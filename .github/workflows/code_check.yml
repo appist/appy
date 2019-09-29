@@ -15,7 +15,8 @@ jobs:
           go-version: ${{ matrix.go }}
       - uses: actions/checkout@master
       - run: go mod download
-      - run: export PATH=$PATH:$(go env GOPATH)/bin
-      - run: go get -u golang.org/x/lint/golint
-      - run: golint -set_exit_status ./... || exit 1
+      - run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go get -u golang.org/x/lint/golint
+          golint -set_exit_status ./... || exit 1
       - run: go vet ./...
