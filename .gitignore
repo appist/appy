@@ -1,0 +1,11 @@
+# Misc.
+.cache
+.envrc
+*.out
+.DS_Store
+Thumbs.db
+coverage
+
+# Temporary assets
+node_modules
+vendor
