@@ -17,7 +17,7 @@ install:
 test:
 	go test -covermode=atomic -coverprofile=coverage.out -race ./...
 
-test-cov:
+testcov:
 	go tool cover -html=coverage.out
 
 .PHONY: bootstrap codecheck install test

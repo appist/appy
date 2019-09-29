@@ -10,25 +10,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type SetupCSRSuite struct {
+type SetupCSRSuiteT struct {
 	test.SuiteT
 	Config *support.ConfigT
 	Server *ServerT
 }
 
-func (s *SetupCSRSuite) SetupTest() {
+func (s *SetupCSRSuiteT) SetupTest() {
 	s.Config = support.Config
 	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.Server = NewServer(s.Config)
 }
 
-func (s *SetupCSRSuite) TearDownAllTest() {
-}
-
-func (s *SetupCSRSuite) TearDownTest() {
-}
-
-func (s *SetupCSRSuite) TestAssetsNotConfigured() {
+func (s *SetupCSRSuiteT) TestAssetsNotConfigured() {
 	s.Server.SetupCSR()
 
 	recorder := httptest.NewRecorder()
@@ -37,7 +31,7 @@ func (s *SetupCSRSuite) TestAssetsNotConfigured() {
 	s.Equal(404, recorder.Code)
 }
 
-func (s *SetupCSRSuite) TestIndexHTMLMissing() {
+func (s *SetupCSRSuiteT) TestIndexHTMLMissing() {
 	s.Server.SetupAssets(http.Dir("."))
 	s.Server.SetupCSR()
 
@@ -47,7 +41,7 @@ func (s *SetupCSRSuite) TestIndexHTMLMissing() {
 	s.Equal(404, recorder.Code)
 }
 
-func (s *SetupCSRSuite) TestNonExistingRequest() {
+func (s *SetupCSRSuiteT) TestNonExistingRequest() {
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Server.SetupCSR()
 
@@ -57,7 +51,7 @@ func (s *SetupCSRSuite) TestNonExistingRequest() {
 	s.Equal(404, recorder.Code)
 }
 
-func (s *SetupCSRSuite) TestStaticAssets301Redirect() {
+func (s *SetupCSRSuiteT) TestStaticAssets301Redirect() {
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Server.SetupCSR()
 
@@ -67,7 +61,7 @@ func (s *SetupCSRSuite) TestStaticAssets301Redirect() {
 	s.Equal(301, recorder.Code)
 }
 
-func (s *SetupCSRSuite) TestFallbackReturnsIndexHTML() {
+func (s *SetupCSRSuiteT) TestFallbackReturnsIndexHTML() {
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Server.SetupCSR()
 
@@ -77,7 +71,7 @@ func (s *SetupCSRSuite) TestFallbackReturnsIndexHTML() {
 	s.Equal(200, recorder.Code)
 }
 
-func (s *SetupCSRSuite) TestHTTPCrawlerBotWithSSLDisabled() {
+func (s *SetupCSRSuiteT) TestHTTPCrawlerBotWithSSLDisabled() {
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Server.SetupCSR()
 
@@ -90,7 +84,7 @@ func (s *SetupCSRSuite) TestHTTPCrawlerBotWithSSLDisabled() {
 	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
 }
 
-func (s *SetupCSRSuite) TestCrawlerBotWithSSLEnabled() {
+func (s *SetupCSRSuiteT) TestCrawlerBotWithSSLEnabled() {
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Server.SetupCSR()
 	s.Config.HTTPSSLEnabled = true
@@ -104,7 +98,7 @@ func (s *SetupCSRSuite) TestCrawlerBotWithSSLEnabled() {
 	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
 }
 
-func (s *SetupCSRSuite) TestSSRWorksCorrectly() {
+func (s *SetupCSRSuiteT) TestSSRWorksCorrectly() {
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Server.GET("/welcome", func(c *gin.Context) {
 		s.Server.RenderString(c, 200, "%s", "test")
@@ -119,5 +113,5 @@ func (s *SetupCSRSuite) TestSSRWorksCorrectly() {
 }
 
 func TestSetupCSR(t *testing.T) {
-	test.Run(t, new(SetupCSRSuite))
+	test.Run(t, new(SetupCSRSuiteT))
 }
