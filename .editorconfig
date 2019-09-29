@@ -34,7 +34,7 @@ indent_style = tab
 # GraphQL
 # https://graphql.org/learn/
 # https://prettier.io
-[*.graphql]
+[*.{gql,graphql}]
 indent_size = 2
 indent_style = space
 

@@ -9,6 +9,7 @@ import (
 	ahttp "appist/appy/http"
 	"appist/appy/middleware"
 	"appist/appy/support"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-pg/pg/v9"
 	"github.com/spf13/cobra"
