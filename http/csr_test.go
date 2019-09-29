@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 type SetupCSRSuite struct {
@@ -75,7 +77,7 @@ func (s *SetupCSRSuite) TestFallbackReturnsIndexHTML() {
 	s.Equal(200, recorder.Code)
 }
 
-func (s *SetupCSRSuite) TestCrawlerBot() {
+func (s *SetupCSRSuite) TestHTTPCrawlerBotWithSSLDisabled() {
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Server.SetupCSR()
 
@@ -86,6 +88,34 @@ func (s *SetupCSRSuite) TestCrawlerBot() {
 	s.Server.ServeHTTP(recorder, request)
 	s.Equal(200, recorder.Code)
 	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
+}
+
+func (s *SetupCSRSuite) TestCrawlerBotWithSSLEnabled() {
+	s.Server.SetupAssets(http.Dir("../testdata"))
+	s.Server.SetupCSR()
+	s.Config.HTTPSSLEnabled = true
+
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/login", nil)
+	request.Host = "0.0.0.0"
+	request.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
+	s.Server.ServeHTTP(recorder, request)
+	s.Equal(200, recorder.Code)
+	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
+}
+
+func (s *SetupCSRSuite) TestSSRWorksCorrectly() {
+	s.Server.SetupAssets(http.Dir("../testdata"))
+	s.Server.GET("/welcome", func(c *gin.Context) {
+		s.Server.RenderString(c, 200, "%s", "test")
+	})
+	s.Server.SetupCSR()
+
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/welcome", nil)
+	s.Server.ServeHTTP(recorder, request)
+	s.Equal(200, recorder.Code)
+	s.Equal("test", recorder.Body.String())
 }
 
 func TestSetupCSR(t *testing.T) {

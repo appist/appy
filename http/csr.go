@@ -60,27 +60,21 @@ func (s *ServerT) SetupCSR() {
 
 func serveStaticAssets(urlPrefix string, s *ServerT) gin.HandlerFunc {
 	fileserver := http.FileServer(s.assets)
+
 	if urlPrefix != "" {
 		fileserver = http.StripPrefix(urlPrefix, fileserver)
 	}
 
-	routesMap := map[string]bool{}
-	for _, route := range s.router.Routes() {
-		if route.Method == "GET" {
-			routesMap[route.Path] = true
-		}
-	}
-
 	return func(c *gin.Context) {
 		r := c.Request
-		if !strings.Contains(r.URL.Path, "/"+ViewDir+"/") &&
-			!strings.Contains(r.URL.Path, "/"+LocaleDir+"/") &&
-			!isSSRPath(routesMap, r.URL.Path) {
-			// SEO crawling for the CSR pages.
+
+		// SEO crawling for the CSR pages.
+		if !strings.Contains(r.URL.Path, "/"+ViewDir+"/") && !strings.Contains(r.URL.Path, "/"+LocaleDir+"/") {
 			if !extRegex.MatchString(r.URL.Path) &&
 				isWebCrawler(strings.ToLower(r.Header.Get(headerUserAgent))) {
 				scheme := "http"
 				port := support.Config.HTTPPort
+
 				if support.Config.HTTPSSLEnabled == true {
 					scheme = "https"
 					port = support.Config.HTTPSSLPort
@@ -136,14 +130,6 @@ func serveStaticAssets(urlPrefix string, s *ServerT) gin.HandlerFunc {
 			}
 		}
 	}
-}
-
-func isSSRPath(routes map[string]bool, url string) bool {
-	if _, ok := routes[url]; ok {
-		return true
-	}
-
-	return false
 }
 
 func isWebCrawler(userAgent string) bool {
