@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/appist/appy/middleware"
-	"github.com/appist/appy/support"
+	"appist/appy/middleware"
+	"appist/appy/support"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v2"

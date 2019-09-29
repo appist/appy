@@ -4,9 +4,10 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/appist/appy/middleware"
-	"github.com/appist/appy/support"
-	atpl "github.com/appist/appy/template"
+	"appist/appy/middleware"
+	"appist/appy/support"
+	atpl "appist/appy/template"
+
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-contrib/secure"
@@ -31,7 +32,7 @@ func init() {
 // NewServer returns a ServerT instance.
 func NewServer(config *support.ConfigT) *ServerT {
 	renderer := multitemplate.NewRenderer()
-	router := newRouter(config)
+	router := newRouter()
 	router.HTMLRender = renderer
 	h, hs := newServers(config, router)
 
@@ -84,16 +85,16 @@ func (s *ServerT) SetFuncMap(fm template.FuncMap) {
 	s.funcMap = nfm
 }
 
-func newRouter(config *support.ConfigT) *gin.Engine {
+func newRouter() *gin.Engine {
 	r := gin.New()
-	r.Use(middleware.CSRF(config))
+	r.Use(middleware.CSRF(support.Config))
 	r.Use(middleware.RequestID())
 	r.Use(middleware.RequestLogger())
 	r.Use(middleware.RealIP())
-	r.Use(middleware.SessionManager(config))
-	r.Use(middleware.HealthCheck(config.HTTPHealthCheckURL))
+	r.Use(middleware.SessionManager(support.Config))
+	r.Use(middleware.HealthCheck(support.Config.HTTPHealthCheckURL))
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	r.Use(secure.New(newSecureConfig(config)))
+	r.Use(secure.New(newSecureConfig(support.Config)))
 	r.Use(middleware.Recovery())
 
 	return r

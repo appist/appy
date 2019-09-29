@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	ahttp "github.com/appist/appy/http"
+	ahttp "appist/appy/http"
 	"github.com/bndr/gotabulate"
 	"github.com/spf13/cobra"
 )

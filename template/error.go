@@ -1,6 +1,6 @@
 package template
 
-import "github.com/appist/appy/support"
+import "appist/appy/support"
 
 func errorUpper() string {
 	return `

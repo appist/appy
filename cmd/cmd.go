@@ -7,7 +7,7 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/appist/appy/support"
+	"appist/appy/support"
 	"github.com/spf13/cobra"
 )
 

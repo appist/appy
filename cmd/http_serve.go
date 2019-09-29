@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	ahttp "github.com/appist/appy/http"
+	ahttp "appist/appy/http"
 	"github.com/spf13/cobra"
 )
 

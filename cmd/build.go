@@ -7,7 +7,7 @@ import (
 	"path"
 	"strings"
 
-	ahttp "github.com/appist/appy/http"
+	ahttp "appist/appy/http"
 	"github.com/otiai10/copy"
 	"github.com/shurcooL/vfsgen"
 	"github.com/spf13/cobra"
@@ -78,7 +78,7 @@ func NewBuildCommand(s *ahttp.ServerT) *cobra.Command {
 			}
 
 			logger.Info("Building the binary...")
-			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo", "-ldflags", "-w -extldflags '-static' -X github.com/appist/appy/support.Build=release", "-o", binaryName, ".")
+			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo", "-ldflags", "-w -extldflags '-static' -X appist/appy/support.Build=release", "-o", binaryName, ".")
 			buildBinaryCmd.Stderr = os.Stderr
 			if err = buildBinaryCmd.Run(); err != nil {
 				logger.Fatal(err)

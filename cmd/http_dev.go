@@ -17,7 +17,7 @@ import (
 
 	"github.com/99designs/gqlgen/api"
 	gqlgenCfg "github.com/99designs/gqlgen/codegen/config"
-	ahttp "github.com/appist/appy/http"
+	ahttp "appist/appy/http"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/cobra"
 )

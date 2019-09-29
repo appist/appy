@@ -1,0 +1,28 @@
+name: Unit Test
+
+on: push
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        go: [1.11.x, 1.12.x, 1.13.x]
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379/tcp
+    steps:
+      - uses: actions/setup-go@master
+        with:
+          go-version: ${{ matrix.go }}
+      - uses: actions/checkout@master
+      - run: go mod download
+      - run: go test -covermode=atomic -coverprofile=coverage.out -race ./...
+        env:
+          HTTP_SESSION_REDIS_ADDR: localhost:${{ job.services.redis.ports[6379] }}
+      - run: bash <(curl -s https://codecov.io/bash)
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

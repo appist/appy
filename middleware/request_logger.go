@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appist/appy/support"
+	"appist/appy/support"
 	"github.com/gin-gonic/gin"
 )
 
