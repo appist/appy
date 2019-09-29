@@ -16,6 +16,7 @@ type SetupCSRSuite struct {
 
 func (s *SetupCSRSuite) SetupTest() {
 	s.Config = support.Config
+	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.Server = NewServer(s.Config)
 }
 
@@ -62,6 +63,29 @@ func (s *SetupCSRSuite) TestStaticAssets301Redirect() {
 	request, _ := http.NewRequest("GET", "/index.html", nil)
 	s.Server.ServeHTTP(recorder, request)
 	s.Equal(301, recorder.Code)
+}
+
+func (s *SetupCSRSuite) TestFallbackReturnsIndexHTML() {
+	s.Server.SetupAssets(http.Dir("../testdata"))
+	s.Server.SetupCSR()
+
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/login", nil)
+	s.Server.ServeHTTP(recorder, request)
+	s.Equal(200, recorder.Code)
+}
+
+func (s *SetupCSRSuite) TestCrawlerBot() {
+	s.Server.SetupAssets(http.Dir("../testdata"))
+	s.Server.SetupCSR()
+
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/login", nil)
+	request.Host = "0.0.0.0"
+	request.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
+	s.Server.ServeHTTP(recorder, request)
+	s.Equal(200, recorder.Code)
+	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
 }
 
 func TestSetupCSR(t *testing.T) {

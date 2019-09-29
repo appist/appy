@@ -10,6 +10,7 @@ import (
 
 	"appist/appy/middleware"
 	"appist/appy/support"
+
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/chromedp"
 	"github.com/gin-gonic/gin"
@@ -45,14 +46,7 @@ func (s *ServerT) SetupCSR() {
 				return
 			}
 
-			data, err = ioutil.ReadAll(f)
-			if err != nil {
-				c.HTML(http.StatusNotFound, "error/404", gin.H{
-					"title": "404 Page Not Found",
-				})
-				return
-			}
-
+			data, _ = ioutil.ReadAll(f)
 			s.RenderData(c, http.StatusOK, "text/html; charset=utf-8", data)
 			return
 		}
