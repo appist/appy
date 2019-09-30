@@ -38,7 +38,6 @@ func NewHTTPDevCommand(s *ah.ServerT) *cobra.Command {
 		Short: "Run the HTTP/HTTPS web server in development watch mode, only available for debug build.",
 		Run: func(cmd *cobra.Command, args []string) {
 			checkSSLCerts(s)
-
 			wd, _ := os.Getwd()
 			watchPaths := []string{
 				wd + "/app",
@@ -47,8 +46,8 @@ func NewHTTPDevCommand(s *ah.ServerT) *cobra.Command {
 				wd + "/go.mod",
 				wd + "/main.go",
 			}
-
 			quit := make(chan os.Signal, 1)
+
 			signal.Notify(quit, os.Interrupt)
 			signal.Notify(quit, syscall.SIGTERM)
 			go func() {
@@ -56,8 +55,8 @@ func NewHTTPDevCommand(s *ah.ServerT) *cobra.Command {
 				killHTTPServeCmd()
 				killWebServeCmd()
 			}()
-			go runHTTPServeCmd()
 
+			go runHTTPServeCmd()
 			if _, err := os.Stat(wd + "/web"); !os.IsNotExist(err) {
 				time.Sleep(3 * time.Second)
 				go runWebServeCmd(s)
@@ -81,7 +80,7 @@ func fileChangesHandler(e watcher.Event) {
 	}
 
 	gqlgenConfig, _ := gqlgenLoadConfig()
-	if strings.Contains(e.Path, gqlgenConfig.Model.Filename) || (strings.Contains(e.Path, gqlgenConfig.Exec.Filename) && e.Op == watcher.Remove) {
+	if gqlgenConfig != nil && (strings.Contains(e.Path, gqlgenConfig.Model.Filename) || (strings.Contains(e.Path, gqlgenConfig.Exec.Filename) && e.Op == watcher.Remove)) {
 		isGenerating = false
 		return
 	}
@@ -200,6 +199,13 @@ func watchFileChanges(watchPaths []string, callback func(e watcher.Event)) {
 	w.AddFilterHook(watcher.RegexFilterHook(r, false))
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				killHTTPServeCmd()
+				logger.Fatal(r)
+			}
+		}()
+
 		for {
 			select {
 			case event := <-w.Event:
