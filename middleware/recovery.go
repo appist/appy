@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"strings"
 
-	"appist/appy/support"
+	"github.com/appist/appy/support"
 	"github.com/gin-gonic/gin"
 )
 

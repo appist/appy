@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"appist/appy/middleware"
+	"github.com/appist/appy/middleware"
 
 	"github.com/BurntSushi/toml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"

@@ -1,8 +1,8 @@
 package http
 
 import (
-	"appist/appy/support"
-	"appist/appy/test"
+	"github.com/appist/appy/support"
+	"github.com/appist/appy/test"
 	"bufio"
 	"errors"
 	"net/http"

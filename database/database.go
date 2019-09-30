@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"appist/appy/support"
+	"github.com/appist/appy/support"
 	"github.com/go-pg/pg/v9"
 )
 

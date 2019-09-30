@@ -7,8 +7,8 @@ import (
 	"path"
 	"runtime"
 
-	ah "appist/appy/http"
-	"appist/appy/support"
+	ah "github.com/appist/appy/http"
+	"github.com/appist/appy/support"
 
 	"github.com/spf13/cobra"
 )

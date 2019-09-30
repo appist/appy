@@ -4,11 +4,11 @@ import (
 	"html/template"
 	"net/http"
 
-	"appist/appy/cmd"
-	"appist/appy/database"
-	ah "appist/appy/http"
-	"appist/appy/middleware"
-	"appist/appy/support"
+	"github.com/appist/appy/cmd"
+	"github.com/appist/appy/database"
+	ah "github.com/appist/appy/http"
+	"github.com/appist/appy/middleware"
+	"github.com/appist/appy/support"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-pg/pg/v9"

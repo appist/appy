@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"appist/appy/middleware"
+	"github.com/appist/appy/middleware"
 	"github.com/gin-contrib/sse"
 	"github.com/gin-gonic/gin"
 	"github.com/nicksnyder/go-i18n/v2/i18n"

@@ -4,9 +4,9 @@ import (
 	"html/template"
 	"net/http"
 
-	"appist/appy/middleware"
-	"appist/appy/support"
-	at "appist/appy/template"
+	"github.com/appist/appy/middleware"
+	"github.com/appist/appy/support"
+	at "github.com/appist/appy/template"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/multitemplate"

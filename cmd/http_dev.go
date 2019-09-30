@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	ah "appist/appy/http"
+	ah "github.com/appist/appy/http"
 
 	"github.com/99designs/gqlgen/api"
 	gqlgenCfg "github.com/99designs/gqlgen/codegen/config"

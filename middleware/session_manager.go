@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"appist/appy/support"
+	"github.com/appist/appy/support"
 	ginsessions "github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/sessions/redis"

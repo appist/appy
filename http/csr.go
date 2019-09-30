@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"appist/appy/middleware"
-	"appist/appy/support"
+	"github.com/appist/appy/middleware"
+	"github.com/appist/appy/support"
 
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/chromedp"

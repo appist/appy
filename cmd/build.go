@@ -7,7 +7,7 @@ import (
 	"path"
 	"strings"
 
-	ah "appist/appy/http"
+	ah "github.com/appist/appy/http"
 
 	"github.com/otiai10/copy"
 	"github.com/shurcooL/vfsgen"

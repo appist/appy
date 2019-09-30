@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	ah "appist/appy/http"
+	ah "github.com/appist/appy/http"
 	"os"
 	"os/exec"
 	"path/filepath"

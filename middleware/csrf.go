@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"appist/appy/support"
+	"github.com/appist/appy/support"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/securecookie"
 )
