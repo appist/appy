@@ -8,7 +8,6 @@ import (
 	"runtime"
 
 	"github.com/appist/appy/support"
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -19,10 +18,6 @@ type ServerT struct {
 	GRPC   *grpc.Server
 	HTTP   *http.Server
 	Router *RouterT
-}
-
-func init() {
-	gin.SetMode(gin.ReleaseMode)
 }
 
 // NewServer returns the server instance which contains GRPC/HTTP servers and the gin router in it.

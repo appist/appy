@@ -20,7 +20,6 @@ const csrfTokenLength = 32
 
 var (
 	csrfSecureCookie    *securecookie.SecureCookie
-	csrfCtxErrorKey     = "appy.csrfError"
 	csrfCtxFieldNameKey = "appy.csrfFieldName"
 	csrfCtxSkipCheckKey = "appy.csrfSkip"
 	csrfCtxTokenKey     = "appy.csrfToken"
@@ -57,15 +56,15 @@ func csrfHandler(c *gin.Context, config *support.ConfigT) {
 	if err != nil || len(realToken) != csrfTokenLength {
 		realToken, err = generateRandomBytes(csrfTokenLength)
 		if err != nil {
-			c.Set(csrfCtxErrorKey, err)
-			c.Next()
+			support.Logger.Error(err)
+			c.AbortWithError(http.StatusForbidden, err)
 			return
 		}
 
 		err = saveCSRFTokenIntoCookie(realToken, c, config)
 		if err != nil {
-			c.Set(csrfCtxErrorKey, err)
-			c.Next()
+			support.Logger.Error(err)
+			c.AbortWithError(http.StatusForbidden, err)
 			return
 		}
 	}
@@ -80,49 +79,34 @@ func csrfHandler(c *gin.Context, config *support.ConfigT) {
 		if r.TLS != nil {
 			referer, err := url.Parse(r.Referer())
 			if err != nil || referer.String() == "" {
-				c.Set(csrfCtxErrorKey, errCsrfNoReferer)
-				c.Next()
+				support.Logger.Error(errCsrfNoReferer)
+				c.AbortWithError(http.StatusForbidden, errCsrfNoReferer)
 				return
 			}
 
 			if !(referer.Scheme == "https" && referer.Host == r.Host) {
-				c.Set(csrfCtxErrorKey, errCsrfBadReferer)
-				c.Next()
+				support.Logger.Error(errCsrfBadReferer)
+				c.AbortWithError(http.StatusForbidden, errCsrfBadReferer)
 				return
 			}
 		}
 
 		if realToken == nil {
-			c.Set(csrfCtxErrorKey, errCsrfNoToken)
-			c.Next()
+			support.Logger.Error(errCsrfNoToken)
+			c.AbortWithError(http.StatusForbidden, errCsrfNoToken)
 			return
 		}
 
 		authenticityToken := getCSRFUnmaskedToken(getCSRFTokenFromRequest(c, config))
 		if !compareTokens(authenticityToken, realToken) {
-			c.Set(csrfCtxErrorKey, errCsrfBadToken)
-			c.Next()
+			support.Logger.Error(errCsrfBadToken)
+			c.AbortWithError(http.StatusForbidden, errCsrfBadToken)
 			return
 		}
 	}
 
 	c.Writer.Header().Add("Vary", "Cookie")
 	c.Next()
-}
-
-// CSRFError returns the error related to CSRF validation.
-func CSRFError(c *gin.Context) error {
-	val, exists := c.Get(csrfCtxSkipCheckKey)
-	if val == true && exists == true {
-		return nil
-	}
-
-	err, exists := c.Get(csrfCtxErrorKey)
-	if err != nil {
-		return err.(error)
-	}
-
-	return nil
 }
 
 // CSRFSkipCheck skips the CSRF check for the request.
