@@ -12,7 +12,6 @@ import (
 
 type SSRSuiteT struct {
 	test.SuiteT
-	Config     *support.ConfigT
 	Recorder   *httptest.ResponseRecorder
 	Server     *ServerT
 	OldViewDir string
@@ -21,9 +20,9 @@ type SSRSuiteT struct {
 func (s *SSRSuiteT) SetupTest() {
 	s.OldViewDir = ViewDir
 	ViewDir = "."
-	s.Config = support.Config
-	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
-	s.Server = NewServer(s.Config)
+	config := support.Config
+	config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
+	s.Server = NewServer(config)
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Recorder = httptest.NewRecorder()
 }

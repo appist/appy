@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"appist/appy/support"
+
 	"github.com/gin-gonic/gin"
 )
 
 // RequestLogger is a middleware that logs the start and end of each request, along with some useful
 // data about what was requested, what the response status was, and how long it took to return.
-func RequestLogger() gin.HandlerFunc {
+func RequestLogger(config *support.ConfigT) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestID, _ := c.Get(requestIDCtxKey)
 		start := time.Now()
@@ -23,12 +24,12 @@ func RequestLogger() gin.HandlerFunc {
 			scheme = "https"
 		}
 
-		support.Logger.Infof("[%s] %s '%s://%s%s %s' from %s - %d %dB in %s", requestID, r.Method, scheme, r.Host, filterParams(r),
+		support.Logger.Infof("[%s] %s '%s://%s%s %s' from %s - %d %dB in %s", requestID, r.Method, scheme, r.Host, filterParams(r, config),
 			r.Proto, r.RemoteAddr, c.Writer.Status(), c.Writer.Size(), time.Since(start))
 	}
 }
 
-func filterParams(r *http.Request) string {
+func filterParams(r *http.Request, config *support.ConfigT) string {
 	var queryParams []string
 	splits := strings.Split(r.RequestURI, "?")
 	baseURI := splits[0]
@@ -36,7 +37,7 @@ func filterParams(r *http.Request) string {
 	for key, value := range r.URL.Query() {
 		needsFilter := false
 
-		for _, filter := range support.Config.HTTPLogFilterParameters {
+		for _, filter := range config.HTTPLogFilterParameters {
 			if strings.Contains(key, filter) == true {
 				needsFilter = true
 				break

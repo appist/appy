@@ -71,16 +71,15 @@ func TestDynamicRouting(t *testing.T) {
 
 type StaticRoutingSuiteT struct {
 	test.SuiteT
-	Config   *support.ConfigT
 	Recorder *httptest.ResponseRecorder
 	Server   *ServerT
 }
 
 func (s *StaticRoutingSuiteT) SetupTest() {
-	s.Config = support.Config
-	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
+	config := support.Config
+	config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.Recorder = httptest.NewRecorder()
-	s.Server = NewServer(s.Config)
+	s.Server = NewServer(config)
 }
 
 func (s *StaticRoutingSuiteT) TestStaticRoute() {

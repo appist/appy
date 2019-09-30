@@ -15,9 +15,10 @@ import (
 	"syscall"
 	"time"
 
+	ah "appist/appy/http"
+
 	"github.com/99designs/gqlgen/api"
 	gqlgenCfg "github.com/99designs/gqlgen/codegen/config"
-	ahttp "appist/appy/http"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/cobra"
 )
@@ -31,12 +32,12 @@ var (
 )
 
 // NewHTTPDevCommand runs the HTTP/HTTPS web server in development watch mode, only available for debug build.
-func NewHTTPDevCommand(s *ahttp.ServerT) *cobra.Command {
+func NewHTTPDevCommand(s *ah.ServerT) *cobra.Command {
 	return &cobra.Command{
 		Use:   "http:dev",
 		Short: "Run the HTTP/HTTPS web server in development watch mode, only available for debug build.",
 		Run: func(cmd *cobra.Command, args []string) {
-			checkSSLCerts()
+			checkSSLCerts(s)
 
 			wd, _ := os.Getwd()
 			watchPaths := []string{
@@ -56,8 +57,12 @@ func NewHTTPDevCommand(s *ahttp.ServerT) *cobra.Command {
 				killWebServeCmd()
 			}()
 			go runHTTPServeCmd()
-			time.Sleep(3 * time.Second)
-			go runWebServeCmd(s)
+
+			if _, err := os.Stat(wd + "/web"); !os.IsNotExist(err) {
+				time.Sleep(3 * time.Second)
+				go runWebServeCmd(s)
+			}
+
 			watchFileChanges(watchPaths, fileChangesHandler)
 		},
 	}
@@ -131,7 +136,7 @@ func killWebServeCmd() {
 	}
 }
 
-func runWebServeCmd(s *ahttp.ServerT) {
+func runWebServeCmd(s *ah.ServerT) {
 	wd, _ := os.Getwd()
 	ssrPaths := []string{}
 	for _, route := range s.GetAllRoutes() {
@@ -151,13 +156,13 @@ func runWebServeCmd(s *ahttp.ServerT) {
 	go func(stdout io.ReadCloser, stderr io.ReadCloser) {
 		firstTime := true
 		scheme := "http"
-		port, _ := strconv.Atoi(config.HTTPPort)
-		if config.HTTPSSLEnabled == true {
+		port, _ := strconv.Atoi(s.Config.HTTPPort)
+		if s.Config.HTTPSSLEnabled == true {
 			scheme = "https"
-			port, _ = strconv.Atoi(config.HTTPSSLPort)
+			port, _ = strconv.Atoi(s.Config.HTTPSSLPort)
 		}
 
-		hosts := getIPHosts()
+		hosts := getIPHosts(s)
 		host := fmt.Sprintf("%s://%s:%s", scheme, hosts[0], strconv.Itoa(port+1))
 		timeRe := regexp.MustCompile(` [0-9]+ms`)
 

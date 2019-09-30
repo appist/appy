@@ -3,13 +3,14 @@ package cmd
 import (
 	"fmt"
 
-	ahttp "appist/appy/http"
+	ah "appist/appy/http"
+
 	"github.com/bndr/gotabulate"
 	"github.com/spf13/cobra"
 )
 
 // NewHTTPRoutesCommand lists all the HTTP routes.
-func NewHTTPRoutesCommand(s *ahttp.ServerT) *cobra.Command {
+func NewHTTPRoutesCommand(s *ah.ServerT) *cobra.Command {
 	return &cobra.Command{
 		Use:   "http:routes",
 		Short: "Lists all the HTTP routes.",

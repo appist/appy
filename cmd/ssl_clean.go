@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	ah "appist/appy/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,7 +10,7 @@ import (
 )
 
 // NewSSLCleanCommand removes/uninstalls all the local SSL certs using `mkcert`, only available for debug build.
-func NewSSLCleanCommand() *cobra.Command {
+func NewSSLCleanCommand(s *ah.ServerT) *cobra.Command {
 	return &cobra.Command{
 		Use:   "ssl:clean",
 		Short: "Uninstall and clean up the locally trusted SSL certs using `mkcert`, only available for debug build.",
@@ -19,7 +20,7 @@ func NewSSLCleanCommand() *cobra.Command {
 				logger.Fatal(err)
 			}
 
-			dir := filepath.Dir(config.HTTPSSLCertPath + "/ca.crt")
+			dir := filepath.Dir(s.Config.HTTPSSLCertPath + "/ca.crt")
 			_ = os.RemoveAll(dir)
 
 			cleanCmd := exec.Command("mkcert", "-uninstall")

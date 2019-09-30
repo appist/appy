@@ -64,14 +64,13 @@ func TestI18n(t *testing.T) {
 
 type RenderSuiteT struct {
 	test.SuiteT
-	Config *support.ConfigT
 	Server *ServerT
 }
 
 func (s *RenderSuiteT) SetupTest() {
-	s.Config = support.Config
-	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
-	s.Server = NewServer(s.Config)
+	config := support.Config
+	config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
+	s.Server = NewServer(config)
 }
 
 func (s *RenderSuiteT) TestRenderHTML() {
@@ -284,13 +283,11 @@ func TestRender(t *testing.T) {
 
 type BeforeRenderSuiteT struct {
 	test.SuiteT
-	Config *support.ConfigT
 	Server *ServerT
 }
 
 func (s *BeforeRenderSuiteT) SetupTest() {
-	s.Config = support.Config
-	s.Server = NewServer(s.Config)
+	s.Server = NewServer(support.Config)
 }
 
 func (s *BeforeRenderSuiteT) TestRemoveSetCookieIfAPIOnly() {

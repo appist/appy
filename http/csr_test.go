@@ -12,14 +12,13 @@ import (
 
 type SetupCSRSuiteT struct {
 	test.SuiteT
-	Config *support.ConfigT
 	Server *ServerT
 }
 
 func (s *SetupCSRSuiteT) SetupTest() {
-	s.Config = support.Config
-	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
-	s.Server = NewServer(s.Config)
+	config := support.Config
+	config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
+	s.Server = NewServer(config)
 }
 
 func (s *SetupCSRSuiteT) TestAssetsNotConfigured() {
@@ -87,7 +86,7 @@ func (s *SetupCSRSuiteT) TestHTTPCrawlerBotWithSSLDisabled() {
 func (s *SetupCSRSuiteT) TestCrawlerBotWithSSLEnabled() {
 	s.Server.SetupAssets(http.Dir("../testdata"))
 	s.Server.SetupCSR()
-	s.Config.HTTPSSLEnabled = true
+	s.Server.Config.HTTPSSLEnabled = true
 
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/login", nil)

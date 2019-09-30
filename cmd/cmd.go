@@ -7,7 +7,9 @@ import (
 	"path"
 	"runtime"
 
+	ah "appist/appy/http"
 	"appist/appy/support"
+
 	"github.com/spf13/cobra"
 )
 
@@ -15,14 +17,12 @@ import (
 const VERSION = "0.1.0"
 
 var (
-	config           *support.ConfigT
 	logger           *support.LoggerT
 	root             *cobra.Command
 	reservedCmdNames = map[string]bool{}
 )
 
 func init() {
-	config = support.Config
 	logger = support.Logger
 	root = NewCommand()
 }
@@ -60,22 +60,22 @@ func Run() {
 	root.Execute()
 }
 
-func checkSSLCerts() {
-	if config.HTTPSSLEnabled == true {
-		if _, err := os.Stat(config.HTTPSSLCertPath + "/cert.pem"); os.IsNotExist(err) {
+func checkSSLCerts(s *ah.ServerT) {
+	if s.Config.HTTPSSLEnabled == true {
+		if _, err := os.Stat(s.Config.HTTPSSLCertPath + "/cert.pem"); os.IsNotExist(err) {
 			logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
 		}
 
-		if _, err := os.Stat(config.HTTPSSLCertPath + "/key.pem"); os.IsNotExist(err) {
+		if _, err := os.Stat(s.Config.HTTPSSLCertPath + "/key.pem"); os.IsNotExist(err) {
 			logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
 		}
 	}
 }
 
-func getIPHosts() []string {
-	var hosts = []string{config.HTTPHost}
+func getIPHosts(s *ah.ServerT) []string {
+	var hosts = []string{s.Config.HTTPHost}
 
-	if config.HTTPHost != "localhost" {
+	if s.Config.HTTPHost != "localhost" {
 		hosts = append(hosts, "localhost")
 	}
 
@@ -96,16 +96,16 @@ func getIPHosts() []string {
 	return hosts
 }
 
-func logServerInfo(sslEnabled bool, httpPort, httpSSLPort string) {
+func logServerInfo(s *ah.ServerT) {
 	logger.Infof("* Version %s (%s), build: %s", VERSION, runtime.Version(), support.Build)
-	logger.Infof("* Environment: %s", config.AppyEnv)
+	logger.Infof("* Environment: %s", s.Config.AppyEnv)
 	logger.Infof("* Environment Config: %s", support.DotenvPath)
 
-	hosts := getIPHosts()
-	host := fmt.Sprintf("http://%s:%s", hosts[0], httpPort)
+	hosts := getIPHosts(s)
+	host := fmt.Sprintf("http://%s:%s", hosts[0], s.Config.HTTPPort)
 
-	if sslEnabled == true {
-		host = fmt.Sprintf("https://%s:%s", hosts[0], httpSSLPort)
+	if s.Config.HTTPSSLEnabled == true {
+		host = fmt.Sprintf("https://%s:%s", hosts[0], s.Config.HTTPSSLPort)
 	}
 
 	logger.Infof("* Listening on %s", host)

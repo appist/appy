@@ -73,14 +73,14 @@ func serveStaticAssets(urlPrefix string, s *ServerT) gin.HandlerFunc {
 			if !extRegex.MatchString(r.URL.Path) &&
 				isWebCrawler(strings.ToLower(r.Header.Get(headerUserAgent))) {
 				scheme := "http"
-				port := support.Config.HTTPPort
+				port := s.Config.HTTPPort
 
-				if support.Config.HTTPSSLEnabled == true {
+				if s.Config.HTTPSSLEnabled == true {
 					scheme = "https"
-					port = support.Config.HTTPSSLPort
+					port = s.Config.HTTPSSLPort
 				}
 
-				urlToCrawl := fmt.Sprintf("%s://%s:%s%s", scheme, support.Config.HTTPHost, port, r.RequestURI)
+				urlToCrawl := fmt.Sprintf("%s://%s:%s%s", scheme, s.Config.HTTPHost, port, r.RequestURI)
 				support.Logger.Infof("SEO crawling %s...", urlToCrawl)
 
 				opts := append(chromedp.DefaultExecAllocatorOptions[:],

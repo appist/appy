@@ -6,7 +6,7 @@ import (
 
 	"appist/appy/middleware"
 	"appist/appy/support"
-	atpl "appist/appy/template"
+	at "appist/appy/template"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/multitemplate"
@@ -21,8 +21,8 @@ type ServerT struct {
 	funcMap      template.FuncMap
 	htmlRenderer multitemplate.Renderer
 	router       *gin.Engine
+	Config       *support.ConfigT
 	HTTP         *http.Server
-	HTTPS        *http.Server
 }
 
 func init() {
@@ -32,19 +32,32 @@ func init() {
 // NewServer returns a ServerT instance.
 func NewServer(config *support.ConfigT) *ServerT {
 	renderer := multitemplate.NewRenderer()
-	router := newRouter()
+	router := newRouter(config)
 	router.HTMLRender = renderer
-	h, hs := newServers(config, router)
+	server := &http.Server{
+		Addr:              config.HTTPHost + ":" + config.HTTPPort,
+		Handler:           router,
+		MaxHeaderBytes:    config.HTTPMaxHeaderBytes,
+		ReadTimeout:       config.HTTPReadTimeout,
+		ReadHeaderTimeout: config.HTTPReadHeaderTimeout,
+		WriteTimeout:      config.HTTPWriteTimeout,
+		IdleTimeout:       config.HTTPIdleTimeout,
+	}
+	server.ErrorLog = zap.NewStdLog(support.Logger.Desugar())
+
+	if config.HTTPSSLEnabled == true {
+		server.Addr = config.HTTPHost + ":" + config.HTTPSSLPort
+	}
 
 	// Initialize the error templates.
-	renderer.AddFromString("error/404", atpl.ErrorTpl404())
-	renderer.AddFromString("error/500", atpl.ErrorTpl500())
+	renderer.AddFromString("error/404", at.ErrorTpl404())
+	renderer.AddFromString("error/500", at.ErrorTpl500())
 
 	return &ServerT{
 		htmlRenderer: renderer,
 		router:       router,
-		HTTP:         h,
-		HTTPS:        hs,
+		Config:       config,
+		HTTP:         server,
 	}
 }
 
@@ -52,10 +65,10 @@ func NewServer(config *support.ConfigT) *ServerT {
 func (s *ServerT) GetAllRoutes() []gin.RouteInfo {
 	routes := s.Routes()
 
-	if support.Config.HTTPHealthCheckURL != "" {
+	if s.Config.HTTPHealthCheckURL != "" {
 		routes = append(routes, gin.RouteInfo{
 			Method:      "GET",
-			Path:        support.Config.HTTPHealthCheckURL,
+			Path:        s.Config.HTTPHealthCheckURL,
 			Handler:     "",
 			HandlerFunc: nil,
 		})
@@ -85,16 +98,16 @@ func (s *ServerT) SetFuncMap(fm template.FuncMap) {
 	s.funcMap = nfm
 }
 
-func newRouter() *gin.Engine {
+func newRouter(config *support.ConfigT) *gin.Engine {
 	r := gin.New()
-	r.Use(middleware.CSRF(support.Config))
+	r.Use(middleware.CSRF(config))
 	r.Use(middleware.RequestID())
-	r.Use(middleware.RequestLogger())
+	r.Use(middleware.RequestLogger(config))
 	r.Use(middleware.RealIP())
-	r.Use(middleware.SessionManager(support.Config))
-	r.Use(middleware.HealthCheck(support.Config.HTTPHealthCheckURL))
+	r.Use(middleware.SessionManager(config))
+	r.Use(middleware.HealthCheck(config.HTTPHealthCheckURL))
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	r.Use(secure.New(newSecureConfig(support.Config)))
+	r.Use(secure.New(newSecureConfig(config)))
 	r.Use(middleware.Recovery())
 
 	return r
@@ -118,30 +131,4 @@ func newSecureConfig(config *support.ConfigT) secure.Config {
 		IENoOpen:                config.HTTPIENoOpen,
 		SSLProxyHeaders:         config.HTTPSSLProxyHeaders,
 	}
-}
-
-func newServers(config *support.ConfigT, router *gin.Engine) (*http.Server, *http.Server) {
-	h := &http.Server{
-		Addr:              config.HTTPHost + ":" + config.HTTPPort,
-		Handler:           router,
-		MaxHeaderBytes:    config.HTTPMaxHeaderBytes,
-		ReadTimeout:       config.HTTPReadTimeout,
-		ReadHeaderTimeout: config.HTTPReadHeaderTimeout,
-		WriteTimeout:      config.HTTPWriteTimeout,
-		IdleTimeout:       config.HTTPIdleTimeout,
-	}
-	h.ErrorLog = zap.NewStdLog(support.Logger.Desugar())
-
-	hs := &http.Server{
-		Addr:              config.HTTPHost + ":" + config.HTTPSSLPort,
-		Handler:           router,
-		MaxHeaderBytes:    config.HTTPMaxHeaderBytes,
-		ReadTimeout:       config.HTTPReadTimeout,
-		ReadHeaderTimeout: config.HTTPReadHeaderTimeout,
-		WriteTimeout:      config.HTTPWriteTimeout,
-		IdleTimeout:       config.HTTPIdleTimeout,
-	}
-	hs.ErrorLog = zap.NewStdLog(support.Logger.Desugar())
-
-	return h, hs
 }

@@ -6,7 +6,7 @@ import (
 
 	"appist/appy/cmd"
 	"appist/appy/database"
-	ahttp "appist/appy/http"
+	ah "appist/appy/http"
 	"appist/appy/middleware"
 	"appist/appy/support"
 
@@ -35,10 +35,10 @@ type LoggerT = support.LoggerT
 type SessionT = middleware.Session
 
 // HTTPServer is the singleton that serves HTTP requests.
-var HTTPServer *ahttp.ServerT
+var HTTPServer *ah.ServerT
 
 // Config is the singleton that keeps the environment variables mapping defined in `support/config.go`.
-var Config = support.Config
+var Config *support.ConfigT
 
 // Db is the database connection handlers.
 var Db = map[string]*pg.DB{}
@@ -50,13 +50,13 @@ var DbConfigs map[string]*pg.Options
 var Logger = support.Logger
 
 // Bootstrap initializes the app instance with singletons like Config, Logger and etc.
-func Bootstrap(assets http.FileSystem, fm template.FuncMap) {
-	HTTPServer = ahttp.NewServer(Config)
+func Bootstrap(assets http.FileSystem, funcMap template.FuncMap) {
+	Config = support.Config
+	DbConfigs = database.ParseDbConfigs()
+	HTTPServer = ah.NewServer(Config)
 	HTTPServer.SetupAssets(assets)
 	HTTPServer.SetupI18n()
-	HTTPServer.SetFuncMap(fm)
-
-	DbConfigs = database.ParseDbConfigs()
+	HTTPServer.SetFuncMap(funcMap)
 
 	cmd.AddCommand(cmd.NewHTTPRoutesCommand(HTTPServer))
 	cmd.AddCommand(cmd.NewHTTPServeCommand(HTTPServer))
@@ -65,8 +65,8 @@ func Bootstrap(assets http.FileSystem, fm template.FuncMap) {
 	if support.Build != "release" {
 		cmd.AddCommand(cmd.NewBuildCommand(HTTPServer))
 		cmd.AddCommand(cmd.NewHTTPDevCommand(HTTPServer))
-		cmd.AddCommand(cmd.NewSSLCleanCommand())
-		cmd.AddCommand(cmd.NewSSLSetupCommand())
+		cmd.AddCommand(cmd.NewSSLCleanCommand(HTTPServer))
+		cmd.AddCommand(cmd.NewSSLSetupCommand(HTTPServer))
 	}
 }
 

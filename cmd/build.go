@@ -7,7 +7,8 @@ import (
 	"path"
 	"strings"
 
-	ahttp "appist/appy/http"
+	ah "appist/appy/http"
+
 	"github.com/otiai10/copy"
 	"github.com/shurcooL/vfsgen"
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ import (
 
 // NewBuildCommand compiles the static assets into go files and build the release mode binary, only available for debug
 // build.
-func NewBuildCommand(s *ahttp.ServerT) *cobra.Command {
+func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 	return &cobra.Command{
 		Use:   "build",
 		Short: "Compile the static assets into go files and build the release mode binary, only available for debug build.",
@@ -46,7 +47,7 @@ func NewBuildCommand(s *ahttp.ServerT) *cobra.Command {
 
 			binaryName := path.Base(wd)
 			assetsPath := "assets"
-			assetsPathForSSR := assetsPath + "/" + ahttp.SSRAssetsDir
+			assetsPathForSSR := assetsPath + "/" + ah.SSRAssetsDir
 			ssrSrcPath := "app"
 
 			logger.Infof("Copying server-side assets from '%s' into '%s'...", ssrSrcPath+"/{locale,view}", assetsPathForSSR+"{locale,view}")

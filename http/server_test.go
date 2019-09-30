@@ -15,10 +15,10 @@ import (
 func TestNewServer(t *testing.T) {
 	s := NewServer(support.Config)
 	assert := test.NewAssert(t)
-	assert.NotEqual(nil, s.HTTP)
-	assert.NotEqual(nil, s.HTTPS)
 	assert.NotEqual(nil, s.router)
 	assert.NotEqual(nil, s.htmlRenderer)
+	assert.NotEqual(nil, s.Config)
+	assert.NotEqual(nil, s.HTTP)
 }
 
 func TestGetAllRoutes(t *testing.T) {
