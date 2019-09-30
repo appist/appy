@@ -9,3 +9,4 @@ coverage
 # Temporary assets
 node_modules
 vendor
+tmp

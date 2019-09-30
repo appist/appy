@@ -28,6 +28,7 @@ func newRouter(c *support.ConfigT) *gin.Engine {
 	r.Use(middleware.RequestID())
 	r.Use(middleware.RequestLogger(c))
 	r.Use(middleware.RealIP())
+	r.Use(middleware.ResponseHeaderFilter())
 	r.Use(middleware.SessionManager(c))
 	r.Use(middleware.HealthCheck(c.HTTPHealthCheckURL))
 	r.Use(gzip.Gzip(gzip.DefaultCompression))

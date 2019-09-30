@@ -10,7 +10,17 @@ import (
 	"github.com/go-pg/pg/v9"
 )
 
+// Conn represents a single database connection rather than a pool of database
+// connections. Prefer running queries from DB unless there is a specific
+// need for a continuous single database connection.
+//
+// A Conn must call Close to return the connection to the database pool
+// and may do so concurrently with a running query.
+//
+// After a call to Close, all operations on the connection fail.
 type Conn = pg.Conn
+
+// Options contains database connection options.
 type Options = pg.Options
 
 // ParseDbConfigs retrieves the database config from the environment variables and use it to initialize the database
