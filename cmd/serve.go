@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewServeCommand runs the HTTP/HTTPS web server.
+// NewServeCommand runs the GRPC/HTTP web server.
 func NewServeCommand(s *ah.ServerT) *cobra.Command {
 	return &cobra.Command{
 		Use:   "serve",

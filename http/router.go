@@ -8,13 +8,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// RouterT is an alias to gin.Engine.
 type RouterT = gin.Engine
+
+// RouterGroupT is an alias to gin.RouterGroup.
 type RouterGroupT = gin.RouterGroup
+
+// RouteInfoT is an alias to gin.RouteInfo.
 type RouteInfoT = gin.RouteInfo
+
+// RoutesT is an alias to gin.IRoutes.
 type RoutesT = gin.IRoutes
 
 func newRouter(c *support.ConfigT) *gin.Engine {
 	r := gin.New()
+	r.AppEngine = true
+	r.HandleMethodNotAllowed = true
 	r.Use(middleware.CSRF(c))
 	r.Use(middleware.RequestID())
 	r.Use(middleware.RequestLogger(c))
