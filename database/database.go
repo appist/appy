@@ -10,12 +10,15 @@ import (
 	"github.com/go-pg/pg/v9"
 )
 
+type Conn = pg.Conn
+type Options = pg.Options
+
 // ParseDbConfigs retrieves the database config from the environment variables and use it to initialize the database
 // connection handler accordingly. For example, to access a database connection handler for `primary` database, i.e.
 // appy.Db["primary"], we can have: DB_PRIMARY_ADDR=0.0.0.0:5432 which configures the database connection host/port.
-func ParseDbConfigs() map[string]*pg.Options {
+func ParseDbConfigs() map[string]*Options {
 	var err error
-	dbOptions := map[string]*pg.Options{}
+	dbOptions := map[string]*Options{}
 	dbNames := []string{}
 
 	for _, val := range os.Environ() {
@@ -150,7 +153,7 @@ func ParseDbConfigs() map[string]*pg.Options {
 			}
 		}
 
-		dbOptions[dbName] = &pg.Options{
+		dbOptions[dbName] = &Options{
 			ApplicationName:       appName,
 			Addr:                  addr,
 			User:                  user,
@@ -167,7 +170,7 @@ func ParseDbConfigs() map[string]*pg.Options {
 			RetryStatementTimeout: retryStatement,
 			MinIdleConns:          minIdleConns,
 			MaxConnAge:            maxConnAge,
-			OnConnect: func(conn *pg.Conn) error {
+			OnConnect: func(conn *Conn) error {
 				_, err := conn.Exec("SET search_path=?", defaultSchema)
 				if err != nil {
 					support.Logger.Fatal(err)
