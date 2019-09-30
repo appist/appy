@@ -1,72 +1,100 @@
 package http
 
 import (
-	"html/template"
+	"fmt"
+	"net"
 	"net/http"
+	"os"
+	"runtime"
 
-	"github.com/appist/appy/middleware"
 	"github.com/appist/appy/support"
-	at "github.com/appist/appy/template"
-
-	"github.com/gin-contrib/gzip"
-	"github.com/gin-contrib/multitemplate"
-	"github.com/gin-contrib/secure"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
-// ServerT is a high level HTTP server that provides more functionalities to serve HTTP requests.
+// ServerT is a type that contains GRPC/HTTP servers and the gin router in it.
 type ServerT struct {
-	assets       http.FileSystem
-	funcMap      template.FuncMap
-	htmlRenderer multitemplate.Renderer
-	router       *gin.Engine
-	Config       *support.ConfigT
-	HTTP         *http.Server
+	Config *support.ConfigT
+	GRPC   *grpc.Server
+	HTTP   *http.Server
+	Router *RouterT
 }
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
 }
 
-// NewServer returns a ServerT instance.
-func NewServer(config *support.ConfigT) *ServerT {
-	renderer := multitemplate.NewRenderer()
-	router := newRouter(config)
-	router.HTMLRender = renderer
-	server := &http.Server{
-		Addr:              config.HTTPHost + ":" + config.HTTPPort,
-		Handler:           router,
-		MaxHeaderBytes:    config.HTTPMaxHeaderBytes,
-		ReadTimeout:       config.HTTPReadTimeout,
-		ReadHeaderTimeout: config.HTTPReadHeaderTimeout,
-		WriteTimeout:      config.HTTPWriteTimeout,
-		IdleTimeout:       config.HTTPIdleTimeout,
+// NewServer returns the server instance which contains GRPC/HTTP servers and the gin router in it.
+func NewServer(c *support.ConfigT) *ServerT {
+	r := newRouter(c)
+	s := &http.Server{
+		Addr:              c.HTTPHost + ":" + c.HTTPPort,
+		Handler:           r,
+		MaxHeaderBytes:    c.HTTPMaxHeaderBytes,
+		ReadTimeout:       c.HTTPReadTimeout,
+		ReadHeaderTimeout: c.HTTPReadHeaderTimeout,
+		WriteTimeout:      c.HTTPWriteTimeout,
+		IdleTimeout:       c.HTTPIdleTimeout,
 	}
-	server.ErrorLog = zap.NewStdLog(support.Logger.Desugar())
+	s.ErrorLog = zap.NewStdLog(support.Logger.Desugar())
 
-	if config.HTTPSSLEnabled == true {
-		server.Addr = config.HTTPHost + ":" + config.HTTPSSLPort
+	if c.HTTPSSLEnabled == true {
+		s.Addr = c.HTTPHost + ":" + c.HTTPSSLPort
 	}
-
-	// Initialize the error templates.
-	renderer.AddFromString("error/404", at.ErrorTpl404())
-	renderer.AddFromString("error/500", at.ErrorTpl500())
 
 	return &ServerT{
-		htmlRenderer: renderer,
-		router:       router,
-		Config:       config,
-		HTTP:         server,
+		Config: c,
+		GRPC:   nil, // to be implemented
+		HTTP:   s,
+		Router: r,
 	}
 }
 
-// GetAllRoutes returns all the routes including the ones in middlewares.
-func (s *ServerT) GetAllRoutes() []gin.RouteInfo {
-	routes := s.Routes()
+// CheckSSLCerts checks if `./tmp/ssl` exists and contains the locally trusted SSL certificates.
+func (s *ServerT) CheckSSLCerts() {
+	if s.Config.HTTPSSLEnabled == true {
+		if _, err := os.Stat(s.Config.HTTPSSLCertPath + "/cert.pem"); os.IsNotExist(err) {
+			support.Logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
+		}
+
+		if _, err := os.Stat(s.Config.HTTPSSLCertPath + "/key.pem"); os.IsNotExist(err) {
+			support.Logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
+		}
+	}
+}
+
+// Hosts returns the server hosts list.
+func (s *ServerT) Hosts() []string {
+	var hosts = []string{s.Config.HTTPHost}
+
+	if s.Config.HTTPHost != "localhost" {
+		hosts = append(hosts, "localhost")
+	}
+
+	addresses, err := net.InterfaceAddrs()
+	if err != nil {
+		support.Logger.Fatal(err)
+	}
+
+	for _, address := range addresses {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			host := ipnet.IP.To4()
+			if host != nil {
+				hosts = append(hosts, host.String())
+			}
+		}
+	}
+
+	return hosts
+}
+
+// Routes returns all the routes including those in middlewares.
+func (s *ServerT) Routes() []RouteInfoT {
+	routes := s.Router.Routes()
 
 	if s.Config.HTTPHealthCheckURL != "" {
-		routes = append(routes, gin.RouteInfo{
+		routes = append(routes, RouteInfoT{
 			Method:      "GET",
 			Path:        s.Config.HTTPHealthCheckURL,
 			Handler:     "",
@@ -77,58 +105,18 @@ func (s *ServerT) GetAllRoutes() []gin.RouteInfo {
 	return routes
 }
 
-// SecureJSONPrefix sets the prefix used in RenderSecureJSON.
-func (s *ServerT) SecureJSONPrefix(prefix string) *gin.Engine {
-	return s.router.SecureJsonPrefix(prefix)
-}
+// PrintInfo prints the server info.
+func (s *ServerT) PrintInfo() {
+	support.Logger.Infof("* Version %s (%s), build: %s", support.VERSION, runtime.Version(), support.Build)
+	support.Logger.Infof("* Environment: %s", s.Config.AppyEnv)
+	support.Logger.Infof("* Environment Config: %s", support.DotenvPath)
 
-// SetupAssets sets up the static assets.
-func (s *ServerT) SetupAssets(assets http.FileSystem) {
-	s.assets = assets
-}
+	hosts := s.Hosts()
+	host := fmt.Sprintf("http://%s:%s", hosts[0], s.Config.HTTPPort)
 
-// SetFuncMap sets the view template helpers.
-func (s *ServerT) SetFuncMap(fm template.FuncMap) {
-	nfm := template.FuncMap{}
-
-	for n := range fm {
-		nfm[n] = fm[n]
+	if s.Config.HTTPSSLEnabled == true {
+		host = fmt.Sprintf("https://%s:%s", hosts[0], s.Config.HTTPSSLPort)
 	}
 
-	s.funcMap = nfm
-}
-
-func newRouter(config *support.ConfigT) *gin.Engine {
-	r := gin.New()
-	r.Use(middleware.CSRF(config))
-	r.Use(middleware.RequestID())
-	r.Use(middleware.RequestLogger(config))
-	r.Use(middleware.RealIP())
-	r.Use(middleware.SessionManager(config))
-	r.Use(middleware.HealthCheck(config.HTTPHealthCheckURL))
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	r.Use(secure.New(newSecureConfig(config)))
-	r.Use(middleware.Recovery())
-
-	return r
-}
-
-func newSecureConfig(config *support.ConfigT) secure.Config {
-	return secure.Config{
-		IsDevelopment:           false,
-		AllowedHosts:            config.HTTPAllowedHosts,
-		SSLRedirect:             config.HTTPSSLRedirect,
-		SSLTemporaryRedirect:    config.HTTPSSLTemporaryRedirect,
-		SSLHost:                 config.HTTPSSLHost,
-		STSSeconds:              config.HTTPSTSSeconds,
-		STSIncludeSubdomains:    config.HTTPSTSIncludeSubdomains,
-		FrameDeny:               config.HTTPFrameDeny,
-		CustomFrameOptionsValue: config.HTTPCustomFrameOptionsValue,
-		ContentTypeNosniff:      config.HTTPContentTypeNosniff,
-		BrowserXssFilter:        config.HTTPBrowserXSSFilter,
-		ContentSecurityPolicy:   config.HTTPContentSecurityPolicy,
-		ReferrerPolicy:          config.HTTPReferrerPolicy,
-		IENoOpen:                config.HTTPIENoOpen,
-		SSLProxyHeaders:         config.HTTPSSLProxyHeaders,
-	}
+	support.Logger.Infof("* Listening on %s", host)
 }

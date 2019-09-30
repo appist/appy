@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	ah "github.com/appist/appy/http"
 	"os"
 	"os/exec"
-	"path/filepath"
+
+	ah "github.com/appist/appy/http"
 
 	"github.com/spf13/cobra"
 )
@@ -17,12 +17,10 @@ func NewSSLCleanCommand(s *ah.ServerT) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			_, err := exec.LookPath("mkcert")
 			if err != nil {
-				logger.Fatal(err)
+				panic(err)
 			}
 
-			dir := filepath.Dir(s.Config.HTTPSSLCertPath + "/ca.crt")
-			_ = os.RemoveAll(dir)
-
+			os.RemoveAll(s.Config.HTTPSSLCertPath)
 			cleanCmd := exec.Command("mkcert", "-uninstall")
 			cleanCmd.Stdout = os.Stdout
 			cleanCmd.Stderr = os.Stderr

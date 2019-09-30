@@ -12,21 +12,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewHTTPServeCommand runs the HTTP/HTTPS web server.
-func NewHTTPServeCommand(s *ah.ServerT) *cobra.Command {
+// NewServeCommand runs the HTTP/HTTPS web server.
+func NewServeCommand(s *ah.ServerT) *cobra.Command {
 	return &cobra.Command{
-		Use:   "http:serve",
-		Short: "Run the HTTP/HTTPS web server.",
+		Use:   "serve",
+		Short: "Run the GRPC/HTTP web server.",
 		Run: func(cmd *cobra.Command, args []string) {
-			checkSSLCerts(s)
-			s.SetupCSR()
-			serveHTTPServer(s)
+			s.CheckSSLCerts()
+			// s.SetupCSR()
+			serve(s)
 		},
 	}
 }
 
-func serveHTTPServer(s *ah.ServerT) {
-	logServerInfo(s)
+func serve(s *ah.ServerT) {
+	s.PrintInfo()
 
 	httpDone := make(chan bool, 1)
 	httpQuit := make(chan os.Signal, 1)

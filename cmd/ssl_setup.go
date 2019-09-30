@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	ah "github.com/appist/appy/http"
 	"os"
 	"os/exec"
-	"path/filepath"
+
+	ah "github.com/appist/appy/http"
 
 	"github.com/spf13/cobra"
 )
@@ -21,11 +21,9 @@ func NewSSLSetupCommand(s *ah.ServerT) *cobra.Command {
 				logger.Fatal(err)
 			}
 
-			dir := filepath.Dir(s.Config.HTTPSSLCertPath + "/ca.crt")
-			_ = os.MkdirAll(dir, os.ModePerm)
-
+			os.MkdirAll(s.Config.HTTPSSLCertPath, os.ModePerm)
 			setupArgs := []string{"-install", "-cert-file", s.Config.HTTPSSLCertPath + "/cert.pem", "-key-file", s.Config.HTTPSSLCertPath + "/key.pem"}
-			setupArgs = append(setupArgs, getIPHosts(s)...)
+			setupArgs = append(setupArgs, s.Hosts()...)
 			setupCmd := exec.Command("mkcert", setupArgs...)
 			setupCmd.Stdout = os.Stdout
 			setupCmd.Stderr = os.Stderr

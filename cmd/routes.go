@@ -9,15 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewHTTPRoutesCommand lists all the HTTP routes.
-func NewHTTPRoutesCommand(s *ah.ServerT) *cobra.Command {
+// NewRoutesCommand lists all the routes.
+func NewRoutesCommand(s *ah.ServerT) *cobra.Command {
 	return &cobra.Command{
-		Use:   "http:routes",
-		Short: "Lists all the HTTP routes.",
+		Use:   "routes",
+		Short: "Lists all the routes.",
 		Run: func(cmd *cobra.Command, args []string) {
 			var routes [][]string
 
-			for _, route := range s.GetAllRoutes() {
+			for _, route := range s.Routes() {
 				routes = append(routes, []string{route.Method, route.Path, route.Handler})
 			}
 
