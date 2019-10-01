@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"crypto/tls"
+	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -60,13 +61,31 @@ func (s *CSRFSuiteT) TestTokenAndFieldNameContextKey() {
 	s.Equal("Cookie", ctx.Writer.Header().Get("Vary"))
 }
 
-func (s *CSRFSuiteT) TestRender403IfUnableToGenerateToken() {
+func (s *CSRFSuiteT) TestRender403IfGenerateTokenError() {
+	oldGRB := generateRandomBytes
+	generateRandomBytes = func(n int) ([]byte, error) { return nil, errors.New("no token") }
 	ctx, _ := test.CreateContext(s.Recorder)
 	ctx.Request = &http.Request{
 		Header: map[string][]string{},
 	}
 	csrfHandler(ctx, s.Config)
 	s.Equal(403, ctx.Writer.Status())
+	s.Equal(errors.New("no token"), ctx.Errors.Last().Err)
+	generateRandomBytes = oldGRB
+}
+
+func (s *CSRFSuiteT) TestRender403IfNoTokenGenerated() {
+	oldGRB := generateRandomBytes
+	generateRandomBytes = func(n int) ([]byte, error) { return nil, nil }
+	ctx, _ := test.CreateContext(s.Recorder)
+	ctx.Request = &http.Request{
+		Header: map[string][]string{},
+		Method: "POST",
+	}
+	csrfHandler(ctx, s.Config)
+	s.Equal(403, ctx.Writer.Status())
+	s.Equal(errCsrfNoToken, ctx.Errors.Last().Err)
+	generateRandomBytes = oldGRB
 }
 
 func (s *CSRFSuiteT) TestRender403IfSecretKeyMissing() {
@@ -129,6 +148,21 @@ func (s *CSRFSuiteT) TestRender403IfTokenIsInvalid() {
 	}
 	ctx.Request.Header.Set(s.Config.HTTPCSRFRequestHeader, "test")
 	ctx.Request.AddCookie(&http.Cookie{Name: s.Config.HTTPCSRFCookieName, Value: string(realToken)})
+	csrfHandler(ctx, s.Config)
+	s.Equal(403, ctx.Writer.Status())
+	s.Equal(errCsrfBadToken, ctx.Errors.Last().Err)
+}
+
+func (s *CSRFSuiteT) TestTokenIsNotDecodable() {
+	realToken, _ := generateRandomBytes(csrfTokenLength)
+	encRealToken, _ := csrfSecureCookie.Encode(s.Config.HTTPCSRFCookieName, realToken)
+	ctx, _ := test.CreateContext(s.Recorder)
+	ctx.Request = &http.Request{
+		Header: map[string][]string{},
+		Method: "POST",
+	}
+	ctx.Request.AddCookie(&http.Cookie{Name: s.Config.HTTPCSRFCookieName, Value: encRealToken})
+	ctx.Request.Header.Set(s.Config.HTTPCSRFRequestHeader, "XXXXXaGVsbG8=")
 	csrfHandler(ctx, s.Config)
 	s.Equal(403, ctx.Writer.Status())
 	s.Equal(errCsrfBadToken, ctx.Errors.Last().Err)

@@ -28,6 +28,15 @@ var (
 	errCsrfBadReferer   = errors.New("the request referer is invalid")
 	errCsrfNoToken      = errors.New("the CSRF token is missing")
 	errCsrfBadToken     = errors.New("the CSRF token is invalid")
+	generateRandomBytes = func(n int) ([]byte, error) {
+		b := make([]byte, n)
+		_, err := rand.Read(b)
+		if err != nil {
+			return nil, err
+		}
+
+		return b, nil
+	}
 )
 
 // CSRF is a middleware that provides Cross-Site Request Forgery protection.
@@ -253,16 +262,6 @@ func xorToken(a, b []byte) []byte {
 	}
 
 	return res
-}
-
-func generateRandomBytes(n int) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
 }
 
 func saveCSRFTokenIntoCookie(token []byte, c *gin.Context, config *support.ConfigT) error {
