@@ -100,8 +100,6 @@ func csrfHandler(c *gin.Context, config *support.ConfigT) {
 		authenticityToken := getCSRFUnmaskedToken(getCSRFTokenFromRequest(c, config))
 		if !compareTokens(authenticityToken, realToken) {
 			support.Logger.Error(errCsrfBadToken)
-			support.Logger.Info(authenticityToken)
-			support.Logger.Info(realToken)
 			c.AbortWithError(http.StatusForbidden, errCsrfBadToken)
 			return
 		}

@@ -10,12 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ContextT is the most important part of gin. It allows us to pass variables between middleware,
-// manage the flow, validate the JSON of a request and render a JSON response for example.
-type ContextT = gin.Context
-
 // CommandT is a type alias to cobra.Command.
 type CommandT = cobra.Command
+
+// ContextT is the most important part of gin. It allows us to pass variables between middleware,
+// manage the flow, validate the JSON of a request and render a JSON response for example.
+type ContextT = ah.ContextT
 
 // HandlerFuncT is a type alias to gin.HandlerFunc.
 type HandlerFuncT = gin.HandlerFunc

@@ -8,16 +8,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RouterT is an alias to gin.Engine.
+// ContextT is a type alias to gin.Context.
+type ContextT = gin.Context
+
+// RouterT is a type alias to gin.Engine.
 type RouterT = gin.Engine
 
-// RouterGroupT is an alias to gin.RouterGroup.
+// RouterGroupT is a type alias to gin.RouterGroup.
 type RouterGroupT = gin.RouterGroup
 
-// RouteInfoT is an alias to gin.RouteInfo.
+// RouteInfoT is a type alias to gin.RouteInfo.
 type RouteInfoT = gin.RouteInfo
 
-// RoutesT is an alias to gin.IRoutes.
+// RoutesT is a type alias to gin.IRoutes.
 type RoutesT = gin.IRoutes
 
 func newRouter(c *support.ConfigT) *gin.Engine {
