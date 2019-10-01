@@ -18,7 +18,7 @@ An opinionated productive web framework that helps scaling business easier.
 - Server-side rendered **View** templates with [html/template](https://golang.org/pkg/html/template/).
 - Client-side rendered **Progressive Web App** with [Webpack](https://webpack.js.org/) + [Typescript](https://www.typescriptlang.org/) + [VueJS](https://vuejs.org/).
 - Automatically prerender client-side rendered pages for SEO using [chromedp](https://github.com/chromedp/chromedp).
-- Automatically remove `Set-Cookie` and `X-CSRF-Token` response headers when the `X-API-Only: 1` request header is sent.
+- Automatically remove `Set-Cookie` response headers when the `X-API-Only: 1` request header is sent.
 - Single binary support with **View** + **Progressive Web App** embedded.
 
 ## Credits
