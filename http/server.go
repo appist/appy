@@ -8,9 +8,13 @@ import (
 	"runtime"
 
 	"github.com/appist/appy/support"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
+
+// HandlerFuncT is a type alias to gin.HandlerFunc.
+type HandlerFuncT = gin.HandlerFunc
 
 // ServerT is a type that contains GRPC/HTTP servers and the gin router in it.
 type ServerT struct {

@@ -6,7 +6,6 @@ import (
 	"github.com/appist/appy/cmd"
 	ah "github.com/appist/appy/http"
 	"github.com/appist/appy/support"
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +17,7 @@ type CommandT = cobra.Command
 type ContextT = ah.ContextT
 
 // HandlerFuncT is a type alias to gin.HandlerFunc.
-type HandlerFuncT = gin.HandlerFunc
+type HandlerFuncT = ah.HandlerFuncT
 
 // RouterT is an alias to gin.Engine.
 type RouterT = ah.RouterT

@@ -60,6 +60,12 @@ func recoveryErrorHandler(c *gin.Context, err interface{}) {
 }
 
 func renderErrors(c *gin.Context) {
+	defer func(c *gin.Context) {
+		if r := recover(); r != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+	}(c)
+
 	session := DefaultSession(c)
 	sessionVars := ""
 	if session != nil {
@@ -91,12 +97,6 @@ func renderErrors(c *gin.Context) {
 	if qsParams == "" {
 		qsParams = "None"
 	}
-
-	defer func(c *gin.Context) {
-		if r := recover(); r != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-		}
-	}(c)
 
 	c.HTML(http.StatusInternalServerError, "error/500", gin.H{
 		"errors":      tplErrors,
