@@ -9,6 +9,6 @@ import (
 // WelcomeIndex is the welcome index page.
 func WelcomeIndex() appy.HandlerFuncT {
 	return func(c *appy.ContextT) {
-		c.JSON(http.StatusOK, appy.H{"a": 1})
+		c.JSON(http.StatusOK, appy.H{"a": appy.T(c, "login")})
 	}
 }

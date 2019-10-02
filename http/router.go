@@ -27,6 +27,7 @@ func newRouter(c *support.ConfigT) *gin.Engine {
 	r := gin.New()
 	r.AppEngine = true
 	r.HandleMethodNotAllowed = true
+
 	r.Use(middleware.CSRF(c))
 	r.Use(middleware.RequestID())
 	r.Use(middleware.RequestLogger(c))

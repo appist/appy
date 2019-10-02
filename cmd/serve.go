@@ -19,7 +19,6 @@ func NewServeCommand(s *ah.ServerT) *cobra.Command {
 		Short: "Run the GRPC/HTTP web server.",
 		Run: func(cmd *cobra.Command, args []string) {
 			s.CheckSSLCerts()
-			// s.SetupCSR()
 			serve(s)
 		},
 	}

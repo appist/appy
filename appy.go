@@ -5,7 +5,9 @@ import (
 
 	"github.com/appist/appy/cmd"
 	ah "github.com/appist/appy/http"
+	"github.com/appist/appy/middleware"
 	"github.com/appist/appy/support"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -128,6 +130,8 @@ var Use func(handlers ...HandlerFuncT) RoutesT
 // Init initializes the server singleton.
 func Init(assets http.FileSystem) {
 	Server = ah.NewServer(Config)
+	Server.InitSSRLocale()
+	Server.InitSSRView()
 	DELETE = Server.Router.DELETE
 	GET = Server.Router.GET
 	HEAD = Server.Router.HEAD
@@ -167,5 +171,24 @@ func Routes() []RouteInfoT {
 
 // Run executes the given command.
 func Run() {
+	// Shows a default welcome page with appy logo/slogan if `GET /` isn't defined.
+	Server.AddDefaultWelcomePage()
+	// Must be located right before the server runs due to CSR utilizes `gin.NoRoute` to achieve pretty URL navigation
+	// with HTML5 history API.
+	Server.InitCSR()
 	cmd.Run()
+}
+
+// T translates a message based on the given key.
+func T(ctx *ContextT, key string) string {
+	localizer := middleware.I18nLocalizer(ctx)
+	locale := middleware.I18nLocale(ctx)
+	msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: key})
+
+	if err != nil {
+		Logger.Errorf("Missing translation for key '%s' in '%s' locale.", key, locale)
+		return ""
+	}
+
+	return msg
 }

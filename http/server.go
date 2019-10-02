@@ -7,7 +7,9 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/appist/appy/html"
 	"github.com/appist/appy/support"
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -18,15 +20,25 @@ type HandlerFuncT = gin.HandlerFunc
 
 // ServerT is a type that contains GRPC/HTTP servers and the gin router in it.
 type ServerT struct {
-	Config *support.ConfigT
-	GRPC   *grpc.Server
-	HTTP   *http.Server
-	Router *RouterT
+	Assets       http.FileSystem
+	Config       *support.ConfigT
+	GRPC         *grpc.Server
+	HTTP         *http.Server
+	HTMLRenderer *multitemplate.Renderer
+	Router       *RouterT
 }
 
 // NewServer returns the server instance which contains GRPC/HTTP servers and the gin router in it.
 func NewServer(c *support.ConfigT) *ServerT {
+	renderer := multitemplate.NewRenderer()
+	// Initialize the error templates.
+	renderer.AddFromString("error/404", html.ErrorTpl404())
+	renderer.AddFromString("error/500", html.ErrorTpl500())
+	renderer.AddFromString("default/welcome", html.WelcomeTpl())
+
 	r := newRouter(c)
+	r.HTMLRender = renderer
+
 	s := &http.Server{
 		Addr:              c.HTTPHost + ":" + c.HTTPPort,
 		Handler:           r,
@@ -43,10 +55,30 @@ func NewServer(c *support.ConfigT) *ServerT {
 	}
 
 	return &ServerT{
-		Config: c,
-		GRPC:   nil, // to be implemented
-		HTTP:   s,
-		Router: r,
+		Config:       c,
+		GRPC:         nil, // to be implemented
+		HTTP:         s,
+		HTMLRenderer: &renderer,
+		Router:       r,
+	}
+}
+
+// AddDefaultWelcomePage adds the default welcome page for `/` route.
+func (s *ServerT) AddDefaultWelcomePage() {
+	routes := s.Routes()
+	rootDefined := false
+
+	for _, route := range routes {
+		if route.Path == "/" {
+			rootDefined = true
+			break
+		}
+	}
+
+	if rootDefined == false {
+		s.Router.GET("/", func(c *ContextT) {
+			c.HTML(200, "default/welcome", nil)
+		})
 	}
 }
 

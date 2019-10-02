@@ -32,7 +32,7 @@ func ParseDbConfigs() map[string]*Options {
 	dbNames := []string{}
 
 	for _, val := range os.Environ() {
-		re := regexp.MustCompile("DB_(.*)_ADDR")
+		re := regexp.MustCompile("DB_ADDR_(.*)")
 		match := re.FindStringSubmatch(val)
 
 		if len(match) > 1 {
@@ -42,37 +42,37 @@ func ParseDbConfigs() map[string]*Options {
 
 	for _, dbName := range dbNames {
 		defaultSchema := "public"
-		if val, ok := os.LookupEnv("DB_" + dbName + "_DEFAULT_SCHEMA"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_DEFAULT_SCHEMA_" + dbName); ok && val != "" {
 			defaultSchema = val
 		}
 
 		addr := "0.0.0.0:5432"
-		if val, ok := os.LookupEnv("DB_" + dbName + "_ADDR"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_ADDR_" + dbName); ok && val != "" {
 			addr = val
 		}
 
 		user := "postgres"
-		if val, ok := os.LookupEnv("DB_" + dbName + "_USER"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_USER_" + dbName); ok && val != "" {
 			user = val
 		}
 
 		password := "postgres"
-		if val, ok := os.LookupEnv("DB_" + dbName + "_PASSWORD"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_PASSWORD_" + dbName); ok && val != "" {
 			password = val
 		}
 
 		database := "appy"
-		if val, ok := os.LookupEnv("DB_" + dbName + "_DATABASE"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_DATABASE_" + dbName); ok && val != "" {
 			database = val
 		}
 
 		appName := "appy"
-		if val, ok := os.LookupEnv("DB_" + dbName + "_APP_NAME"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_APP_NAME_" + dbName); ok && val != "" {
 			appName = val
 		}
 
 		maxRetries := 0
-		if val, ok := os.LookupEnv("DB_" + dbName + "_MAX_RETRIES"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_MAX_RETRIES_" + dbName); ok && val != "" {
 			maxRetries, err = strconv.Atoi(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -80,7 +80,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		retryStatement := false
-		if val, ok := os.LookupEnv("DB_" + dbName + "_RETRY_STATEMENT"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_RETRY_STATEMENT_" + dbName); ok && val != "" {
 			retryStatement, err = strconv.ParseBool(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -88,7 +88,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		poolSize := 10
-		if val, ok := os.LookupEnv("DB_" + dbName + "_POOL_SIZE"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_POOL_SIZE_" + dbName); ok && val != "" {
 			poolSize, err = strconv.Atoi(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -96,7 +96,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		poolTimeout := 31 * time.Second
-		if val, ok := os.LookupEnv("DB_" + dbName + "_POOL_TIMEOUT"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_POOL_TIMEOUT_" + dbName); ok && val != "" {
 			poolTimeout, err = time.ParseDuration(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -104,7 +104,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		minIdleConns := 0
-		if val, ok := os.LookupEnv("DB_" + dbName + "_MIN_IDLE_CONNS"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_MIN_IDLE_CONNS_" + dbName); ok && val != "" {
 			minIdleConns, err = strconv.Atoi(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -112,7 +112,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		maxConnAge := 0 * time.Second
-		if val, ok := os.LookupEnv("DB_" + dbName + "_MAX_CONN_AGE"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_MAX_CONN_AGE_" + dbName); ok && val != "" {
 			maxConnAge, err = time.ParseDuration(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -120,7 +120,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		dialTimeout := 30 * time.Second
-		if val, ok := os.LookupEnv("DB_" + dbName + "_DIAL_TIMEOUT"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_DIAL_TIMEOUT_" + dbName); ok && val != "" {
 			dialTimeout, err = time.ParseDuration(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -128,7 +128,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		idleCheckFrequency := 1 * time.Minute
-		if val, ok := os.LookupEnv("DB_" + dbName + "_IDLE_CHECK_FREQUENCY"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_IDLE_CHECK_FREQUENCY_" + dbName); ok && val != "" {
 			idleCheckFrequency, err = time.ParseDuration(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -136,7 +136,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		idleTimeout := 5 * time.Minute
-		if val, ok := os.LookupEnv("DB_" + dbName + "_IDLE_TIMEOUT"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_IDLE_TIMEOUT_" + dbName); ok && val != "" {
 			idleTimeout, err = time.ParseDuration(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -144,7 +144,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		readTimeout := 30 * time.Second
-		if val, ok := os.LookupEnv("DB_" + dbName + "_READ_TIMEOUT"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_READ_TIMEOUT_" + dbName); ok && val != "" {
 			readTimeout, err = time.ParseDuration(val)
 			if err != nil {
 				support.Logger.Fatal(err)
@@ -156,7 +156,7 @@ func ParseDbConfigs() map[string]*Options {
 		}
 
 		writeTimeout := 30 * time.Second
-		if val, ok := os.LookupEnv("DB_" + dbName + "_WRITE_TIMEOUT"); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_WRITE_TIMEOUT_" + dbName); ok && val != "" {
 			writeTimeout, err = time.ParseDuration(val)
 			if err != nil {
 				support.Logger.Fatal(err)
