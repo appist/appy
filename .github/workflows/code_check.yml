@@ -1,0 +1,22 @@
+name: Code Check
+
+on: push
+
+jobs:
+  code-check:
+    strategy:
+      matrix:
+        go: [1.11.x, 1.12.x, 1.13.x]
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/setup-go@master
+        with:
+          go-version: ${{ matrix.go }}
+      - uses: actions/checkout@master
+      - run: go mod download
+      - run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go get -u golang.org/x/lint/golint
+          golint -set_exit_status ./... || exit 1
+      - run: go vet ./...

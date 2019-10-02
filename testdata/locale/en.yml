@@ -1,0 +1,6 @@
+password: Password
+
+messages:
+  Zero: "{{.Name}} has no message."
+  One: "{{.Name}} has {{.Count}} message."
+  Other: "{{.Name}} has {{.Count}} messages."
