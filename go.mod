@@ -3,7 +3,7 @@ module github.com/appist/appy
 go 1.13.1
 
 require (
-	github.com/99designs/gqlgen v0.9.3
+	github.com/99designs/gqlgen v0.10.1
 	github.com/BurntSushi/toml v0.3.1
 	github.com/agnivade/levenshtein v1.0.2 // indirect
 	github.com/bndr/gotabulate v1.1.2
