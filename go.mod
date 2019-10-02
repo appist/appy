@@ -23,7 +23,7 @@ require (
 	github.com/gorilla/sessions v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.2
-	github.com/otiai10/copy v1.0.1
+	github.com/otiai10/copy v1.0.2
 	github.com/otiai10/curr v0.0.0-20190513014714-f5a3d24e5776 // indirect
 	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0
