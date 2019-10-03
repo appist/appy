@@ -10,9 +10,9 @@ import (
 func WelcomeIndex() appy.HandlerFuncT {
 	return func(c *appy.ContextT) {
 		c.HTML(http.StatusOK, "welcome/index.html", appy.H{
-			"message": appy.T(c, "message", map[string]interface{}{
+			"message": appy.T(c, "message", appy.H{
 				"Name":  "John Doe",
-				"Count": 2,
+				"Count": 0,
 			}),
 		})
 	}

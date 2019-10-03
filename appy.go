@@ -7,7 +7,6 @@ import (
 	ah "github.com/appist/appy/http"
 	"github.com/appist/appy/middleware"
 	"github.com/appist/appy/support"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/spf13/cobra"
 )
 
@@ -127,6 +126,10 @@ var StaticFile func(relativePath, filePath string) RoutesT
 // For example, this is the right place for a logger or error management middleware.
 var Use func(handlers ...HandlerFuncT) RoutesT
 
+// T translates a message based on the given key. Furthermore, we can pass in template data with `Count` in it to
+// support singular/plural cases.
+var T = middleware.T
+
 // Init initializes the server singleton.
 func Init(assets http.FileSystem) {
 	Server = ah.NewServer(Config)
@@ -177,47 +180,4 @@ func Run() {
 	// with HTML5 history API.
 	Server.InitCSR()
 	cmd.Run()
-}
-
-// T translates a message based on the given key. Furthermore, we can pass in template data with `Count` in it to
-// support singular/plural cases.
-func T(ctx *ContextT, key string, args ...map[string]interface{}) string {
-	localizer := middleware.I18nLocalizer(ctx)
-
-	if len(args) < 1 {
-		msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: key})
-
-		if err != nil {
-			Logger.Error(err)
-			return ""
-		}
-
-		return msg
-	}
-
-	count := -1
-	if _, ok := args[0]["Count"]; ok {
-		count = args[0]["Count"].(int)
-	}
-
-	countKey := key
-	if count != -1 {
-		switch count {
-		case 0:
-			countKey = key + ".Zero"
-		case 1:
-			countKey = key + ".One"
-		default:
-			countKey = key + ".Other"
-		}
-	}
-
-	msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: countKey, TemplateData: args[0]})
-
-	if err != nil {
-		Logger.Error(err)
-		return ""
-	}
-
-	return msg
 }
