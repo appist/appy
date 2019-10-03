@@ -33,8 +33,8 @@ func TestCopy(t *testing.T) {
 	assert.Equal("John Doe", employees[0].Name)
 
 	users := []User{
-		User{Email: "john_doe1@gmail.com", Name: "John Doe 1"},
-		User{Email: "john_doe2@gmail.com", Name: "John Doe 2"},
+		{Email: "john_doe1@gmail.com", Name: "John Doe 1"},
+		{Email: "john_doe2@gmail.com", Name: "John Doe 2"},
 	}
 	employees = []Employee{}
 	Copy(&employees, &users)

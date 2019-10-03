@@ -143,7 +143,7 @@ func (s *ServerT) InitSSRView() error {
 			continue
 		}
 
-		fileInfos := []os.FileInfo{}
+		var fileInfos []os.FileInfo
 		targetDir := viewDir + "/" + fi.Name()
 		if support.Build == "debug" {
 			if fileInfos, err = ioutil.ReadDir(targetDir); err != nil {
@@ -196,6 +196,9 @@ func (s *ServerT) InitSSRLocale() error {
 		}
 
 		localeFiles, err = file.Readdir(-1)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, localeFile := range localeFiles {
