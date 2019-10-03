@@ -14,15 +14,25 @@ import (
 )
 
 var (
-	ssrRoot          = "app"
-	ssrView          = "views"
-	ssrLocale        = "locales"
+	// SSRRootDebug is the root folder for debug build.
+	SSRRootDebug = "app"
+
+	// SSRRootRelease is the root folder for release build.
+	SSRRootRelease = ".ssr"
+
+	// SSRView is the views folder.
+	SSRView = "views"
+
+	// SSRLocale is the locales folder.
+	SSRLocale = "locales"
+
+	ssrRoot          = SSRRootDebug
 	reservedViewDirs = []string{"layouts", "shared"}
 )
 
 func init() {
 	if support.Build == "release" {
-		ssrRoot = ".ssr"
+		ssrRoot = SSRRootRelease
 	}
 }
 
@@ -96,7 +106,7 @@ func (s *ServerT) InitSSRView() error {
 		err error
 	)
 
-	viewDir := ssrRoot + "/" + ssrView
+	viewDir := ssrRoot + "/" + SSRView
 
 	// We will always read from local file system when it's debug build. Otherwise, read from the bind assets.
 	if support.Build == "debug" {
@@ -175,7 +185,7 @@ func (s *ServerT) InitSSRLocale() error {
 	i18nBundle.RegisterUnmarshalFunc("yml", yaml.Unmarshal)
 	i18nBundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
 
-	localeDir := ssrRoot + "/" + ssrLocale
+	localeDir := ssrRoot + "/" + SSRLocale
 
 	// Try getting all the locale files from `app/locales`, but fallback to `assets` http.FileSystem.
 	localeFiles, err := ioutil.ReadDir(localeDir)

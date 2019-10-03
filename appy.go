@@ -133,8 +133,10 @@ var T = middleware.T
 // Init initializes the server singleton.
 func Init(assets http.FileSystem) {
 	Server = ah.NewServer(Config)
+	Server.Assets = assets
 	Server.InitSSRLocale()
 	Server.InitSSRView()
+
 	DELETE = Server.Router.DELETE
 	GET = Server.Router.GET
 	HEAD = Server.Router.HEAD
@@ -160,7 +162,7 @@ func Init(assets http.FileSystem) {
 	cmd.AddCommand(cmd.NewSecretCommand())
 
 	if support.Build != "release" {
-		// cmd.AddCommand(cmd.NewBuildCommand(Server))
+		cmd.AddCommand(cmd.NewBuildCommand(Server))
 		// cmd.AddCommand(cmd.NewDevCommand(Server))
 		cmd.AddCommand(cmd.NewSSLCleanCommand(Server))
 		cmd.AddCommand(cmd.NewSSLSetupCommand(Server))

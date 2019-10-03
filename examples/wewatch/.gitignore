@@ -1,0 +1,16 @@
+# MacOS System
+.DS_Store
+
+# Coverage
+coverage
+*.out
+
+# Dependencies
+node_modules
+vendor
+
+# Misc.
+.cache-loader
+assets
+tmp
+wewatch
