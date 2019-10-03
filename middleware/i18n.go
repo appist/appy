@@ -23,9 +23,13 @@ var (
 func I18n(b *i18n.Bundle) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		localizer := i18n.NewLocalizer(b, c.Request.Header.Get(acceptLanguage))
-		locale := strings.Split(c.Request.Header.Get(acceptLanguage), ",")[0]
 		c.Set(I18nCtxKey, localizer)
-		c.Set(I18nLocaleCtxKey, locale)
+
+		splits := strings.Split(c.Request.Header.Get(acceptLanguage), ",")
+		if len(splits) > 0 {
+			c.Set(I18nLocaleCtxKey, splits[0])
+		}
+
 		c.Next()
 	}
 }
@@ -43,13 +47,13 @@ func I18nLocalizer(c *gin.Context) *i18n.Localizer {
 
 // I18nLocale returns the I18n locale.
 func I18nLocale(c *gin.Context) string {
-	l, exists := c.Get(I18nLocaleCtxKey)
+	locale, exists := c.Get(I18nLocaleCtxKey)
 
-	if !exists {
+	if locale == "" || !exists {
 		return "en"
 	}
 
-	return l.(string)
+	return locale.(string)
 }
 
 // T translates a message based on the given key. Furthermore, we can pass in template data with `Count` in it to

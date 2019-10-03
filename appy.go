@@ -181,5 +181,6 @@ func Run() {
 	// Must be located right before the server runs due to CSR utilizes `gin.NoRoute` to achieve pretty URL navigation
 	// with HTML5 history API.
 	Server.InitCSR()
+
 	cmd.Run()
 }

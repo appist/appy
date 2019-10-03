@@ -60,12 +60,6 @@ func recoveryErrorHandler(c *gin.Context, err interface{}) {
 }
 
 func renderErrors(c *gin.Context) {
-	defer func(c *gin.Context) {
-		if r := recover(); r != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-		}
-	}(c)
-
 	session := DefaultSession(c)
 	sessionVars := ""
 	if session != nil {

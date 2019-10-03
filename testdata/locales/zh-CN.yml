@@ -1,6 +1,6 @@
 password: 密码
 
-messages:
+message:
   Zero: "{{.Name}}没有讯息。"
   One: "{{.Name}}有{{.Count}}则讯息。"
   Other: "{{.Name}}有{{.Count}}则讯息。"
