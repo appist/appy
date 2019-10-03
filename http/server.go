@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"text/template"
 
 	"github.com/appist/appy/html"
 	"github.com/appist/appy/support"
@@ -24,8 +25,9 @@ type ServerT struct {
 	Config       *support.ConfigT
 	GRPC         *grpc.Server
 	HTTP         *http.Server
-	HTMLRenderer *multitemplate.Renderer
+	HTMLRenderer multitemplate.Renderer
 	Router       *RouterT
+	ViewHelper   template.FuncMap
 }
 
 // NewServer returns the server instance which contains GRPC/HTTP servers and the gin router in it.
@@ -58,7 +60,7 @@ func NewServer(c *support.ConfigT) *ServerT {
 		Config:       c,
 		GRPC:         nil, // to be implemented
 		HTTP:         s,
-		HTMLRenderer: &renderer,
+		HTMLRenderer: renderer,
 		Router:       r,
 	}
 }

@@ -179,14 +179,43 @@ func Run() {
 	cmd.Run()
 }
 
-// T translates a message based on the given key.
-func T(ctx *ContextT, key string) string {
+// T translates a message based on the given key. Furthermore, we can pass in template data with `Count` in it to
+// support singular/plural cases.
+func T(ctx *ContextT, key string, args ...map[string]interface{}) string {
 	localizer := middleware.I18nLocalizer(ctx)
-	locale := middleware.I18nLocale(ctx)
-	msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: key})
+
+	if len(args) < 1 {
+		msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: key})
+
+		if err != nil {
+			Logger.Error(err)
+			return ""
+		}
+
+		return msg
+	}
+
+	count := -1
+	if _, ok := args[0]["Count"]; ok {
+		count = args[0]["Count"].(int)
+	}
+
+	countKey := key
+	if count != -1 {
+		switch count {
+		case 0:
+			countKey = key + ".Zero"
+		case 1:
+			countKey = key + ".One"
+		default:
+			countKey = key + ".Other"
+		}
+	}
+
+	msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: countKey, TemplateData: args[0]})
 
 	if err != nil {
-		Logger.Errorf("Missing translation for key '%s' in '%s' locale.", key, locale)
+		Logger.Error(err)
 		return ""
 	}
 
