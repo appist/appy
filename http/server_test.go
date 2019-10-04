@@ -1,8 +1,10 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 
 	"github.com/appist/appy/support"
@@ -81,7 +83,7 @@ func (s *ServerSuiteT) TestPrintInfo() {
 		s.Server.PrintInfo()
 	})
 
-	s.Contains(output, "* Version 0.1.0 (go1.13.1), build: debug")
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug", runtime.Version()))
 	s.Contains(output, "* Environment: development")
 	s.Contains(output, "* Environment Config: None")
 	s.Contains(output, "* Listening on http://0.0.0.0:3000")
@@ -91,7 +93,7 @@ func (s *ServerSuiteT) TestPrintInfo() {
 		s.Server.PrintInfo()
 	})
 
-	s.Contains(output, "* Version 0.1.0 (go1.13.1), build: debug")
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug", runtime.Version()))
 	s.Contains(output, "* Environment: development")
 	s.Contains(output, "* Environment Config: None")
 	s.Contains(output, "* Listening on https://0.0.0.0:3443")
