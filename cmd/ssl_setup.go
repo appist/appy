@@ -23,7 +23,8 @@ func NewSSLSetupCommand(s *ah.ServerT) *cobra.Command {
 
 			os.MkdirAll(s.Config.HTTPSSLCertPath, os.ModePerm)
 			setupArgs := []string{"-install", "-cert-file", s.Config.HTTPSSLCertPath + "/cert.pem", "-key-file", s.Config.HTTPSSLCertPath + "/key.pem"}
-			setupArgs = append(setupArgs, s.Hosts()...)
+			hosts, _ := s.Hosts()
+			setupArgs = append(setupArgs, hosts...)
 			setupCmd := exec.Command("mkcert", setupArgs...)
 			setupCmd.Stdout = os.Stdout
 			setupCmd.Stderr = os.Stderr

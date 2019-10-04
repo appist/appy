@@ -16,6 +16,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+// H is a type alias to gin.H.
+type H = gin.H
+
 // HandlerFuncT is a type alias to gin.HandlerFunc.
 type HandlerFuncT = gin.HandlerFunc
 
@@ -84,21 +87,20 @@ func (s *ServerT) AddDefaultWelcomePage() {
 	}
 }
 
-// CheckSSLCerts checks if `./tmp/ssl` exists and contains the locally trusted SSL certificates.
-func (s *ServerT) CheckSSLCerts() {
-	if s.Config.HTTPSSLEnabled == true {
-		if _, err := os.Stat(s.Config.HTTPSSLCertPath + "/cert.pem"); os.IsNotExist(err) {
-			support.Logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
-		}
+// IsSSLCertsExist checks if `./tmp/ssl` exists and contains the locally trusted SSL certificates.
+func (s *ServerT) IsSSLCertsExist() bool {
+	_, certErr := os.Stat(s.Config.HTTPSSLCertPath + "/cert.pem")
+	_, keyErr := os.Stat(s.Config.HTTPSSLCertPath + "/key.pem")
 
-		if _, err := os.Stat(s.Config.HTTPSSLCertPath + "/key.pem"); os.IsNotExist(err) {
-			support.Logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
-		}
+	if os.IsNotExist(certErr) || os.IsNotExist(keyErr) {
+		return false
 	}
+
+	return true
 }
 
 // Hosts returns the server hosts list.
-func (s *ServerT) Hosts() []string {
+func (s *ServerT) Hosts() ([]string, error) {
 	var hosts = []string{s.Config.HTTPHost}
 
 	if s.Config.HTTPHost != "localhost" {
@@ -107,7 +109,7 @@ func (s *ServerT) Hosts() []string {
 
 	addresses, err := net.InterfaceAddrs()
 	if err != nil {
-		support.Logger.Fatal(err)
+		return nil, err
 	}
 
 	for _, address := range addresses {
@@ -119,7 +121,7 @@ func (s *ServerT) Hosts() []string {
 		}
 	}
 
-	return hosts
+	return hosts, nil
 }
 
 // Routes returns all the routes including those in middlewares.
@@ -144,7 +146,7 @@ func (s *ServerT) PrintInfo() {
 	support.Logger.Infof("* Environment: %s", s.Config.AppyEnv)
 	support.Logger.Infof("* Environment Config: %s", support.DotenvPath)
 
-	hosts := s.Hosts()
+	hosts, _ := s.Hosts()
 	host := fmt.Sprintf("http://%s:%s", hosts[0], s.Config.HTTPPort)
 
 	if s.Config.HTTPSSLEnabled == true {

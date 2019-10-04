@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"html/template"
 	"net/http"
 
 	"github.com/appist/appy/cmd"
@@ -131,11 +132,12 @@ var Use func(handlers ...HandlerFuncT) RoutesT
 var T = middleware.T
 
 // Init initializes the server singleton.
-func Init(assets http.FileSystem) {
+func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	Server = ah.NewServer(Config)
 	Server.Assets = assets
 	Server.InitSSRLocale()
 	Server.InitSSRView()
+	Server.Router.SetFuncMap(viewHelper)
 
 	DELETE = Server.Router.DELETE
 	GET = Server.Router.GET
