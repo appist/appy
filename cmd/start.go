@@ -198,6 +198,13 @@ func watch(watchPaths []string, callback func(e watcher.Event)) {
 	w.AddFilterHook(watcher.RegexFilterHook(r, false))
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				killAPIServeCmd()
+				logger.Fatal(r)
+			}
+		}()
+
 		for {
 			select {
 			case event := <-w.Event:
