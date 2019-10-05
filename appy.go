@@ -163,7 +163,7 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 
 	if support.Build != "release" {
 		cmd.AddCommand(cmd.NewBuildCommand(Server))
-		// cmd.AddCommand(cmd.NewDevCommand(Server))
+		cmd.AddCommand(cmd.NewStartCommand(Server))
 		cmd.AddCommand(cmd.NewSSLCleanCommand(Server))
 		cmd.AddCommand(cmd.NewSSLSetupCommand(Server))
 	}
