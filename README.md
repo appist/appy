@@ -1,6 +1,7 @@
 # appy
 
-[![Build Status](https://github.com/appist/appy/workflows/CI%20Build/badge.svg)](https://github.com/appist/appy/actions)
+[![Build Status](https://github.com/appist/appy/workflows/Code%20Check/badge.svg)](https://github.com/appist/appy/actions?workflow=Code+Check)
+[![Build Status](https://github.com/appist/appy/workflows/Unit%20Test/badge.svg)](https://github.com/appist/appy/actions?workflow=Unit+Test)
 [![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/appist/appy?style=flat-square)](https://codeclimate.com/github/appist/appy/maintainability)
 [![Coverage Status](https://img.shields.io/codecov/c/gh/appist/appy.svg?logo=codecov&style=flat-square)](https://codecov.io/gh/appist/appy)
 [![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg?style=flat-square)](http://godoc.org/github.com/appist/appy)
