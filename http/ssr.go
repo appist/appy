@@ -1,6 +1,7 @@
 package http
 
 import (
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -29,12 +30,6 @@ var (
 	ssrRoot          = SSRRootDebug
 	reservedViewDirs = []string{"layouts", "shared"}
 )
-
-func init() {
-	if support.Build == "release" {
-		ssrRoot = SSRRootRelease
-	}
-}
 
 func getCommonTemplates(assets http.FileSystem, build, path string) ([]string, error) {
 	var (
@@ -78,11 +73,7 @@ func getCommonTemplates(assets http.FileSystem, build, path string) ([]string, e
 func getTemplateContent(assets http.FileSystem, build, path string) (string, error) {
 	var data []byte
 	if build == "debug" {
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return "", err
-		}
-
+		data, _ := ioutil.ReadFile(path)
 		return string(data), nil
 	}
 
@@ -91,16 +82,30 @@ func getTemplateContent(assets http.FileSystem, build, path string) (string, err
 		return "", err
 	}
 
-	data, err = ioutil.ReadAll(file)
-	if err != nil {
-		return "", err
-	}
-
+	data, _ = ioutil.ReadAll(file)
 	return string(data), nil
 }
 
-// InitSSRView loads all the view files for HTML rendering.
-func (s *ServerT) InitSSRView() error {
+// InitSSR initiates the SSR setup.
+func (s *ServerT) InitSSR(vh template.FuncMap) error {
+	if support.Build == "release" {
+		ssrRoot = SSRRootRelease
+	}
+
+	s.ViewHelper = vh
+
+	if err := s.initSSRLocale(); err != nil {
+		return err
+	}
+
+	if err := s.initSSRView(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ServerT) initSSRView() error {
 	var (
 		fis []os.FileInfo
 		err error
@@ -121,9 +126,7 @@ func (s *ServerT) InitSSRView() error {
 			return err
 		}
 
-		if fis, err = file.Readdir(-1); err != nil {
-			return err
-		}
+		fis, err = file.Readdir(-1)
 	}
 
 	commonTpls := []string{}
@@ -140,6 +143,11 @@ func (s *ServerT) InitSSRView() error {
 			}
 
 			commonTpls = append(commonTpls, tpls...)
+		}
+	}
+
+	for _, fi := range fis {
+		if fi.IsDir() == false || support.Contains(reservedViewDirs, fi.Name()) == true {
 			continue
 		}
 
@@ -161,6 +169,10 @@ func (s *ServerT) InitSSRView() error {
 		}
 
 		for _, fileInfo := range fileInfos {
+			if fileInfo.IsDir() == true {
+				continue
+			}
+
 			viewName := fi.Name() + "/" + fileInfo.Name()
 			targetFn := targetDir + "/" + fileInfo.Name()
 			data, err := getTemplateContent(s.Assets, support.Build, targetFn)
@@ -171,49 +183,54 @@ func (s *ServerT) InitSSRView() error {
 			commonTplsCopy := make([]string, len(commonTpls))
 			copy(commonTplsCopy, commonTpls)
 			viewContent := append(commonTplsCopy, data)
-			s.HTMLRenderer.AddFromStringsFuncs(viewName, nil, viewContent...)
+			s.HTMLRenderer.AddFromStringsFuncs(viewName, s.ViewHelper, viewContent...)
 		}
 	}
 
 	return nil
 }
 
-// InitSSRLocale loads all the locale files to initialize the I18n bundle.
-func (s *ServerT) InitSSRLocale() error {
+func (s *ServerT) initSSRLocale() error {
 	i18nBundle := i18n.NewBundle(language.English)
 	i18nBundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 	i18nBundle.RegisterUnmarshalFunc("yml", yaml.Unmarshal)
 	i18nBundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
 
+	var (
+		localeFiles []os.FileInfo
+		data        []byte
+		err         error
+	)
 	localeDir := ssrRoot + "/" + SSRLocale
 
 	// Try getting all the locale files from `app/locales`, but fallback to `assets` http.FileSystem.
-	localeFiles, err := ioutil.ReadDir(localeDir)
-	if err != nil {
-		file, err := s.Assets.Open("/" + localeDir)
+	if support.Build == "debug" {
+		localeFiles, err = ioutil.ReadDir(localeDir)
+		if err != nil {
+			return err
+		}
+	} else {
+		localeDir = "/" + localeDir
+		file, err := s.Assets.Open(localeDir)
 		if err != nil {
 			return err
 		}
 
-		localeFiles, err = file.Readdir(-1)
-		if err != nil {
-			return err
-		}
+		localeFiles, _ = file.Readdir(-1)
 	}
 
 	for _, localeFile := range localeFiles {
 		localeFn := localeFile.Name()
-		data, err := ioutil.ReadFile(localeDir + "/" + localeFn)
-		if err != nil && os.IsNotExist(err) {
-			file, err := s.Assets.Open("/" + localeDir + "/" + localeFn)
+
+		if support.Build == "debug" {
+			data, _ = ioutil.ReadFile(localeDir + "/" + localeFn)
+		} else {
+			file, err := s.Assets.Open(localeDir + "/" + localeFn)
 			if err != nil {
 				return err
 			}
 
-			data, err = ioutil.ReadAll(file)
-			if err != nil {
-				return err
-			}
+			data, _ = ioutil.ReadAll(file)
 		}
 
 		i18nBundle.MustParseMessageFileBytes(data, localeFn)

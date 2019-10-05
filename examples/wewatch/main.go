@@ -8,7 +8,7 @@ import (
 
 func main() {
 	// Setup the application
-	appy.Init(assets)
+	appy.Init(assets, nil)
 
 	// Configure routes
 	appy.GET("/welcome", handler.WelcomeIndex())

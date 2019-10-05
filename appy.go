@@ -135,9 +135,7 @@ var T = middleware.T
 func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	Server = ah.NewServer(Config)
 	Server.Assets = assets
-	Server.InitSSRLocale()
-	Server.InitSSRView()
-	Server.Router.SetFuncMap(viewHelper)
+	Server.InitSSR(viewHelper)
 
 	DELETE = Server.Router.DELETE
 	GET = Server.Router.GET

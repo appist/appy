@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"text/template"
+	"html/template"
 
 	"github.com/appist/appy/html"
 	"github.com/appist/appy/support"

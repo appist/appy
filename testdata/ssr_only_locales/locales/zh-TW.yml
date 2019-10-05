@@ -1,0 +1,6 @@
+login: 登入
+
+message:
+  Zero: 嗨, {{.Name}}! 您有{{.Count}}則訊息。
+  One: 嗨, {{.Name}}! 您有{{.Count}}則訊息。
+  Other: 嗨, {{.Name}}! 您有{{.Count}}則訊息。
