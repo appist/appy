@@ -110,7 +110,7 @@ function getVueConfig(pkg) {
         locale: "en",
         fallbackLocale: "en",
         localeDir: "locales",
-        enableInSFC: true
+        enableInSFC: false
       },
       webpackBundleAnalyzer: {
         openAnalyzer:
