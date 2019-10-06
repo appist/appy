@@ -53,11 +53,13 @@ func NewStartCommand(s *ah.ServerT) *cobra.Command {
 
 			signal.Notify(quit, os.Interrupt)
 			signal.Notify(quit, syscall.SIGTERM)
+
 			go func() {
 				<-quit
 				killAPIServeCmd()
 				killWebServeCmd()
 			}()
+
 			go runAPIServeCmd()
 			if _, err := os.Stat(wd + "/" + ah.CSRRoot + "/package.json"); !os.IsNotExist(err) {
 				time.Sleep(3 * time.Second)

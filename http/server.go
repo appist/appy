@@ -80,8 +80,14 @@ func (s *ServerT) AddDefaultWelcomePage() {
 		}
 	}
 
-	_, err := s.Assets.Open("/index.html")
-	if rootDefined == false && os.IsNotExist(err) {
+	csrRootDefined := false
+	if s.Assets != nil {
+		if _, err := s.Assets.Open("/index.html"); err == nil {
+			csrRootDefined = true
+		}
+	}
+
+	if !rootDefined && !csrRootDefined {
 		s.Router.GET("/", func(c *ContextT) {
 			c.HTML(200, "default/welcome", nil)
 		})

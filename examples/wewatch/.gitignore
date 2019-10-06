@@ -29,5 +29,4 @@ vendor
 /tests/e2e/reports/
 selenium-debug.log
 tmp
-main_assets.go
 wewatch
