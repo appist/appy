@@ -54,10 +54,12 @@ function getVueConfig(pkg) {
     proxy = {};
 
   ssrPaths.map(p => {
-    proxy[p] = {
-      secure: false,
-      target: `${proxyConfig.scheme}://${process.env.HTTP_HOST}:${proxyConfig.port}`
-    };
+    if (p !== "/") {
+      proxy[p] = {
+        secure: false,
+        target: `${proxyConfig.scheme}://${process.env.HTTP_HOST}:${proxyConfig.port}`
+      };
+    }
   });
 
   if (Object.keys(proxy).length > 0) {

@@ -197,6 +197,10 @@ func runWebServeCmd(s *ah.ServerT) {
 					killAPIServeCmd()
 					time.Sleep(1 * time.Second)
 					logger.Fatalf("* [wds] Please run \"npm install\" in \"./%s\" folder first.", ah.CSRRoot)
+				} else if strings.Contains(errText, "Error: Cannot find module") {
+					killAPIServeCmd()
+					time.Sleep(1 * time.Second)
+					logger.Fatalf("* [wds] %s", errText)
 				}
 			}
 		}
