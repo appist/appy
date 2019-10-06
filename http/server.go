@@ -2,11 +2,11 @@ package http
 
 import (
 	"fmt"
+	"html/template"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
-	"html/template"
 
 	"github.com/appist/appy/html"
 	"github.com/appist/appy/support"
@@ -80,7 +80,8 @@ func (s *ServerT) AddDefaultWelcomePage() {
 		}
 	}
 
-	if rootDefined == false {
+	_, err := s.Assets.Open("/index.html")
+	if rootDefined == false && os.IsNotExist(err) {
 		s.Router.GET("/", func(c *ContextT) {
 			c.HTML(200, "default/welcome", nil)
 		})

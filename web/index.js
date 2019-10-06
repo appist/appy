@@ -3,11 +3,11 @@ const path = require("path");
 const webpackErrorOverlayPlugin = require("error-overlay-webpack-plugin");
 const webpackFaviconsPlugin = require("favicons-webpack-plugin");
 const webpackWorkboxPlugin = require("workbox-webpack-plugin");
-const srcDir = "./src";
 
 function getVueConfig(pkg) {
+  const srcDir = "./src";
   const ssrPaths = (() => {
-    let paths = ["/service-worker.js"];
+    let paths = [];
 
     if (
       process.env.APPY_SSR_PATHS !== undefined &&
@@ -19,22 +19,18 @@ function getVueConfig(pkg) {
     return paths;
   })();
 
+  const ssl = {
+    key: `../${process.env.HTTP_SSL_CERT_PATH}/key.pem`,
+    cert: `../${process.env.HTTP_SSL_CERT_PATH}/cert.pem`
+  };
   const https = (() => {
     return process.env.HTTP_SSL_ENABLED !== undefined &&
-      process.env.HTTP_SSL_ENABLED === "true"
+      process.env.HTTP_SSL_ENABLED === "true" &&
+      fs.existsSync(ssl.key) &&
+      fs.existsSync(ssl.cert)
       ? {
-          key: fs.readFileSync(
-            path.resolve(
-              process.cwd(),
-              `../${process.env.HTTP_SSL_CERT_PATH}/key.pem`
-            )
-          ),
-          cert: fs.readFileSync(
-            path.resolve(
-              process.cwd(),
-              `../${process.env.HTTP_SSL_CERT_PATH}/cert.pem`
-            )
-          )
+          key: fs.readFileSync(path.resolve(process.cwd(), ssl.key)),
+          cert: fs.readFileSync(path.resolve(process.cwd(), ssl.cert))
         }
       : false;
   })();
@@ -64,21 +60,6 @@ function getVueConfig(pkg) {
 
     configureWebpack: {
       devtool: "cheap-module-source-map",
-      devServer: {
-        contentBase: path.resolve(process.cwd(), "dist"),
-        historyApiFallback: true,
-        http2: true,
-        https,
-        hot: true,
-        host: process.env.HTTP_HOST,
-        port: parseInt(proxyConfig.port) + 1,
-        overlay: {
-          warnings: true,
-          errors: true
-        },
-        index: "",
-        proxy
-      },
       plugins: [
         new webpackErrorOverlayPlugin(),
         new webpackFaviconsPlugin({
@@ -98,9 +79,22 @@ function getVueConfig(pkg) {
           skipWaiting: true,
           clientsClaim: true,
           navigateFallback: "/index.html",
-          navigateFallbackBlacklist: ssrPaths.map(p => new RegExp(p))
+          navigateFallbackBlacklist: ssrPaths
+            .concat(["/service-worker.js"])
+            .map(p => new RegExp(p))
         })
       ]
+    },
+
+    devServer: {
+      https,
+      host: process.env.HTTP_HOST,
+      port: parseInt(proxyConfig.port) + 1,
+      overlay: {
+        warnings: true,
+        errors: true
+      },
+      proxy
     },
 
     outputDir: path.resolve(process.cwd(), "../assets"),
@@ -113,9 +107,7 @@ function getVueConfig(pkg) {
         enableInSFC: false
       },
       webpackBundleAnalyzer: {
-        openAnalyzer:
-          process.env.BUNDLE_ANALYZER !== undefined &&
-          process.env.BUNDLE_ANALYZER === "true"
+        openAnalyzer: false
       }
     }
   };

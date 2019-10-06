@@ -51,6 +51,7 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 			assetsPathForSSR := assetsPath + "/" + ah.SSRRootRelease
 
 			logger.Infof("Copying server-side assets from '%s' into '%s'...", ah.SSRRootDebug, assetsPathForSSR)
+			os.RemoveAll("./" + assetsPath)
 			err = copy.Copy(ah.SSRRootDebug+"/"+ah.SSRView, assetsPathForSSR+"/"+ah.SSRView)
 			if err != nil {
 				logger.Fatal(err)
