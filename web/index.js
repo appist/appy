@@ -65,7 +65,7 @@ function getVueConfig(pkg) {
     configureWebpack: {
       devtool: "cheap-module-source-map",
       devServer: {
-        contentBase: path.resolve(process.cwd(), "public"),
+        contentBase: path.resolve(process.cwd(), "dist"),
         historyApiFallback: true,
         http2: true,
         https,
