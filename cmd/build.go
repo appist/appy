@@ -67,12 +67,12 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 			os.Stdout = nil
 
 			generateMainAssets()
-			logger.Infof("Compiling assets folder into \"%s\"...", mainAssets)
+			logger.Infof("Compiling assets folder into '%s'...", mainAssets)
 			err = vfsgen.Generate(http.Dir(assetsPath), vfsgen.Options{Filename: mainAssets, VariableName: "assets"})
 			if err != nil {
 				logger.Fatal(err)
 			}
-			logger.Infof("Compiling assets folder into \"%s\"... DONE", mainAssets)
+			logger.Infof("Compiling assets folder into '%s'... DONE", mainAssets)
 			os.Stdout = oldStdout
 
 			goPath, err := exec.LookPath("go")
