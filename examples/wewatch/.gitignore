@@ -18,15 +18,14 @@ coverage
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*driver.log*
 
 # 3rd party dependencies
 node_modules
 vendor
 
 # Misc.
-.cache-loader
 /assets
-/tests/e2e/reports/
-selenium-debug.log
+/web/tests/e2e/reports/
 tmp
 wewatch
