@@ -1,4 +1,6 @@
 const appy = require("@appist/appy");
 const pkg = require("./package.json");
 
-module.exports = appy.getVueConfig(pkg);
+const config = appy.getVueConfig(pkg);
+console.log(config);
+module.exports = config;
