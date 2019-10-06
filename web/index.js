@@ -9,7 +9,7 @@ function getVueConfig(pkg) {
   const ssrPaths = (() => {
     let paths = ["/service-worker.js"];
 
-    if (process.env.APPY_process.env.APPY_SSR_PATHS !== "") {
+    if (process.env.APPY_SSR_PATHS && process.env.APPY_SSR_PATHS !== "") {
       paths = paths.concat(process.env.APPY_SSR_PATHS.split(","));
     }
 
