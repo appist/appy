@@ -1,0 +1,22 @@
+{
+  "name": "@appist/appy",
+  "version": "0.1.0",
+  "description": "A set of toolkit for appy web framework.",
+  "main": "web/index.js",
+  "directories": {
+    "web": "web"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/appist/appy.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/appist/appy/issues"
+  },
+  "homepage": "https://github.com/appist/appy#readme"
+}

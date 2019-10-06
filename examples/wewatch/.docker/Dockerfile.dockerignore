@@ -1,0 +1,11 @@
+.docker
+.editorconfig
+.env*
+.git
+.gitignore
+.DS_Store
+**/node_modules
+assets
+coverage
+tmp
+README.md

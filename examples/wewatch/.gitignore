@@ -11,6 +11,6 @@ vendor
 
 # Misc.
 .cache-loader
-assets
+/assets
 tmp
 wewatch

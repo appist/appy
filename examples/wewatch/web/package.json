@@ -1,0 +1,165 @@
+{
+  "name": "wewatch",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "test:e2e": "vue-cli-service test:e2e",
+    "test:unit": "vue-cli-service test:unit"
+  },
+  "dependencies": {
+    "core-js": "^3.2.1",
+    "register-service-worker": "^1.6.2",
+    "vue": "^2.6.10",
+    "vue-class-component": "^7.0.2",
+    "vue-i18n": "^8.14.1",
+    "vue-property-decorator": "^8.1.0",
+    "vue-router": "^3.0.3",
+    "vuex": "^3.0.1"
+  },
+  "devDependencies": {
+    "@appist/appy": "git+https://github.com/appist/appy.git#master",
+    "@types/jest": "^24.0.18",
+    "@vue/cli-plugin-babel": "^3.11.0",
+    "@vue/cli-plugin-e2e-nightwatch": "^3.11.0",
+    "@vue/cli-plugin-eslint": "^3.11.0",
+    "@vue/cli-plugin-pwa": "^3.11.0",
+    "@vue/cli-plugin-typescript": "^3.11.0",
+    "@vue/cli-plugin-unit-jest": "^3.11.0",
+    "@vue/cli-service": "^3.11.0",
+    "@vue/eslint-config-prettier": "^5.0.0",
+    "@vue/eslint-config-typescript": "^4.0.0",
+    "@vue/test-utils": "1.0.0-beta.29",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-eslint": "^10.0.1",
+    "error-overlay-webpack-plugin": "^0.4.1",
+    "eslint": "^6.5.1",
+    "eslint-plugin-prettier": "^3.1.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "favicons-webpack-plugin": "^1.0.2",
+    "husky": "^3.0.8",
+    "imagemin-lint-staged": "^0.4.0",
+    "lint-staged": "^9.4.1",
+    "node-sass": "^4.9.0",
+    "prettier": "^1.18.2",
+    "pug": "^2.0.4",
+    "pug-plain-loader": "^1.0.0",
+    "sass-loader": "^8.0.0",
+    "ts-jest": "^24.1.0",
+    "typescript": "^3.4.3",
+    "vue-cli-plugin-i18n": "^0.6.0",
+    "vue-cli-plugin-webpack-bundle-analyzer": "^1.4.0",
+    "vue-template-compiler": "^2.6.10"
+  },
+  "license": "UNLICENSED",
+  "babel": {
+    "presets": [
+      [
+        "@vue/app"
+      ]
+    ]
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ],
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "@vue/prettier",
+      "@vue/typescript"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "@typescript-eslint/parser"
+    },
+    "overrides": [
+      {
+        "files": [
+          "**/__tests__/*.{j,t}s?(x)"
+        ],
+        "env": {
+          "jest": true
+        }
+      }
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "jsx",
+      "json",
+      "vue",
+      "ts",
+      "tsx"
+    ],
+    "transform": {
+      "^.+\\.vue$": "vue-jest",
+      ".+\\.(css|styl|less|sass|scss|svg|png|jpg|ttf|woff|woff2)$": "jest-transform-stub",
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "snapshotSerializers": [
+      "jest-serializer-vue"
+    ],
+    "testMatch": [
+      "**/tests/unit/**/*.spec.(js|jsx|ts|tsx)|**/__tests__/*.(js|jsx|ts|tsx)"
+    ],
+    "testURL": "http://localhost/",
+    "watchPlugins": [
+      "jest-watch-typeahead/filename",
+      "jest-watch-typeahead/testname"
+    ]
+  },
+  "lint-staged": {
+    "../**/*.go": [
+      "golint -set_exit_status",
+      "git add"
+    ],
+    "../**/*.{css,scss,gql,graphql,js,jsx,json,ts,tsx,md}": [
+      "prettier --write",
+      "git add"
+    ],
+    "../**/*.{png,jpeg,jpg,gif,svg}": [
+      "imagemin-lint-staged",
+      "git add"
+    ]
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "pwa": {
+    "appName": "WeWatch",
+    "appDescription": "A demo web app to watch movies/TVs using appy framework.",
+    "appShortName": "WeWatch",
+    "appleStatusBarStyle": "black-translucent",
+    "background": "#ffffff",
+    "developerName": "Appist",
+    "developerURL": "https://appist.io",
+    "display": "standalone",
+    "dir": "auto",
+    "lang": "en-US",
+    "orientation": "any",
+    "scope": "/",
+    "start_url": "./index.html",
+    "theme_color": "#000000"
+  }
+}
