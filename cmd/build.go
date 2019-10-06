@@ -20,6 +20,16 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 		Use:   "build",
 		Short: "Compile the static assets into go files and build the release mode binary, only available for debug build.",
 		Run: func(cmd *cobra.Command, args []string) {
+			wd, err := os.Getwd()
+			if err != nil {
+				logger.Fatal(err)
+			}
+
+			binaryName := path.Base(wd)
+			assetsPath := "assets"
+			assetsPathForSSR := assetsPath + "/" + ah.SSRRootRelease
+			os.RemoveAll(assetsPath)
+
 			if _, err := os.Stat(ah.CSRRoot + "/package.json"); !os.IsNotExist(err) {
 				ssrPaths := []string{}
 				for _, route := range s.Routes() {
@@ -41,16 +51,6 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 				logger.Info("Building the web app... DONE")
 			}
 
-			wd, err := os.Getwd()
-			if err != nil {
-				logger.Fatal(err)
-			}
-
-			binaryName := path.Base(wd)
-			assetsPath := "assets"
-			assetsPathForSSR := assetsPath + "/" + ah.SSRRootRelease
-
-			os.RemoveAll(assetsPath)
 			logger.Infof("Copying server-side assets from '%s' into '%s'...", ah.SSRRootDebug, assetsPathForSSR)
 			err = copy.Copy(ah.SSRRootDebug+"/"+ah.SSRView, assetsPathForSSR+"/"+ah.SSRView)
 			if err != nil {
