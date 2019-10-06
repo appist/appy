@@ -42,15 +42,27 @@ function getVueConfig(pkg) {
       : { port: process.env.HTTP_PORT, scheme: "http" };
 
   let devServer = {
-    https,
-    host: process.env.HTTP_HOST,
-    port: parseInt(proxyConfig.port) + 1,
-    proxy: `${proxyConfig.scheme}://${process.env.HTTP_HOST}:${proxyConfig.port}`,
-    overlay: {
-      warnings: true,
-      errors: true
-    }
-  };
+      historyApiFallback: true,
+      https,
+      host: process.env.HTTP_HOST,
+      port: parseInt(proxyConfig.port) + 1,
+      overlay: {
+        warnings: true,
+        errors: true
+      }
+    },
+    proxy = {};
+
+  ssrPaths.map(p => {
+    proxy[p] = {
+      secure: false,
+      target: `${proxyConfig.scheme}://${process.env.HTTP_HOST}:${proxyConfig.port}`
+    };
+  });
+
+  if (Object.keys(proxy).length > 0) {
+    devServer = Object.assign({}, devServer, { proxy });
+  }
 
   return {
     css: {
