@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "description": "A set of toolkit for appy web framework.",
   "main": "web/index.js",
-  "directories": {
-    "web": "web"
-  },
+  "files": [
+    "web"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
