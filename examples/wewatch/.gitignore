@@ -1,16 +1,33 @@
-# MacOS System
+# MacOS system
 .DS_Store
 
 # Coverage
 coverage
 *.out
 
-# Dependencies
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 3rd party dependencies
 node_modules
 vendor
 
 # Misc.
 .cache-loader
 /assets
+/tests/e2e/reports/
+selenium-debug.log
 tmp
+main_assets.go
 wewatch

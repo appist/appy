@@ -51,7 +51,6 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 			assetsPathForSSR := assetsPath + "/" + ah.SSRRootRelease
 
 			logger.Infof("Copying server-side assets from '%s' into '%s'...", ah.SSRRootDebug, assetsPathForSSR)
-			os.RemoveAll("./" + assetsPath)
 			err = copy.Copy(ah.SSRRootDebug+"/"+ah.SSRView, assetsPathForSSR+"/"+ah.SSRView)
 			if err != nil {
 				logger.Fatal(err)
@@ -66,8 +65,10 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 			oldStdout := os.Stdout
 			os.Stdout = nil
 
-			logger.Infof("Compiling assets folder into main_assets.go...")
-			err = vfsgen.Generate(http.Dir(assetsPath), vfsgen.Options{Filename: "main_assets.go", VariableName: "assets"})
+			mainAssets := "main_assets.go"
+			os.Remove("./" + mainAssets)
+			logger.Infof("Compiling assets folder into %s...", mainAssets)
+			err = vfsgen.Generate(http.Dir(assetsPath), vfsgen.Options{Filename: mainAssets, VariableName: "assets"})
 			if err != nil {
 				logger.Fatal(err)
 			}
