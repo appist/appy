@@ -18,5 +18,6 @@
   "bugs": {
     "url": "https://github.com/appist/appy/issues"
   },
-  "homepage": "https://github.com/appist/appy#readme"
+  "homepage": "https://github.com/appist/appy#readme",
+  "dependencies": {}
 }

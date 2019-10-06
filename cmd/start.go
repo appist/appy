@@ -146,9 +146,14 @@ func runWebServeCmd(s *ah.ServerT) {
 	}
 
 	webServeCmd = exec.Command("npm", "run", "serve")
-	webServeCmd.Dir = wd + "/web"
+	webServeCmd.Dir = wd + "/" + ah.CSRRoot
 	webServeCmd.Env = os.Environ()
 	webServeCmd.Env = append(webServeCmd.Env, "APPY_SSR_PATHS="+strings.Join(ssrPaths, ","))
+	webServeCmd.Env = append(webServeCmd.Env, "HTTP_HOST="+s.Config.HTTPHost)
+	webServeCmd.Env = append(webServeCmd.Env, "HTTP_PORT="+s.Config.HTTPPort)
+	webServeCmd.Env = append(webServeCmd.Env, "HTTP_SSL_PORT="+s.Config.HTTPSSLPort)
+	webServeCmd.Env = append(webServeCmd.Env, "HTTP_SSL_ENABLED="+strconv.FormatBool(s.Config.HTTPSSLEnabled))
+	webServeCmd.Env = append(webServeCmd.Env, "HTTP_SSL_CERT_PATH="+s.Config.HTTPSSLCertPath)
 	webServeCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	webServeCmdOut, _ := webServeCmd.StdoutPipe()
 	webServeCmdErr, _ := webServeCmd.StderrPipe()
@@ -168,20 +173,30 @@ func runWebServeCmd(s *ah.ServerT) {
 
 		for {
 			out := bufio.NewScanner(stdout)
-			for out.Scan() {
-				t := out.Text()
+			err := bufio.NewScanner(stderr)
 
-				if strings.Contains(t, "Starting development server") {
+			for out.Scan() || err.Scan() {
+				outText := out.Text()
+
+				if strings.Contains(outText, "Starting development server") {
 					logger.Info("* [wds] Starting...")
-				} else if strings.Contains(t, "Compiling...") {
+				} else if strings.Contains(outText, "Compiling...") {
 					logger.Info("* [wds] Compiling...")
-				} else if strings.Contains(t, "Compiled successfully in") {
-					logger.Infof("* [wds] Compiled successfully in%s", timeRe.FindStringSubmatch(t)[0])
+				} else if strings.Contains(outText, "Compiled successfully in") {
+					logger.Infof("* [wds] Compiled successfully in%s", timeRe.FindStringSubmatch(outText)[0])
 
 					if firstTime == true {
 						firstTime = false
 						logger.Infof("* [wds] Listening on %s", host)
 					}
+				}
+
+				errText := err.Text()
+
+				if strings.Contains(errText, "Local package.json exists, but node_modules missing") {
+					killAPIServeCmd()
+					time.Sleep(1 * time.Second)
+					logger.Fatalf("* [wds] Please run \"npm install\" in \"./%s\" folder first.", ah.CSRRoot)
 				}
 			}
 		}
