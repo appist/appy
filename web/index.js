@@ -29,7 +29,7 @@ function getVueConfig(pkg) {
   };
 
   const https = (() => {
-    return fs.existsSync(ssl.key) && fs.existsSync(ssl.crt)
+    return process.env.HTTP_SSL_ENABLED
       ? {
           key: fs.readFileSync(ssl.key),
           cert: fs.readFileSync(ssl.crt)
