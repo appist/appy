@@ -9,40 +9,36 @@ function getVueConfig(pkg) {
   const ssrPaths = (() => {
     let paths = ["/service-worker.js"];
 
-    if (process.env.APPY_SSR_PATHS) {
+    if (process.env.APPY_SSR_PATHS !== "") {
       paths = paths.concat(process.env.APPY_SSR_PATHS.split(","));
     }
 
     return paths;
   })();
 
-  const navigateFallbackBlacklist = ssrPaths.map(p => new RegExp(p));
-  const ssl = {
-    key: path.resolve(
-      process.cwd(),
-      `../${process.env.HTTP_SSL_CERT_PATH}/key.pem`
-    ),
-    crt: path.resolve(
-      process.cwd(),
-      `../${process.env.HTTP_SSL_CERT_PATH}/cert.pem`
-    )
-  };
-
   const https = (() => {
-    return process.env.HTTP_SSL_ENABLED
+    return process.env.HTTP_SSL_ENABLED === "true"
       ? {
-          key: fs.readFileSync(ssl.key),
-          cert: fs.readFileSync(ssl.crt)
+          key: fs.readFileSync(
+            path.resolve(
+              process.cwd(),
+              `../${process.env.HTTP_SSL_CERT_PATH}/key.pem`
+            )
+          ),
+          cert: fs.readFileSync(
+            path.resolve(
+              process.cwd(),
+              `../${process.env.HTTP_SSL_CERT_PATH}/cert.pem`
+            )
+          )
         }
       : {};
   })();
 
-  const proxyConfig = {
-    port: process.env.HTTP_SSL_ENABLED
-      ? process.env.HTTP_SSL_PORT
-      : process.env.HTTP_PORT,
-    scheme: process.env.HTTP_SSL_ENABLED ? "https" : "http"
-  };
+  const proxyConfig =
+    process.env.HTTP_SSL_ENABLED === "true"
+      ? { port: process.env.HTTP_SSL_PORT, scheme: "https" }
+      : { port: process.env.HTTP_PORT, scheme: "http" };
 
   let proxy = {};
   ssrPaths.map(p => {
@@ -97,7 +93,7 @@ function getVueConfig(pkg) {
           skipWaiting: true,
           clientsClaim: true,
           navigateFallback: "/index.html",
-          navigateFallbackBlacklist
+          navigateFallbackBlacklist: ssrPaths.map(p => new RegExp(p))
         })
       ]
     },
@@ -112,7 +108,7 @@ function getVueConfig(pkg) {
         enableInSFC: true
       },
       webpackBundleAnalyzer: {
-        openAnalyzer: process.env.BUNDLE_ANALYZER === "1"
+        openAnalyzer: process.env.BUNDLE_ANALYZER === "true"
       }
     }
   };
