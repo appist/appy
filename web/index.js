@@ -44,6 +44,7 @@ function getVueConfig(pkg) {
     scheme: process.env.HTTP_SSL_ENABLED ? "https" : "http"
   };
 
+  let proxy = {};
   ssrPaths.map(p => {
     proxy[p] = {
       secure: false,
