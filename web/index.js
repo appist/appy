@@ -41,13 +41,27 @@ function getVueConfig(pkg) {
       ? { port: process.env.HTTP_SSL_PORT, scheme: "https" }
       : { port: process.env.HTTP_PORT, scheme: "http" };
 
-  let proxy = {};
+  let devServer = {
+      https,
+      host: process.env.HTTP_HOST,
+      port: parseInt(proxyConfig.port) + 1,
+      overlay: {
+        warnings: true,
+        errors: true
+      }
+    },
+    proxy = {};
+
   ssrPaths.map(p => {
     proxy[p] = {
       secure: false,
       target: `${proxyConfig.scheme}://${process.env.HTTP_HOST}:${proxyConfig.port}`
     };
   });
+
+  if (Object.keys(proxy).length > 0) {
+    devServer = Object.assign({}, devServer, { proxy });
+  }
 
   return {
     css: {
@@ -86,16 +100,7 @@ function getVueConfig(pkg) {
       ]
     },
 
-    devServer: {
-      https,
-      host: process.env.HTTP_HOST,
-      port: parseInt(proxyConfig.port) + 1,
-      overlay: {
-        warnings: true,
-        errors: true
-      },
-      proxy
-    },
+    devServer,
 
     outputDir: path.resolve(process.cwd(), "../assets"),
 
