@@ -9,7 +9,10 @@ function getVueConfig(pkg) {
   const ssrPaths = (() => {
     let paths = ["/service-worker.js"];
 
-    if (process.env.APPY_SSR_PATHS !== "") {
+    if (
+      process.env.APPY_SSR_PATHS !== undefined &&
+      process.env.APPY_SSR_PATHS !== ""
+    ) {
       paths = paths.concat(process.env.APPY_SSR_PATHS.split(","));
     }
 
@@ -17,7 +20,8 @@ function getVueConfig(pkg) {
   })();
 
   const https = (() => {
-    return process.env.HTTP_SSL_ENABLED === "true"
+    return process.env.HTTP_SSL_ENABLED !== undefined &&
+      process.env.HTTP_SSL_ENABLED === "true"
       ? {
           key: fs.readFileSync(
             path.resolve(
@@ -36,6 +40,7 @@ function getVueConfig(pkg) {
   })();
 
   const proxyConfig =
+    process.env.HTTP_SSL_ENABLED !== undefined &&
     process.env.HTTP_SSL_ENABLED === "true"
       ? { port: process.env.HTTP_SSL_PORT, scheme: "https" }
       : { port: process.env.HTTP_PORT, scheme: "http" };
@@ -108,7 +113,9 @@ function getVueConfig(pkg) {
         enableInSFC: true
       },
       webpackBundleAnalyzer: {
-        openAnalyzer: process.env.BUNDLE_ANALYZER === "true"
+        openAnalyzer:
+          process.env.BUNDLE_ANALYZER !== undefined &&
+          process.env.BUNDLE_ANALYZER === "true"
       }
     }
   };
