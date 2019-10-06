@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const webpackErrorOverlayPlugin = require("error-overlay-webpack-plugin");
 const webpackFaviconsPlugin = require("favicons-webpack-plugin");
 const webpackWorkboxPlugin = require("workbox-webpack-plugin");
