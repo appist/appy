@@ -13,8 +13,9 @@ jobs:
         with:
           node-version: 12.10.0
       - uses: actions/checkout@master
+      - working-directory: examples/wewatch/web
+        run: npm install
       - working-directory: examples/wewatch
         run: |
           go mod download
-          cd web && npm i
           go run . build
