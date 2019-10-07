@@ -3,7 +3,6 @@ package http
 import (
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/appist/appy/middleware"
@@ -19,10 +18,8 @@ type spaResourceT struct {
 
 var (
 	// CSRRoot is the root folder for VueJS web application.
-	CSRRoot         = "web"
-	extRegex        = regexp.MustCompile(`\.(bmp|css|csv|eot|exif|gif|html|ico|ini|jpg|jpeg|js|json|mp4|otf|pdf|png|svg|webp|woff|woff2|tiff|ttf|toml|txt|xml|xlsx|yml|yaml)$`)
-	userAgentHeader = http.CanonicalHeaderKey("user-agent")
-	spaResources    = []spaResourceT{}
+	CSRRoot      = "web"
+	spaResources = []spaResourceT{}
 )
 
 // InitCSR setup the SPA client-side rendering/routing with index.html fallback.
@@ -36,7 +33,7 @@ func (s *ServerT) InitCSR() {
 	s.Router.NoRoute(middleware.CSRFSkipCheck(), func(c *ContextT) {
 		request := c.Request
 
-		if request.Method == "GET" && !extRegex.MatchString(request.URL.Path) {
+		if request.Method == "GET" && !support.ExtRegex.MatchString(request.URL.Path) {
 			c.Header("Cache-Control", "no-cache")
 			resource := getSPAResource(request.URL.Path)
 
