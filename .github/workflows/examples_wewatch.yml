@@ -5,6 +5,7 @@ on: push
 jobs:
   examples-wewatch:
     runs-on: ubuntu-latest
+    working-directory: examples/wewatch
     steps:
       - uses: actions/setup-go@master
         with:
