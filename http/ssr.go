@@ -39,9 +39,7 @@ func getCommonTemplates(assets http.FileSystem, build, path string) ([]string, e
 
 	tpls := []string{}
 	if build == "debug" {
-		if fis, err = ioutil.ReadDir(path); err != nil {
-			return nil, err
-		}
+		fis, _ = ioutil.ReadDir(path)
 	} else {
 		var file http.File
 		path = "/" + path
@@ -49,9 +47,7 @@ func getCommonTemplates(assets http.FileSystem, build, path string) ([]string, e
 			return nil, err
 		}
 
-		if fis, err = file.Readdir(-1); err != nil {
-			return nil, err
-		}
+		fis, _ = file.Readdir(-1)
 	}
 
 	for _, fi := range fis {
@@ -154,18 +150,14 @@ func (s *ServerT) initSSRView() error {
 		var fileInfos []os.FileInfo
 		targetDir := viewDir + "/" + fi.Name()
 		if support.Build == "debug" {
-			if fileInfos, err = ioutil.ReadDir(targetDir); err != nil {
-				return err
-			}
+			fileInfos, _ = ioutil.ReadDir(targetDir)
 		} else {
 			var file http.File
 			if file, err = s.Assets.Open(targetDir); err != nil {
 				return err
 			}
 
-			if fileInfos, err = file.Readdir(-1); err != nil {
-				return err
-			}
+			fileInfos, _ = file.Readdir(-1)
 		}
 
 		for _, fileInfo := range fileInfos {
