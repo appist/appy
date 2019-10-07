@@ -14,6 +14,36 @@ import (
 
 var (
 	userAgentHeader = http.CanonicalHeaderKey("user-agent")
+	crawl           = func(url string) ([]byte, error) {
+		opts := append(chromedp.DefaultExecAllocatorOptions[:],
+			chromedp.DisableGPU,
+			chromedp.NoSandbox,
+			chromedp.Flag("ignore-certificate-errors", true),
+		)
+
+		allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
+		defer cancel()
+
+		taskCtx, cancel := chromedp.NewContext(allocCtx)
+		defer cancel()
+
+		var data string
+		err := chromedp.Run(taskCtx,
+			chromedp.Navigate(url),
+			chromedp.WaitReady("body", chromedp.ByQuery),
+			chromedp.ActionFunc(func(ctx context.Context) error {
+				node, err := dom.GetDocument().Do(ctx)
+				if err != nil {
+					return err
+				}
+
+				data, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
+				return err
+			}),
+		)
+
+		return []byte(data), err
+	}
 )
 
 // Prerender dynamically renders client-side rendered SPA for SEO using Chrome.
@@ -47,37 +77,6 @@ func Prerender(config *support.ConfigT) gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-func crawl(url string) ([]byte, error) {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.DisableGPU,
-		chromedp.NoSandbox,
-		chromedp.Flag("ignore-certificate-errors", true),
-	)
-
-	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer cancel()
-
-	taskCtx, cancel := chromedp.NewContext(allocCtx)
-	defer cancel()
-
-	var data string
-	err := chromedp.Run(taskCtx,
-		chromedp.Navigate(url),
-		chromedp.WaitReady("body", chromedp.ByQuery),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			node, err := dom.GetDocument().Do(ctx)
-			if err != nil {
-				return err
-			}
-
-			data, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
-			return err
-		}),
-	)
-
-	return []byte(data), err
 }
 
 func isSEOBot(ua string) bool {
