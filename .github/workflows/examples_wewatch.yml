@@ -13,6 +13,6 @@ jobs:
         with:
           go-version: 12.10.0
       - uses: actions/checkout@master
-      - run: |
-          go version
-          node --version
+      - run: go mod download
+      - run: cd web && npm i
+      - run: go run . build
