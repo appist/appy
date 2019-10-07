@@ -158,8 +158,14 @@ func runWebServeCmd(s *ah.ServerT) {
 	webServeCmdOut, _ := webServeCmd.StdoutPipe()
 	webServeCmdErr, _ := webServeCmd.StderrPipe()
 
-	go func(stdout io.ReadCloser, stderr io.ReadCloser) {
-		firstTime := true
+	go func(stdout io.ReadCloser) {
+		defer func() {
+			if r := recover(); r != nil {
+				killAPIServeCmd()
+				logger.Fatal(r)
+			}
+		}()
+
 		scheme := "http"
 		port, _ := strconv.Atoi(s.Config.HTTPPort)
 		if s.Config.HTTPSSLEnabled == true {
@@ -170,41 +176,68 @@ func runWebServeCmd(s *ah.ServerT) {
 		hosts, _ := s.Hosts()
 		host := fmt.Sprintf("%s://%s:%s", scheme, hosts[0], strconv.Itoa(port+1))
 		timeRe := regexp.MustCompile(` [0-9]+ms`)
+		stdoutBlank := true
+		out := bufio.NewScanner(stdout)
 
-		for {
-			out := bufio.NewScanner(stdout)
-			err := bufio.NewScanner(stderr)
+		for out.Scan() {
+			outText := strings.Trim(out.Text(), " ")
 
-			for out.Scan() || err.Scan() {
-				outText := out.Text()
-
-				if strings.Contains(outText, "Starting development server") {
-					logger.Info("* [wds] Starting...")
-				} else if strings.Contains(outText, "Compiling...") {
-					logger.Info("* [wds] Compiling...")
-				} else if strings.Contains(outText, "Compiled successfully in") {
-					logger.Infof("* [wds] Compiled successfully in%s", timeRe.FindStringSubmatch(outText)[0])
-
-					if firstTime == true {
-						firstTime = false
-						logger.Infof("* [wds] Listening on %s", host)
-					}
+			if outText == "" {
+				if stdoutBlank {
+					continue
 				}
 
-				errText := err.Text()
+				stdoutBlank = true
+			} else {
+				stdoutBlank = false
+			}
 
-				if strings.Contains(errText, "Local package.json exists, but node_modules missing") {
-					killAPIServeCmd()
-					time.Sleep(1 * time.Second)
-					logger.Fatalf("* [wds] Please run \"npm install\" in \"./%s\" folder first.", ah.CSRRoot)
-				} else if strings.Contains(errText, "Error: Cannot find module") {
-					killAPIServeCmd()
-					time.Sleep(1 * time.Second)
-					logger.Fatalf("* [wds] %s", errText)
-				}
+			if strings.Contains(outText, "｢wds｣") || strings.Contains(outText, "Use Ctrl+C to close it") || strings.Contains(outText, "> ") ||
+				strings.Contains(outText, "App running at") || strings.Contains(outText, "- Local:") || strings.Contains(outText, "Using ") ||
+				strings.Contains(outText, "Webpack Bundle Analyzer is started at") || strings.Contains(outText, "Starting type checking service...") ||
+				strings.Contains(outText, "Type checking in progress...") {
+				continue
+			}
+
+			if strings.Contains(outText, "Starting development server") {
+				logger.Info("Starting webpack development server...")
+			} else if strings.Contains(outText, "- Network:") {
+				logger.Infof("App is running at: %s", host)
+				logger.Infof("Webpack Bundle Analyzer is running at: http://%s:8888", hosts[0])
+			} else if strings.Contains(outText, "Compiling...") {
+				logger.Info("Compiling...")
+			} else if strings.Contains(outText, "Compiled successfully in") {
+				logger.Infof("Compiled successfully in%s", timeRe.FindStringSubmatch(outText)[0])
+			} else {
+				logger.Info(outText)
 			}
 		}
-	}(webServeCmdOut, webServeCmdErr)
+	}(webServeCmdOut)
+
+	go func(stderr io.ReadCloser) {
+		defer func() {
+			if r := recover(); r != nil {
+				killAPIServeCmd()
+				logger.Fatal(r)
+			}
+		}()
+
+		err := bufio.NewScanner(stderr)
+		fatalErr := ""
+		for err.Scan() {
+			errText := strings.Trim(err.Text(), " ")
+
+			if strings.Contains(errText, "npm ERR!") {
+				break
+			}
+
+			fatalErr = fatalErr + errText + "\n\t"
+		}
+
+		killAPIServeCmd()
+		time.Sleep(1 * time.Second)
+		logger.Fatal(fatalErr)
+	}(webServeCmdErr)
 
 	webServeCmd.Run()
 }

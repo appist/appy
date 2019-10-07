@@ -48,7 +48,7 @@
     "pug": "^2.0.4",
     "pug-plain-loader": "^1.0.0",
     "sass-loader": "^8.0.0",
-    "typescript": "^3.4.5",
+    "typescript": "^3.5.3",
     "vue-cli-plugin-i18n": "^0.6.0",
     "vue-cli-plugin-webpack-bundle-analyzer": "^1.4.0",
     "vue-template-compiler": "^2.6.10",
