@@ -114,11 +114,7 @@ func (s *ServerT) Hosts() ([]string, error) {
 		hosts = append(hosts, "localhost")
 	}
 
-	addresses, err := net.InterfaceAddrs()
-	if err != nil {
-		return nil, err
-	}
-
+	addresses, _ := net.InterfaceAddrs()
 	for _, address := range addresses {
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			host := ipnet.IP.To4()

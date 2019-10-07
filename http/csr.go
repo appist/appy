@@ -24,7 +24,9 @@ var (
 
 // InitCSR setup the SPA client-side rendering/routing with index.html fallback.
 func (s *ServerT) InitCSR() {
-	s.Router.Use(serveStaticAssets("/", s))
+	// Setup SPA hosting at "/".
+	s.Router.Use(serveSPA("/", s))
+
 	s.Router.NoRoute(middleware.CSRFSkipCheck(), func(c *gin.Context) {
 		request := c.Request
 		method := request.Method
@@ -36,20 +38,21 @@ func (s *ServerT) InitCSR() {
 			return
 		}
 
-		if method == "GET" && fallback && s.Assets != nil {
+		if method == "GET" && fallback {
 			c.Header("Cache-Control", "no-cache")
 
-			f, err := s.Assets.Open("/index.html")
-			if err != nil {
-				c.HTML(http.StatusNotFound, "error/404", gin.H{
-					"title": "404 Page Not Found",
-				})
-				return
+			data := []byte{}
+			if s.Assets != nil {
+				f, _ := s.Assets.Open("/index.html")
+				if f != nil {
+					data, _ = ioutil.ReadAll(f)
+				}
 			}
 
-			data, _ := ioutil.ReadAll(f)
-			c.Data(http.StatusOK, "text/html; charset=utf-8", data)
-			return
+			if len(data) > 0 {
+				c.Data(http.StatusOK, "text/html; charset=utf-8", data)
+				return
+			}
 		}
 
 		c.HTML(http.StatusNotFound, "error/404", gin.H{
@@ -58,7 +61,7 @@ func (s *ServerT) InitCSR() {
 	})
 }
 
-func serveStaticAssets(url string, s *ServerT) HandlerFuncT {
+func serveSPA(url string, s *ServerT) HandlerFuncT {
 	fs := http.FileServer(s.Assets)
 	if url != "" {
 		fs = http.StripPrefix(url, fs)
@@ -67,8 +70,7 @@ func serveStaticAssets(url string, s *ServerT) HandlerFuncT {
 	return func(c *ContextT) {
 		request := c.Request
 
-		if !strings.Contains(request.URL.Path, "/"+SSRView+"/") &&
-			!strings.Contains(request.URL.Path, "/"+SSRLocale+"/") &&
+		if !support.Contains([]string{"/" + SSRView + "/", "/" + SSRLocale + "/"}, request.URL.Path) &&
 			!isSSRPath(s.Routes(), request.URL.Path) {
 			userAgent := request.Header.Get(userAgentHeader)
 

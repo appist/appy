@@ -69,6 +69,18 @@ func (s *ServerSuiteT) TestAddDefaultWelcomePage() {
 	s.Equal(200, recorder.Code)
 	s.Equal("application/json; charset=utf-8", recorder.Header().Get("Content-Type"))
 	s.Equal("{\"a\":1}\n", recorder.Body.String())
+
+	recorder = httptest.NewRecorder()
+	request, _ = http.NewRequest("GET", "/", nil)
+	s.Server = NewServer(s.Config)
+	s.Server.Assets = http.Dir("../testdata/assets")
+	s.Server.InitCSR()
+	s.Server.AddDefaultWelcomePage()
+	s.Server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
+	s.Contains(recorder.Body.String(), "we build apps")
 }
 
 func (s *ServerSuiteT) TestIsSSLCertsExist() {
