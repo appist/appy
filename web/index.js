@@ -89,7 +89,7 @@ function getVueConfig(pkg) {
             }
           }),
           inject: true,
-          logo: `${srcDir}/assets/logo.svg`,
+          logo: `${srcDir}/assets/logo.png`,
           prefix: "pwa/"
         }),
         new webpackWorkboxPlugin.GenerateSW({
