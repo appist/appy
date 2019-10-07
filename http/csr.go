@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -10,102 +9,98 @@ import (
 
 	"github.com/appist/appy/middleware"
 	"github.com/appist/appy/support"
+	"github.com/appist/appy/tools"
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/chromedp"
-	"github.com/gin-gonic/gin"
 )
+
+type spaResourceT struct {
+	assets     http.FileSystem
+	fileServer http.Handler
+	prefix     string
+}
 
 var (
 	// CSRRoot is the root folder for VueJS web application.
 	CSRRoot         = "web"
 	extRegex        = regexp.MustCompile(`\.(bmp|css|csv|eot|exif|gif|html|ico|ini|jpg|jpeg|js|json|mp4|otf|pdf|png|svg|webp|woff|woff2|tiff|ttf|toml|txt|xml|xlsx|yml|yaml)$`)
 	userAgentHeader = http.CanonicalHeaderKey("user-agent")
+	spaResources    = []spaResourceT{}
 )
 
 // InitCSR setup the SPA client-side rendering/routing with index.html fallback.
 func (s *ServerT) InitCSR() {
 	// Setup SPA hosting at "/".
-	s.Router.Use(serveSPA("/", s))
+	s.Router.Use(serveSPA("/", s.Assets, s))
 
-	s.Router.NoRoute(middleware.CSRFSkipCheck(), func(c *gin.Context) {
+	// Setup SPA hosting at "/tools".
+	s.Router.Use(serveSPA("/tools", tools.Assets, s))
+
+	s.Router.NoRoute(middleware.CSRFSkipCheck(), func(c *ContextT) {
 		request := c.Request
-		method := request.Method
-		path := request.URL.Path
-		fallback := !extRegex.MatchString(path)
 
-		// Prevent SEO crawling from double rendering.
-		if isSEOBot(request.Header.Get(userAgentHeader)) {
+		if request.Method == "GET" && !extRegex.MatchString(request.URL.Path) {
+			c.Header("Cache-Control", "no-cache")
+			resource := getSPAResource(request.URL.Path)
+
+			f, _ := resource.assets.Open("/index.html")
+			data, _ := ioutil.ReadAll(f)
+
+			c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 			return
 		}
 
-		if method == "GET" && fallback {
-			c.Header("Cache-Control", "no-cache")
-
-			data := []byte{}
-			if s.Assets != nil {
-				f, _ := s.Assets.Open("/index.html")
-				if f != nil {
-					data, _ = ioutil.ReadAll(f)
-				}
-			}
-
-			if len(data) > 0 {
-				c.Data(http.StatusOK, "text/html; charset=utf-8", data)
-				return
-			}
-		}
-
-		c.HTML(http.StatusNotFound, "error/404", gin.H{
+		c.HTML(http.StatusNotFound, "error/404", H{
 			"title": "404 Page Not Found",
 		})
 	})
 }
 
-func serveSPA(url string, s *ServerT) HandlerFuncT {
-	fs := http.FileServer(s.Assets)
-	if url != "" {
-		fs = http.StripPrefix(url, fs)
-	}
+func serveSPA(prefix string, assets http.FileSystem, s *ServerT) HandlerFuncT {
+	spaResources = append(spaResources, spaResourceT{
+		assets:     assets,
+		fileServer: http.StripPrefix(prefix, http.FileServer(assets)),
+		prefix:     prefix,
+	})
 
 	return func(c *ContextT) {
 		request := c.Request
+		ssrAssetsPath := []string{"/" + SSRView + "/", "/" + SSRLocale + "/"}
 
-		if !support.Contains([]string{"/" + SSRView + "/", "/" + SSRLocale + "/"}, request.URL.Path) &&
-			!isSSRPath(s.Routes(), request.URL.Path) {
-			userAgent := request.Header.Get(userAgentHeader)
+		// Serve from the assets FS if the URL path isn't `/views/`, `/locales/` or any of the SSR path.
+		if !support.Contains(ssrAssetsPath, request.URL.Path) && !isSSRPath(s.Routes(), request.URL.Path) {
+			resource := getSPAResource(request.URL.Path)
 
-			// SEO crawling for the CSR pages.
-			if !extRegex.MatchString(request.URL.Path) && isSEOBot(userAgent) {
-				scheme := "http"
-				port := s.Config.HTTPPort
-				if s.Config.HTTPSSLEnabled == true {
-					scheme = "https"
-					port = s.Config.HTTPSSLPort
-				}
-
-				targetURL := fmt.Sprintf("%s://%s:%s%s", scheme, s.Config.HTTPHost, port, request.URL)
-				support.Logger.Infof("SEO bot \"%s\" crawling \"%s\"...", userAgent, targetURL)
-
-				data, err := crawl(targetURL)
-				if err != nil {
-					support.Logger.Error(err)
-					c.AbortWithError(http.StatusInternalServerError, err)
-					return
-				}
-
-				c.Data(http.StatusOK, "text/html; charset=utf-8", data)
-				return
-			}
-
-			if s.Assets != nil {
-				_, err := s.Assets.Open(request.URL.Path)
+			if resource.assets != nil {
+				requestPath := request.URL.Path
+				assetPath := strings.Replace(requestPath, resource.prefix, "", 1)
+				_, err := resource.assets.Open(assetPath)
+				// Only serve the request from assets if the file is in the assets filesystem.
 				if err == nil {
-					fs.ServeHTTP(c.Writer, request)
+					resource.fileServer.ServeHTTP(c.Writer, request)
 					c.Abort()
 				}
 			}
 		}
 	}
+}
+
+func getSPAResource(path string) spaResourceT {
+	var resource spaResourceT
+
+	for _, spaResource := range spaResources {
+		if (spaResourceT{}) == resource {
+			resource = spaResource
+			continue
+		}
+
+		if spaResource.prefix != "/" && strings.HasPrefix(path, spaResource.prefix) {
+			resource = spaResource
+			break
+		}
+	}
+
+	return resource
 }
 
 func crawl(url string) ([]byte, error) {
