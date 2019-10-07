@@ -20,6 +20,7 @@ func (s *InitCSRSuiteT) SetupTest() {
 	support.Copy(&s.Config, &support.Config)
 	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.Server = NewServer(s.Config)
+	spaResources = []spaResourceT{}
 }
 
 func (s *InitCSRSuiteT) TestAssetsNotConfigured() {
@@ -30,6 +31,7 @@ func (s *InitCSRSuiteT) TestAssetsNotConfigured() {
 	s.Server.Router.ServeHTTP(recorder, request)
 
 	s.Equal(404, recorder.Code)
+	support.Logger.Info(recorder.Body.String())
 }
 
 func (s *InitCSRSuiteT) TestNonExistingPathWithAssetsNil() {
@@ -41,6 +43,7 @@ func (s *InitCSRSuiteT) TestNonExistingPathWithAssetsNil() {
 	s.Server.Router.ServeHTTP(recorder, request)
 
 	s.Equal(404, recorder.Code)
+	support.Logger.Info(recorder.Body.String())
 }
 
 func (s *InitCSRSuiteT) TestNonExistingPathWithAssetsNotNil() {
@@ -78,50 +81,16 @@ func (s *InitCSRSuiteT) TestFallbackReturnsIndexHTML() {
 	s.Contains(recorder.Body.String(), "<div id=\"app\">we build apps</div>")
 }
 
-// We need to better test this in the integration test.
-func (s *InitCSRSuiteT) TestSEOCrawlingWithSSLDisabled() {
+func (s *InitCSRSuiteT) TestToolsSPA() {
 	s.Server.Assets = http.Dir("../testdata/assets")
 	s.Server.InitCSR()
 
 	recorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/", nil)
-	request.Host = "0.0.0.0"
-	request.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
+	request, _ := http.NewRequest("GET", "/tools", nil)
 	s.Server.Router.ServeHTTP(recorder, request)
 
 	s.Equal(200, recorder.Code)
-	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
-	s.Equal("<html><head></head><body></body></html>", recorder.Body.String())
-}
-
-// We need to better test this in the integration test.
-func (s *InitCSRSuiteT) TestCrawlerBotWithSSLEnabled() {
-	s.Server.Assets = http.Dir("../testdata/assets")
-	s.Server.InitCSR()
-	s.Server.Config.HTTPSSLEnabled = true
-
-	recorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/", nil)
-	request.Host = "https"
-	request.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
-	s.Server.Router.ServeHTTP(recorder, request)
-
-	s.Equal(200, recorder.Code)
-	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
-	s.Equal("<html><head></head><body></body></html>", recorder.Body.String())
-}
-
-func (s *InitCSRSuiteT) TestCrawlerBotWithMalformedURL() {
-	s.Server.Assets = http.Dir("../testdata/assets")
-	s.Server.InitCSR()
-	s.Server.Config.HTTPSSLEnabled = true
-
-	recorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "https://blabla", nil)
-	request.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
-	s.Server.Router.ServeHTTP(recorder, request)
-
-	s.Equal(500, recorder.Code)
+	s.Contains(recorder.Body.String(), "<title>appy tooling</title>")
 }
 
 func (s *InitCSRSuiteT) TestSSRStillWorkCorrectly() {

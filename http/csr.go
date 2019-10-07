@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -10,8 +9,6 @@ import (
 	"github.com/appist/appy/middleware"
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/tools"
-	"github.com/chromedp/cdproto/dom"
-	"github.com/chromedp/chromedp"
 )
 
 type spaResourceT struct {
@@ -43,11 +40,18 @@ func (s *ServerT) InitCSR() {
 			c.Header("Cache-Control", "no-cache")
 			resource := getSPAResource(request.URL.Path)
 
-			f, _ := resource.assets.Open("/index.html")
-			data, _ := ioutil.ReadAll(f)
+			if resource.assets != nil {
+				file, _ := resource.assets.Open("/index.html")
 
-			c.Data(http.StatusOK, "text/html; charset=utf-8", data)
-			return
+				if file != nil {
+					data, _ := ioutil.ReadAll(file)
+
+					if data != nil {
+						c.Data(http.StatusOK, "text/html; charset=utf-8", data)
+						return
+					}
+				}
+			}
 		}
 
 		c.HTML(http.StatusNotFound, "error/404", H{
@@ -103,55 +107,9 @@ func getSPAResource(path string) spaResourceT {
 	return resource
 }
 
-func crawl(url string) ([]byte, error) {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.DisableGPU,
-		chromedp.NoSandbox,
-		chromedp.Flag("ignore-certificate-errors", true),
-	)
-
-	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer cancel()
-
-	taskCtx, cancel := chromedp.NewContext(allocCtx)
-	defer cancel()
-
-	var data string
-	err := chromedp.Run(taskCtx,
-		chromedp.Navigate(url),
-		chromedp.WaitReady("body", chromedp.ByQuery),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			node, err := dom.GetDocument().Do(ctx)
-			if err != nil {
-				return err
-			}
-
-			data, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
-			return err
-		}),
-	)
-
-	return []byte(data), err
-}
-
 func isSSRPath(routes []RouteInfoT, path string) bool {
 	for _, route := range routes {
 		if route.Path == path {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isSEOBot(ua string) bool {
-	bots := []string{
-		"googlebot", "yahoou", "bingbot", "baiduspider", "yandex", "yeti", "yodaobot", "gigabot", "ia_archiver",
-		"facebookexternalhit", "twitterbot", "developers.google.com",
-	}
-
-	for _, bot := range bots {
-		if strings.Contains(strings.ToLower(ua), bot) {
 			return true
 		}
 	}
