@@ -57,6 +57,7 @@ function getVueConfig(pkg) {
     if (p !== "/") {
       proxy[p] = {
         secure: false,
+        ws: true,
         target: `${proxyConfig.scheme}://${process.env.HTTP_HOST}:${proxyConfig.port}`
       };
     }
