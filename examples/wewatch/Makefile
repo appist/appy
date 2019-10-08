@@ -6,9 +6,13 @@ bootstrap:
 	asdf reshim golang
 	asdf reshim nodejs
 
+clean:
+	rm -rf assets coverage.out wewatch **/*.log
+
 codecheck:
 	go vet ./...
 	golint -set_exit_status ./...
+	cd web && npm run lint
 
 install:
 	go get -u golang.org/x/lint/golint
