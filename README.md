@@ -21,7 +21,8 @@ An opinionated productive web framework that helps scaling business easier.
 ## Features
 
 - Modern app development with [12factor](https://12factor.net/) methodology.
-- Highly performant routing HTTP server using [Gin](https://github.com/gin-gonic/gin).
+- [Highly performant](https://github.com/gin-gonic/gin/blob/master/BENCHMARKS.md) routing HTTP server using [Gin](https://github.com/gin-gonic/gin).
+- [Highly performant](https://github.com/go-pg/pg/wiki/FAQ#why-go-pg) PostgreSQL ORM using [go-pg](https://github.com/go-pg/pg).
 - Automatically re-compile upon file changes.
 - Automatically re-generate GraphQL or gRPC boilerplate codes upon schema changes using [gqlgen](https://gqlgen.com/) or [protoc](https://github.com/protocolbuffers/protobuf).
 - Server-side rendered **View** templates with [html/template](https://golang.org/pkg/html/template/).
