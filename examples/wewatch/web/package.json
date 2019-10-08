@@ -7,7 +7,9 @@
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e --env chrome,firefox --headless",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "dependencies": {
     "core-js": "^3.1.2",
@@ -21,6 +23,11 @@
   },
   "devDependencies": {
     "@appist/appy": "git+https://github.com/appist/appy.git#master",
+    "@babel/core": "^7.6.2",
+    "@storybook/addon-actions": "^5.2.3",
+    "@storybook/addon-links": "^5.2.3",
+    "@storybook/addons": "^5.2.3",
+    "@storybook/vue": "^5.2.3",
     "@types/jest": "^24.0.11",
     "@vue/cli-plugin-babel": "^4.0.0-rc.7",
     "@vue/cli-plugin-e2e-nightwatch": "^4.0.0-rc.7",
@@ -33,6 +40,8 @@
     "@vue/eslint-config-prettier": "^5.0.0",
     "@vue/eslint-config-typescript": "^4.0.0",
     "@vue/test-utils": "1.0.0-beta.29",
+    "babel-loader": "^8.0.6",
+    "babel-preset-vue": "^2.0.2",
     "chromedriver": "77",
     "error-overlay-webpack-plugin": "^0.4.1",
     "eslint": "^5.16.0",

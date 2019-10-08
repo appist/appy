@@ -27,9 +27,11 @@ An opinionated productive web framework that helps scaling business easier.
 - Automatically re-generate GraphQL or gRPC boilerplate codes upon schema changes using [gqlgen](https://gqlgen.com/) or [protoc](https://github.com/protocolbuffers/protobuf).
 - Server-side rendered **View** templates with [html/template](https://golang.org/pkg/html/template/).
 - Client-side rendered **Progressive Web App** with [Webpack](https://webpack.js.org/) + [Typescript](https://www.typescriptlang.org/) + [VueJS](https://vuejs.org/).
+- Single binary support with **View** + **Progressive Web App** embedded.
 - Automatically prerender client-side rendered pages for SEO using [chromedp](https://github.com/chromedp/chromedp).
 - Automatically remove `Set-Cookie` response headers when the `X-API-Only: 1` request header is sent.
-- Single binary support with **View** + **Progressive Web App** embedded.
+- Automatically set the locale based on the browser's or HTTP request's `Accept-Language` header.
+- Use [Storybook](https://storybook.js.org/docs/basics/introduction/) to document/demonstrate your team's UI component style guide.
 
 ## Credits
 
