@@ -1,5 +1,7 @@
 # appy
 
+An opinionated productive web framework that helps scaling business easier.
+
 [![Build Status](https://github.com/appist/appy/workflows/Code%20Check/badge.svg)](https://github.com/appist/appy/actions?workflow=Code+Check)
 [![Build Status](https://github.com/appist/appy/workflows/Unit%20Test/badge.svg)](https://github.com/appist/appy/actions?workflow=Unit+Test)
 [![Build Status](https://github.com/appist/appy/workflows/Examples%20-%20WeWatch/badge.svg)](https://github.com/appist/appy/actions?workflow=Examples+-+WeWatch)
@@ -9,8 +11,6 @@
 [![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg?style=flat-square)](http://godoc.org/github.com/appist/appy)
 [![Go Report Card](https://goreportcard.com/badge/github.com/appist/appy?style=flat-square)](https://goreportcard.com/report/github.com/appist/appy)
 ![GitHub](https://img.shields.io/github/license/appist/appy.svg?style=flat-square)
-
-An opinionated productive web framework that helps scaling business easier.
 
 ## Features
 
