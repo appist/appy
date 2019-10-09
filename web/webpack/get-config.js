@@ -167,17 +167,14 @@ module.exports = function(pkg) {
         },
         {
           test: /\.svelte$/,
-          oneOf: [
+          use: [
             {
-              use: [
-                {
-                  loader: "svelte-loader",
-                  options: {
-                    emitCss: isProduction,
-                    hotReload: !isProduction
-                  }
-                }
-              ]
+              loader: "svelte-loader",
+              options: {
+                emitCss: isProduction,
+                hotReload: !isProduction,
+                preprocess: require("svelte-preprocess")({})
+              }
             }
           ]
         }

@@ -1,46 +1,30 @@
 {
   "name": "wewatch",
+  "description": "A demo web app to watch movies/TVs using appy framework.",
   "version": "1.0.0",
   "scripts": {
     "build": "NODE_ENV=production npx webpack --mode=production --progress",
-    "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:stylelint",
-    "lint:prettier": "npx prettier --write '**/*.{svelte,svt}'",
-    "lint:eslint": "npx eslint --fix src",
-    "lint:stylelint": "npx stylelint '**/*.{css,html,js,md,mjs,svelte,svt,svg,ts}' --fix",
+    "prettier": "npx prettier --write '**/*.svelte'",
     "serve": "npx webpack-dev-server",
     "test:unit": "",
     "test:e2e": ""
   },
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "bootstrap": "^4.3.1",
+    "jquery": "^3.4.1",
+    "popper.js": "^1.15.0"
+  },
+  "devDependencies": {
+    "prettier": "^1.18.2",
+    "prettier-plugin-svelte": "^0.7.0",
+    "svelte": "^3.12.1",
+    "webpack": "^4.41.0",
+    "webpack-dev-server": "^3.8.2"
+  },
   "browserslist": [
     "> 1%",
     "last 2 versions"
-  ],
-  "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 2019,
-      "sourceType": "module"
-    },
-    "env": {
-      "es6": true,
-      "browser": true
-    },
-    "plugins": [
-      "svelte3"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "**/*.svelte"
-        ],
-        "processor": "svelte3/svelte3"
-      }
-    ]
-  },
-  "eslintIgnore": [
-    "src/assets"
   ],
   "postcss": {
     "plugins": {
@@ -48,12 +32,13 @@
     }
   },
   "prettier": {
+    "parser": "vue",
     "trailingComma": "es5",
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true,
     "plugins": [
-      "prettier-plugin-svelte"
+      "svelte"
     ]
   },
   "pwa": {
@@ -71,11 +56,5 @@
     "scope": "/",
     "start_url": "./index.html",
     "theme_color": "#000000"
-  },
-  "stylelint": {
-    "extends": [
-      "stylelint-config-recommended",
-      "stylelint-config-css-modules"
-    ]
   }
 }
