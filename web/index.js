@@ -1,5 +1,5 @@
-const getVueConfig = require("./get-vue-config");
+const getConfig = require("./webpack/get-config");
 
 module.exports = {
-  getVueConfig
+  getConfig
 };

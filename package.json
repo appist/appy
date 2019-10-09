@@ -1,7 +1,7 @@
 {
   "name": "@appist/appy",
   "version": "0.1.0",
-  "description": "A set of toolkit for appy web framework.",
+  "description": "The UI toolkit for appy web framework.",
   "main": "web/index.js",
   "files": [
     "web"
@@ -19,5 +19,36 @@
     "url": "https://github.com/appist/appy/issues"
   },
   "homepage": "https://github.com/appist/appy#readme",
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "@intervolga/optimize-cssnano-plugin": "^1.0.6",
+    "autoprefixer": "^9.6.4",
+    "babel-loader": "^8.0.6",
+    "case-sensitive-paths-webpack-plugin": "^2.2.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^5.0.4",
+    "css-loader": "^3.2.0",
+    "eslint": "^6.5.1",
+    "eslint-plugin-svelte3": "^2.7.3",
+    "favicons-webpack-plugin": "^1.0.2",
+    "file-loader": "^4.2.0",
+    "friendly-errors-webpack-plugin": "^1.7.0",
+    "html-webpack-plugin": "^3.2.0",
+    "mini-css-extract-plugin": "^0.8.0",
+    "postcss-loader": "^3.0.0",
+    "preload-webpack-plugin": "^3.0.0-beta.3",
+    "prettier": "^1.18.2",
+    "prettier-plugin-svelte": "^0.7.0",
+    "stylelint": "^11.0.0",
+    "stylelint-config-css-modules": "^1.5.0",
+    "stylelint-config-recommended": "^3.0.0",
+    "svelte": "^3.12.1",
+    "svelte-loader": "^2.13.6",
+    "url-loader": "^2.2.0",
+    "webpack": "^4.41.0",
+    "webpack-bundle-analyzer": "^3.5.2",
+    "webpack-cli": "^3.3.9",
+    "webpack-dev-server": "^3.8.2",
+    "workbox-webpack-plugin": "^4.3.1"
+  }
 }

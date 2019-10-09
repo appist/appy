@@ -1,124 +1,60 @@
 {
   "name": "wewatch",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "test:unit": "vue-cli-service test:unit",
-    "test:e2e": "vue-cli-service test:e2e --env chrome,firefox --headless",
-    "lint": "vue-cli-service lint",
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "build": "NODE_ENV=production npx webpack --mode=production --progress",
+    "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:stylelint",
+    "lint:prettier": "npx prettier --write '**/*.{svelte,svt}'",
+    "lint:eslint": "npx eslint --fix src",
+    "lint:stylelint": "npx stylelint '**/*.{css,html,js,md,mjs,svelte,svt,svg,ts}' --fix",
+    "serve": "npx webpack-dev-server",
+    "test:unit": "",
+    "test:e2e": ""
   },
-  "dependencies": {
-    "core-js": "^3.1.2",
-    "register-service-worker": "^1.6.2",
-    "vue": "^2.6.10",
-    "vue-class-component": "^7.0.2",
-    "vue-i18n": "^8.14.1",
-    "vue-property-decorator": "^8.1.0",
-    "vue-router": "^3.0.6",
-    "vuex": "^3.0.1"
-  },
-  "devDependencies": {
-    "@appist/appy": "git+https://github.com/appist/appy.git#master",
-    "@babel/core": "^7.6.2",
-    "@storybook/addon-actions": "^5.2.3",
-    "@storybook/addon-links": "^5.2.3",
-    "@storybook/addons": "^5.2.3",
-    "@storybook/vue": "^5.2.3",
-    "@types/jest": "^24.0.11",
-    "@vue/cli-plugin-babel": "^4.0.0-rc.7",
-    "@vue/cli-plugin-e2e-nightwatch": "^4.0.0-rc.7",
-    "@vue/cli-plugin-eslint": "^4.0.0-rc.7",
-    "@vue/cli-plugin-router": "^4.0.0-rc.7",
-    "@vue/cli-plugin-typescript": "^4.0.0-rc.7",
-    "@vue/cli-plugin-unit-jest": "^4.0.0-rc.7",
-    "@vue/cli-plugin-vuex": "^4.0.0-rc.7",
-    "@vue/cli-service": "^4.0.0-rc.7",
-    "@vue/eslint-config-prettier": "^5.0.0",
-    "@vue/eslint-config-typescript": "^4.0.0",
-    "@vue/test-utils": "1.0.0-beta.29",
-    "babel-loader": "^8.0.6",
-    "babel-preset-vue": "^2.0.2",
-    "chromedriver": "77",
-    "error-overlay-webpack-plugin": "^0.4.1",
-    "eslint": "^5.16.0",
-    "eslint-plugin-prettier": "^3.1.0",
-    "eslint-plugin-vue": "^5.0.0",
-    "favicons-webpack-plugin": "^1.0.2",
-    "geckodriver": "^1.16.2",
-    "husky": "^3.0.8",
-    "imagemin-lint-staged": "^0.4.0",
-    "lint-staged": "^9.4.1",
-    "node-sass": "^4.12.0",
-    "prettier": "^1.18.2",
-    "pug": "^2.0.4",
-    "pug-plain-loader": "^1.0.0",
-    "sass-loader": "^8.0.0",
-    "typescript": "^3.5.3",
-    "vue-cli-plugin-i18n": "^0.6.0",
-    "vue-cli-plugin-webpack-bundle-analyzer": "^1.4.0",
-    "vue-template-compiler": "^2.6.10",
-    "workbox-webpack-plugin": "^4.3.1"
-  },
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
   "browserslist": [
     "> 1%",
     "last 2 versions"
   ],
   "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "@vue/prettier",
-      "@vue/typescript"
-    ],
-    "rules": {},
     "parserOptions": {
-      "parser": "@typescript-eslint/parser"
+      "ecmaVersion": 2019,
+      "sourceType": "module"
     },
+    "env": {
+      "es6": true,
+      "browser": true
+    },
+    "plugins": [
+      "svelte3"
+    ],
     "overrides": [
       {
         "files": [
-          "**/__tests__/*.{j,t}s?(x)",
-          "**/tests/unit/**/*.spec.{j,t}s?(x)"
+          "**/*.svelte"
         ],
-        "env": {
-          "jest": true
-        }
+        "processor": "svelte3/svelte3"
       }
     ]
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "jest": {
-    "preset": "@vue/cli-plugin-unit-jest/presets/typescript-and-babel"
-  },
-  "lint-staged": {
-    "../**/*.go": [
-      "golint -set_exit_status",
-      "git add"
-    ],
-    "../**/*.{css,scss,gql,graphql,js,jsx,json,ts,tsx,md}": [
-      "prettier --write",
-      "git add"
-    ],
-    "../**/*.{png,jpeg,jpg,gif,svg}": [
-      "imagemin-lint-staged",
-      "git add"
-    ]
-  },
+  "eslintIgnore": [
+    "src/assets"
+  ],
   "postcss": {
     "plugins": {
       "autoprefixer": {}
     }
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true,
+    "plugins": [
+      "prettier-plugin-svelte"
+    ]
   },
   "pwa": {
     "appName": "WeWatch",
@@ -135,5 +71,11 @@
     "scope": "/",
     "start_url": "./index.html",
     "theme_color": "#000000"
+  },
+  "stylelint": {
+    "extends": [
+      "stylelint-config-recommended",
+      "stylelint-config-css-modules"
+    ]
   }
 }

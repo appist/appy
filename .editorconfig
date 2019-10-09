@@ -40,7 +40,7 @@ indent_style = space
 
 # HTML
 # https://google.github.io/styleguide/htmlcssguide.xml#General_Formatting_Rules
-[*.{htm,html}]
+[*.{htm,html,svelte}]
 indent_size = 2
 indent_style = space
 trim_trailing_whitespace = true
