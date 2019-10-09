@@ -13,7 +13,8 @@
   "dependencies": {
     "bootstrap": "^4.3.1",
     "jquery": "^3.4.1",
-    "popper.js": "^1.15.0"
+    "popper.js": "^1.15.0",
+    "register-service-worker": "^1.6.2"
   },
   "devDependencies": {
     "prettier": "^1.18.2",
@@ -32,14 +33,10 @@
     }
   },
   "prettier": {
-    "parser": "vue",
     "trailingComma": "es5",
     "tabWidth": 2,
     "semi": false,
-    "singleQuote": true,
-    "plugins": [
-      "svelte"
-    ]
+    "singleQuote": true
   },
   "pwa": {
     "appName": "WeWatch",
