@@ -10,4 +10,7 @@
   @import 'bootstrap/scss/bootstrap';
 </style>
 
-<template lang="pug" />
+<template lang="pug">
+  button(class="btn-primary" on:click!="{() => handleClick(-1)}") - span {count}
+  button(class="btn-primary" on:click!="{() => handleClick(1)}") +
+</template>

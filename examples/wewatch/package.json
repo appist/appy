@@ -2,6 +2,7 @@
   "name": "wewatch",
   "description": "A demo web app to watch movies/TVs using appy framework.",
   "version": "1.0.0",
+  "repository": "github:appist/appy",
   "scripts": {
     "build": "NODE_ENV=production webpack --config=web/appy.config.js --mode=production --progress",
     "prettier": "prettier --write '**/*.svelte'",
@@ -19,8 +20,7 @@
     "register-service-worker": "^1.6.2"
   },
   "devDependencies": {
-    "@appist/appy": "git+https://github.com/appist/appy.git#master",
-    "@babel/core": "^7.6.3",
+    "@babel/core": "^7.6.4",
     "@storybook/addon-actions": "^5.2.3",
     "@storybook/addon-links": "^5.2.3",
     "@storybook/addons": "^5.2.3",
@@ -34,6 +34,7 @@
     "svelte": "^3.12.1",
     "svelte-loader": "^2.13.6",
     "webpack": "^4.41.0",
+    "webpack-cli": "^3.3.9",
     "webpack-dev-server": "^3.8.2"
   },
   "browserslist": [

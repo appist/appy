@@ -12,7 +12,7 @@ func WelcomeIndex() appy.HandlerFuncT {
 		c.HTML(http.StatusOK, "welcome/index.html", appy.H{
 			"message": appy.T(c, "message", appy.H{
 				"Name":  "John",
-				"Count": 0,
+				"Count": 2,
 			}),
 		})
 	}

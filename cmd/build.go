@@ -30,7 +30,7 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 			assetsPathForSSR := assetsPath + "/" + ah.SSRRootRelease
 			os.RemoveAll(assetsPath)
 
-			if _, err := os.Stat(ah.CSRRoot + "/package.json"); !os.IsNotExist(err) {
+			if _, err := os.Stat("./package.json"); !os.IsNotExist(err) {
 				ssrPaths := []string{}
 				for _, route := range s.Routes() {
 					if route.Method == "GET" {
@@ -42,7 +42,7 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 				buildWebCmd := exec.Command("npm", "run", "build")
 				buildWebCmd.Env = os.Environ()
 				buildWebCmd.Env = append(buildWebCmd.Env, "APPY_SSR_PATHS="+strings.Join(ssrPaths, ","))
-				buildWebCmd.Dir = ah.CSRRoot
+				buildWebCmd.Dir = wd
 				buildWebCmd.Stdout = os.Stdout
 				buildWebCmd.Stderr = os.Stderr
 				if err := buildWebCmd.Run(); err != nil {
