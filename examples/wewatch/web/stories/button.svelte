@@ -1,6 +1,14 @@
-<button class="button" on:click="{onClick}">
-  {text}
-</button>
+<script>
+  import { createEventDispatcher } from 'svelte'
+
+  export let text = ''
+
+  const dispatch = createEventDispatcher()
+
+  function onClick(event) {
+    dispatch('click', event)
+  }
+</script>
 
 <style>
   .button {
@@ -14,14 +22,4 @@
   }
 </style>
 
-<script>
-  import { createEventDispatcher } from 'svelte'
-
-  export let text = ''
-
-  const dispatch = createEventDispatcher()
-
-  function onClick(event) {
-    dispatch('click', event)
-  }
-</script>
+<button class="button" on:click={onClick}>{text}</button>

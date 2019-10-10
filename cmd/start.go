@@ -61,7 +61,7 @@ func NewStartCommand(s *ah.ServerT) *cobra.Command {
 			}()
 
 			go runAPIServeCmd()
-			if _, err := os.Stat(wd + "/" + ah.CSRRoot + "/package.json"); !os.IsNotExist(err) {
+			if _, err := os.Stat(wd + "/package.json"); !os.IsNotExist(err) {
 				time.Sleep(2 * time.Second)
 				go runWebServeCmd(s)
 			}
@@ -146,7 +146,7 @@ func runWebServeCmd(s *ah.ServerT) {
 	}
 
 	webServeCmd = exec.Command("npm", "run", "start")
-	webServeCmd.Dir = wd + "/" + ah.CSRRoot
+	webServeCmd.Dir = wd
 	webServeCmd.Env = os.Environ()
 	webServeCmd.Env = append(webServeCmd.Env, "APPY_SSR_PATHS="+strings.Join(ssrPaths, ","))
 	webServeCmd.Env = append(webServeCmd.Env, "HTTP_HOST="+s.Config.HTTPHost)
@@ -185,7 +185,7 @@ func runWebServeCmd(s *ah.ServerT) {
 			outText := strings.Trim(out.Text(), " ")
 
 			if outText == "" {
-				if stdoutBlank || isWDSCompiling {
+				if stdoutBlank || isWDSCompiling || firstTime {
 					continue
 				}
 

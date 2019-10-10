@@ -10,6 +10,4 @@
   @import 'bootstrap/scss/bootstrap';
 </style>
 
-<template lang="pug">
-
-</template>
+<template lang="pug" />

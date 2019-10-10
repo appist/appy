@@ -32,7 +32,7 @@ func (s *PrerenderSuiteT) TestRequestWithNonSEOBot() {
 			Path: "/",
 		},
 	}
-	output := support.CaptureOutput(func() {
+	output := support.CaptureLogOutput(func() {
 		Prerender(s.Config)(ctx)
 	})
 
@@ -52,7 +52,7 @@ func (s *PrerenderSuiteT) TestRequestHTTPHostWithSEOBot() {
 	}
 	ctx.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
 
-	output := support.CaptureOutput(func() {
+	output := support.CaptureLogOutput(func() {
 		Prerender(s.Config)(ctx)
 	})
 
@@ -74,7 +74,7 @@ func (s *PrerenderSuiteT) TestRequestHTTPSHostWithSEOBot() {
 	ctx.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
 
 	s.Config.HTTPSSLEnabled = true
-	output := support.CaptureOutput(func() {
+	output := support.CaptureLogOutput(func() {
 		Prerender(s.Config)(ctx)
 	})
 
@@ -99,7 +99,7 @@ func (s *PrerenderSuiteT) TestRequestFailedWithSEOBot() {
 	}
 	ctx.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
 
-	output := support.CaptureOutput(func() {
+	output := support.CaptureLogOutput(func() {
 		Prerender(s.Config)(ctx)
 	})
 

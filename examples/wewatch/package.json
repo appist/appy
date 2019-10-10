@@ -3,13 +3,13 @@
   "description": "A demo web app to watch movies/TVs using appy framework.",
   "version": "1.0.0",
   "scripts": {
-    "build": "NODE_ENV=production webpack --mode=production --progress",
+    "build": "NODE_ENV=production webpack --config=web/appy.config.js --mode=production --progress",
     "prettier": "prettier --write '**/*.svelte'",
-    "start": "NODE_ENV=development webpack-dev-server --mode=development",
+    "start": "NODE_ENV=development webpack-dev-server --config=web/appy.config.js --mode=development",
     "test:unit": "",
     "test:e2e": "",
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "storybook": "start-storybook -p 6006 -c ./web/.storybook",
+    "build-storybook": "build-storybook -c ./web/.storybook"
   },
   "license": "MIT",
   "dependencies": {
@@ -46,15 +46,15 @@
     }
   },
   "lint-staged": {
-    "../**/*.go": [
+    "**/*.go": [
       "golint -set_exit_status",
       "git add"
     ],
-    "../**/*.{css,scss,gql,graphql,js,jsx,json,svelte,ts,tsx,md}": [
+    "**/*.{css,scss,gql,graphql,js,jsx,json,svelte,ts,tsx,md}": [
       "prettier --write",
       "git add"
     ],
-    "../**/*.{png,jpeg,jpg,gif,svg}": [
+    "**/*.{png,jpeg,jpg,gif,svg}": [
       "imagemin-lint-staged",
       "git add"
     ]

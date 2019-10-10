@@ -12,12 +12,12 @@ clean:
 codecheck:
 	go vet ./...
 	golint -set_exit_status ./...
-	cd web && npm run lint
+	npm run lint
 
 install:
 	go get -u golang.org/x/lint/golint
 	go mod download
-	cd web && npm i
+	npm i
 
 test:
 	go test -covermode=atomic -coverprofile=coverage.out -race -failfast ./...

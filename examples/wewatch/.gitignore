@@ -26,6 +26,7 @@ vendor
 
 # Misc.
 /assets
+/storybook-static
 /web/tests/e2e/reports/
 tmp
 wewatch

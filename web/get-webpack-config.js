@@ -19,8 +19,8 @@ const {
 
 module.exports = function(pkg) {
   const isProduction = process.env.NODE_ENV === "production" ? true : false;
-  const srcDir = "src";
-  const publicDir = "public";
+  const srcDir = "web/src";
+  const publicDir = "web/public";
   const ssrPaths = (() => {
     let paths = [];
 
@@ -34,8 +34,8 @@ module.exports = function(pkg) {
     return paths;
   })();
   const ssl = {
-    key: `../${process.env.HTTP_SSL_CERT_PATH}/key.pem`,
-    cert: `../${process.env.HTTP_SSL_CERT_PATH}/cert.pem`
+    key: `${process.env.HTTP_SSL_CERT_PATH}/key.pem`,
+    cert: `${process.env.HTTP_SSL_CERT_PATH}/cert.pem`
   };
   const https = (() => {
     return process.env.HTTP_SSL_ENABLED !== undefined &&
@@ -184,7 +184,7 @@ module.exports = function(pkg) {
         ? "js/[name].[contenthash:8].js"
         : "js/[name].js",
       filename: isProduction ? "js/[name].[contenthash:8].js" : "js/[name].js",
-      path: path.resolve("..", "assets"),
+      path: path.resolve("assets"),
       publicPath: "/"
     },
     plugins: [
@@ -247,7 +247,7 @@ module.exports = function(pkg) {
       new CopyWebpackPlugin([
         {
           from: path.resolve(publicDir),
-          to: path.resolve("..", "assets"),
+          to: path.resolve("assets"),
           toType: "dir",
           ignore: [
             ".DS_Store",
