@@ -2,6 +2,10 @@
 
 An opinionated productive web framework that helps scaling business easier.
 
+###### Project Status
+
+[![Project Status](https://img.shields.io/badge/production--ready-not%20yet-brightgreen)](https://github.com/appist/appy)
+
 ###### Build Status
 
 [![Build Status](https://github.com/appist/appy/workflows/Code%20Check/badge.svg)](https://github.com/appist/appy/actions?workflow=Code+Check)
