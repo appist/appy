@@ -30,7 +30,7 @@ An opinionated productive web framework that helps scaling business easier.
 - Automatically re-compile upon file changes.
 - Automatically re-generate GraphQL or gRPC boilerplate codes upon schema changes using [gqlgen](https://gqlgen.com/) or [protoc](https://github.com/protocolbuffers/protobuf).
 - Server-side rendered **View** templates with [html/template](https://golang.org/pkg/html/template/).
-- Client-side rendered **Progressive Web App** with [Webpack](https://webpack.js.org/) + [Typescript](https://www.typescriptlang.org/) + [VueJS](https://vuejs.org/).
+- Client-side rendered **Progressive Web App** with [Webpack](https://webpack.js.org/) + [Svelte](https://svelte.dev/).
 - Single binary support with **View** + **Progressive Web App** embedded.
 - Automatically prerender client-side rendered pages for SEO using [chromedp](https://github.com/chromedp/chromedp).
 - Automatically remove `Set-Cookie` response headers when the `X-API-Only: 1` request header is sent.
