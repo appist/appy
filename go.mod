@@ -7,7 +7,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/bndr/gotabulate v1.1.2
 	github.com/caarlos0/env v3.5.0+incompatible
-	github.com/chromedp/cdproto v0.0.0-20191005232412-878241ce2dca
+	github.com/chromedp/cdproto v0.0.0-20191009033829-c22f49c9ff0a
 	github.com/chromedp/chromedp v0.5.0
 	github.com/gin-contrib/gzip v0.0.1
 	github.com/gin-contrib/multitemplate v0.0.0-20190528082104-30e424939505
