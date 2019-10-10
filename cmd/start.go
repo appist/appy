@@ -104,10 +104,10 @@ func generateGQL() {
 		log.SetOutput(os.Stderr)
 	}()
 
-	logger.Info("* Generating GraphQL boilerplate code...")
+	fmt.Println("* Generating GraphQL boilerplate code...")
 	gqlgenConfig, _ := gqlgenLoadConfig()
 	if err := api.Generate(gqlgenConfig); err != nil {
-		logger.Error(err)
+		fmt.Println(err)
 	}
 }
 
@@ -125,7 +125,7 @@ func runAPIServeCmd() {
 	apiServeCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	apiServeCmd.Stdout = os.Stdout
 	apiServeCmd.Stderr = os.Stderr
-	logger.Info("* Compiling...")
+	fmt.Println("* Compiling...")
 	apiServeCmd.Run()
 }
 
@@ -200,23 +200,23 @@ func runWebServeCmd(s *ah.ServerT) {
 
 			if strings.Contains(outText, "Compiling...") || strings.Contains(outText, "｢wds｣") {
 				isWDSCompiling = true
-				logger.Info("* [wds] Compiling...")
+				fmt.Println("* [wds] Compiling...")
 			} else if strings.Contains(outText, "Compiled successfully in") {
 				isWDSCompiling = false
-				logger.Infof("* [wds] Compiled successfully in%s", timeRe.FindStringSubmatch(outText)[0])
+				fmt.Printf("* [wds] Compiled successfully in%s\n", timeRe.FindStringSubmatch(outText)[0])
 
 				if firstTime {
 					firstTime = false
-					logger.Infof("* [wds] Listening on %s", host)
+					fmt.Printf("* [wds] Listening on %s\n", host)
 				}
 
 				stdoutBlank = true
 			} else {
 				if strings.Contains(outText, "ERROR  ") {
-					logger.Info("")
+					fmt.Println("")
 				}
 
-				logger.Info(outText)
+				fmt.Println(outText)
 			}
 		}
 	}(webServeCmdOut)
