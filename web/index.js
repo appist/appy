@@ -1,5 +1,5 @@
-const getConfig = require("./webpack/get-config");
+const getWebpackConfig = require("./get-webpack-config");
 
 module.exports = {
-  getConfig
+  getWebpackConfig
 };

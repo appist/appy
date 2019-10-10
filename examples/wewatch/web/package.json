@@ -3,9 +3,9 @@
   "description": "A demo web app to watch movies/TVs using appy framework.",
   "version": "1.0.0",
   "scripts": {
-    "build": "NODE_ENV=production npx webpack --mode=production --progress",
-    "prettier": "npx prettier --write '**/*.svelte'",
-    "serve": "npx webpack-dev-server",
+    "build": "NODE_ENV=production webpack --mode=production --progress",
+    "prettier": "prettier --write '**/*.svelte'",
+    "start": "NODE_ENV=development webpack-dev-server --mode=development",
     "test:unit": "",
     "test:e2e": "",
     "storybook": "start-storybook -p 6006",
@@ -31,9 +31,7 @@
     "prettier": "^1.18.2",
     "prettier-plugin-svelte": "^0.7.0",
     "svelte": "^3.12.1",
-    "svelte-loader": "^2.13.6",
-    "webpack": "^4.41.0",
-    "webpack-dev-server": "^3.8.2"
+    "svelte-loader": "^2.13.6"
   },
   "browserslist": [
     "> 1%",

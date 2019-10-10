@@ -145,7 +145,7 @@ func runWebServeCmd(s *ah.ServerT) {
 		}
 	}
 
-	webServeCmd = exec.Command("npm", "run", "serve")
+	webServeCmd = exec.Command("npm", "run", "start")
 	webServeCmd.Dir = wd + "/" + ah.CSRRoot
 	webServeCmd.Env = os.Environ()
 	webServeCmd.Env = append(webServeCmd.Env, "APPY_SSR_PATHS="+strings.Join(ssrPaths, ","))
@@ -177,13 +177,15 @@ func runWebServeCmd(s *ah.ServerT) {
 		host := fmt.Sprintf("%s://%s:%s", scheme, hosts[0], strconv.Itoa(port+1))
 		timeRe := regexp.MustCompile(` [0-9]+ms`)
 		stdoutBlank := true
+		firstTime := true
+		isWDSCompiling := false
 		out := bufio.NewScanner(stdout)
 
 		for out.Scan() {
 			outText := strings.Trim(out.Text(), " ")
 
 			if outText == "" {
-				if stdoutBlank {
+				if stdoutBlank || isWDSCompiling {
 					continue
 				}
 
@@ -192,23 +194,28 @@ func runWebServeCmd(s *ah.ServerT) {
 				stdoutBlank = false
 			}
 
-			if strings.Contains(outText, "｢wds｣") || strings.Contains(outText, "Use Ctrl+C to close it") || strings.Contains(outText, "> ") ||
-				strings.Contains(outText, "App running at") || strings.Contains(outText, "- Local:") || strings.Contains(outText, "Using ") ||
-				strings.Contains(outText, "Webpack Bundle Analyzer is started at") || strings.Contains(outText, "Starting type checking service...") ||
-				strings.Contains(outText, "Type checking in progress...") {
+			if strings.Contains(outText, "｢wdm｣") || strings.Contains(outText, "> ") || (isWDSCompiling && strings.Contains(outText, "｢wds｣")) {
 				continue
 			}
 
-			if strings.Contains(outText, "Starting development server") {
-				logger.Info("Starting webpack development server...")
-			} else if strings.Contains(outText, "- Network:") {
-				logger.Infof("App is running at: %s", host)
-				logger.Infof("Webpack Bundle Analyzer is running at: http://%s:8888", hosts[0])
-			} else if strings.Contains(outText, "Compiling...") {
-				logger.Info("Compiling...")
+			if strings.Contains(outText, "Compiling...") || strings.Contains(outText, "｢wds｣") {
+				isWDSCompiling = true
+				logger.Info("* [wds] Compiling...")
 			} else if strings.Contains(outText, "Compiled successfully in") {
-				logger.Infof("Compiled successfully in%s", timeRe.FindStringSubmatch(outText)[0])
+				isWDSCompiling = false
+				logger.Infof("* [wds] Compiled successfully in%s", timeRe.FindStringSubmatch(outText)[0])
+
+				if firstTime {
+					firstTime = false
+					logger.Infof("* [wds] Listening on %s", host)
+				}
+
+				stdoutBlank = true
 			} else {
+				if strings.Contains(outText, "ERROR  ") {
+					logger.Info("")
+				}
+
 				logger.Info(outText)
 			}
 		}
@@ -225,13 +232,7 @@ func runWebServeCmd(s *ah.ServerT) {
 		err := bufio.NewScanner(stderr)
 		fatalErr := ""
 		for err.Scan() {
-			errText := strings.Trim(err.Text(), " ")
-
-			if strings.Contains(errText, "npm ERR!") {
-				break
-			}
-
-			fatalErr = fatalErr + errText + "\n\t"
+			fatalErr = fatalErr + strings.Trim(err.Text(), " ") + "\n\t"
 		}
 
 		killAPIServeCmd()

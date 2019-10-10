@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
-  .BundleAnalyzerPlugin;
+const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
@@ -259,12 +258,16 @@ module.exports = function(pkg) {
           ]
         }
       ]),
-      new BundleAnalyzerPlugin({
-        analyzerMode: "static",
-        analyzerHost: proxyConfig.host,
-        analyzerPort: parseInt(proxyConfig.port) + 2,
-        openAnalyzer: false
-      }),
+      ...(isProduction
+        ? [
+            new BundleAnalyzerPlugin({
+              analyzerMode: "static",
+              analyzerHost: proxyConfig.host,
+              analyzerPort: parseInt(proxyConfig.port) + 2,
+              openAnalyzer: false
+            })
+          ]
+        : []),
       new FaviconsWebpackPlugin({
         cache: !isProduction,
         favicons: Object.assign({}, pkg.pwa, {
@@ -294,13 +297,15 @@ module.exports = function(pkg) {
       extensions: [".mjs", ".js", ".json", ".svelte"],
       mainFields: ["svelte", "browser", "module", "main"]
     },
-    stats: {
-      assets: true,
-      assetsSort: "!size",
-      builtAt: false,
-      children: false,
-      colors: true,
-      modules: false
-    }
+    stats: isProduction
+      ? {
+          assets: true,
+          assetsSort: "!size",
+          builtAt: false,
+          children: false,
+          colors: true,
+          modules: false
+        }
+      : "minimal"
   };
 };
