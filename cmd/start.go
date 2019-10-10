@@ -62,7 +62,7 @@ func NewStartCommand(s *ah.ServerT) *cobra.Command {
 
 			go runAPIServeCmd()
 			if _, err := os.Stat(wd + "/" + ah.CSRRoot + "/package.json"); !os.IsNotExist(err) {
-				time.Sleep(3 * time.Second)
+				time.Sleep(2 * time.Second)
 				go runWebServeCmd(s)
 			}
 			watch(watchPaths, watchHandler)
