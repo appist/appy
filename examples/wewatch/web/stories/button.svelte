@@ -1,25 +1,25 @@
 <script>
-  import { createEventDispatcher } from 'svelte'
+import { createEventDispatcher } from 'svelte'
 
-  export let text = ''
+export let text = ''
 
-  const dispatch = createEventDispatcher()
+const dispatch = createEventDispatcher()
 
-  function onClick(event) {
-    dispatch('click', event)
-  }
+function onClick(event) {
+  dispatch('click', event)
+}
 </script>
 
 <style>
-  .button {
-    border: 1px solid #eee;
-    border-radius: 3px;
-    background-color: #ffffff;
-    cursor: pointer;
-    font-size: 15px;
-    padding: 3px 10px;
-    margin: 10px;
-  }
+.button {
+  border: 1px solid #eee;
+  border-radius: 3px;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 3px 10px;
+  margin: 10px;
+}
 </style>
 
-<button class="button" on:click={onClick}>{text}</button>
+<button class="button" on:click="{onClick}">{text}</button>
