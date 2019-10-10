@@ -176,25 +176,18 @@ func runWebServeCmd(s *ah.ServerT) {
 		hosts, _ := s.Hosts()
 		host := fmt.Sprintf("%s://%s:%s", scheme, hosts[0], strconv.Itoa(port+1))
 		timeRe := regexp.MustCompile(` [0-9]+ms`)
-		stdoutBlank := true
-		firstTime := true
+		isFirstTime := true
 		isWDSCompiling := false
 		out := bufio.NewScanner(stdout)
 
 		for out.Scan() {
 			outText := strings.Trim(out.Text(), " ")
 
-			if outText == "" {
-				if stdoutBlank || isWDSCompiling || firstTime {
-					continue
-				}
-
-				stdoutBlank = true
-			} else {
-				stdoutBlank = false
+			if outText == "" && (isWDSCompiling || isFirstTime) {
+				continue
 			}
 
-			if strings.Contains(outText, "｢wdm｣") || strings.Contains(outText, "> ") || (isWDSCompiling && strings.Contains(outText, "｢wds｣")) {
+			if strings.Contains(outText, "｢wdm｣") || strings.HasPrefix(outText, "> ") || (isWDSCompiling && strings.Contains(outText, "｢wds｣")) || strings.HasPrefix(outText, "error") {
 				continue
 			}
 
@@ -205,17 +198,14 @@ func runWebServeCmd(s *ah.ServerT) {
 				isWDSCompiling = false
 				fmt.Printf("* [wds] Compiled successfully in%s\n", timeRe.FindStringSubmatch(outText)[0])
 
-				if firstTime {
-					firstTime = false
+				if isFirstTime {
+					isFirstTime = false
 					fmt.Printf("* [wds] Listening on %s\n", host)
 				}
-
-				stdoutBlank = true
+			} else if strings.HasPrefix(outText, "ERROR  Failed to compile") {
+				fmt.Println("* [wds] Failed to compile.")
+				fmt.Println("")
 			} else {
-				if strings.Contains(outText, "ERROR  ") {
-					fmt.Println("")
-				}
-
 				fmt.Println(outText)
 			}
 		}
