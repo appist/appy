@@ -10,7 +10,7 @@ module.exports = {
   test_workers: false,
   test_settings: {
     default: {
-      launch_url: process.env.URL || 'http://0.0.0.0:3001',
+      launch_url: process.env.URL || 'http://0.0.0.0:3000',
     },
     chrome: {
       desiredCapabilities: {
