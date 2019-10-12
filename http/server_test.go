@@ -90,7 +90,7 @@ func (s *ServerSuiteT) TestIsSSLCertsExist() {
 	s.Equal(true, s.Server.IsSSLCertsExist())
 }
 
-func (s *ServerSuiteT) TestPrintInfo() {
+func (s *ServerSuiteT) TestDebugPrintInfo() {
 	output := support.CaptureOutput(func() {
 		s.Server.PrintInfo()
 	})
@@ -109,6 +109,30 @@ func (s *ServerSuiteT) TestPrintInfo() {
 	s.Contains(output, "* Environment: development")
 	s.Contains(output, "* Environment Config: None")
 	s.Contains(output, "* Listening on https://0.0.0.0:3443")
+}
+
+func (s *ServerSuiteT) TestReleasePrintInfo() {
+	oldBuild := support.Build
+	support.Build = "release"
+	output := support.CaptureLogOutput(func() {
+		s.Server.PrintInfo()
+	})
+
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: release", runtime.Version()))
+	s.Contains(output, "* Environment: development")
+	s.Contains(output, "* Environment Config: None")
+	s.Contains(output, "* Listening on http://0.0.0.0:3000")
+
+	s.Config.HTTPSSLEnabled = true
+	output = support.CaptureLogOutput(func() {
+		s.Server.PrintInfo()
+	})
+
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: release", runtime.Version()))
+	s.Contains(output, "* Environment: development")
+	s.Contains(output, "* Environment Config: None")
+	s.Contains(output, "* Listening on https://0.0.0.0:3443")
+	support.Build = oldBuild
 }
 
 func TestServer(t *testing.T) {
