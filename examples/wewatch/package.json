@@ -7,7 +7,7 @@
     "build": "NODE_ENV=production webpack --mode=production --progress",
     "prettier": "prettier --write '**/*.svelte'",
     "start": "NODE_ENV=development webpack-dev-server --mode=development",
-    "test:unit": "",
+    "test:unit": "jest web/tests/unit",
     "test:e2e": "nightwatch --env chrome,firefox",
     "storybook": "start-storybook -p 6006 -c ./web/.storybook",
     "build-storybook": "build-storybook -c ./web/.storybook"
@@ -22,12 +22,16 @@
   "devDependencies": {
     "@appist/appy": "git+https://github.com/appist/appy.git#master",
     "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
     "@intervolga/optimize-cssnano-plugin": "^1.0.6",
     "@storybook/addon-actions": "^5.2.3",
     "@storybook/addon-links": "^5.2.3",
     "@storybook/addons": "^5.2.3",
     "@storybook/svelte": "^5.2.3",
+    "@testing-library/jest-dom": "^4.1.2",
+    "@testing-library/svelte": "^1.9.0",
     "autoprefixer": "^9.6.4",
+    "babel-jest": "^24.9.0",
     "babel-loader": "^8.0.6",
     "case-sensitive-paths-webpack-plugin": "^2.2.0",
     "chromedriver": "^77.0.0",
@@ -41,6 +45,9 @@
     "html-webpack-plugin": "^3.2.0",
     "husky": "^3.0.8",
     "imagemin-lint-staged": "^0.4.0",
+    "jest": "^24.9.0",
+    "jest-transform-stub": "^2.0.0",
+    "jest-transform-svelte": "^2.1.0",
     "lint-staged": "^9.4.2",
     "mini-css-extract-plugin": "^0.8.0",
     "nightwatch": "^1.2.4",
@@ -62,6 +69,18 @@
     "webpack-dev-server": "^3.8.2",
     "workbox-webpack-plugin": "^4.3.1"
   },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ]
+  },
   "browserslist": [
     "> 1%",
     "last 2 versions"
@@ -71,6 +90,9 @@
       "pre-commit": "lint-staged"
     }
   },
+  "setupFilesAfterEnv": [
+    "@testing-library/jest-dom/extend-expect"
+  ],
   "lint-staged": {
     "**/*.go": [
       "golint -set_exit_status",
