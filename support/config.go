@@ -2,6 +2,8 @@ package support
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"reflect"
 	"strings"
@@ -14,7 +16,6 @@ import (
 // ConfigT offers a declarative way to map the environment variables.
 type ConfigT struct {
 	AppyEnv string `env:"APPY_ENV" envDefault:"development"`
-	GoEnv   string `env:"GO_ENV" envDefault:"development"`
 
 	// Server related configuration.
 	HTTPDebugEnabled        bool          `env:"HTTP_DEBUG_ENABLED" envDefault:"false"`
@@ -85,7 +86,10 @@ var (
 	Build = "debug"
 
 	// DotenvPath is the path to the current loaded .env file.
-	DotenvPath = "None"
+	DotenvPath = "none"
+
+	// SSRConfig is the config folder.
+	SSRConfig = "config"
 
 	dotenvPath = func() string {
 		fn := ".env.development"
@@ -93,15 +97,41 @@ var (
 			fn = fmt.Sprintf(".env.%s", os.Getenv("APPY_ENV"))
 		}
 
-		return fn
+		return "config/" + fn
 	}
 )
 
 // NewConfig constructs a config.
-func NewConfig() (*ConfigT, error) {
+func NewConfig(assets http.FileSystem) (*ConfigT, error) {
+	var (
+		err    error
+		reader io.Reader
+	)
 	path := dotenvPath()
-	if err := godotenv.Load(path); err == nil {
+
+	if Build == "debug" {
+		reader, err = os.Open(path)
+	} else {
+		// Need to fix the import cycle issue.
+		reader, err = assets.Open(".ssr/" + path)
+	}
+
+	if err == nil {
 		DotenvPath = path
+		envMap, _ := godotenv.Parse(reader)
+		currentEnv := map[string]bool{}
+		rawEnv := os.Environ()
+		for _, rawEnvLine := range rawEnv {
+			key := strings.Split(rawEnvLine, "=")[0]
+			currentEnv[key] = true
+		}
+
+		// Add decrypt using APPY_MASTER_KEY
+		for key, value := range envMap {
+			if !currentEnv[key] {
+				os.Setenv(key, value)
+			}
+		}
 	}
 
 	cfg := &ConfigT{}

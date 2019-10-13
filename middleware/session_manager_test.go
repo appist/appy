@@ -17,6 +17,7 @@ type SessionManagerSuiteT struct {
 }
 
 func (s *SessionManagerSuiteT) SetupTest() {
+	support.Init(nil)
 	s.Config = &support.ConfigT{}
 	support.Copy(&s.Config, &support.Config)
 	s.Config.HTTPSessionSecrets = [][]byte{[]byte("a401a91b016dcd4e6fcf4b96bf1ae283")}

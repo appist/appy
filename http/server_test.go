@@ -18,6 +18,7 @@ type ServerSuiteT struct {
 }
 
 func (s *ServerSuiteT) SetupTest() {
+	support.Init(nil)
 	s.Config = &support.ConfigT{}
 	support.Copy(&s.Config, &support.Config)
 	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
@@ -95,9 +96,7 @@ func (s *ServerSuiteT) TestDebugPrintInfo() {
 		s.Server.PrintInfo()
 	})
 
-	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug", runtime.Version()))
-	s.Contains(output, "* Environment: development")
-	s.Contains(output, "* Environment Config: None")
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
 	s.Contains(output, "* Listening on http://0.0.0.0:3000")
 
 	s.Config.HTTPSSLEnabled = true
@@ -105,9 +104,7 @@ func (s *ServerSuiteT) TestDebugPrintInfo() {
 		s.Server.PrintInfo()
 	})
 
-	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug", runtime.Version()))
-	s.Contains(output, "* Environment: development")
-	s.Contains(output, "* Environment Config: None")
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
 	s.Contains(output, "* Listening on https://0.0.0.0:3443")
 }
 
@@ -118,9 +115,7 @@ func (s *ServerSuiteT) TestReleasePrintInfo() {
 		s.Server.PrintInfo()
 	})
 
-	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: release", runtime.Version()))
-	s.Contains(output, "* Environment: development")
-	s.Contains(output, "* Environment Config: None")
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: release, environment: development, config: none", runtime.Version()))
 	s.Contains(output, "* Listening on http://0.0.0.0:3000")
 
 	s.Config.HTTPSSLEnabled = true
@@ -128,9 +123,7 @@ func (s *ServerSuiteT) TestReleasePrintInfo() {
 		s.Server.PrintInfo()
 	})
 
-	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: release", runtime.Version()))
-	s.Contains(output, "* Environment: development")
-	s.Contains(output, "* Environment Config: None")
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: release, environment: development, config: none", runtime.Version()))
 	s.Contains(output, "* Listening on https://0.0.0.0:3443")
 	support.Build = oldBuild
 }

@@ -12,13 +12,11 @@ import (
 
 var (
 	mainAssets       = "main_assets.go"
-	logger           *support.LoggerT
 	root             *cobra.Command
 	reservedCmdNames = map[string]bool{}
 )
 
 func init() {
-	logger = support.Logger
 	root = NewCommand()
 }
 
@@ -26,11 +24,7 @@ func init() {
 func NewCommand() *cobra.Command {
 	cmdName := path.Base(os.Args[0])
 	if cmdName == "main" {
-		wd, err := os.Getwd()
-		if err != nil {
-			logger.Fatal(err)
-		}
-
+		wd, _ := os.Getwd()
 		cmdName = path.Base(wd)
 	}
 
@@ -44,7 +38,7 @@ func NewCommand() *cobra.Command {
 // AddCommand adds a custom command.
 func AddCommand(command *cobra.Command) {
 	if _, ok := reservedCmdNames[command.Name()]; ok {
-		logger.Fatalf("'%s' command name is reserved, please update the command name.", command.Name())
+		support.Logger.Fatalf("'%s' command name is reserved, please update the command name.", command.Name())
 	}
 
 	root.AddCommand(command)
@@ -69,6 +63,6 @@ var assets http.FileSystem
 `)
 	err := ioutil.WriteFile(mainAssets, template, 0644)
 	if err != nil {
-		logger.Fatal(err)
+		support.Logger.Fatal(err)
 	}
 }

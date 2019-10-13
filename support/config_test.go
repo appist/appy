@@ -1,6 +1,7 @@
 package support
 
 import (
+	"net/http"
 	"os"
 	"reflect"
 	"testing"
@@ -15,7 +16,6 @@ func TestNewConfig(t *testing.T) {
 	t.Run("sets default values with correct type", func(t *testing.T) {
 		tests := map[string]interface{}{
 			"AppyEnv":                         "development",
-			"GoEnv":                           "development",
 			"HTTPDebugEnabled":                false,
 			"HTTPLogFilterParameters":         []string{"password"},
 			"HTTPHealthCheckURL":              "/health_check",
@@ -70,7 +70,7 @@ func TestNewConfig(t *testing.T) {
 			"HTTPSSLProxyHeaders":             map[string]string{},
 		}
 
-		c, _ := NewConfig()
+		c, _ := NewConfig(nil)
 		cv := reflect.ValueOf(*c)
 		for key, defaultVal := range tests {
 			fv := cv.FieldByName(key)
@@ -118,9 +118,16 @@ func TestNewConfig(t *testing.T) {
 		}
 	})
 
+	t.Run("sets default values with correct type for release build", func(t *testing.T) {
+		Build = "release"
+		cfg, _ := NewConfig(http.Dir("../testdata/assets"))
+		assert.Equal(true, cfg.HTTPSSLEnabled)
+		Build = "debug"
+	})
+
 	t.Run("returns error if the environment variable cannot be parsed", func(t *testing.T) {
 		os.Setenv("HTTP_DEBUG_ENABLED", "nil")
-		_, err := NewConfig()
+		_, err := NewConfig(nil)
 		os.Unsetenv("HTTP_DEBUG_ENABLED")
 		assert.NotNil(err)
 	})
@@ -168,16 +175,16 @@ func TestParseEnv(t *testing.T) {
 
 func TestDotenvPath(t *testing.T) {
 	assert := test.NewAssert(t)
-	assert.Equal(".env.development", dotenvPath())
+	assert.Equal("config/.env.development", dotenvPath())
 
 	os.Setenv("APPY_ENV", "production")
 	path := dotenvPath()
 	os.Unsetenv("APPY_ENV")
-	assert.Equal(".env.production", path)
+	assert.Equal("config/.env.production", path)
 
 	oldDotenvPath := dotenvPath
 	dotenvPath = func() string { return "../testdata/dotenv/.env.test" }
-	config, _ := NewConfig()
+	config, _ := NewConfig(nil)
 	assert.Equal("1234", config.HTTPPort)
 	assert.Equal("../testdata/dotenv/.env.test", DotenvPath)
 	dotenvPath = oldDotenvPath

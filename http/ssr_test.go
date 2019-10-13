@@ -20,7 +20,9 @@ type SSRSuiteT struct {
 }
 
 func (s *SSRSuiteT) SetupTest() {
-	s.Config = support.Config
+	support.Init(http.Dir("../testdata/assets"))
+	s.Config = &support.ConfigT{}
+	support.Copy(&s.Config, &support.Config)
 	s.Config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.Server = NewServer(s.Config)
 	s.Recorder = httptest.NewRecorder()
@@ -31,6 +33,15 @@ func (s *SSRSuiteT) SetupTest() {
 	}
 
 	// Ensure every test case has the correct path
+	SSRRootDebug = "app"
+	SSRRootRelease = ".ssr"
+	ssrRoot = SSRRootDebug
+	SSRView = "views"
+	SSRLocale = "locales"
+	support.Build = "debug"
+}
+
+func (s *SSRSuiteT) TearDownTest() {
 	SSRRootDebug = "app"
 	SSRRootRelease = ".ssr"
 	ssrRoot = SSRRootDebug

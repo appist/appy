@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	ah "github.com/appist/appy/http"
+	"github.com/appist/appy/support"
 
 	"github.com/spf13/cobra"
 )
@@ -20,7 +21,7 @@ func NewServeCommand(s *ah.ServerT) *cobra.Command {
 		Short: "Run the GRPC/HTTP web server.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if s.Config.HTTPSSLEnabled == true && !s.IsSSLCertsExist() {
-				logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
+				support.Logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
 			}
 
 			serve(s)
@@ -42,7 +43,7 @@ func serve(s *ah.ServerT) {
 		defer cancel()
 
 		if err := s.HTTP.Shutdown(ctx); err != nil {
-			logger.Fatal(err)
+			support.Logger.Fatal(err)
 		}
 
 		close(httpDone)
@@ -56,7 +57,7 @@ func serve(s *ah.ServerT) {
 	}
 
 	if err != http.ErrServerClosed {
-		logger.Fatal(err)
+		support.Logger.Fatal(err)
 	}
 
 	<-httpDone

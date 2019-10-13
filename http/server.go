@@ -146,9 +146,11 @@ func (s *ServerT) Routes() []RouteInfoT {
 // PrintInfo prints the server info.
 func (s *ServerT) PrintInfo() {
 	lines := []string{}
-	lines = append(lines, fmt.Sprintf("* Version %s (%s), build: %s", support.VERSION, runtime.Version(), support.Build))
-	lines = append(lines, fmt.Sprintf("* Environment: %s", s.Config.AppyEnv))
-	lines = append(lines, fmt.Sprintf("* Environment Config: %s", support.DotenvPath))
+	lines = append(lines,
+		fmt.Sprintf("* Version %s (%s), build: %s, environment: %s, config: %s",
+			support.VERSION, runtime.Version(), support.Build, s.Config.AppyEnv, support.DotenvPath,
+		),
+	)
 
 	hosts, _ := s.Hosts()
 	host := fmt.Sprintf("http://%s:%s", hosts[0], s.Config.HTTPPort)

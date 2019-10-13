@@ -5,6 +5,7 @@ import (
 	"os/exec"
 
 	ah "github.com/appist/appy/http"
+	"github.com/appist/appy/support"
 
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ func NewSSLSetupCommand(s *ah.ServerT) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			_, err := exec.LookPath("mkcert")
 			if err != nil {
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			}
 
 			os.MkdirAll(s.Config.HTTPSSLCertPath, os.ModePerm)

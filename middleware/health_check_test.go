@@ -17,6 +17,7 @@ type HealthCheckSuiteT struct {
 }
 
 func (s *HealthCheckSuiteT) SetupTest() {
+	support.Init(nil)
 	s.Config = &support.ConfigT{}
 	support.Copy(&s.Config, &support.Config)
 	s.Recorder = httptest.NewRecorder()

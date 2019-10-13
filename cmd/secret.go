@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/appist/appy/support"
 )
 
 // NewSecretCommand generates a cryptographically secure secret key which is typically used for cookie sessions.
@@ -16,7 +17,7 @@ func NewSecretCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			bytes := make([]byte, 64)
 			if _, err := rand.Read(bytes); err != nil {
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			}
 
 			fmt.Println(hex.EncodeToString(bytes))

@@ -18,6 +18,7 @@ type PrerenderSuiteT struct {
 }
 
 func (s *PrerenderSuiteT) SetupTest() {
+	support.Init(nil)
 	s.Config = &support.ConfigT{}
 	support.Copy(&s.Config, &support.Config)
 	s.Recorder = httptest.NewRecorder()

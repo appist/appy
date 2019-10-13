@@ -18,6 +18,7 @@ import (
 	"github.com/99designs/gqlgen/api"
 	gqlgenCfg "github.com/99designs/gqlgen/codegen/config"
 	ah "github.com/appist/appy/http"
+	"github.com/appist/appy/support"
 	"github.com/radovskyb/watcher"
 
 	"github.com/spf13/cobra"
@@ -38,13 +39,14 @@ func NewStartCommand(s *ah.ServerT) *cobra.Command {
 		Short: "Run the GRPC/HTTP web server in development watch mode, only available for debug build.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if s.Config.HTTPSSLEnabled == true && !s.IsSSLCertsExist() {
-				logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
+				support.Logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
 			}
 
 			wd, _ := os.Getwd()
 			watchPaths := []string{
 				wd + "/app",
 				wd + "/cmd",
+				wd + "/config",
 				wd + "/go.sum",
 				wd + "/go.mod",
 				wd + "/main.go",
@@ -162,7 +164,7 @@ func runWebServeCmd(s *ah.ServerT) {
 		defer func() {
 			if r := recover(); r != nil {
 				killAPIServeCmd()
-				logger.Fatal(r)
+				support.Logger.Fatal(r)
 			}
 		}()
 
@@ -215,7 +217,7 @@ func runWebServeCmd(s *ah.ServerT) {
 		defer func() {
 			if r := recover(); r != nil {
 				killAPIServeCmd()
-				logger.Fatal(r)
+				support.Logger.Fatal(r)
 			}
 		}()
 
@@ -227,7 +229,7 @@ func runWebServeCmd(s *ah.ServerT) {
 
 		killAPIServeCmd()
 		time.Sleep(1 * time.Second)
-		logger.Fatal(fatalErr)
+		support.Logger.Fatal(fatalErr)
 	}(webServeCmdErr)
 
 	webServeCmd.Run()
@@ -246,7 +248,7 @@ func watch(watchPaths []string, callback func(e watcher.Event)) {
 		defer func() {
 			if r := recover(); r != nil {
 				killAPIServeCmd()
-				logger.Fatal(r)
+				support.Logger.Fatal(r)
 			}
 		}()
 
@@ -255,7 +257,7 @@ func watch(watchPaths []string, callback func(e watcher.Event)) {
 			case event := <-w.Event:
 				callback(event)
 			case err := <-w.Error:
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			case <-w.Closed:
 				return
 			}
@@ -275,6 +277,6 @@ func watch(watchPaths []string, callback func(e watcher.Event)) {
 	}()
 
 	if err := w.Start(time.Second * watcherPollInterval); err != nil {
-		logger.Fatal(err)
+		support.Logger.Fatal(err)
 	}
 }

@@ -21,11 +21,11 @@ var (
 	// SSRRootRelease is the root folder for release build.
 	SSRRootRelease = ".ssr"
 
-	// SSRView is the views folder.
-	SSRView = "views"
-
 	// SSRLocale is the locales folder.
 	SSRLocale = "locales"
+
+	// SSRView is the views folder.
+	SSRView = "views"
 
 	ssrRoot          = SSRRootDebug
 	reservedViewDirs = []string{"layouts", "shared"}

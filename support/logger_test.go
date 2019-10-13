@@ -18,6 +18,7 @@ func TestNewLoggerConfig(t *testing.T) {
 	Build = "release"
 	config = NewLoggerConfig()
 	assert.Equal(false, config.Development)
+	Build = "debug"
 }
 
 func TestNewLogger(t *testing.T) {

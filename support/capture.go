@@ -36,10 +36,7 @@ func CaptureOutput(f func()) string {
 }
 
 func (c *capturer) capture(f func()) string {
-	r, w, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
+	r, w, _ := os.Pipe()
 
 	if c.stdout {
 		stdout := os.Stdout

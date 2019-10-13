@@ -14,6 +14,9 @@ import (
 // CommandT is a type alias to cobra.Command.
 type CommandT = cobra.Command
 
+// ConfigT offers a declarative way to map the environment variables.
+type ConfigT = support.ConfigT
+
 // ContextT is the most important part of gin. It allows us to pass variables between middleware,
 // manage the flow, validate the JSON of a request and render a JSON response for example.
 type ContextT = ah.ContextT
@@ -40,10 +43,10 @@ type H map[string]interface{}
 type LoggerT = support.LoggerT
 
 // Config is the singleton that keeps the environment variables mapping defined in `support/config.go`.
-var Config = support.Config
+var Config *support.ConfigT
 
 // Logger is the singleton that provides logging utility to the app.
-var Logger = support.Logger
+var Logger *support.LoggerT
 
 // Server is the server singleton.
 var Server *ah.ServerT
@@ -131,8 +134,15 @@ var Use func(handlers ...HandlerFuncT) RoutesT
 // support singular/plural cases.
 var T = middleware.T
 
+// ParseEnv parses the environment variables into the config.
+var ParseEnv = support.ParseEnv
+
 // Init initializes the server singleton.
 func Init(assets http.FileSystem, viewHelper template.FuncMap) {
+	support.Init(assets)
+	Config = support.Config
+	Logger = support.Logger
+
 	Server = ah.NewServer(Config)
 	Server.Assets = assets
 	Server.InitSSR(viewHelper)

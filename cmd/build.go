@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	ah "github.com/appist/appy/http"
+	"github.com/appist/appy/support"
 	"github.com/otiai10/copy"
 	"github.com/shurcooL/vfsgen"
 	"github.com/spf13/cobra"
@@ -22,7 +23,7 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			wd, err := os.Getwd()
 			if err != nil {
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			}
 
 			binaryName := path.Base(wd)
@@ -38,7 +39,7 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 					}
 				}
 
-				logger.Info("Building the web app...")
+				support.Logger.Info("Building the web app...")
 				buildWebCmd := exec.Command("npm", "run", "build")
 				buildWebCmd.Env = os.Environ()
 				buildWebCmd.Env = append(buildWebCmd.Env, "APPY_SSR_PATHS="+strings.Join(ssrPaths, ","))
@@ -46,57 +47,63 @@ func NewBuildCommand(s *ah.ServerT) *cobra.Command {
 				buildWebCmd.Stdout = os.Stdout
 				buildWebCmd.Stderr = os.Stderr
 				if err := buildWebCmd.Run(); err != nil {
-					logger.Fatal(err)
+					support.Logger.Fatal(err)
 				}
-				logger.Info("Building the web app... DONE")
+				support.Logger.Info("Building the web app... DONE")
 			}
 
-			logger.Infof("Copying server-side assets from '%s' into '%s'...", ah.SSRRootDebug, assetsPathForSSR)
+			support.Logger.Infof("Copying server-side assets from '%s' into '%s'...", ah.SSRRootDebug, assetsPathForSSR)
 			err = copy.Copy(ah.SSRRootDebug+"/"+ah.SSRView, assetsPathForSSR+"/"+ah.SSRView)
 			if err != nil {
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			}
 
 			err = copy.Copy(ah.SSRRootDebug+"/"+ah.SSRLocale, assetsPathForSSR+"/"+ah.SSRLocale)
 			if err != nil {
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			}
-			logger.Infof("Copying server-side assets from '%s' into '%s'... DONE", ah.SSRRootDebug, assetsPathForSSR)
+
+			err = copy.Copy(support.SSRConfig, assetsPathForSSR+"/"+support.SSRConfig)
+			if err != nil {
+				support.Logger.Fatal(err)
+			}
+			support.Logger.Infof("Copying server-side assets from '%s' into '%s'... DONE", ah.SSRRootDebug, assetsPathForSSR)
 
 			oldStdout := os.Stdout
 			os.Stdout = nil
 
 			generateMainAssets()
-			logger.Infof("Compiling assets folder into '%s'...", mainAssets)
+			support.Logger.Infof("Compiling assets folder into '%s'...", mainAssets)
 			err = vfsgen.Generate(http.Dir(assetsPath), vfsgen.Options{Filename: mainAssets, VariableName: "assets"})
 			if err != nil {
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			}
-			logger.Infof("Compiling assets folder into '%s'... DONE", mainAssets)
+			support.Logger.Infof("Compiling assets folder into '%s'... DONE", mainAssets)
 			os.Stdout = oldStdout
 
+			// Add GraphQL/GRPC generator step
 			goPath, err := exec.LookPath("go")
 			if err != nil {
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			}
 
-			logger.Info("Building the binary...")
+			support.Logger.Info("Building the binary...")
 			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo", "-ldflags", "-w -extldflags '-static' -X github.com/appist/appy/support.Build=release", "-o", binaryName, ".")
 			buildBinaryCmd.Stderr = os.Stderr
 			if err = buildBinaryCmd.Run(); err != nil {
-				logger.Fatal(err)
+				support.Logger.Fatal(err)
 			}
-			logger.Info("Building the binary... DONE")
+			support.Logger.Info("Building the binary... DONE")
 
 			_, err = exec.LookPath("upx")
 			if err == nil {
-				logger.Info("Compressing the binary with upx...")
+				support.Logger.Info("Compressing the binary with upx...")
 				compressBinaryCmd := exec.Command("upx", binaryName)
 				compressBinaryCmd.Stderr = os.Stderr
 				if err = compressBinaryCmd.Run(); err != nil {
-					logger.Fatal(err)
+					support.Logger.Fatal(err)
 				}
-				logger.Info("Compressing the binary with upx... DONE")
+				support.Logger.Info("Compressing the binary with upx... DONE")
 			}
 		},
 	}
