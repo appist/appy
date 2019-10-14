@@ -20,7 +20,7 @@ var (
 )
 
 // Init setup the Config and Logger singletons.
-func Init(assets http.FileSystem) {
-	Config, _ = NewConfig(assets)
+func Init(assets http.FileSystem, ssrRoot string) {
+	Config, _ = NewConfig(assets, ssrRoot)
 	Logger, _ = NewLogger(NewLoggerConfig())
 }

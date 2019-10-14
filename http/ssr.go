@@ -132,7 +132,7 @@ func (s *ServerT) initSSRView() error {
 			continue
 		}
 
-		if support.Contains(reservedViewDirs, fi.Name()) == true {
+		if support.ArrayContains(reservedViewDirs, fi.Name()) == true {
 			tpls, err := getCommonTemplates(s.Assets, support.Build, viewDir+"/"+fi.Name())
 			if err != nil {
 				return err
@@ -143,7 +143,7 @@ func (s *ServerT) initSSRView() error {
 	}
 
 	for _, fi := range fis {
-		if fi.IsDir() == false || support.Contains(reservedViewDirs, fi.Name()) == true {
+		if fi.IsDir() == false || support.ArrayContains(reservedViewDirs, fi.Name()) == true {
 			continue
 		}
 

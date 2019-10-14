@@ -134,12 +134,18 @@ var Use func(handlers ...HandlerFuncT) RoutesT
 // support singular/plural cases.
 var T = middleware.T
 
+// ArrayContains checks if a value is in a slice of the same type.
+var ArrayContains = support.ArrayContains
+
+// DeepClone deeply clones from 1 interface to another.
+var DeepClone = support.DeepClone
+
 // ParseEnv parses the environment variables into the config.
 var ParseEnv = support.ParseEnv
 
 // Init initializes the server singleton.
 func Init(assets http.FileSystem, viewHelper template.FuncMap) {
-	support.Init(assets)
+	support.Init(assets, ah.SSRRootRelease)
 	Config = support.Config
 	Logger = support.Logger
 

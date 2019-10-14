@@ -82,7 +82,7 @@ func csrfHandler(c *gin.Context, config *support.ConfigT) {
 	c.Set(csrfCtxFieldNameKey, strings.ToLower(config.HTTPCSRFFieldName))
 
 	r := c.Request
-	if !support.Contains(csrfSafeMethods, r.Method) {
+	if !support.ArrayContains(csrfSafeMethods, r.Method) {
 		// Enforce an origin check for HTTPS connections. As per the Django CSRF implementation (https://goo.gl/vKA7GE)
 		// the Referer header is almost always present for same-domain HTTP requests.
 		if r.TLS != nil {

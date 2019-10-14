@@ -6,7 +6,7 @@ import (
 	"github.com/appist/appy/test"
 )
 
-func TestCopy(t *testing.T) {
+func TestDeepClone(t *testing.T) {
 	assert := test.NewAssert(t)
 
 	type User struct {
@@ -22,12 +22,12 @@ func TestCopy(t *testing.T) {
 
 	user := User{Email: "john_doe@gmail.com", Name: "John Doe"}
 	employee := Employee{}
-	Copy(&employee, &user)
+	DeepClone(&employee, &user)
 	assert.Equal("john_doe@gmail.com", employee.Email)
 	assert.Equal("John Doe", employee.Name)
 
 	employees := []Employee{}
-	Copy(&employees, &user)
+	DeepClone(&employees, &user)
 	assert.Equal(1, len(employees))
 	assert.Equal("john_doe@gmail.com", employees[0].Email)
 	assert.Equal("John Doe", employees[0].Name)
@@ -37,7 +37,7 @@ func TestCopy(t *testing.T) {
 		{Email: "john_doe2@gmail.com", Name: "John Doe 2"},
 	}
 	employees = []Employee{}
-	Copy(&employees, &users)
+	DeepClone(&employees, &users)
 	assert.Equal(2, len(employees))
 	assert.Equal("john_doe1@gmail.com", employees[0].Email)
 	assert.Equal("John Doe 1", employees[0].Name)
@@ -45,7 +45,7 @@ func TestCopy(t *testing.T) {
 	assert.Equal("John Doe 2", employees[1].Name)
 }
 
-func TestContains(t *testing.T) {
+func TestArrayContains(t *testing.T) {
 	assert := test.NewAssert(t)
 	tests := []struct {
 		arr      interface{}
@@ -106,6 +106,6 @@ func TestContains(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		assert.Equal(tt.expected, Contains(tt.arr, tt.val))
+		assert.Equal(tt.expected, ArrayContains(tt.arr, tt.val))
 	}
 }

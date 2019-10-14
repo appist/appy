@@ -69,7 +69,7 @@ func serveSPA(prefix string, assets http.FileSystem, s *ServerT) HandlerFuncT {
 		ssrAssetsPath := []string{"/" + SSRView + "/", "/" + SSRLocale + "/", "/" + support.SSRConfig + "/"}
 
 		// Serve from the assets FS if the URL path isn't `/views/`, `/locales/`, `/config/`, or any of the SSR path.
-		if !support.Contains(ssrAssetsPath, request.URL.Path) && !isSSRPath(s.Routes(), request.URL.Path) {
+		if !support.ArrayContains(ssrAssetsPath, request.URL.Path) && !isSSRPath(s.Routes(), request.URL.Path) {
 			resource := getSPAResource(request.URL.Path)
 
 			if resource.assets != nil {

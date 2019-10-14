@@ -6,13 +6,13 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-// Copy deeply clones from 1 interface to another.
-func Copy(dst, src interface{}) error {
+// DeepClone deeply clones from 1 interface to another.
+func DeepClone(dst, src interface{}) error {
 	return copier.Copy(dst, src)
 }
 
-// Contains is a helper function to check if a value is in a slice.
-func Contains(arr interface{}, val interface{}) bool {
+// ArrayContains checks if a value is in a slice of the same type.
+func ArrayContains(arr interface{}, val interface{}) bool {
 	arrT := reflect.TypeOf(arr)
 	valT := reflect.TypeOf(val)
 	if (arrT.Kind().String() != "array" && arrT.Kind().String() != "slice") ||

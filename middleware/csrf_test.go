@@ -23,7 +23,7 @@ type CSRFSuiteT struct {
 func (s *CSRFSuiteT) SetupTest() {
 	support.Init(nil)
 	s.Config = &support.ConfigT{}
-	support.Copy(&s.Config, &support.Config)
+	support.DeepClone(&s.Config, &support.Config)
 	s.Recorder = httptest.NewRecorder()
 	csrfSecureCookie = securecookie.New([]byte("481e5d98a31585148b8b1dfb6a3c0465"), nil)
 	csrfSecureCookie.SetSerializer(securecookie.JSONEncoder{})

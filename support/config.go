@@ -102,7 +102,7 @@ var (
 )
 
 // NewConfig constructs a config.
-func NewConfig(assets http.FileSystem) (*ConfigT, error) {
+func NewConfig(assets http.FileSystem, ssrRoot string) (*ConfigT, error) {
 	var (
 		err    error
 		reader io.Reader
@@ -113,7 +113,7 @@ func NewConfig(assets http.FileSystem) (*ConfigT, error) {
 		reader, err = os.Open(path)
 	} else {
 		// Need to fix the import cycle issue.
-		reader, err = assets.Open(".ssr/" + path)
+		reader, err = assets.Open(ssrRoot + "/" + path)
 	}
 
 	if err == nil {
