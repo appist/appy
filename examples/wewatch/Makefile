@@ -25,4 +25,4 @@ test:
 testcov:
 	go tool cover -html=coverage.out
 
-.PHONY: bootstrap codecheck install test testcov
+.PHONY: bootstrap clean codecheck install test testcov

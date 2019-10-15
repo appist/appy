@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/appist/appy"
+
+	"wewatch/app/handler"
 )
 
 func main() {
@@ -9,8 +11,8 @@ func main() {
 	appy.Init(assets, nil)
 
 	// // Configure routes
-	// appy.GET("/welcome", handler.WelcomeIndex())
+	appy.GET("/welcome", handler.WelcomeIndex())
 
-	// // Run the application
-	// appy.Run()
+	// Run the application
+	appy.Run()
 }

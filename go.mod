@@ -5,6 +5,7 @@ go 1.13.1
 require (
 	github.com/99designs/gqlgen v0.10.1
 	github.com/BurntSushi/toml v0.3.1
+	github.com/appist/vfsgen v0.0.0-20191015065545-60b05a3c5a39
 	github.com/bndr/gotabulate v1.1.2
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/chromedp/cdproto v0.0.0-20191009033829-c22f49c9ff0a

@@ -4,26 +4,51 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/appist/appy/cmd"
 	"github.com/appist/appy/core"
 	"github.com/appist/appy/support"
+	"github.com/appist/appy/test"
 )
 
+// App keeps everything that an application needs, e.g. config, logger, server and etc.
 type App = core.App
+
+// AppConfig keeps the parsed environment variables.
 type AppConfig = core.AppConfig
+
+// Context retains the information that can be passed along in HTTP request flow.
 type Context = core.Context
+
+// H is a shortcut for map[string]interface{}.
 type H = core.H
+
+// HandlerFunc defines the handler used by middleware as the return value.
 type HandlerFunc = core.HandlerFunc
+
+// Router keeps the rules that define how HTTP requests should be routed.
 type Router = core.Router
+
+// RouterGroup groups the routes together that share the same set of middlewares.
 type RouterGroup = core.RouterGroup
+
+// RouteInfo represents a request route's specification which contains method and path and its handler.
 type RouteInfo = core.RouteInfo
+
+// Routes defines all router handle interface.
 type Routes = core.Routes
+
+// SugaredLogger wraps the base Logger functionality.
 type SugaredLogger = core.SugaredLogger
+
+type Assert = test.Assert
+
+type TestSuite = test.Suite
 
 var (
 	app App
 
 	// Build is the current build type for the application, can be `debug` or `release`.
-	Build string
+	Build = core.Build
 
 	// Config is the application's configuration singleton.
 	Config AppConfig
@@ -109,6 +134,8 @@ var (
 	// For example, this is the right place for a logger or error management middleware.
 	Use func(handlers ...HandlerFunc) Routes
 
+	NewAssert = test.NewAssert
+
 	// ArrayContains checks if a value is in a slice of the same type.
 	ArrayContains = support.ArrayContains
 
@@ -121,11 +148,44 @@ var (
 
 // Init initializes the application singleton.
 func Init(assets http.FileSystem, viewHelper template.FuncMap) {
-	app, err := core.NewApp(assets, viewHelper)
+	var err error
+	app, err = core.NewApp(assets, viewHelper)
 	if err != nil {
 		panic(err)
 	}
 
 	Config = app.Config
 	Logger = app.Logger
+
+	DELETE = app.Server.Router.DELETE
+	GET = app.Server.Router.GET
+	HEAD = app.Server.Router.HEAD
+	OPTIONS = app.Server.Router.OPTIONS
+	PATCH = app.Server.Router.PATCH
+	POST = app.Server.Router.POST
+	PUT = app.Server.Router.PUT
+	Any = app.Server.Router.Any
+	BasePath = app.Server.Router.BasePath
+	Group = app.Server.Router.Group
+	Handle = app.Server.Router.Handle
+	HandleContext = app.Server.Router.HandleContext
+	NoMethod = app.Server.Router.NoMethod
+	NoRoute = app.Server.Router.NoRoute
+	SecureJSONPrefix = app.Server.Router.SecureJsonPrefix
+	Static = app.Server.Router.Static
+	StaticFS = app.Server.Router.StaticFS
+	StaticFile = app.Server.Router.StaticFile
+	Use = app.Server.Router.Use
+}
+
+// Run executes the given command.
+func Run() {
+	// Shows a default welcome page with appy logo/slogan if `GET /` isn't defined.
+	app.Server.AddDefaultWelcomePage()
+	// Must be located right before the server runs due to CSR utilizes `NoRoute` to achieve pretty URL navigation
+	// with HTML5 history API.
+	app.Server.InitCSR()
+
+	cmd.Init(app)
+	cmd.Run()
 }

@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// AppConfig keeps the parsed environment variables.
 type AppConfig struct {
 	AppyEnv string `env:"APPY_ENV" envDefault:"development"`
 
@@ -82,6 +84,10 @@ var (
 	// Build specifies if the binary is debug or release build.
 	Build = "debug"
 
+	csrPaths = map[string]string{
+		"root": "web",
+	}
+
 	ssrPaths = map[string]string{
 		"rootDebug":   "app",
 		"rootRelease": ".ssr",
@@ -89,6 +95,8 @@ var (
 		"locale":      "locales",
 		"view":        "views",
 	}
+
+	staticExtRegex = regexp.MustCompile(`\.(bmp|css|csv|eot|exif|gif|html|ico|ini|jpg|jpeg|js|json|mp4|otf|pdf|png|svg|webp|woff|woff2|tiff|ttf|toml|txt|xml|xlsx|yml|yaml)$`)
 )
 
 func configPath() string {

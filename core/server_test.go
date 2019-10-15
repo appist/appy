@@ -1,0 +1,156 @@
+package core
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/appist/appy/test"
+)
+
+type ServerSuite struct {
+	test.Suite
+	assets http.FileSystem
+	config AppConfig
+	logger *SugaredLogger
+}
+
+func (s *ServerSuite) SetupTest() {
+	Build = "debug"
+	s.assets = http.Dir("./testdata")
+	s.config, _ = newConfig(s.assets)
+	s.config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
+	s.logger, _ = newLogger(newLoggerConfig())
+}
+
+func (s *ServerSuite) TearDownTest() {
+}
+
+func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
+	server := newServer(s.assets, s.config, s.logger, nil)
+	s.NotNil(server.assets)
+	s.NotNil(server.config)
+	s.NotNil(server.http)
+	s.NotNil(server.htmlRenderer)
+	s.NotNil(server.Router)
+	s.Equal("0.0.0.0:3000", server.http.Addr)
+}
+
+func (s *ServerSuite) TestNewServerWithSSLEnabled() {
+	s.config.HTTPSSLEnabled = true
+	server := newServer(s.assets, s.config, s.logger, nil)
+	s.NotNil(server.assets)
+	s.NotNil(server.config)
+	s.NotNil(server.http)
+	s.NotNil(server.htmlRenderer)
+	s.NotNil(server.Router)
+	s.Equal("0.0.0.0:3443", server.http.Addr)
+}
+
+func (s *ServerSuite) TestDefaultWelcomePageWithoutCustomHomePath() {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/", nil)
+	server := newServer(s.assets, s.config, s.logger, nil)
+	server.AddDefaultWelcomePage()
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
+	s.Contains(recorder.Body.String(), "<p class=\"lead\">An opinionated productive web framework that helps scaling business easier.</p>")
+}
+
+func (s *ServerSuite) TestDefaultWelcomePageWithCustomHomePath() {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/", nil)
+	server := newServer(s.assets, s.config, s.logger, nil)
+	server.Router.GET("/", func(c *Context) {
+		c.JSON(200, H{"a": 1})
+	})
+	server.AddDefaultWelcomePage()
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Equal("application/json; charset=utf-8", recorder.Header().Get("Content-Type"))
+	s.Equal("{\"a\":1}\n", recorder.Body.String())
+}
+
+func (s *ServerSuite) TestDefaultWelcomePageWithCSRHomePath() {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/", nil)
+	server := newServer(http.Dir("./testdata/.ssr"), s.config, s.logger, nil)
+	server.AddDefaultWelcomePage()
+	server.InitCSR()
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Equal("text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
+	s.Contains(recorder.Body.String(), "we build apps")
+}
+
+func (s *ServerSuite) TestIsSSLCertsExist() {
+	server := newServer(s.assets, s.config, s.logger, nil)
+	s.Equal(false, server.IsSSLCertsExist())
+
+	s.config.HTTPSSLCertPath = "./testdata/ssl"
+	server = newServer(s.assets, s.config, s.logger, nil)
+	s.Equal(true, server.IsSSLCertsExist())
+}
+
+func (s *ServerSuite) TestCSRAssetsNotConfigured() {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/", nil)
+	server := newServer(nil, s.config, s.logger, nil)
+	server.InitCSR()
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(404, recorder.Code)
+}
+
+func (s *ServerSuite) TestNonExistingPathWithCSRAssetsNil() {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/dummy", nil)
+	server := newServer(nil, s.config, s.logger, nil)
+	server.InitCSR()
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(404, recorder.Code)
+}
+
+func (s *ServerSuite) TestNonExistingPathWithCSRAssetsPresent() {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/dummy", nil)
+	server := newServer(http.Dir("./testdata/csr"), s.config, s.logger, nil)
+	server.InitCSR()
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Contains(recorder.Body.String(), "<div id=\"app\">we build apps</div>")
+}
+
+func (s *ServerSuite) TestStaticAssets301Redirect() {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/index.html", nil)
+	server := newServer(http.Dir("./testdata/csr"), s.config, s.logger, nil)
+	server.InitCSR()
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(301, recorder.Code)
+}
+
+func (s *ServerSuite) TestSSRWithCSRInitialized() {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/welcome", nil)
+	server := newServer(http.Dir("./testdata/csr"), s.config, s.logger, nil)
+	server.Router.GET("/welcome", func(c *Context) {
+		c.String(200, "%s", "test")
+	})
+	server.InitCSR()
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Equal("test", recorder.Body.String())
+}
+
+func TestServer(t *testing.T) {
+	test.Run(t, new(ServerSuite))
+}
