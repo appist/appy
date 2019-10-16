@@ -158,12 +158,14 @@ func CaptureLoggerOutput(f func()) string {
 	var buffer bytes.Buffer
 	oldLogger := Logger
 	writer := bufio.NewWriter(&buffer)
-	Logger = &AppLogger{zap.New(
-		zapcore.NewCore(
-			zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
-			zapcore.AddSync(writer),
-			zapcore.DebugLevel,
-		)).Sugar(),
+	Logger = &AppLogger{
+		SugaredLogger: zap.New(
+			zapcore.NewCore(
+				zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+				zapcore.AddSync(writer),
+				zapcore.DebugLevel,
+			),
+		).Sugar(),
 	}
 	f()
 	writer.Flush()

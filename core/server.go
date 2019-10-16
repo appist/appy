@@ -45,8 +45,8 @@ type csrResource struct {
 	prefix     string
 }
 
-// Server is the core that serves HTTP/GRPC requests.
-type Server struct {
+// AppServer is the core that serves HTTP/GRPC requests.
+type AppServer struct {
 	assets       http.FileSystem
 	config       AppConfig
 	csrResources []csrResource
@@ -62,7 +62,7 @@ func init() {
 	gin.SetMode(gin.ReleaseMode)
 }
 
-func newServer(assets http.FileSystem, c AppConfig, l *AppLogger, vh template.FuncMap) Server {
+func newServer(assets http.FileSystem, c AppConfig, l *AppLogger, vh template.FuncMap) AppServer {
 	// Initialize the error templates.
 	renderer := multitemplate.NewRenderer()
 	renderer.AddFromString("error/404", errorTpl404())
@@ -87,7 +87,7 @@ func newServer(assets http.FileSystem, c AppConfig, l *AppLogger, vh template.Fu
 		http.Addr = c.HTTPHost + ":" + c.HTTPSSLPort
 	}
 
-	return Server{
+	return AppServer{
 		assets:       assets,
 		config:       c,
 		csrResources: []csrResource{},
@@ -141,7 +141,7 @@ func newSecureConfig(c AppConfig) secure.Config {
 }
 
 // AddDefaultWelcomePage adds the default welcome page for `/` route.
-func (s Server) AddDefaultWelcomePage() {
+func (s AppServer) AddDefaultWelcomePage() {
 	routes := s.Routes()
 	rootDefined := false
 
@@ -167,7 +167,7 @@ func (s Server) AddDefaultWelcomePage() {
 }
 
 // IsSSLCertsExist checks if `./tmp/ssl` exists and contains the locally trusted SSL certificates.
-func (s Server) IsSSLCertsExist() bool {
+func (s AppServer) IsSSLCertsExist() bool {
 	_, certErr := os.Stat(s.config.HTTPSSLCertPath + "/cert.pem")
 	_, keyErr := os.Stat(s.config.HTTPSSLCertPath + "/key.pem")
 
@@ -179,7 +179,7 @@ func (s Server) IsSSLCertsExist() bool {
 }
 
 // Hosts returns the server hosts list.
-func (s Server) Hosts() ([]string, error) {
+func (s AppServer) Hosts() ([]string, error) {
 	var hosts = []string{s.config.HTTPHost}
 
 	if s.config.HTTPHost != "localhost" {
@@ -200,7 +200,7 @@ func (s Server) Hosts() ([]string, error) {
 }
 
 // Routes returns all the routes including those in middlewares.
-func (s Server) Routes() []RouteInfo {
+func (s AppServer) Routes() []RouteInfo {
 	routes := s.Router.Routes()
 
 	if s.config.HTTPHealthCheckURL != "" {
@@ -216,7 +216,7 @@ func (s Server) Routes() []RouteInfo {
 }
 
 // PrintInfo prints the server info.
-func (s Server) PrintInfo() {
+func (s AppServer) PrintInfo() {
 	configPath, _, _ := getConfigInfo(s.assets)
 	lines := []string{}
 	lines = append(lines,
@@ -244,7 +244,7 @@ func (s Server) PrintInfo() {
 }
 
 // InitCSR setup the client-side rendering/routing with index.html fallback.
-func (s Server) InitCSR() {
+func (s AppServer) InitCSR() {
 	// Setup CSR hosting at "/".
 	s.Router.Use(s.serveCSR("/", s.assets))
 
@@ -278,7 +278,7 @@ func (s Server) InitCSR() {
 	})
 }
 
-func (s Server) csrResource(path string) csrResource {
+func (s AppServer) csrResource(path string) csrResource {
 	var (
 		resource, rootResource csrResource
 	)
@@ -300,7 +300,7 @@ func (s Server) csrResource(path string) csrResource {
 	return resource
 }
 
-func (s *Server) serveCSR(prefix string, assets http.FileSystem) HandlerFunc {
+func (s *AppServer) serveCSR(prefix string, assets http.FileSystem) HandlerFunc {
 	s.csrResources = append(s.csrResources, csrResource{
 		assets:     assets,
 		fileServer: http.StripPrefix(prefix, http.FileServer(assets)),

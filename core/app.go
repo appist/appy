@@ -14,7 +14,7 @@ const (
 type App struct {
 	Config AppConfig
 	Logger *AppLogger
-	Server Server
+	Server AppServer
 }
 
 // NewApp initializes the app singleton.
