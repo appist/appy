@@ -1,6 +1,8 @@
 package appy
 
 import (
+	"bufio"
+	"bytes"
 	"html/template"
 	"net/http"
 
@@ -8,6 +10,8 @@ import (
 	"github.com/appist/appy/core"
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // App keeps everything that an application needs, e.g. config, logger, server and etc.
@@ -15,6 +19,9 @@ type App = core.App
 
 // AppConfig keeps the parsed environment variables.
 type AppConfig = core.AppConfig
+
+// AppLogger keeps the logging functionality.
+type AppLogger = core.AppLogger
 
 // Context retains the information that can be passed along in HTTP request flow.
 type Context = core.Context
@@ -37,9 +44,6 @@ type RouteInfo = core.RouteInfo
 // Routes defines all router handle interface.
 type Routes = core.Routes
 
-// SugaredLogger wraps the base Logger functionality.
-type SugaredLogger = core.SugaredLogger
-
 type Assert = test.Assert
 
 type TestSuite = test.Suite
@@ -54,7 +58,7 @@ var (
 	Config AppConfig
 
 	// Logger is the application's logger singleton.
-	Logger *SugaredLogger
+	Logger *AppLogger
 
 	// DELETE is a shortcut for appy.Handle("DELETE", path, handler).
 	DELETE func(relativePath string, handlers ...HandlerFunc) Routes
@@ -139,12 +143,34 @@ var (
 	// ArrayContains checks if a value is in a slice of the same type.
 	ArrayContains = support.ArrayContains
 
+	// CaptureOutput captures stdout and stderr.
+	CaptureOutput = core.CaptureOutput
+
 	// DeepClone deeply clones from 1 interface to another.
 	DeepClone = support.DeepClone
 
 	// ParseEnv parses the environment variables into the config.
 	ParseEnv = support.ParseEnv
 )
+
+// CaptureLoggerOutput captures the Logger's output.
+func CaptureLoggerOutput(f func()) string {
+	var buffer bytes.Buffer
+	oldLogger := Logger
+	writer := bufio.NewWriter(&buffer)
+	Logger = &AppLogger{zap.New(
+		zapcore.NewCore(
+			zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+			zapcore.AddSync(writer),
+			zapcore.DebugLevel,
+		)).Sugar(),
+	}
+	f()
+	writer.Flush()
+	Logger = oldLogger
+
+	return buffer.String()
+}
 
 // Init initializes the application singleton.
 func Init(assets http.FileSystem, viewHelper template.FuncMap) {
@@ -180,12 +206,13 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 
 // Run executes the given command.
 func Run() {
+	cmd.Init(app)
+
 	// Shows a default welcome page with appy logo/slogan if `GET /` isn't defined.
 	app.Server.AddDefaultWelcomePage()
 	// Must be located right before the server runs due to CSR utilizes `NoRoute` to achieve pretty URL navigation
 	// with HTML5 history API.
 	app.Server.InitCSR()
 
-	cmd.Init(app)
 	cmd.Run()
 }

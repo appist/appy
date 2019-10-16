@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/appist/appy/support"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-contrib/secure"
@@ -54,7 +53,7 @@ type Server struct {
 	grpc         *grpc.Server
 	http         *http.Server
 	htmlRenderer multitemplate.Renderer
-	Logger       *SugaredLogger
+	Logger       *AppLogger
 	Router       *Router
 	viewHelper   template.FuncMap
 }
@@ -63,7 +62,7 @@ func init() {
 	gin.SetMode(gin.ReleaseMode)
 }
 
-func newServer(assets http.FileSystem, c AppConfig, l *SugaredLogger, vh template.FuncMap) Server {
+func newServer(assets http.FileSystem, c AppConfig, l *AppLogger, vh template.FuncMap) Server {
 	// Initialize the error templates.
 	renderer := multitemplate.NewRenderer()
 	renderer.AddFromString("error/404", errorTpl404())
@@ -101,7 +100,7 @@ func newServer(assets http.FileSystem, c AppConfig, l *SugaredLogger, vh templat
 	}
 }
 
-func newRouter(c AppConfig, l *SugaredLogger) *gin.Engine {
+func newRouter(c AppConfig, l *AppLogger) *gin.Engine {
 	r := gin.New()
 	r.AppEngine = true
 	r.HandleMethodNotAllowed = true
@@ -218,10 +217,11 @@ func (s Server) Routes() []RouteInfo {
 
 // PrintInfo prints the server info.
 func (s Server) PrintInfo() {
+	configPath, _, _ := getConfigInfo(s.assets)
 	lines := []string{}
 	lines = append(lines,
 		fmt.Sprintf("* Version %s (%s), build: %s, environment: %s, config: %s",
-			VERSION, runtime.Version(), Build, s.config.AppyEnv, configPath(),
+			VERSION, runtime.Version(), Build, s.config.AppyEnv, configPath,
 		),
 	)
 
@@ -243,13 +243,13 @@ func (s Server) PrintInfo() {
 	}
 }
 
-// InitCSR setup the SPA client-side rendering/routing with index.html fallback.
+// InitCSR setup the client-side rendering/routing with index.html fallback.
 func (s Server) InitCSR() {
-	// Setup SPA hosting at "/".
-	s.Router.Use(serveSPA("/", s.assets, &s))
+	// Setup CSR hosting at "/".
+	s.Router.Use(serveCSR("/", s.assets, &s))
 
-	// Setup SPA hosting at "/tools".
-	// s.Router.Use(serveSPA("/tools", tools.Assets, s))
+	// Setup CSR hosting at "/tools".
+	// s.Router.Use(serveCSR("/tools", tools.Assets, s))
 
 	s.Router.NoRoute(CSRFSkipCheck(), func(ctx *Context) {
 		request := ctx.Request
@@ -296,7 +296,7 @@ func (s Server) csrResource(path string) csrResource {
 	return resource
 }
 
-func serveSPA(prefix string, assets http.FileSystem, s *Server) HandlerFunc {
+func serveCSR(prefix string, assets http.FileSystem, s *Server) HandlerFunc {
 	s.csrResources = append(s.csrResources, csrResource{
 		assets:     assets,
 		fileServer: http.StripPrefix(prefix, http.FileServer(assets)),
@@ -305,10 +305,9 @@ func serveSPA(prefix string, assets http.FileSystem, s *Server) HandlerFunc {
 
 	return func(ctx *Context) {
 		request := ctx.Request
-		ssrAssetsPath := []string{"/" + ssrPaths["view"] + "/", "/" + ssrPaths["locale"] + "/", "/" + ssrPaths["config"] + "/"}
 
-		// Serve from the assets FS if the URL path isn't `/views/`, `/locales/`, `/config/`, or any of the SSR path.
-		if !support.ArrayContains(ssrAssetsPath, request.URL.Path) && !isSSRPath(s.Routes(), request.URL.Path) {
+		// Serve from the assets FS if the URL path isn't matching any of the SSR paths.
+		if !isSSRPath(s.Routes(), request.URL.Path) && !strings.HasPrefix(request.URL.Path, "/"+ssrPaths["root"]) {
 			resource := s.csrResource(request.URL.Path)
 
 			if resource.assets != nil {

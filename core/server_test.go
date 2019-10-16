@@ -1,8 +1,11 @@
 package core
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"runtime"
 	"testing"
 
 	"github.com/appist/appy/test"
@@ -12,7 +15,7 @@ type ServerSuite struct {
 	test.Suite
 	assets http.FileSystem
 	config AppConfig
-	logger *SugaredLogger
+	logger *AppLogger
 }
 
 func (s *ServerSuite) SetupTest() {
@@ -149,6 +152,55 @@ func (s *ServerSuite) TestSSRWithCSRInitialized() {
 
 	s.Equal(200, recorder.Code)
 	s.Equal("test", recorder.Body.String())
+}
+
+func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	server := newServer(nil, s.config, s.logger, nil)
+	output := CaptureOutput(func() {
+		server.PrintInfo()
+	})
+
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
+	s.Contains(output, "* Listening on http://0.0.0.0:3000")
+
+	os.Setenv("HTTP_SSL_ENABLED", "true")
+	s.config, _ = newConfig(http.Dir("./testdata"))
+	server = newServer(http.Dir("./testdata"), s.config, s.logger, nil)
+	output = CaptureOutput(func() {
+		server.PrintInfo()
+	})
+
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
+	s.Contains(output, "* Listening on https://0.0.0.0:3443")
+}
+
+func (s *ServerSuite) TestServerPrintInfoWithReleaseBuild() {
+	Build = "release"
+	s.config, _ = newConfig(http.Dir("./testdata/.ssr"))
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	server := newServer(nil, s.config, s.logger, nil)
+	output := CaptureOutput(func() {
+		server.PrintInfo()
+	})
+
+	// Release build should use AppLogger instead of stdout
+	s.Equal(output, "")
+	s.Equal(output, "")
+
+	os.Setenv("HTTP_SSL_ENABLED", "true")
+	server = newServer(nil, s.config, s.logger, nil)
+	output = CaptureOutput(func() {
+		server.PrintInfo()
+	})
+
+	// Release build should use AppLogger instead of stdout
+	s.Equal(output, "")
+	s.Equal(output, "")
 }
 
 func TestServer(t *testing.T) {

@@ -89,43 +89,45 @@ var (
 	}
 
 	ssrPaths = map[string]string{
-		"rootDebug":   "app",
-		"rootRelease": ".ssr",
-		"config":      "config",
-		"locale":      "locales",
-		"view":        "views",
+		"root":   ".ssr",
+		"config": "config",
+		"locale": "app/locales",
+		"view":   "app/views",
 	}
 
 	staticExtRegex = regexp.MustCompile(`\.(bmp|css|csv|eot|exif|gif|html|ico|ini|jpg|jpeg|js|json|mp4|otf|pdf|png|svg|webp|woff|woff2|tiff|ttf|toml|txt|xml|xlsx|yml|yaml)$`)
 )
 
-func configPath() string {
-	if os.Getenv("APPY_ENV") == "" {
-		os.Setenv("APPY_ENV", "development")
-	}
-
-	path := ssrPaths["config"] + "/.env." + os.Getenv("APPY_ENV")
-
-	if Build == "debug" {
-		return path
-	}
-
-	return ssrPaths["rootRelease"] + "/" + path
-}
-
-func newConfig(assets http.FileSystem) (AppConfig, error) {
+func getConfigInfo(assets http.FileSystem) (string, io.Reader, error) {
 	var (
 		err    error
 		reader io.Reader
 	)
 
-	path := configPath()
+	if os.Getenv("APPY_ENV") == "" {
+		os.Setenv("APPY_ENV", "development")
+	}
+
+	path := ssrPaths["config"] + "/.env." + os.Getenv("APPY_ENV")
 	if Build == "debug" {
 		reader, err = os.Open(path)
 	} else {
-		reader, err = assets.Open(path)
+		path = ssrPaths["root"] + "/" + path
+
+		if assets != nil {
+			reader, err = assets.Open(path)
+		}
 	}
 
+	if err != nil {
+		path = "none"
+	}
+
+	return path, reader, err
+}
+
+func newConfig(assets http.FileSystem) (AppConfig, error) {
+	_, reader, err := getConfigInfo(assets)
 	if err == nil {
 		envMap, _ := godotenv.Parse(reader)
 		currentEnv := map[string]bool{}

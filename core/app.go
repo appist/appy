@@ -13,7 +13,7 @@ const (
 // App keeps everything that an application needs, e.g. config, logger, server and etc.
 type App struct {
 	Config AppConfig
-	Logger *SugaredLogger
+	Logger *AppLogger
 	Server Server
 }
 

@@ -39,7 +39,7 @@ var (
 )
 
 // CSRF is a middleware that provides Cross-Site Request Forgery protection.
-func CSRF(config AppConfig, logger *SugaredLogger) HandlerFunc {
+func CSRF(config AppConfig, logger *AppLogger) HandlerFunc {
 	csrfSecureCookie = securecookie.New(config.HTTPCSRFSecret, nil)
 	csrfSecureCookie.SetSerializer(securecookie.JSONEncoder{})
 	csrfSecureCookie.MaxAge(config.HTTPCSRFCookieMaxAge)
@@ -49,7 +49,7 @@ func CSRF(config AppConfig, logger *SugaredLogger) HandlerFunc {
 	}
 }
 
-func csrfHandler(ctx *Context, config AppConfig, logger *SugaredLogger) {
+func csrfHandler(ctx *Context, config AppConfig, logger *AppLogger) {
 	if IsAPIOnly(ctx) == true {
 		ctx.Set(csrfCtxSkipCheckKey, true)
 	}
