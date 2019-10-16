@@ -246,10 +246,10 @@ func (s Server) PrintInfo() {
 // InitCSR setup the client-side rendering/routing with index.html fallback.
 func (s Server) InitCSR() {
 	// Setup CSR hosting at "/".
-	s.Router.Use(serveCSR("/", s.assets, &s))
+	s.Router.Use(s.serveCSR("/", s.assets))
 
 	// Setup CSR hosting at "/tools".
-	// s.Router.Use(serveCSR("/tools", tools.Assets, s))
+	// s.Router.Use(s.serveCSR("/tools", tools.Assets))
 
 	s.Router.NoRoute(CSRFSkipCheck(), func(ctx *Context) {
 		request := ctx.Request
@@ -279,24 +279,28 @@ func (s Server) InitCSR() {
 }
 
 func (s Server) csrResource(path string) csrResource {
-	var resource csrResource
+	var (
+		resource, rootResource csrResource
+	)
 
 	for _, res := range s.csrResources {
-		if (csrResource{}) == resource {
-			resource = res
-			continue
+		if res.prefix == "/" {
+			rootResource = res
 		}
 
 		if res.prefix != "/" && strings.HasPrefix(path, res.prefix) {
 			resource = res
-			break
 		}
+	}
+
+	if (csrResource{}) == resource {
+		resource = rootResource
 	}
 
 	return resource
 }
 
-func serveCSR(prefix string, assets http.FileSystem, s *Server) HandlerFunc {
+func (s *Server) serveCSR(prefix string, assets http.FileSystem) HandlerFunc {
 	s.csrResources = append(s.csrResources, csrResource{
 		assets:     assets,
 		fileServer: http.StripPrefix(prefix, http.FileServer(assets)),

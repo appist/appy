@@ -154,6 +154,42 @@ func (s *ServerSuite) TestSSRWithCSRInitialized() {
 	s.Equal("test", recorder.Body.String())
 }
 
+func (s *ServerSuite) TestSSRWithAdditionalCSRInitialized() {
+	server := newServer(http.Dir("./testdata/csr"), s.config, s.logger, nil)
+	server.serveCSR("/tools", http.Dir("./testdata/tools"))
+	server.InitCSR()
+
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/tools", nil)
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Contains(recorder.Body.String(), "<div id=\"app\">we build tools</div>")
+
+	recorder = httptest.NewRecorder()
+	request, _ = http.NewRequest("GET", "/tools/dummy", nil)
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Contains(recorder.Body.String(), "<div id=\"app\">we build tools</div>")
+}
+
+func (s *ServerSuite) TestSSRWorksWithCSR() {
+	server := newServer(http.Dir("./testdata/csr"), s.config, s.logger, nil)
+	server.serveCSR("/tools", http.Dir("./testdata/tools"))
+	server.InitCSR()
+	server.Router.GET("/welcome", func(c *Context) {
+		c.String(200, "%s", "test")
+	})
+
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/welcome", nil)
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Equal("test", recorder.Body.String())
+}
+
 func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
