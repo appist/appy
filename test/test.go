@@ -20,7 +20,7 @@ var Run = suite.Run
 // CreateTestContext returns a fresh router engine and context for testing purposes.
 var CreateTestContext = gin.CreateTestContext
 
-// NewAssert makes a new AssertionT object for the specified TestingT.
+// NewAssert makes a new Assert object for the specified TestingT.
 func NewAssert(t *testing.T) *Assert {
 	return assert.New(t)
 }

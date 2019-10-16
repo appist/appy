@@ -44,8 +44,10 @@ type RouteInfo = core.RouteInfo
 // Routes defines all router handle interface.
 type Routes = core.Routes
 
+// Assert provides the unit test helpers to test various conditions.
 type Assert = test.Assert
 
+// TestSuite is a basic testing suite with methods for storing and retrieving the current *testing.T context.
 type TestSuite = test.Suite
 
 var (
@@ -138,6 +140,7 @@ var (
 	// For example, this is the right place for a logger or error management middleware.
 	Use func(handlers ...HandlerFunc) Routes
 
+	// NewAssert returns an Assert instance that provides the unit test helpers to test various conditions.
 	NewAssert = test.NewAssert
 
 	// ArrayContains checks if a value is in a slice of the same type.
