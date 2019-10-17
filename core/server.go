@@ -110,12 +110,12 @@ func newRouter(c AppConfig, l *AppLogger) *gin.Engine {
 	r.Use(RequestLogger(c, l))
 	r.Use(RealIP())
 	r.Use(ResponseHeaderFilter())
-	// r.Use(middleware.SessionManager(c))
+	r.Use(SessionManager(c))
 	r.Use(HealthCheck(c.HTTPHealthCheckURL))
 	r.Use(Prerender(c, l))
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(secure.New(newSecureConfig(c)))
-	// r.Use(middleware.Recovery())
+	r.Use(Recovery(l))
 
 	return r
 }
