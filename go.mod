@@ -3,6 +3,7 @@ module github.com/appist/appy
 go 1.13.1
 
 require (
+	github.com/BurntSushi/toml v0.3.1
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/chromedp/cdproto v0.0.0-20191009033829-c22f49c9ff0a
 	github.com/chromedp/chromedp v0.5.0

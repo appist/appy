@@ -10,12 +10,17 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/BurntSushi/toml"
+	"github.com/appist/appy/support"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-contrib/secure"
 	"github.com/gin-gonic/gin"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"go.uber.org/zap"
+	"golang.org/x/text/language"
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
 )
 
 // H is a type alias to gin.H.
@@ -53,10 +58,15 @@ type AppServer struct {
 	grpc         *grpc.Server
 	http         *http.Server
 	htmlRenderer multitemplate.Renderer
+	i18nBundle   *i18n.Bundle
 	Logger       *AppLogger
 	Router       *Router
 	viewHelper   template.FuncMap
 }
+
+var (
+	reservedViewDirs = []string{"layouts", "shared"}
+)
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
@@ -326,6 +336,204 @@ func (s *AppServer) serveCSR(prefix string, assets http.FileSystem) HandlerFunc 
 			}
 		}
 	}
+}
+
+// InitSSR initiates the SSR setup.
+func (s *AppServer) InitSSR() error {
+	if err := s.initSSRLocale(); err != nil {
+		return err
+	}
+
+	if err := s.initSSRView(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *AppServer) initSSRLocale() error {
+	s.i18nBundle = i18n.NewBundle(language.English)
+	s.i18nBundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
+	s.i18nBundle.RegisterUnmarshalFunc("yml", yaml.Unmarshal)
+	s.i18nBundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
+
+	var (
+		localeFiles []os.FileInfo
+		data        []byte
+		err         error
+	)
+	localeDir := ssrPaths["locale"]
+
+	// Try getting all the locale files from `app/locales`, but fallback to `assets` http.FileSystem.
+	if Build == "debug" {
+		localeFiles, err = ioutil.ReadDir(localeDir)
+
+		if err != nil {
+			return err
+		}
+	} else {
+		localeDir = "/" + ssrPaths["root"] + "/" + localeDir
+		file, err := s.assets.Open(localeDir)
+
+		if err != nil {
+			return err
+		}
+
+		localeFiles, _ = file.Readdir(-1)
+	}
+
+	for _, localeFile := range localeFiles {
+		localeFn := localeFile.Name()
+
+		if Build == "debug" {
+			data, _ = ioutil.ReadFile(localeDir + "/" + localeFn)
+		} else {
+			file, err := s.assets.Open(localeDir + "/" + localeFn)
+			if err != nil {
+				return err
+			}
+
+			data, _ = ioutil.ReadAll(file)
+		}
+
+		s.i18nBundle.MustParseMessageFileBytes(data, localeFn)
+	}
+
+	s.Router.Use(I18n(s.i18nBundle))
+	return nil
+}
+
+func (s *AppServer) initSSRView() error {
+	var (
+		fis []os.FileInfo
+		err error
+	)
+
+	viewDir := ssrPaths["view"]
+
+	// We will always read from local file system when it's debug build. Otherwise, read from the bind assets.
+	if Build == "debug" {
+		if fis, err = ioutil.ReadDir(viewDir); err != nil {
+			return err
+		}
+	} else {
+		viewDir = "/" + ssrPaths["root"] + "/" + viewDir
+
+		var file http.File
+		if file, err = s.assets.Open(viewDir); err != nil {
+			return err
+		}
+
+		fis, err = file.Readdir(-1)
+	}
+
+	commonTpls := []string{}
+	for _, fi := range fis {
+		// We should only see directories in `app/views`.
+		if fi.IsDir() == false {
+			continue
+		}
+
+		if support.ArrayContains(reservedViewDirs, fi.Name()) == true {
+			tpls, err := getCommonTemplates(s.assets, Build, viewDir+"/"+fi.Name())
+			if err != nil {
+				return err
+			}
+
+			commonTpls = append(commonTpls, tpls...)
+		}
+	}
+
+	for _, fi := range fis {
+		if fi.IsDir() == false || support.ArrayContains(reservedViewDirs, fi.Name()) == true {
+			continue
+		}
+
+		var fileInfos []os.FileInfo
+		targetDir := viewDir + "/" + fi.Name()
+		if Build == "debug" {
+			fileInfos, _ = ioutil.ReadDir(targetDir)
+		} else {
+			var file http.File
+			if file, err = s.assets.Open(targetDir); err != nil {
+				return err
+			}
+
+			fileInfos, _ = file.Readdir(-1)
+		}
+
+		for _, fileInfo := range fileInfos {
+			if fileInfo.IsDir() == true {
+				continue
+			}
+
+			viewName := fi.Name() + "/" + fileInfo.Name()
+			targetFn := targetDir + "/" + fileInfo.Name()
+			data, err := getTemplateContent(s.assets, Build, targetFn)
+			if err != nil {
+				return err
+			}
+
+			commonTplsCopy := make([]string, len(commonTpls))
+			copy(commonTplsCopy, commonTpls)
+			viewContent := append(commonTplsCopy, data)
+			s.htmlRenderer.AddFromStringsFuncs(viewName, s.viewHelper, viewContent...)
+		}
+	}
+
+	return nil
+}
+
+func getCommonTemplates(assets http.FileSystem, build, path string) ([]string, error) {
+	var (
+		fis []os.FileInfo
+		err error
+	)
+
+	tpls := []string{}
+	if build == "debug" {
+		fis, _ = ioutil.ReadDir(path)
+	} else {
+		var file http.File
+		path = "/" + path
+
+		if file, err = assets.Open(path); err != nil {
+			return nil, err
+		}
+
+		fis, _ = file.Readdir(-1)
+	}
+
+	for _, fi := range fis {
+		if fi.IsDir() == true {
+			continue
+		}
+
+		data, err := getTemplateContent(assets, build, path+"/"+fi.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		tpls = append(tpls, data)
+	}
+
+	return tpls, nil
+}
+
+func getTemplateContent(assets http.FileSystem, build, path string) (string, error) {
+	var data []byte
+	if build == "debug" {
+		data, _ := ioutil.ReadFile(path)
+		return string(data), nil
+	}
+
+	file, err := assets.Open(path)
+	if err != nil {
+		return "", err
+	}
+
+	data, _ = ioutil.ReadAll(file)
+	return string(data), nil
 }
 
 func isSSRPath(routes []RouteInfo, path string) bool {

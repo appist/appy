@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,9 +14,10 @@ import (
 
 type ServerSuite struct {
 	test.Suite
-	assets http.FileSystem
-	config AppConfig
-	logger *AppLogger
+	assets     http.FileSystem
+	config     AppConfig
+	logger     *AppLogger
+	viewHelper template.FuncMap
 }
 
 func (s *ServerSuite) SetupTest() {
@@ -24,9 +26,15 @@ func (s *ServerSuite) SetupTest() {
 	s.config, _ = newConfig(s.assets)
 	s.config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.logger, _ = newLogger(newLoggerConfig())
+	s.viewHelper = template.FuncMap{
+		"testViewHelper": func() string {
+			return "i am view helper"
+		},
+	}
 }
 
 func (s *ServerSuite) TearDownTest() {
+	os.Clearenv()
 }
 
 func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
@@ -237,6 +245,109 @@ func (s *ServerSuite) TestServerPrintInfoWithReleaseBuild() {
 	// Release build should use AppLogger instead of stdout
 	s.Equal(output, "")
 	s.Equal(output, "")
+}
+
+func (s *ServerSuite) TestInitSSRWithDebugBuildWithCorrectPath() {
+	oldSSRLocale := ssrPaths["locale"]
+	oldSSRView := ssrPaths["view"]
+	ssrPaths["locale"] = "./testdata/.ssr/app/locales"
+	ssrPaths["view"] = "./testdata/.ssr/app/views"
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+	s.config, _ = newConfig(http.Dir("./testdata/.ssr"))
+
+	recorder := httptest.NewRecorder()
+	server := newServer(nil, s.config, s.logger, s.viewHelper)
+	s.NoError(server.InitSSR())
+	server.Router.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "welcome/index", nil)
+	})
+	request, _ := http.NewRequest("GET", "/", nil)
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(500, recorder.Code)
+
+	server = newServer(nil, s.config, s.logger, s.viewHelper)
+	s.NoError(server.InitSSR())
+	server.Router.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "welcome/index.html", H{"message": "i am testing"})
+	})
+	recorder = httptest.NewRecorder()
+	request, _ = http.NewRequest("GET", "/", nil)
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Contains(recorder.Body.String(), "i am testing")
+	s.Contains(recorder.Body.String(), "i am view helper")
+
+	ssrPaths["locale"] = oldSSRLocale
+	ssrPaths["view"] = oldSSRView
+}
+
+func (s *ServerSuite) TestInitSSRWithDebugBuildWithIncorrectPath() {
+	oldSSRLocale := ssrPaths["locale"]
+	oldSSRView := ssrPaths["view"]
+
+	server := newServer(nil, AppConfig{}, s.logger, s.viewHelper)
+	ssrPaths["locale"] = "./testdata/.ssr_only_locales/app/locales"
+	ssrPaths["view"] = "./testdata/.ssr_only_locales/app/views"
+	s.EqualError(server.InitSSR(), fmt.Sprintf("open %s: no such file or directory", ssrPaths["view"]))
+
+	server = newServer(nil, AppConfig{}, s.logger, s.viewHelper)
+	ssrPaths["locale"] = "./testdata/.ssr_only_views/app/locales"
+	ssrPaths["view"] = "./testdata/.ssr_only_views/app/views"
+	s.EqualError(server.InitSSR(), fmt.Sprintf("open %s: no such file or directory", ssrPaths["locale"]))
+
+	ssrPaths["locale"] = oldSSRLocale
+	ssrPaths["view"] = oldSSRView
+}
+
+func (s *ServerSuite) TestInitSSRWithReleaseBuildWithCorrectPath() {
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+	Build = "release"
+	s.config, _ = newConfig(http.Dir("./testdata"))
+
+	server := newServer(http.Dir("./testdata"), s.config, s.logger, s.viewHelper)
+	s.NoError(server.InitSSR())
+	server.Router.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "welcome/index", nil)
+	})
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/", nil)
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(500, recorder.Code)
+
+	server = newServer(http.Dir("./testdata"), s.config, s.logger, s.viewHelper)
+	s.NoError(server.InitSSR())
+	server.Router.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "welcome/index.html", H{"message": "i am testing"})
+	})
+	recorder = httptest.NewRecorder()
+	request, _ = http.NewRequest("GET", "/", nil)
+	server.Router.ServeHTTP(recorder, request)
+
+	s.Equal(200, recorder.Code)
+	s.Contains(recorder.Body.String(), "i am testing")
+	s.Contains(recorder.Body.String(), "i am view helper")
+}
+
+func (s *ServerSuite) TestInitSSRWithReleaseBuildWithIncorrectPath() {
+	Build = "release"
+	oldSSRLocale := ssrPaths["locale"]
+	oldSSRView := ssrPaths["view"]
+	ssrPaths["locale"] = "../app/locales"
+	ssrPaths["view"] = "../app/views"
+
+	server := newServer(http.Dir("./testdata/.ssr_only_locales"), AppConfig{}, s.logger, s.viewHelper)
+	s.EqualError(server.InitSSR(), "open testdata/.ssr_only_locales/app/views: no such file or directory")
+
+	server = newServer(http.Dir("./testdata/.ssr_only_views"), AppConfig{}, s.logger, s.viewHelper)
+	s.EqualError(server.InitSSR(), "open testdata/.ssr_only_views/app/locales: no such file or directory")
+
+	ssrPaths["locale"] = oldSSRLocale
+	ssrPaths["view"] = oldSSRView
 }
 
 func TestServer(t *testing.T) {

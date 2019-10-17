@@ -215,6 +215,7 @@ func Run() {
 
 	// Shows a default welcome page with appy logo/slogan if `GET /` isn't defined.
 	app.Server.AddDefaultWelcomePage()
+	app.Server.InitSSR()
 	// Must be located right before the server runs due to CSR utilizes `NoRoute` to achieve pretty URL navigation
 	// with HTML5 history API.
 	app.Server.InitCSR()
