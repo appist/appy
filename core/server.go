@@ -53,14 +53,16 @@ type csrResource struct {
 // AppServer is the core that serves HTTP/GRPC requests.
 type AppServer struct {
 	assets       http.FileSystem
-	config       AppConfig
+	Config       AppConfig
 	csrResources []csrResource
-	grpc         *grpc.Server
-	http         *http.Server
+	GRPC         *grpc.Server
+	HTTP         *http.Server
 	htmlRenderer multitemplate.Renderer
 	i18nBundle   *i18n.Bundle
 	Logger       *AppLogger
 	Router       *Router
+	CSRPaths     map[string]string
+	SSRPaths     map[string]string
 	viewHelper   template.FuncMap
 }
 
@@ -99,13 +101,15 @@ func newServer(assets http.FileSystem, c AppConfig, l *AppLogger, vh template.Fu
 
 	return AppServer{
 		assets:       assets,
-		config:       c,
+		Config:       c,
 		csrResources: []csrResource{},
-		grpc:         nil,
-		http:         http,
+		GRPC:         nil,
+		HTTP:         http,
 		htmlRenderer: renderer,
 		Logger:       l,
 		Router:       r,
+		CSRPaths:     CSRPaths,
+		SSRPaths:     SSRPaths,
 		viewHelper:   vh,
 	}
 }
@@ -178,8 +182,8 @@ func (s AppServer) AddDefaultWelcomePage() {
 
 // IsSSLCertsExist checks if `./tmp/ssl` exists and contains the locally trusted SSL certificates.
 func (s AppServer) IsSSLCertsExist() bool {
-	_, certErr := os.Stat(s.config.HTTPSSLCertPath + "/cert.pem")
-	_, keyErr := os.Stat(s.config.HTTPSSLCertPath + "/key.pem")
+	_, certErr := os.Stat(s.Config.HTTPSSLCertPath + "/cert.pem")
+	_, keyErr := os.Stat(s.Config.HTTPSSLCertPath + "/key.pem")
 
 	if os.IsNotExist(certErr) || os.IsNotExist(keyErr) {
 		return false
@@ -190,9 +194,9 @@ func (s AppServer) IsSSLCertsExist() bool {
 
 // Hosts returns the server hosts list.
 func (s AppServer) Hosts() ([]string, error) {
-	var hosts = []string{s.config.HTTPHost}
+	var hosts = []string{s.Config.HTTPHost}
 
-	if s.config.HTTPHost != "localhost" {
+	if s.Config.HTTPHost != "localhost" {
 		hosts = append(hosts, "localhost")
 	}
 
@@ -213,10 +217,10 @@ func (s AppServer) Hosts() ([]string, error) {
 func (s AppServer) Routes() []RouteInfo {
 	routes := s.Router.Routes()
 
-	if s.config.HTTPHealthCheckURL != "" {
+	if s.Config.HTTPHealthCheckURL != "" {
 		routes = append(routes, RouteInfo{
 			Method:      "GET",
-			Path:        s.config.HTTPHealthCheckURL,
+			Path:        s.Config.HTTPHealthCheckURL,
 			Handler:     "",
 			HandlerFunc: nil,
 		})
@@ -231,15 +235,15 @@ func (s AppServer) PrintInfo() {
 	lines := []string{}
 	lines = append(lines,
 		fmt.Sprintf("* Version %s (%s), build: %s, environment: %s, config: %s",
-			VERSION, runtime.Version(), Build, s.config.AppyEnv, configPath,
+			VERSION, runtime.Version(), Build, s.Config.AppyEnv, configPath,
 		),
 	)
 
 	hosts, _ := s.Hosts()
-	host := fmt.Sprintf("http://%s:%s", hosts[0], s.config.HTTPPort)
+	host := fmt.Sprintf("http://%s:%s", hosts[0], s.Config.HTTPPort)
 
-	if s.config.HTTPSSLEnabled == true {
-		host = fmt.Sprintf("https://%s:%s", hosts[0], s.config.HTTPSSLPort)
+	if s.Config.HTTPSSLEnabled == true {
+		host = fmt.Sprintf("https://%s:%s", hosts[0], s.Config.HTTPSSLPort)
 	}
 
 	lines = append(lines, fmt.Sprintf("* Listening on %s", host))
@@ -321,7 +325,7 @@ func (s *AppServer) serveCSR(prefix string, assets http.FileSystem) HandlerFunc 
 		request := ctx.Request
 
 		// Serve from the assets FS if the URL path isn't matching any of the SSR paths.
-		if !isSSRPath(s.Routes(), request.URL.Path) && !strings.HasPrefix(request.URL.Path, "/"+ssrPaths["root"]) {
+		if !isSSRPath(s.Routes(), request.URL.Path) && !strings.HasPrefix(request.URL.Path, "/"+s.SSRPaths["root"]) {
 			resource := s.csrResource(request.URL.Path)
 
 			if resource.assets != nil {
@@ -362,7 +366,7 @@ func (s *AppServer) initSSRLocale() error {
 		data        []byte
 		err         error
 	)
-	localeDir := ssrPaths["locale"]
+	localeDir := s.SSRPaths["locale"]
 
 	// Try getting all the locale files from `app/locales`, but fallback to `assets` http.FileSystem.
 	if Build == "debug" {
@@ -372,7 +376,7 @@ func (s *AppServer) initSSRLocale() error {
 			return err
 		}
 	} else {
-		localeDir = "/" + ssrPaths["root"] + "/" + localeDir
+		localeDir = "/" + s.SSRPaths["root"] + "/" + localeDir
 		file, err := s.assets.Open(localeDir)
 
 		if err != nil {
@@ -409,7 +413,7 @@ func (s *AppServer) initSSRView() error {
 		err error
 	)
 
-	viewDir := ssrPaths["view"]
+	viewDir := s.SSRPaths["view"]
 
 	// We will always read from local file system when it's debug build. Otherwise, read from the bind assets.
 	if Build == "debug" {
@@ -417,7 +421,7 @@ func (s *AppServer) initSSRView() error {
 			return err
 		}
 	} else {
-		viewDir = "/" + ssrPaths["root"] + "/" + viewDir
+		viewDir = "/" + s.SSRPaths["root"] + "/" + viewDir
 
 		var file http.File
 		if file, err = s.assets.Open(viewDir); err != nil {

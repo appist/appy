@@ -23,6 +23,9 @@ type AppConfig = core.AppConfig
 // AppLogger keeps the logging functionality.
 type AppLogger = core.AppLogger
 
+// AppServer is the core that serves HTTP/GRPC requests.
+type AppServer = core.AppServer
+
 // Context retains the information that can be passed along in HTTP request flow.
 type Context = core.Context
 
@@ -207,12 +210,22 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	StaticFS = app.Server.Router.StaticFS
 	StaticFile = app.Server.Router.StaticFile
 	Use = app.Server.Router.Use
+
+	cmd.Init(app)
+	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
+	cmd.AddCommand(cmd.NewSecretCommand())
+	cmd.AddCommand(cmd.NewServeCommand(app.Server))
+
+	if Build != "release" {
+		cmd.AddCommand(cmd.NewBuildCommand(app.Server))
+		cmd.AddCommand(cmd.NewStartCommand(app.Server))
+		cmd.AddCommand(cmd.NewSSLCleanCommand(app.Server))
+		cmd.AddCommand(cmd.NewSSLSetupCommand(app.Server))
+	}
 }
 
 // Run executes the given command.
 func Run() {
-	cmd.Init(app)
-
 	// Shows a default welcome page with appy logo/slogan if `GET /` isn't defined.
 	app.Server.AddDefaultWelcomePage()
 	app.Server.InitSSR()

@@ -40,22 +40,22 @@ func (s *ServerSuite) TearDownTest() {
 func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
 	server := newServer(s.assets, s.config, s.logger, nil)
 	s.NotNil(server.assets)
-	s.NotNil(server.config)
-	s.NotNil(server.http)
+	s.NotNil(server.Config)
+	s.NotNil(server.HTTP)
 	s.NotNil(server.htmlRenderer)
 	s.NotNil(server.Router)
-	s.Equal("0.0.0.0:3000", server.http.Addr)
+	s.Equal("0.0.0.0:3000", server.HTTP.Addr)
 }
 
 func (s *ServerSuite) TestNewServerWithSSLEnabled() {
 	s.config.HTTPSSLEnabled = true
 	server := newServer(s.assets, s.config, s.logger, nil)
 	s.NotNil(server.assets)
-	s.NotNil(server.config)
-	s.NotNil(server.http)
+	s.NotNil(server.Config)
+	s.NotNil(server.HTTP)
 	s.NotNil(server.htmlRenderer)
 	s.NotNil(server.Router)
-	s.Equal("0.0.0.0:3443", server.http.Addr)
+	s.Equal("0.0.0.0:3443", server.HTTP.Addr)
 }
 
 func (s *ServerSuite) TestDefaultWelcomePageWithoutCustomHomePath() {
@@ -248,16 +248,16 @@ func (s *ServerSuite) TestServerPrintInfoWithReleaseBuild() {
 }
 
 func (s *ServerSuite) TestInitSSRWithDebugBuildWithCorrectPath() {
-	oldSSRLocale := ssrPaths["locale"]
-	oldSSRView := ssrPaths["view"]
-	ssrPaths["locale"] = "./testdata/.ssr/app/locales"
-	ssrPaths["view"] = "./testdata/.ssr/app/views"
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 	s.config, _ = newConfig(http.Dir("./testdata/.ssr"))
 
 	recorder := httptest.NewRecorder()
 	server := newServer(nil, s.config, s.logger, s.viewHelper)
+	oldSSRLocale := server.SSRPaths["locale"]
+	oldSSRView := server.SSRPaths["view"]
+	server.SSRPaths["locale"] = "./testdata/.ssr/app/locales"
+	server.SSRPaths["view"] = "./testdata/.ssr/app/views"
 	s.NoError(server.InitSSR())
 	server.Router.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "welcome/index", nil)
@@ -280,26 +280,25 @@ func (s *ServerSuite) TestInitSSRWithDebugBuildWithCorrectPath() {
 	s.Contains(recorder.Body.String(), "i am testing")
 	s.Contains(recorder.Body.String(), "i am view helper")
 
-	ssrPaths["locale"] = oldSSRLocale
-	ssrPaths["view"] = oldSSRView
+	server.SSRPaths["locale"] = oldSSRLocale
+	server.SSRPaths["view"] = oldSSRView
 }
 
 func (s *ServerSuite) TestInitSSRWithDebugBuildWithIncorrectPath() {
-	oldSSRLocale := ssrPaths["locale"]
-	oldSSRView := ssrPaths["view"]
-
 	server := newServer(nil, AppConfig{}, s.logger, s.viewHelper)
-	ssrPaths["locale"] = "./testdata/.ssr_only_locales/app/locales"
-	ssrPaths["view"] = "./testdata/.ssr_only_locales/app/views"
-	s.EqualError(server.InitSSR(), fmt.Sprintf("open %s: no such file or directory", ssrPaths["view"]))
+	oldSSRLocale := server.SSRPaths["locale"]
+	oldSSRView := server.SSRPaths["view"]
+	server.SSRPaths["locale"] = "./testdata/.ssr_only_locales/app/locales"
+	server.SSRPaths["view"] = "./testdata/.ssr_only_locales/app/views"
+	s.EqualError(server.InitSSR(), fmt.Sprintf("open %s: no such file or directory", server.SSRPaths["view"]))
 
 	server = newServer(nil, AppConfig{}, s.logger, s.viewHelper)
-	ssrPaths["locale"] = "./testdata/.ssr_only_views/app/locales"
-	ssrPaths["view"] = "./testdata/.ssr_only_views/app/views"
-	s.EqualError(server.InitSSR(), fmt.Sprintf("open %s: no such file or directory", ssrPaths["locale"]))
+	server.SSRPaths["locale"] = "./testdata/.ssr_only_views/app/locales"
+	server.SSRPaths["view"] = "./testdata/.ssr_only_views/app/views"
+	s.EqualError(server.InitSSR(), fmt.Sprintf("open %s: no such file or directory", server.SSRPaths["locale"]))
 
-	ssrPaths["locale"] = oldSSRLocale
-	ssrPaths["view"] = oldSSRView
+	server.SSRPaths["locale"] = oldSSRLocale
+	server.SSRPaths["view"] = oldSSRView
 }
 
 func (s *ServerSuite) TestInitSSRWithReleaseBuildWithCorrectPath() {
@@ -335,19 +334,19 @@ func (s *ServerSuite) TestInitSSRWithReleaseBuildWithCorrectPath() {
 
 func (s *ServerSuite) TestInitSSRWithReleaseBuildWithIncorrectPath() {
 	Build = "release"
-	oldSSRLocale := ssrPaths["locale"]
-	oldSSRView := ssrPaths["view"]
-	ssrPaths["locale"] = "../app/locales"
-	ssrPaths["view"] = "../app/views"
 
 	server := newServer(http.Dir("./testdata/.ssr_only_locales"), AppConfig{}, s.logger, s.viewHelper)
+	oldSSRLocale := server.SSRPaths["locale"]
+	oldSSRView := server.SSRPaths["view"]
+	server.SSRPaths["locale"] = "../app/locales"
+	server.SSRPaths["view"] = "../app/views"
 	s.EqualError(server.InitSSR(), "open testdata/.ssr_only_locales/app/views: no such file or directory")
 
 	server = newServer(http.Dir("./testdata/.ssr_only_views"), AppConfig{}, s.logger, s.viewHelper)
 	s.EqualError(server.InitSSR(), "open testdata/.ssr_only_views/app/locales: no such file or directory")
 
-	ssrPaths["locale"] = oldSSRLocale
-	ssrPaths["view"] = oldSSRView
+	server.SSRPaths["locale"] = oldSSRLocale
+	server.SSRPaths["view"] = oldSSRView
 }
 
 func TestServer(t *testing.T) {

@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Command wraps the information of what a command line should do.
-type Command = cobra.Command
+// AppCmd wraps the information of what a command line is about.
+type AppCmd = cobra.Command
 
 var (
 	mainAssets       = "main_assets.go"
 	app              core.App
-	root             *Command
+	root             *AppCmd
 	reservedCmdNames = map[string]bool{}
 )
 
@@ -28,7 +28,7 @@ func Init(a core.App) {
 		cmdName = path.Base(wd)
 	}
 
-	root = &Command{
+	root = &AppCmd{
 		Use:     cmdName,
 		Short:   "An opinionated productive web framework that helps scaling business easier.",
 		Version: core.VERSION,
@@ -36,7 +36,7 @@ func Init(a core.App) {
 }
 
 // AddCommand adds a custom command.
-func AddCommand(command *Command) {
+func AddCommand(command *AppCmd) {
 	if _, ok := reservedCmdNames[command.Name()]; ok {
 		app.Logger.Fatalf("\"%s\" command name is reserved, please update the command name.", command.Name())
 	}

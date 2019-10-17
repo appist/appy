@@ -84,11 +84,11 @@ var (
 	// Build specifies if the binary is debug or release build.
 	Build = "debug"
 
-	csrPaths = map[string]string{
+	CSRPaths = map[string]string{
 		"root": "web",
 	}
 
-	ssrPaths = map[string]string{
+	SSRPaths = map[string]string{
 		"root":   ".ssr",
 		"config": "config",
 		"locale": "app/locales",
@@ -108,11 +108,11 @@ func getConfigInfo(assets http.FileSystem) (string, io.Reader, error) {
 		os.Setenv("APPY_ENV", "development")
 	}
 
-	path := ssrPaths["config"] + "/.env." + os.Getenv("APPY_ENV")
+	path := SSRPaths["config"] + "/.env." + os.Getenv("APPY_ENV")
 	if Build == "debug" {
 		reader, err = os.Open(path)
 	} else {
-		path = ssrPaths["root"] + "/" + path
+		path = SSRPaths["root"] + "/" + path
 
 		if assets != nil {
 			reader, err = assets.Open(path)
