@@ -84,10 +84,12 @@ var (
 	// Build specifies if the binary is debug or release build.
 	Build = "debug"
 
+	// CSRPaths specifies the path that stores the client-side rendering assets.
 	CSRPaths = map[string]string{
 		"root": "web",
 	}
 
+	// SSRPaths specifies the paths that store the server-side rendering assets.
 	SSRPaths = map[string]string{
 		"root":   ".ssr",
 		"config": "config",
