@@ -11,7 +11,7 @@ function handleClick(num) {
 </style>
 
 <template lang="pug">
-  div Hello World!
+  span Hello World!
   button(class="btn-primary" on:click!="{() => handleClick(-1)}") -
   span {count}
   button(class="btn-primary" on:click!="{() => handleClick(1)}") +

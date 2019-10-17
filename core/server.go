@@ -329,8 +329,7 @@ func (s *AppServer) serveCSR(prefix string, assets http.FileSystem) HandlerFunc 
 			resource := s.csrResource(request.URL.Path)
 
 			if resource.assets != nil {
-				requestPath := request.URL.Path
-				assetPath := strings.Replace(requestPath, resource.prefix, "", 1)
+				assetPath := strings.Replace(request.URL.Path, resource.prefix, "", 1)
 				_, err := resource.assets.Open(assetPath)
 				// Only serve the request from assets if the file is in the assets filesystem.
 				if err == nil {

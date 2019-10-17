@@ -50,6 +50,7 @@ func Prerender(config AppConfig, logger *AppLogger) HandlerFunc {
 	scheme := "http"
 	host := config.HTTPHost
 	port := config.HTTPPort
+
 	if config.HTTPSSLEnabled == true {
 		scheme = "https"
 		port = config.HTTPSSLPort
@@ -72,6 +73,7 @@ func Prerender(config AppConfig, logger *AppLogger) HandlerFunc {
 
 			ctx.Writer.Header().Add(xPrerender, "1")
 			ctx.Data(http.StatusOK, "text/html; charset=utf-8", data)
+			ctx.Abort()
 			return
 		}
 
