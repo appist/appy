@@ -28,6 +28,12 @@ func (s *AppSuite) TestNewApp() {
 	s.NotNil(app.Server)
 }
 
+func (s *AppSuite) TestNewAppWithMissingRequiredEnvVariables() {
+	app, err := NewApp(nil, nil)
+	s.EqualError(err, "required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
+	s.Equal(AppConfig{}, app.Config)
+}
+
 func TestApp(t *testing.T) {
 	test.Run(t, new(AppSuite))
 }

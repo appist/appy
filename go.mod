@@ -9,8 +9,12 @@ require (
 	github.com/gin-contrib/gzip v0.0.1
 	github.com/gin-contrib/multitemplate v0.0.0-20190528082104-30e424939505
 	github.com/gin-contrib/secure v0.0.0-20190528141218-312887ea6e1f
+	github.com/gin-contrib/sessions v0.0.1
 	github.com/gin-gonic/gin v1.4.1-0.20190922073534-0b96dd8ae554
+	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
+	github.com/gorilla/sessions v1.2.0
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/pretty v0.1.0 // indirect
