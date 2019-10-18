@@ -30,16 +30,16 @@ func (s *RequestLoggerSuite) TestRequestLogger() {
 	recorder := httptest.NewRecorder()
 	ctx, _ := test.CreateTestContext(recorder)
 	ctx.Request = &http.Request{
-		Host:       "0.0.0.0",
+		Host:       "localhost",
 		Method:     "GET",
 		Proto:      "HTTP/2.0",
-		RemoteAddr: "0.0.0.0",
+		RemoteAddr: "localhost",
 		TLS:        &tls.ConnectionState{},
 		URL:        &url.URL{},
 	}
 	RequestLogger(s.config, s.logger)(ctx)
 
-	host := "http://0.0.0.0"
+	host := "http://localhost"
 	query := "username=user&password=secret"
 	request := &http.Request{
 		RequestURI: host + "?" + query,

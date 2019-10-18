@@ -131,7 +131,7 @@ func (s *CSRFSuite) TestRender403IfMismatchRefererOverHTTPSConn() {
 		Method: "POST",
 		TLS:    &tls.ConnectionState{},
 	}
-	ctx.Request.Header.Set("Referer", "http://0.0.0.0")
+	ctx.Request.Header.Set("Referer", "http://localhost")
 	csrfHandler(ctx, s.config, s.logger)
 
 	s.Equal(403, ctx.Writer.Status())

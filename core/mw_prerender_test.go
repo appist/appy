@@ -47,7 +47,7 @@ func (s *PrerenderSuite) TestRequestHTTPHostWithSEOBot() {
 	ctx, _ := test.CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{
 		Header: map[string][]string{},
-		Host:   "0.0.0.0",
+		Host:   "localhost",
 		Method: "GET",
 		URL: &url.URL{
 			Path: "/",
@@ -64,7 +64,7 @@ func (s *PrerenderSuite) TestRequestHTTPSHostWithSEOBot() {
 	ctx, _ := test.CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{
 		Header: map[string][]string{},
-		Host:   "0.0.0.0",
+		Host:   "localhost",
 		Method: "GET",
 		URL: &url.URL{
 			Path: "/tools/about",
@@ -87,7 +87,7 @@ func (s *PrerenderSuite) TestRequestFailedWithSEOBot() {
 	ctx, _ := test.CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{
 		Header: map[string][]string{},
-		Host:   "0.0.0.0",
+		Host:   "localhost",
 		Method: "GET",
 		URL: &url.URL{
 			Path: "/",

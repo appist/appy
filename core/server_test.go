@@ -44,7 +44,7 @@ func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
 	s.NotNil(server.HTTP)
 	s.NotNil(server.htmlRenderer)
 	s.NotNil(server.Router)
-	s.Equal("0.0.0.0:3000", server.HTTP.Addr)
+	s.Equal("localhost:3000", server.HTTP.Addr)
 }
 
 func (s *ServerSuite) TestNewServerWithSSLEnabled() {
@@ -55,7 +55,7 @@ func (s *ServerSuite) TestNewServerWithSSLEnabled() {
 	s.NotNil(server.HTTP)
 	s.NotNil(server.htmlRenderer)
 	s.NotNil(server.Router)
-	s.Equal("0.0.0.0:3443", server.HTTP.Addr)
+	s.Equal("localhost:3443", server.HTTP.Addr)
 }
 
 func (s *ServerSuite) TestDefaultWelcomePageWithoutCustomHomePath() {
@@ -208,9 +208,19 @@ func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 	})
 
 	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
-	s.Contains(output, "* Listening on http://0.0.0.0:3000")
+	s.Contains(output, "* Listening on http://localhost:3000")
 
 	os.Setenv("HTTP_SSL_ENABLED", "true")
+	s.config, _ = newConfig(http.Dir("./testdata"))
+	server = newServer(http.Dir("./testdata"), s.config, s.logger, nil)
+	output = CaptureOutput(func() {
+		server.PrintInfo()
+	})
+
+	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
+	s.Contains(output, "* Listening on https://localhost:3443")
+
+	os.Setenv("HTTP_HOST", "0.0.0.0")
 	s.config, _ = newConfig(http.Dir("./testdata"))
 	server = newServer(http.Dir("./testdata"), s.config, s.logger, nil)
 	output = CaptureOutput(func() {

@@ -92,7 +92,7 @@ func (s *SessionManagerSuite) TestSessionRedisStoreWrongAddr() {
 	ctx, _ := test.CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
-	s.config.HTTPSessionRedisAddr = "0.0.0.0:1234"
+	s.config.HTTPSessionRedisAddr = "localhost:1234"
 	s.Panics(func() { SessionManager(s.config)(ctx) })
 }
 
