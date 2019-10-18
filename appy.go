@@ -229,9 +229,13 @@ func Run() {
 	// Shows a default welcome page with appy logo/slogan if `GET /` isn't defined.
 	app.Server.AddDefaultWelcomePage()
 	app.Server.InitSSR()
+
 	// Must be located right before the server runs due to CSR utilizes `NoRoute` to achieve pretty URL navigation
-	// with HTML5 history API.
-	app.Server.InitCSR()
+	// with HTML5 history API. In addition, we only enable CSR hosting for `release` build due to `debug` build
+	// should rely on webpack-dev-server.
+	if Build == "release" {
+		app.Server.InitCSR()
+	}
 
 	cmd.Run()
 }

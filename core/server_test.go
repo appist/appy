@@ -89,6 +89,7 @@ func (s *ServerSuite) TestDefaultWelcomePageWithCustomHomePath() {
 }
 
 func (s *ServerSuite) TestDefaultWelcomePageWithCSRHomePath() {
+	Build = "release"
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/", nil)
 	server := newServer(http.Dir("./testdata/.ssr"), s.config, s.logger, nil)

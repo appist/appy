@@ -167,7 +167,7 @@ func (s AppServer) AddDefaultWelcomePage() {
 	}
 
 	csrRootDefined := false
-	if s.assets != nil {
+	if Build == "release" && s.assets != nil {
 		if _, err := s.assets.Open("/index.html"); err == nil {
 			csrRootDefined = true
 		}
