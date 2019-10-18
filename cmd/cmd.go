@@ -18,14 +18,28 @@ var (
 	root             *AppCmd
 	reservedCmdNames = map[string]bool{}
 
-	ArbitraryArgs  = cobra.ArbitraryArgs
-	ExactArgs      = cobra.ExactArgs
+	// ExactArgs returns an error if there are not exactly n args.
+	ExactArgs = cobra.ExactArgs
+
+	// ExactValidArgs returns an error if
+	// there are not exactly N positional args OR
+	// there are any positional args that are not in the `ValidArgs` field of `Command`
 	ExactValidArgs = cobra.ExactValidArgs
-	MinimumNArgs   = cobra.MinimumNArgs
-	MaximumNArgs   = cobra.MaximumNArgs
-	NoArgs         = cobra.NoArgs
-	OnlyValidArgs  = cobra.OnlyValidArgs
-	RangeArgs      = cobra.RangeArgs
+
+	// MinimumNArgs returns an error if there is not at least N args.
+	MinimumNArgs = cobra.MinimumNArgs
+
+	// MaximumNArgs returns an error if there are more than N args.
+	MaximumNArgs = cobra.MaximumNArgs
+
+	// NoArgs returns an error if any args are included.
+	NoArgs = cobra.NoArgs
+
+	// OnlyValidArgs returns an error if any args are not in the list of ValidArgs.
+	OnlyValidArgs = cobra.OnlyValidArgs
+
+	// RangeArgs returns an error if the number of args is not within the expected range.
+	RangeArgs = cobra.RangeArgs
 )
 
 // Init initializes the root command instance.
