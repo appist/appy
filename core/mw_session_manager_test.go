@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -80,6 +81,7 @@ func (s *SessionManagerSuite) TestSessionRedisStore() {
 	ctx, _ := test.CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
+	fmt.Println(s.config.HTTPSessionRedisAddr)
 	SessionManager(s.config)(ctx)
 
 	session := DefaultSession(ctx)
