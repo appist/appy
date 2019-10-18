@@ -19,7 +19,6 @@ func (s *ConfigSuite) SetupTest() {
 }
 
 func (s *ConfigSuite) TearDownTest() {
-	os.Clearenv()
 }
 
 func (s *ConfigSuite) TestNewConfigDefaultValue() {
@@ -133,6 +132,7 @@ func (s *ConfigSuite) TestNewConfigRequiredConfig() {
 	c, err := newConfig(http.Dir("./testdata/config"))
 	s.EqualError(err, "required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
 	s.Equal(false, c.HTTPSSLEnabled)
+	os.Unsetenv("APPY_ENV")
 }
 
 func (s *ConfigSuite) TestNewConfigWithReleaseBuild() {

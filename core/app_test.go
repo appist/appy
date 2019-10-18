@@ -15,7 +15,8 @@ func (s *AppSuite) SetupTest() {
 }
 
 func (s *AppSuite) TearDownTest() {
-	os.Clearenv()
+	os.Unsetenv("HTTP_CSRF_SECRET")
+	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
 func (s *AppSuite) TestNewApp() {

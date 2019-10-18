@@ -34,7 +34,10 @@ func (s *ServerSuite) SetupTest() {
 }
 
 func (s *ServerSuite) TearDownTest() {
-	os.Clearenv()
+	os.Unsetenv("HTTP_CSRF_SECRET")
+	os.Unsetenv("HTTP_HOST")
+	os.Unsetenv("HTTP_SESSION_SECRETS")
+	os.Unsetenv("HTTP_SSL_ENABLED")
 }
 
 func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
