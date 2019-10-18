@@ -149,6 +149,43 @@ func (s *ConfigSuite) TestNewConfigWithUnparsableEnvVariable() {
 	s.NotNil(err)
 }
 
+func (s *ConfigSuite) TestMasterKeyWithMissingKeyFile() {
+	_, err := MasterKey()
+	s.EqualError(err, "open config/development.key: no such file or directory")
+}
+
+func (s *ConfigSuite) TestMasterKeyWithAppyEnv() {
+	oldSSRConfig := SSRPaths["config"]
+	SSRPaths["config"] = "./testdata/.ssr/config"
+	os.Setenv("APPY_ENV", "staging")
+	key, err := MasterKey()
+	s.NoError(err)
+	s.Equal([]byte("dummy"), key)
+	os.Unsetenv("APPY_ENV")
+	SSRPaths["config"] = oldSSRConfig
+}
+
+func (s *ConfigSuite) TestMasterKeyWithAppyMasterKey() {
+	oldSSRConfig := SSRPaths["config"]
+	SSRPaths["config"] = "./testdata/.ssr/config"
+	os.Setenv("APPY_MASTER_KEY", "dummy")
+	key, err := MasterKey()
+	s.NoError(err)
+	s.Equal([]byte("dummy"), key)
+	os.Unsetenv("APPY_MASTER_KEY")
+	SSRPaths["config"] = oldSSRConfig
+}
+
+func (s *ConfigSuite) TestMasterKeyWithZeroLength() {
+	oldSSRConfig := SSRPaths["config"]
+	SSRPaths["config"] = "./testdata/.ssr/config"
+	os.Setenv("APPY_ENV", "empty")
+	_, err := MasterKey()
+	s.EqualError(err, "the master key cannot be blank, please either pass in \"APPY_MASTER_KEY\" environment variable or store it in \"config/<APPY_ENV>.key\"")
+	os.Unsetenv("APPY_ENV")
+	SSRPaths["config"] = oldSSRConfig
+}
+
 func TestConfig(t *testing.T) {
 	test.Run(t, new(ConfigSuite))
 }

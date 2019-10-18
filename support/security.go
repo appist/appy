@@ -7,6 +7,7 @@ import (
 	"io"
 )
 
+// Encrypt encrypts a plaintext into a cipher text using the key with AES.
 func Encrypt(plaintext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -26,6 +27,7 @@ func Encrypt(plaintext []byte, key []byte) ([]byte, error) {
 	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
+// Decrypt decrypts a cipher text into a plain text using the key with AES.
 func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {

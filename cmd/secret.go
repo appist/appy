@@ -7,13 +7,15 @@ import (
 	"log"
 )
 
-// NewSecretCommand generates a cryptographically secure secret key for encrypting session cookie and CSRF token.
+// NewSecretCommand generates a cryptographically secure secret key for encrypting cookie, CSRF token and config.
 func NewSecretCommand() *AppCmd {
-	return &AppCmd{
+	var length int
+
+	cmd := &AppCmd{
 		Use:   "secret",
-		Short: "Generate a cryptographically secure secret key for encrypting session cookie and CSRF token.",
+		Short: "Generate a cryptographically secure secret key for encrypting cookie, CSRF token and config.",
 		Run: func(cmd *AppCmd, args []string) {
-			bytes := make([]byte, 64)
+			bytes := make([]byte, length)
 
 			if _, err := rand.Read(bytes); err != nil {
 				log.Fatal(err)
@@ -22,4 +24,7 @@ func NewSecretCommand() *AppCmd {
 			fmt.Println(hex.EncodeToString(bytes))
 		},
 	}
+
+	cmd.Flags().IntVar(&length, "length", 64, "The byte length to generate, use 16 if you're generating for config encryption.")
+	return cmd
 }

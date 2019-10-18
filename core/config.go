@@ -160,13 +160,12 @@ func newConfig(assets http.FileSystem) (AppConfig, error) {
 // 1. the key in `config/<APPY_ENV>.key`
 // 2. `APPY_MASTER_KEY` environment variable
 func MasterKey() ([]byte, error) {
-	wd, _ := os.Getwd()
 	appyEnv := "development"
 	if os.Getenv("APPY_ENV") != "" {
 		appyEnv = os.Getenv("APPY_ENV")
 	}
 
-	key, err := ioutil.ReadFile(wd + "/" + SSRPaths["config"] + "/" + appyEnv + ".key")
+	key, err := ioutil.ReadFile(SSRPaths["config"] + "/" + appyEnv + ".key")
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +173,9 @@ func MasterKey() ([]byte, error) {
 	if os.Getenv("APPY_MASTER_KEY") != "" {
 		key = []byte(os.Getenv("APPY_MASTER_KEY"))
 	}
+
+	key = []byte(strings.Trim(string(key), "\n"))
+	key = []byte(strings.Trim(string(key), " "))
 
 	if len(key) == 0 {
 		return nil, errors.New("the master key cannot be blank, please either pass in \"APPY_MASTER_KEY\" environment variable or store it in \"config/<APPY_ENV>.key\"")

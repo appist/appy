@@ -214,7 +214,6 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	cmd.Init(app)
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())
-	cmd.AddCommand(cmd.NewSecretConfigCommand())
 	cmd.AddCommand(cmd.NewServeCommand(app.Server))
 
 	if Build != "release" {
