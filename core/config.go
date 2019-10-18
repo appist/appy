@@ -1,7 +1,9 @@
 package core
 
 import (
+	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
@@ -151,4 +153,31 @@ func newConfig(assets http.FileSystem) (AppConfig, error) {
 	err = support.ParseEnv(c)
 
 	return *c, err
+}
+
+// MasterKey retrieves the encryption/decryption key by checking the below in order:
+//
+// 1. the key in `config/<APPY_ENV>.key`
+// 2. `APPY_MASTER_KEY` environment variable
+func MasterKey() ([]byte, error) {
+	wd, _ := os.Getwd()
+	appyEnv := "development"
+	if os.Getenv("APPY_ENV") != "" {
+		appyEnv = os.Getenv("APPY_ENV")
+	}
+
+	key, err := ioutil.ReadFile(wd + "/" + SSRPaths["config"] + "/" + appyEnv + ".key")
+	if err != nil {
+		return nil, err
+	}
+
+	if os.Getenv("APPY_MASTER_KEY") != "" {
+		key = []byte(os.Getenv("APPY_MASTER_KEY"))
+	}
+
+	if len(key) == 0 {
+		return nil, errors.New("the master key cannot be blank, please either pass in \"APPY_MASTER_KEY\" environment variable or store it in \"config/<APPY_ENV>.key\"")
+	}
+
+	return key, nil
 }

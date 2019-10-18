@@ -17,6 +17,15 @@ var (
 	app              core.App
 	root             *AppCmd
 	reservedCmdNames = map[string]bool{}
+
+	ArbitraryArgs  = cobra.ArbitraryArgs
+	ExactArgs      = cobra.ExactArgs
+	ExactValidArgs = cobra.ExactValidArgs
+	MinimumNArgs   = cobra.MinimumNArgs
+	MaximumNArgs   = cobra.MaximumNArgs
+	NoArgs         = cobra.NoArgs
+	OnlyValidArgs  = cobra.OnlyValidArgs
+	RangeArgs      = cobra.RangeArgs
 )
 
 // Init initializes the root command instance.

@@ -214,10 +214,13 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	cmd.Init(app)
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())
+	cmd.AddCommand(cmd.NewSecretConfigCommand())
 	cmd.AddCommand(cmd.NewServeCommand(app.Server))
 
 	if Build != "release" {
 		cmd.AddCommand(cmd.NewBuildCommand(app.Server))
+		cmd.AddCommand(cmd.NewConfigDecryptCommand(app.Server))
+		cmd.AddCommand(cmd.NewConfigEncryptCommand(app.Server))
 		cmd.AddCommand(cmd.NewStartCommand(app.Server))
 		cmd.AddCommand(cmd.NewSSLCleanCommand(app.Server))
 		cmd.AddCommand(cmd.NewSSLSetupCommand(app.Server))
