@@ -17,6 +17,7 @@ var (
 		opts := append(chromedp.DefaultExecAllocatorOptions[:],
 			chromedp.DisableGPU,
 			chromedp.NoSandbox,
+			chromedp.Headless,
 			chromedp.Flag("ignore-certificate-errors", true),
 		)
 
