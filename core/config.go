@@ -136,7 +136,8 @@ func newConfig(assets http.FileSystem, logger *AppLogger) (AppConfig, error) {
 	c := &AppConfig{}
 
 	// Skip config parsing for all the commands that don't need .env.<APPY_ENV> to work.
-	if support.ArrayContains(os.Args, "build") || support.ArrayContains(os.Args, "routes") || support.ArrayContains(os.Args, "secret") {
+	if support.ArrayContains(os.Args, "build") || support.ArrayContains(os.Args, "routes") || support.ArrayContains(os.Args, "secret") ||
+		support.ArrayContains(os.Args, "-h") || support.ArrayContains(os.Args, "--help") || (Build == "release" && len(os.Args) == 1) {
 		// Don't have to handle required config error as these commands are not used to serve requests.
 		support.ParseEnv(c)
 		return *c, nil
