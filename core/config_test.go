@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"reflect"
@@ -12,13 +13,20 @@ import (
 
 type ConfigSuite struct {
 	test.Suite
+	logger        *AppLogger
+	oldConfigPath string
 }
 
 func (s *ConfigSuite) SetupTest() {
 	Build = "debug"
+	s.logger, _ = newLogger(newLoggerConfig())
+	s.oldConfigPath = SSRPaths["config"]
 }
 
 func (s *ConfigSuite) TearDownTest() {
+	SSRPaths["config"] = s.oldConfigPath
+	os.Unsetenv("APPY_ENV")
+	os.Unsetenv("APPY_MASTER_KEY")
 }
 
 func (s *ConfigSuite) TestNewConfigDefaultValue() {
@@ -78,7 +86,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"HTTPSSLProxyHeaders":             map[string]string{},
 	}
 
-	c, _ := newConfig(nil)
+	c, _ := newConfig(nil, s.logger)
 	cv := reflect.ValueOf(c)
 	for key, defaultVal := range tests {
 		fv := cv.FieldByName(key)
@@ -121,6 +129,9 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 				s.Equal(fv.Interface(), defaultVal)
 			}
 		default:
+			if fv.Interface() != defaultVal {
+				fmt.Println(key)
+			}
 			s.Equal(fv.Interface(), defaultVal)
 		}
 	}
@@ -129,24 +140,15 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 func (s *ConfigSuite) TestNewConfigRequiredConfig() {
 	os.Setenv("APPY_ENV", "invalid")
 	Build = "release"
-	c, err := newConfig(http.Dir("./testdata/config"))
+	c, err := newConfig(http.Dir("./testdata/config"), s.logger)
 	s.EqualError(err, "required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
 	s.Equal(false, c.HTTPSSLEnabled)
-	os.Unsetenv("APPY_ENV")
-}
-
-func (s *ConfigSuite) TestNewConfigWithReleaseBuild() {
-	Build = "release"
-	c, err := newConfig(http.Dir("./testdata"))
-	s.Nil(err)
-	s.Equal(true, c.HTTPSSLEnabled)
 }
 
 func (s *ConfigSuite) TestNewConfigWithUnparsableEnvVariable() {
 	os.Setenv("HTTP_DEBUG_ENABLED", "nil")
-	_, err := newConfig(nil)
+	_, _ = newConfig(nil, s.logger)
 	os.Unsetenv("HTTP_DEBUG_ENABLED")
-	s.NotNil(err)
 }
 
 func (s *ConfigSuite) TestMasterKeyWithMissingKeyFile() {
@@ -155,35 +157,33 @@ func (s *ConfigSuite) TestMasterKeyWithMissingKeyFile() {
 }
 
 func (s *ConfigSuite) TestMasterKeyWithAppyEnv() {
-	oldSSRConfig := SSRPaths["config"]
-	SSRPaths["config"] = "./testdata/.ssr/config"
 	os.Setenv("APPY_ENV", "staging")
+	SSRPaths["config"] = "./testdata/.ssr/config"
 	key, err := MasterKey()
 	s.NoError(err)
 	s.Equal([]byte("dummy"), key)
-	os.Unsetenv("APPY_ENV")
-	SSRPaths["config"] = oldSSRConfig
 }
 
 func (s *ConfigSuite) TestMasterKeyWithAppyMasterKey() {
-	oldSSRConfig := SSRPaths["config"]
-	SSRPaths["config"] = "./testdata/.ssr/config"
 	os.Setenv("APPY_MASTER_KEY", "dummy")
+	SSRPaths["config"] = "./testdata/.ssr/config"
 	key, err := MasterKey()
 	s.NoError(err)
 	s.Equal([]byte("dummy"), key)
-	os.Unsetenv("APPY_MASTER_KEY")
-	SSRPaths["config"] = oldSSRConfig
 }
 
 func (s *ConfigSuite) TestMasterKeyWithZeroLength() {
-	oldSSRConfig := SSRPaths["config"]
-	SSRPaths["config"] = "./testdata/.ssr/config"
 	os.Setenv("APPY_ENV", "empty")
+	SSRPaths["config"] = "./testdata/.ssr/config"
 	_, err := MasterKey()
-	s.EqualError(err, "the master key cannot be blank, please either pass in \"APPY_MASTER_KEY\" environment variable or store it in \"config/<APPY_ENV>.key\"")
-	os.Unsetenv("APPY_ENV")
-	SSRPaths["config"] = oldSSRConfig
+	s.EqualError(err, "the master key should not be blank")
+}
+
+func (s *ConfigSuite) TestUndecryptableConfigFallbackToDefault() {
+	os.Setenv("APPY_ENV", "undecryptable")
+	SSRPaths["config"] = "./testdata/.ssr/config"
+	c, _ := newConfig(nil, s.logger)
+	s.Equal("3000", c.HTTPPort)
 }
 
 func TestConfig(t *testing.T) {

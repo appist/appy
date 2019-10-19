@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
+	"os"
 
 	"github.com/appist/appy/cmd"
 	"github.com/appist/appy/core"
@@ -185,7 +186,7 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	var err error
 	app, err = core.NewApp(assets, viewHelper)
 	if err != nil {
-		panic(err)
+		os.Exit(1)
 	}
 
 	Config = app.Config

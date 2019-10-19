@@ -1,7 +1,9 @@
 package core
 
 import (
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -130,28 +132,50 @@ func getConfigInfo(assets http.FileSystem) (string, io.Reader, error) {
 	return path, reader, err
 }
 
-func newConfig(assets http.FileSystem) (AppConfig, error) {
-	_, reader, err := getConfigInfo(assets)
+func newConfig(assets http.FileSystem, logger *AppLogger) (AppConfig, error) {
+	c := &AppConfig{}
+	masterKey, err := MasterKey()
+	if err != nil {
+		logger.Info(err.Error())
+	}
+
+	configPath, reader, err := getConfigInfo(assets)
 	if err == nil {
 		envMap, _ := godotenv.Parse(reader)
 		currentEnv := map[string]bool{}
 		rawEnv := os.Environ()
+
 		for _, rawEnvLine := range rawEnv {
 			key := strings.Split(rawEnvLine, "=")[0]
 			currentEnv[key] = true
 		}
 
-		// Add decrypt using APPY_MASTER_KEY
-		for key, value := range envMap {
-			if !currentEnv[key] {
-				os.Setenv(key, value)
+		if len(masterKey) != 0 {
+			for key, value := range envMap {
+				if !currentEnv[key] {
+					decodeStr, _ := hex.DecodeString(value)
+					plaintext, err := support.Decrypt(decodeStr, masterKey)
+					if len(plaintext) < 1 || err != nil {
+						if support.ArrayContains(os.Args, "serve") {
+							msg := fmt.Sprintf("* ERROR unable to decrypt the value for '%s' in '%s'", key, configPath)
+
+							if Build == "debug" {
+								fmt.Println(msg)
+							} else {
+								logger.Info(msg)
+							}
+						}
+
+						continue
+					}
+
+					os.Setenv(key, string(plaintext))
+				}
 			}
 		}
 	}
 
-	c := &AppConfig{}
 	err = support.ParseEnv(c)
-
 	return *c, err
 }
 
@@ -165,9 +189,16 @@ func MasterKey() ([]byte, error) {
 		appyEnv = os.Getenv("APPY_ENV")
 	}
 
-	key, err := ioutil.ReadFile(SSRPaths["config"] + "/" + appyEnv + ".key")
-	if err != nil {
-		return nil, err
+	var (
+		err error
+		key []byte
+	)
+
+	if Build == "debug" {
+		key, err = ioutil.ReadFile(SSRPaths["config"] + "/" + appyEnv + ".key")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if os.Getenv("APPY_MASTER_KEY") != "" {
@@ -178,7 +209,7 @@ func MasterKey() ([]byte, error) {
 	key = []byte(strings.Trim(string(key), " "))
 
 	if len(key) == 0 {
-		return nil, errors.New("the master key cannot be blank, please either pass in \"APPY_MASTER_KEY\" environment variable or store it in \"config/<APPY_ENV>.key\"")
+		return nil, errors.New("the master key should not be blank")
 	}
 
 	return key, nil

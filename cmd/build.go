@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/appist/appy/core"
+	"github.com/dustin/go-humanize"
 	"github.com/otiai10/copy"
 	"github.com/shurcooL/vfsgen"
 )
@@ -98,7 +99,8 @@ func NewBuildCommand(s core.AppServer) *AppCmd {
 			if err = buildBinaryCmd.Run(); err != nil {
 				s.Logger.Fatal(err)
 			}
-			s.Logger.Info("Building the binary... DONE")
+			fi, _ := os.Stat(binaryName)
+			s.Logger.Infof("Building the binary... DONE (size: %s)", humanize.Bytes(uint64(fi.Size())))
 
 			_, err = exec.LookPath("upx")
 			if err == nil {
@@ -108,7 +110,8 @@ func NewBuildCommand(s core.AppServer) *AppCmd {
 				if err = compressBinaryCmd.Run(); err != nil {
 					s.Logger.Fatal(err)
 				}
-				s.Logger.Info("Compressing the binary with upx... DONE")
+				fi, _ := os.Stat(binaryName)
+				s.Logger.Infof("Compressing the binary with upx... DONE (size: %s)", humanize.Bytes(uint64(fi.Size())))
 			}
 		},
 	}

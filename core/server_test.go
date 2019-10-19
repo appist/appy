@@ -23,9 +23,9 @@ type ServerSuite struct {
 func (s *ServerSuite) SetupTest() {
 	Build = "debug"
 	s.assets = http.Dir("./testdata")
-	s.config, _ = newConfig(s.assets)
-	s.config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.logger, _ = newLogger(newLoggerConfig())
+	s.config, _ = newConfig(s.assets, s.logger)
+	s.config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.viewHelper = template.FuncMap{
 		"testViewHelper": func() string {
 			return "i am view helper"
@@ -215,7 +215,7 @@ func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 	s.Contains(output, "* Listening on http://localhost:3000")
 
 	os.Setenv("HTTP_SSL_ENABLED", "true")
-	s.config, _ = newConfig(http.Dir("./testdata"))
+	s.config, _ = newConfig(http.Dir("./testdata"), s.logger)
 	server = newServer(http.Dir("./testdata"), s.config, s.logger, nil)
 	output = CaptureOutput(func() {
 		server.PrintInfo()
@@ -225,7 +225,7 @@ func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 	s.Contains(output, "* Listening on https://localhost:3443")
 
 	os.Setenv("HTTP_HOST", "0.0.0.0")
-	s.config, _ = newConfig(http.Dir("./testdata"))
+	s.config, _ = newConfig(http.Dir("./testdata"), s.logger)
 	server = newServer(http.Dir("./testdata"), s.config, s.logger, nil)
 	output = CaptureOutput(func() {
 		server.PrintInfo()
@@ -237,7 +237,7 @@ func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 
 func (s *ServerSuite) TestServerPrintInfoWithReleaseBuild() {
 	Build = "release"
-	s.config, _ = newConfig(http.Dir("./testdata/.ssr"))
+	s.config, _ = newConfig(http.Dir("./testdata/.ssr"), s.logger)
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
@@ -264,7 +264,7 @@ func (s *ServerSuite) TestServerPrintInfoWithReleaseBuild() {
 func (s *ServerSuite) TestInitSSRWithDebugBuildWithCorrectPath() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-	s.config, _ = newConfig(http.Dir("./testdata/.ssr"))
+	s.config, _ = newConfig(http.Dir("./testdata/.ssr"), s.logger)
 
 	recorder := httptest.NewRecorder()
 	server := newServer(nil, s.config, s.logger, s.viewHelper)
@@ -319,7 +319,7 @@ func (s *ServerSuite) TestInitSSRWithReleaseBuildWithCorrectPath() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 	Build = "release"
-	s.config, _ = newConfig(http.Dir("./testdata"))
+	s.config, _ = newConfig(http.Dir("./testdata"), s.logger)
 
 	server := newServer(http.Dir("./testdata"), s.config, s.logger, s.viewHelper)
 	s.NoError(server.InitSSR())
