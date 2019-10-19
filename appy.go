@@ -182,9 +182,9 @@ func CaptureLoggerOutput(f func()) string {
 }
 
 // Init initializes the application singleton.
-func Init(assets http.FileSystem, viewHelper template.FuncMap) {
+func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncMap) {
 	var err error
-	app, err = core.NewApp(assets, viewHelper)
+	app, err = core.NewApp(assets, appConf, viewHelper)
 	if err != nil {
 		os.Exit(1)
 	}

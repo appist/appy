@@ -25,7 +25,7 @@ func (s *AppSuite) TestNewApp() {
 	os.Setenv("HTTP_CSRF_SECRET", "58f364f29b568807ab9cffa22c99b538")
 	os.Setenv("HTTP_SESSION_SECRETS", "58f364f29b568807ab9cffa22c99b538")
 
-	app, err := NewApp(nil, nil)
+	app, err := NewApp(nil, nil, nil)
 	s.Nil(err)
 	s.NotNil(app.Config)
 	s.NotNil(app.Logger)
@@ -33,7 +33,7 @@ func (s *AppSuite) TestNewApp() {
 }
 
 func (s *AppSuite) TestNewAppWithMissingRequiredEnvVariables() {
-	app, err := NewApp(nil, nil)
+	app, err := NewApp(nil, nil, nil)
 	s.EqualError(err, "required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
 	s.Equal(AppConfig{}, app.Config)
 }

@@ -6,9 +6,15 @@ import (
 	"wewatch/app/handler"
 )
 
+type config struct {
+	AppName string `env:"APP_NAME"`
+}
+
 func main() {
+	cfg := &config{}
+
 	// Setup the app instance.
-	appy.Init(assets, nil)
+	appy.Init(assets, cfg, nil)
 
 	// // Configure routes
 	appy.GET("/welcome", handler.WelcomeIndex())

@@ -88,7 +88,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"HTTPSSLProxyHeaders":             map[string]string{},
 	}
 
-	c, _ := newConfig(nil, s.logger)
+	c, _ := newConfig(nil, nil, s.logger)
 	cv := reflect.ValueOf(c)
 	for key, defaultVal := range tests {
 		fv := cv.FieldByName(key)
@@ -142,25 +142,25 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 func (s *ConfigSuite) TestNewConfigRequiredConfig() {
 	os.Setenv("APPY_ENV", "invalid")
 	Build = "release"
-	c, err := newConfig(http.Dir("./testdata/config"), s.logger)
+	c, err := newConfig(http.Dir("./testdata/config"), nil, s.logger)
 	s.EqualError(err, "required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
 	s.Equal(false, c.HTTPSSLEnabled)
 }
 
 func (s *ConfigSuite) TestNewConfigWithUnparsableEnvVariable() {
 	os.Setenv("HTTP_DEBUG_ENABLED", "nil")
-	_, _ = newConfig(nil, s.logger)
+	_, _ = newConfig(nil, nil, s.logger)
 	os.Unsetenv("HTTP_DEBUG_ENABLED")
 }
 
 func (s *ConfigSuite) TestMasterKeyWithMissingKeyFile() {
 	_, err := MasterKey()
-	s.EqualError(err, "open config/development.key: no such file or directory")
+	s.EqualError(err, "open app/config/development.key: no such file or directory")
 }
 
 func (s *ConfigSuite) TestMasterKeyWithAppyEnv() {
 	os.Setenv("APPY_ENV", "staging")
-	SSRPaths["config"] = "./testdata/.ssr/config"
+	SSRPaths["config"] = "./testdata/.ssr/app/config"
 	key, err := MasterKey()
 	s.NoError(err)
 	s.Equal([]byte("dummy"), key)
@@ -168,7 +168,7 @@ func (s *ConfigSuite) TestMasterKeyWithAppyEnv() {
 
 func (s *ConfigSuite) TestMasterKeyWithAppyMasterKey() {
 	os.Setenv("APPY_MASTER_KEY", "dummy")
-	SSRPaths["config"] = "./testdata/.ssr/config"
+	SSRPaths["config"] = "./testdata/.ssr/app/config"
 	key, err := MasterKey()
 	s.NoError(err)
 	s.Equal([]byte("dummy"), key)
@@ -176,16 +176,79 @@ func (s *ConfigSuite) TestMasterKeyWithAppyMasterKey() {
 
 func (s *ConfigSuite) TestMasterKeyWithZeroLength() {
 	os.Setenv("APPY_ENV", "empty")
-	SSRPaths["config"] = "./testdata/.ssr/config"
+	SSRPaths["config"] = "./testdata/.ssr/app/config"
 	_, err := MasterKey()
 	s.EqualError(err, "the master key should not be blank")
 }
 
 func (s *ConfigSuite) TestUndecryptableConfigFallbackToDefault() {
 	os.Setenv("APPY_ENV", "undecryptable")
-	SSRPaths["config"] = "./testdata/.ssr/config"
-	c, _ := newConfig(nil, s.logger)
+	SSRPaths["config"] = "./testdata/.ssr/app/config"
+	c, _ := newConfig(nil, nil, s.logger)
 	s.Equal("3000", c.HTTPPort)
+}
+
+func (s *ConfigSuite) TestNonHTTPServeCommand() {
+	type config struct {
+		AppName string `env:"APP_NAME" envDefault:"tester"`
+	}
+
+	os.Args = append(os.Args, "build")
+	SSRPaths["config"] = "./testdata/.ssr/app/config"
+	appConf := &config{}
+	appyConf, _ := newConfig(nil, appConf, s.logger)
+	s.Equal("3000", appyConf.HTTPPort)
+	s.Equal("tester", appConf.AppName)
+	os.Args = os.Args[:len(os.Args)-1]
+}
+
+func (s *ConfigSuite) TestHTTPServeCommand() {
+	type config struct {
+		AppName string `env:"APP_NAME" envDefault:"tester"`
+		AppType string `env:"APP_TYPE,required" envDefault:"b2b"`
+	}
+
+	os.Args = append(os.Args, "serve")
+	SSRPaths["config"] = "./testdata/.ssr/app/config"
+	appConf := &config{}
+	appyConf, _ := newConfig(nil, appConf, s.logger)
+	s.Equal("3000", appyConf.HTTPPort)
+	s.Equal("tester", appConf.AppName)
+	s.Equal("", appConf.AppType)
+	os.Args = os.Args[:len(os.Args)-1]
+}
+
+func (s *ConfigSuite) TestHTTPServeCommandDebugBuildWithUndecryptableConfig() {
+	type config struct {
+		AppName string `env:"APP_NAME" envDefault:"tester"`
+	}
+
+	os.Setenv("APPY_ENV", "undecryptable")
+	os.Args = append(os.Args, "serve")
+	SSRPaths["config"] = "./testdata/.ssr/app/config"
+	appConf := &config{}
+	appyConf, _ := newConfig(nil, appConf, s.logger)
+	s.Equal("3000", appyConf.HTTPPort)
+	s.Equal("tester", appConf.AppName)
+	os.Args = os.Args[:len(os.Args)-1]
+}
+
+func (s *ConfigSuite) TestHTTPServeCommandReleaseBuildWithUndecryptableConfig() {
+	type config struct {
+		AppName string `env:"APP_NAME" envDefault:"tester"`
+		AppType string `env:"APP_TYPE,required" envDefault:"b2b"`
+	}
+
+	Build = "release"
+	os.Setenv("APPY_ENV", "undecryptable")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Args = append(os.Args, "serve")
+	appConf := &config{}
+	appyConf, _ := newConfig(http.Dir("./testdata"), appConf, s.logger)
+	s.Equal("3000", appyConf.HTTPPort)
+	s.Equal("tester", appConf.AppName)
+	s.Equal("", appConf.AppType)
+	os.Args = os.Args[:len(os.Args)-1]
 }
 
 func TestConfig(t *testing.T) {

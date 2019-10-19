@@ -96,7 +96,7 @@ var (
 	// SSRPaths specifies the paths that store the server-side rendering assets.
 	SSRPaths = map[string]string{
 		"root":   ".ssr",
-		"config": "config",
+		"config": "app/config",
 		"locale": "app/locales",
 		"view":   "app/views",
 	}
@@ -132,15 +132,20 @@ func getConfigInfo(assets http.FileSystem) (string, io.Reader, error) {
 	return path, reader, err
 }
 
-func newConfig(assets http.FileSystem, logger *AppLogger) (AppConfig, error) {
-	c := &AppConfig{}
+func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (AppConfig, error) {
+	appyConf := &AppConfig{}
 
 	// Skip config parsing for all the commands that don't need .env.<APPY_ENV> to work.
 	if support.ArrayContains(os.Args, "build") || support.ArrayContains(os.Args, "routes") || support.ArrayContains(os.Args, "secret") ||
 		support.ArrayContains(os.Args, "-h") || support.ArrayContains(os.Args, "--help") || (Build == "release" && len(os.Args) == 1) {
 		// Don't have to handle required config error as these commands are not used to serve requests.
-		support.ParseEnv(c)
-		return *c, nil
+		support.ParseEnv(appyConf)
+
+		if appConf != nil {
+			support.ParseEnv(appConf)
+		}
+
+		return *appyConf, nil
 	}
 
 	masterKey, err := MasterKey()
@@ -184,8 +189,31 @@ func newConfig(assets http.FileSystem, logger *AppLogger) (AppConfig, error) {
 		}
 	}
 
-	err = support.ParseEnv(c)
-	return *c, err
+	err = support.ParseEnv(appyConf)
+	if err != nil {
+		msg := fmt.Sprintf("* ERROR %s", err.Error())
+
+		if Build == "debug" {
+			fmt.Println(msg)
+		} else {
+			logger.Info(msg)
+		}
+	}
+
+	if appConf != nil {
+		err = support.ParseEnv(appConf)
+		if err != nil {
+			msg := fmt.Sprintf("* ERROR %s", err.Error())
+
+			if Build == "debug" {
+				fmt.Println(msg)
+			} else {
+				logger.Info(msg)
+			}
+		}
+	}
+
+	return *appyConf, err
 }
 
 // MasterKey retrieves the encryption/decryption key by checking the below in order:

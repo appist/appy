@@ -45,7 +45,6 @@ func NewStartCommand(s core.AppServer) *AppCmd {
 			watchPaths := []string{
 				wd + "/app",
 				wd + "/cmd",
-				wd + "/config",
 				wd + "/go.sum",
 				wd + "/go.mod",
 				wd + "/main.go",

@@ -18,14 +18,14 @@ type App struct {
 }
 
 // NewApp initializes the app singleton.
-func NewApp(assets http.FileSystem, viewHelper template.FuncMap) (App, error) {
+func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.FuncMap) (App, error) {
 	app := App{}
 	logger, err := newLogger(newLoggerConfig())
 	if err != nil {
 		return app, err
 	}
 
-	config, err := newConfig(assets, logger)
+	config, err := newConfig(assets, appConf, logger)
 	if err != nil {
 		return app, err
 	}
