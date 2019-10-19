@@ -25,6 +25,8 @@ func (s *ConfigSuite) SetupTest() {
 
 func (s *ConfigSuite) TearDownTest() {
 	SSRPaths["config"] = s.oldConfigPath
+	os.Unsetenv("HTTP_CSRF_SECRET")
+	os.Unsetenv("HTTP_SESSION_SECRETS")
 	os.Unsetenv("APPY_ENV")
 	os.Unsetenv("APPY_MASTER_KEY")
 }
