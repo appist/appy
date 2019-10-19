@@ -20,7 +20,7 @@ jobs:
           go mod download
           go run . build
           ./wewatch serve &
-      - working-directory: examples/wewatch/web
-        run: npm run test:e2e -- --url http://0.0.0.0:3000
         env:
           APPY_MASTER_KEY: ${{ secrets.WEWATCH_APPY_MASTER_KEY_DEVELOPMENT }}
+      - working-directory: examples/wewatch/web
+        run: npm run test:e2e -- --url http://0.0.0.0:3000
