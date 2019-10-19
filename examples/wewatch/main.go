@@ -3,18 +3,13 @@ package main
 import (
 	"github.com/appist/appy"
 
+	"wewatch/app/config"
 	"wewatch/app/handler"
 )
 
-type config struct {
-	AppName string `env:"APP_NAME"`
-}
-
 func main() {
-	cfg := &config{}
-
 	// Setup the app instance.
-	appy.Init(assets, cfg, nil)
+	appy.Init(assets, config.App, nil)
 
 	// // Configure routes
 	appy.GET("/welcome", handler.WelcomeIndex())
