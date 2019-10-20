@@ -158,6 +158,10 @@ var (
 
 	// ParseEnv parses the environment variables into the config.
 	ParseEnv = support.ParseEnv
+
+	// T translates a message based on the given key. Furthermore, we can pass in template data with `Count` in it to
+	// support singular/plural cases.
+	T = core.T
 )
 
 // CaptureLoggerOutput captures the Logger's output.
@@ -191,7 +195,6 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 
 	Config = app.Config
 	Logger = app.Logger
-
 	DELETE = app.Server.Router.DELETE
 	GET = app.Server.Router.GET
 	HEAD = app.Server.Router.HEAD
@@ -212,6 +215,7 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	StaticFile = app.Server.Router.StaticFile
 	Use = app.Server.Router.Use
 
+	app.Server.InitSSR()
 	cmd.Init(app)
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())
@@ -231,7 +235,6 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 func Run() {
 	// Shows a default welcome page with appy logo/slogan if `GET /` isn't defined.
 	app.Server.AddDefaultWelcomePage()
-	app.Server.InitSSR()
 
 	// Must be located right before the server runs due to CSR utilizes `NoRoute` to achieve pretty URL navigation
 	// with HTML5 history API. In addition, we only enable CSR hosting for `release` build due to `debug` build

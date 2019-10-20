@@ -10,11 +10,10 @@ import (
 func WelcomeIndex() appy.HandlerFunc {
 	return func(c *appy.Context) {
 		c.HTML(http.StatusOK, "welcome/index.html", appy.H{
-			"message": "keke",
-			// "message": appy.T(c, "message", appy.H{
-			// 	"Name":  "John",
-			// 	"Count": 2,
-			// }),
+			"message": appy.T(c, "message", appy.H{
+				"Name":  "John",
+				"Count": 2,
+			}),
 		})
 	}
 }
