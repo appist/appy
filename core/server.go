@@ -32,6 +32,9 @@ type HandlerFunc = gin.HandlerFunc
 // Context is a type alias to gin.Context.
 type Context = gin.Context
 
+// HandlersChain is a type alias to gin.HandlersChain.
+type HandlersChain = gin.HandlersChain
+
 // Router is a type alias to gin.Engine.
 type Router = gin.Engine
 

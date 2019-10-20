@@ -36,6 +36,9 @@ type H = core.H
 // HandlerFunc defines the handler used by middleware as the return value.
 type HandlerFunc = core.HandlerFunc
 
+// HandlersChain defines a HandlerFunc array.
+type HandlersChain = core.HandlersChain
+
 // Router keeps the rules that define how HTTP requests should be routed.
 type Router = core.Router
 
@@ -144,6 +147,9 @@ var (
 	// For example, this is the right place for a logger or error management middleware.
 	Use func(handlers ...HandlerFunc) Routes
 
+	// Middlewares is the global middlewares.
+	Middlewares HandlersChain
+
 	// NewAssert returns an Assert instance that provides the unit test helpers to test various conditions.
 	NewAssert = test.NewAssert
 
@@ -217,8 +223,10 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	StaticFS = app.Server.Router.StaticFS
 	StaticFile = app.Server.Router.StaticFile
 	Use = app.Server.Router.Use
+	Middlewares = app.Server.Router.Handlers
 
 	cmd.Init(app)
+	cmd.AddCommand(cmd.NewMiddlewareCommand(app.Server))
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())
 	cmd.AddCommand(cmd.NewServeCommand(app.Server))
