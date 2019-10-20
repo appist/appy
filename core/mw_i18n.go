@@ -16,12 +16,12 @@ var (
 // I18n is a middleware that provides translations based on `Accept-Language` HTTP header.
 func I18n(b *i18n.Bundle) HandlerFunc {
 	return func(ctx *Context) {
-		localizer := i18n.NewLocalizer(b, ctx.Request.Header.Get(acceptLanguage))
+		languages := strings.Split(ctx.Request.Header.Get(acceptLanguage), ",")
+		localizer := i18n.NewLocalizer(b, languages...)
 		ctx.Set(i18nCtxKey, localizer)
 
-		splits := strings.Split(ctx.Request.Header.Get(acceptLanguage), ",")
-		if len(splits) > 0 {
-			ctx.Set(i18nLocaleCtxKey, splits[0])
+		if len(languages) > 0 {
+			ctx.Set(i18nLocaleCtxKey, languages[0])
 		}
 
 		ctx.Next()
