@@ -193,6 +193,9 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 		os.Exit(1)
 	}
 
+	// Initialize the SSR rendering pipeline.
+	app.Server.InitSSR()
+
 	Config = app.Config
 	Logger = app.Logger
 	DELETE = app.Server.Router.DELETE
@@ -215,7 +218,6 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	StaticFile = app.Server.Router.StaticFile
 	Use = app.Server.Router.Use
 
-	app.Server.InitSSR()
 	cmd.Init(app)
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())

@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	// Setup the app instance
+	// Setup the app instance.
 	appy.Init(assets, app.Config, nil)
 
-	// // Configure routes
+	// Configure the application routes.
 	appy.GET("/welcome", handler.WelcomeIndex())
 
-	// Run the application
+	// Run the application.
 	appy.Run()
 }
