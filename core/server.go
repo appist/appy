@@ -252,11 +252,7 @@ func (s AppServer) PrintInfo() {
 	lines = append(lines, fmt.Sprintf("* Listening on %s", host))
 
 	for _, line := range lines {
-		if Build == "debug" {
-			fmt.Println(line)
-		} else {
-			s.Logger.Info(line)
-		}
+		s.Logger.Info(line)
 	}
 }
 

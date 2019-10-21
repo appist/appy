@@ -60,24 +60,26 @@ func NewStartCommand(s core.AppServer) *AppCmd {
 				killWebServeCmd()
 			}()
 
-			go runAPIServeCmd()
+			go runAPIServeCmd(s)
 			if _, err := os.Stat(wd + "/package.json"); !os.IsNotExist(err) {
 				time.Sleep(2 * time.Second)
 				go runWebServeCmd(s)
 			}
-			watch(s, watchPaths, watchHandler)
+			watch(s, watchPaths, func(e watcher.Event) {
+				watchHandler(e, s)
+			})
 		},
 	}
 }
 
-func watchHandler(e watcher.Event) {
+func watchHandler(e watcher.Event, s core.AppServer) {
 	if isGenerating == true {
 		return
 	}
 
 	isGenerating = true
 	if strings.Contains(e.Path, ".gql") || strings.Contains(e.Path, ".graphql") {
-		generateGQL()
+		generateGQL(s)
 		isGenerating = false
 		return
 	}
@@ -89,7 +91,7 @@ func watchHandler(e watcher.Event) {
 	}
 
 	isGenerating = false
-	go runAPIServeCmd()
+	go runAPIServeCmd(s)
 }
 
 func gqlgenLoadConfig() (*gqlgenCfg.Config, error) {
@@ -97,17 +99,17 @@ func gqlgenLoadConfig() (*gqlgenCfg.Config, error) {
 	return gqlgenCfg.LoadConfig(wd + "/app/graphql/config.yml")
 }
 
-func generateGQL() {
+func generateGQL(s core.AppServer) {
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 	defer func() {
 		log.SetOutput(os.Stderr)
 	}()
 
-	fmt.Println("* Generating GraphQL boilerplate code...")
+	s.Logger.Info("* Generating GraphQL boilerplate code...")
 	gqlgenConfig, _ := gqlgenLoadConfig()
 	if err := api.Generate(gqlgenConfig); err != nil {
-		fmt.Println(err)
+		s.Logger.Info(err.Error())
 	}
 }
 
@@ -118,14 +120,14 @@ func killAPIServeCmd() {
 	}
 }
 
-func runAPIServeCmd() {
+func runAPIServeCmd(s core.AppServer) {
 	killAPIServeCmd()
 	time.Sleep(500 * time.Millisecond)
 	apiServeCmd = exec.Command("go", "run", ".", "serve")
 	apiServeCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	apiServeCmd.Stdout = os.Stdout
 	apiServeCmd.Stderr = os.Stderr
-	fmt.Println("* Compiling...")
+	s.Logger.Info("* Compiling...")
 	apiServeCmd.Run()
 }
 
@@ -193,20 +195,22 @@ func runWebServeCmd(s core.AppServer) {
 
 			if strings.Contains(outText, "Compiling...") || strings.Contains(outText, "｢wds｣") {
 				isWDSCompiling = true
-				fmt.Println("* [wds] Compiling...")
+				s.Logger.Info("* [wds] Compiling...")
 			} else if strings.Contains(outText, "Compiled successfully in") {
 				isWDSCompiling = false
-				fmt.Printf("* [wds] Compiled successfully in%s\n", timeRe.FindStringSubmatch(outText)[0])
+				s.Logger.Infof("* [wds] Compiled successfully in%s", timeRe.FindStringSubmatch(outText)[0])
 
 				if isFirstTime {
 					isFirstTime = false
-					fmt.Printf("* [wds] Listening on %s\n", host)
+					s.Logger.Infof("* [wds] Listening on %s", host)
 				}
 			} else if strings.HasPrefix(outText, "ERROR  Failed to compile") {
-				fmt.Println("* [wds] Failed to compile.")
-				fmt.Println("")
+				s.Logger.Info("* [wds] Failed to compile.")
+				s.Logger.Info("")
 			} else {
-				fmt.Println(outText)
+				if len(outText) > 0 {
+					s.Logger.Info(outText)
+				}
 			}
 		}
 	}(webServeCmdOut)

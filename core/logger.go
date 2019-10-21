@@ -38,5 +38,7 @@ func newLogger(c loggerConfig) (*AppLogger, error) {
 	}
 
 	defer logger.Sync()
-	return &AppLogger{logger.Sugar()}, nil
+	return &AppLogger{
+		SugaredLogger: logger.Sugar(),
+	}, nil
 }

@@ -1,6 +1,8 @@
 package core
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -10,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/appist/appy/test"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type ServerSuite struct {
@@ -17,13 +21,30 @@ type ServerSuite struct {
 	assets     http.FileSystem
 	config     AppConfig
 	logger     *AppLogger
+	buffer     *bytes.Buffer
+	writer     *bufio.Writer
 	viewHelper template.FuncMap
+}
+
+func newMockedAppLogger() (*AppLogger, *bytes.Buffer, *bufio.Writer) {
+	var buffer bytes.Buffer
+	writer := bufio.NewWriter(&buffer)
+
+	return &AppLogger{
+		SugaredLogger: zap.New(
+			zapcore.NewCore(
+				zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+				zapcore.AddSync(writer),
+				zapcore.DebugLevel,
+			),
+		).Sugar(),
+	}, &buffer, writer
 }
 
 func (s *ServerSuite) SetupTest() {
 	Build = "debug"
 	s.assets = http.Dir("./testdata")
-	s.logger, _ = newLogger(newLoggerConfig())
+	s.logger, s.buffer, s.writer = newMockedAppLogger()
 	s.config, _, _ = newConfig(s.assets, nil, s.logger)
 	s.config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.viewHelper = template.FuncMap{
@@ -207,30 +228,30 @@ func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	server := newServer(nil, s.config, s.logger, nil)
-	output := CaptureOutput(func() {
-		server.PrintInfo()
-	})
+	server.PrintInfo()
 
+	s.writer.Flush()
+	output := s.buffer.String()
 	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
 	s.Contains(output, "* Listening on http://localhost:3000")
 
 	os.Setenv("HTTP_SSL_ENABLED", "true")
 	s.config, _, _ = newConfig(http.Dir("./testdata"), nil, s.logger)
 	server = newServer(http.Dir("./testdata"), s.config, s.logger, nil)
-	output = CaptureOutput(func() {
-		server.PrintInfo()
-	})
+	server.PrintInfo()
 
+	s.writer.Flush()
+	output = s.buffer.String()
 	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
 	s.Contains(output, "* Listening on https://localhost:3443")
 
 	os.Setenv("HTTP_HOST", "0.0.0.0")
 	s.config, _, _ = newConfig(http.Dir("./testdata"), nil, s.logger)
 	server = newServer(http.Dir("./testdata"), s.config, s.logger, nil)
-	output = CaptureOutput(func() {
-		server.PrintInfo()
-	})
+	server.PrintInfo()
 
+	s.writer.Flush()
+	output = s.buffer.String()
 	s.Contains(output, fmt.Sprintf("* Version 0.1.0 (%s), build: debug, environment: development, config: none", runtime.Version()))
 	s.Contains(output, "* Listening on https://0.0.0.0:3443")
 }

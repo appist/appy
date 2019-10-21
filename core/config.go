@@ -173,13 +173,7 @@ func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (
 					plaintext, err := support.Decrypt(decodeStr, masterKey)
 					if len(plaintext) < 1 || err != nil {
 						if support.ArrayContains(os.Args, "serve") {
-							msg := fmt.Sprintf("* ERROR unable to decrypt the value for '%s' in '%s'", key, configPath)
-
-							if Build == "debug" {
-								fmt.Println(msg)
-							} else {
-								logger.Info(msg)
-							}
+							logger.Info(fmt.Sprintf("* ERROR unable to decrypt the value for '%s' in '%s'", key, configPath))
 						}
 
 						continue
@@ -193,36 +187,18 @@ func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (
 
 	err = support.ParseEnv(appyConf)
 	if err != nil {
-		msg := fmt.Sprintf("* ERROR %s", err.Error())
-
-		if Build == "debug" {
-			fmt.Println(msg)
-		} else {
-			logger.Info(msg)
-		}
+		logger.Info(fmt.Sprintf("* ERROR %s", err.Error()))
 	}
 
 	dbConfig, err := parseDbConfig()
 	if err != nil {
-		msg := fmt.Sprintf("* ERROR %s", err.Error())
-
-		if Build == "debug" {
-			fmt.Println(msg)
-		} else {
-			logger.Info(msg)
-		}
+		logger.Info(fmt.Sprintf("* ERROR %s", err.Error()))
 	}
 
 	if appConf != nil {
 		err = support.ParseEnv(appConf)
 		if err != nil {
-			msg := fmt.Sprintf("* ERROR %s", err.Error())
-
-			if Build == "debug" {
-				fmt.Println(msg)
-			} else {
-				logger.Info(msg)
-			}
+			logger.Info(fmt.Sprintf("* ERROR %s", err.Error()))
 		}
 	}
 

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -35,7 +34,7 @@ func serve(s core.AppServer) {
 	signal.Notify(httpQuit, syscall.SIGTERM)
 	go func() {
 		<-httpQuit
-		fmt.Printf("* Gracefully shutting down the server within %s...\n", s.Config.HTTPGracefulTimeout)
+		s.Logger.Infof("* Gracefully shutting down the server within %s...\n", s.Config.HTTPGracefulTimeout)
 		ctx, cancel := context.WithTimeout(context.Background(), s.Config.HTTPGracefulTimeout)
 		defer cancel()
 
