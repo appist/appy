@@ -22,7 +22,7 @@ jobs:
       - run: go mod download
       - run: go test -covermode=atomic -coverprofile=coverage.out -race -failfast ./...
         env:
-          HTTP_SESSION_REDIS_ADDR: localhost:6379
+          HTTP_SESSION_REDIS_ADDR: localhost:${{ job.services.redis.ports[6379] }}
       - run: bash <(curl -s https://codecov.io/bash)
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

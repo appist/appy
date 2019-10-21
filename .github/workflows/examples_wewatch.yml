@@ -9,7 +9,7 @@ jobs:
       pg-master:
         image: bitnami/postgresql:11
         ports:
-          - "25432:5432"
+          - 5432/tcp
         environment:
           - POSTGRESQL_REPLICATION_MODE=master
           - POSTGRESQL_REPLICATION_USER=pg-slave
@@ -20,9 +20,9 @@ jobs:
       pg-slave:
         image: bitnami/postgresql:11
         ports:
-          - "25433:5432"
+          - 5433/tcp
         depends_on:
-          - psql-master
+          - pg-master
         environment:
           - POSTGRESQL_REPLICATION_MODE=slave
           - POSTGRESQL_REPLICATION_USER=pg-slave
@@ -47,6 +47,6 @@ jobs:
           ./wewatch serve &
         env:
           APPY_MASTER_KEY: ${{ secrets.WEWATCH_APPY_MASTER_KEY_DEVELOPMENT }}
-          DB_ADDR_PRIMARY: 10574e63d74de0a2b2d5950cf51dbdfe53d3ff8906d9b23bf24bc51aaa3095eb9a410eb4201a9dc8aacb94
+          DB_ADDR_PRIMARY: localhost:${{ job.services.pg-master.ports[6379] }}
       - working-directory: examples/wewatch/web
         run: npm run test:e2e -- --url http://0.0.0.0:3000

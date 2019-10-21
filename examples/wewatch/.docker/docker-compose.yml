@@ -18,7 +18,7 @@ services:
     ports:
       - '25433:5432'
     depends_on:
-      - psql-master
+      - pg-master
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
       - POSTGRESQL_REPLICATION_USER=pg-slave
