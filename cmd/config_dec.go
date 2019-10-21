@@ -26,6 +26,10 @@ func NewConfigDecryptCommand(s core.AppServer) *AppCmd {
 			}
 
 			ciphertext, err := hex.DecodeString(args[0])
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			decrypted, err := support.Decrypt(ciphertext, key)
 			if err != nil {
 				log.Fatal(err)
