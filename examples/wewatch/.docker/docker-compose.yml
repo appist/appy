@@ -1,36 +1,36 @@
-version: "3.7"
+version: '3.7'
 
 services:
-  psql-master:
+  pg-master:
     image: bitnami/postgresql:11
     ports:
-      - "25432:5432"
+      - '25432:5432'
     environment:
       - POSTGRESQL_REPLICATION_MODE=master
-      - POSTGRESQL_REPLICATION_USER=psql-slave
+      - POSTGRESQL_REPLICATION_USER=pg-slave
       - POSTGRESQL_REPLICATION_PASSWORD=whatever
       - POSTGRESQL_USERNAME=postgres
       - POSTGRESQL_PASSWORD=whatever
       - POSTGRESQL_DATABASE=wewatch
 
-  psql-slave:
+  pg-slave:
     image: bitnami/postgresql:11
     ports:
-      - "25433:5432"
+      - '25433:5432'
     depends_on:
       - psql-master
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
-      - POSTGRESQL_REPLICATION_USER=psql-slave
+      - POSTGRESQL_REPLICATION_USER=pg-slave
       - POSTGRESQL_REPLICATION_PASSWORD=whatever
-      - POSTGRESQL_MASTER_HOST=psql-master
+      - POSTGRESQL_MASTER_HOST=pg-master
       - POSTGRESQL_PASSWORD=whatever
       - POSTGRESQL_MASTER_PORT_NUMBER=5432
 
   redis-sentinel:
     image: bitnami/redis-sentinel:5.0.5
     ports:
-      - "26379:6379"
+      - '26379:6379'
     environment:
       - REDIS_MASTER_HOST=redis-master
 
@@ -42,6 +42,6 @@ services:
   redis-session:
     image: bitnami/redis:5.0.5
     ports:
-      - "26380:6379"
+      - '26380:6379'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes

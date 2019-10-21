@@ -5,6 +5,31 @@ on: push
 jobs:
   examples-wewatch:
     runs-on: ubuntu-latest
+    services:
+      pg-master:
+        image: bitnami/postgresql:11
+        ports:
+          - "25432:5432"
+        environment:
+          - POSTGRESQL_REPLICATION_MODE=master
+          - POSTGRESQL_REPLICATION_USER=pg-slave
+          - POSTGRESQL_REPLICATION_PASSWORD=whatever
+          - POSTGRESQL_USERNAME=postgres
+          - POSTGRESQL_PASSWORD=whatever
+          - POSTGRESQL_DATABASE=wewatch
+      pg-slave:
+        image: bitnami/postgresql:11
+        ports:
+          - "25433:5432"
+        depends_on:
+          - psql-master
+        environment:
+          - POSTGRESQL_REPLICATION_MODE=slave
+          - POSTGRESQL_REPLICATION_USER=pg-slave
+          - POSTGRESQL_REPLICATION_PASSWORD=whatever
+          - POSTGRESQL_MASTER_HOST=pg-master
+          - POSTGRESQL_PASSWORD=whatever
+          - POSTGRESQL_MASTER_PORT_NUMBER=5432
     steps:
       - uses: actions/setup-go@master
         with:
@@ -22,5 +47,6 @@ jobs:
           ./wewatch serve &
         env:
           APPY_MASTER_KEY: ${{ secrets.WEWATCH_APPY_MASTER_KEY_DEVELOPMENT }}
+          DB_ADDR_PRIMARY: 10574e63d74de0a2b2d5950cf51dbdfe53d3ff8906d9b23bf24bc51aaa3095eb9a410eb4201a9dc8aacb94
       - working-directory: examples/wewatch/web
         run: npm run test:e2e -- --url http://0.0.0.0:3000
