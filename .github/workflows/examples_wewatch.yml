@@ -10,7 +10,7 @@ jobs:
         image: bitnami/postgresql:11
         ports:
           - 5432/tcp
-        environment:
+        env:
           - POSTGRESQL_REPLICATION_MODE=master
           - POSTGRESQL_REPLICATION_USER=pg-slave
           - POSTGRESQL_REPLICATION_PASSWORD=whatever
@@ -21,7 +21,7 @@ jobs:
         image: bitnami/postgresql:11
         ports:
           - 5433/tcp
-        environment:
+        env:
           - POSTGRESQL_REPLICATION_MODE=slave
           - POSTGRESQL_REPLICATION_USER=pg-slave
           - POSTGRESQL_REPLICATION_PASSWORD=whatever
