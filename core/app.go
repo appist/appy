@@ -13,6 +13,7 @@ const (
 // App keeps everything that an application needs, e.g. config, logger, server and etc.
 type App struct {
 	Config AppConfig
+	Db     map[string]*AppDb
 	Logger *AppLogger
 	Server AppServer
 }
@@ -25,7 +26,7 @@ func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.Fun
 		return app, err
 	}
 
-	config, err := newConfig(assets, appConf, logger)
+	config, dbConfig, err := newConfig(assets, appConf, logger)
 	if err != nil {
 		return app, err
 	}
@@ -33,6 +34,14 @@ func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.Fun
 	server := newServer(assets, config, logger, viewHelper)
 	if err != nil {
 		return app, err
+	}
+
+	app.Db = map[string]*AppDb{}
+	for name, val := range dbConfig {
+		app.Db[name], err = newDb(val)
+		if err != nil {
+			return app, err
+		}
 	}
 
 	app.Config = config

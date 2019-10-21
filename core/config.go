@@ -132,11 +132,12 @@ func getConfigInfo(assets http.FileSystem) (string, io.Reader, error) {
 	return path, reader, err
 }
 
-func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (AppConfig, error) {
+func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (AppConfig, map[string]AppDbConfig, error) {
 	appyConf := &AppConfig{}
 
-	// Skip config parsing for all the commands that don't need .env.<APPY_ENV> to work.
+	// Skip config parsing for all the commands that don't need `config/.env.<APPY_ENV>` to work.
 	if support.ArrayContains(os.Args, "build") || support.ArrayContains(os.Args, "routes") || support.ArrayContains(os.Args, "secret") ||
+		support.ArrayContains(os.Args, "config:dec") || support.ArrayContains(os.Args, "config:enc") || support.ArrayContains(os.Args, "start") ||
 		support.ArrayContains(os.Args, "middleware") || support.ArrayContains(os.Args, "ssl:clean") || support.ArrayContains(os.Args, "ssl:setup") ||
 		support.ArrayContains(os.Args, "-h") || support.ArrayContains(os.Args, "--help") || (Build == "release" && len(os.Args) == 1) {
 		// Don't have to handle required config error as these commands are not used to serve requests.
@@ -146,7 +147,7 @@ func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (
 			support.ParseEnv(appConf)
 		}
 
-		return *appyConf, nil
+		return *appyConf, nil, nil
 	}
 
 	masterKey, err := MasterKey()
@@ -201,6 +202,17 @@ func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (
 		}
 	}
 
+	dbConfig, err := parseDbConfig()
+	if err != nil {
+		msg := fmt.Sprintf("* ERROR %s", err.Error())
+
+		if Build == "debug" {
+			fmt.Println(msg)
+		} else {
+			logger.Info(msg)
+		}
+	}
+
 	if appConf != nil {
 		err = support.ParseEnv(appConf)
 		if err != nil {
@@ -214,7 +226,7 @@ func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (
 		}
 	}
 
-	return *appyConf, err
+	return *appyConf, dbConfig, err
 }
 
 // MasterKey retrieves the encryption/decryption key by checking the below in order:

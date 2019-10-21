@@ -21,6 +21,27 @@ type App = core.App
 // AppConfig keeps the parsed environment variables.
 type AppConfig = core.AppConfig
 
+// AppDb keeps database connection with its configuration.
+type AppDb = core.AppDb
+
+// AppDbConn represents a single database connection rather than a pool of database
+// connections. Prefer running queries from DB unless there is a specific
+// need for a continuous single database connection.
+//
+// A Conn must call Close to return the connection to the database pool
+// and may do so concurrently with a running query.
+//
+// After a call to Close, all operations on the connection fail.
+type AppDbConn = core.AppDbConn
+
+// AppDbConfig keeps database connection options.
+type AppDbConfig = core.AppDbConfig
+
+// AppDbHandler is a database handle representing a pool of zero or more
+// underlying connections. It's safe for concurrent use by multiple
+// goroutines.
+type AppDbHandler = core.AppDbHandler
+
 // AppLogger keeps the logging functionality.
 type AppLogger = core.AppLogger
 
@@ -65,6 +86,9 @@ var (
 
 	// Config is the application's configuration singleton.
 	Config AppConfig
+
+	// Db is the application's database manager.
+	Db map[string]*AppDb
 
 	// Logger is the application's logger singleton.
 	Logger *AppLogger
@@ -203,6 +227,7 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	app.Server.InitSSR()
 
 	Config = app.Config
+	Db = app.Db
 	Logger = app.Logger
 	DELETE = app.Server.Router.DELETE
 	GET = app.Server.Router.GET
@@ -251,6 +276,15 @@ func Run() {
 	// should rely on webpack-dev-server.
 	if Build == "release" {
 		app.Server.InitCSR()
+	}
+
+	for _, db := range app.Db {
+		err := db.Connect()
+		if err != nil {
+			Logger.Fatal(err)
+		}
+
+		defer db.Close()
 	}
 
 	cmd.Run()

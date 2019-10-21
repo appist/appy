@@ -14,6 +14,9 @@ codecheck:
 	golint -set_exit_status ./...
 	npm run lint
 
+down:
+	docker-compose -f .docker/docker-compose.yml -p wewatch down --remove-orphans
+
 install:
 	go get -u golang.org/x/lint/golint
 	go mod download
@@ -25,4 +28,7 @@ test:
 testcov:
 	go tool cover -html=coverage.out
 
-.PHONY: bootstrap clean codecheck install test testcov
+up:
+	docker-compose -f .docker/docker-compose.yml -p wewatch up -d
+
+.PHONY: bootstrap clean codecheck down install test testcov up

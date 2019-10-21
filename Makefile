@@ -11,7 +11,7 @@ codecheck:
 	golint -set_exit_status ./...
 
 down:
-	docker-compose -f .docker/docker-compose.yml down --remove-orphans
+	docker-compose -f .docker/docker-compose.yml -p appy down --remove-orphans
 
 install:
 	go get -u golang.org/x/lint/golint
@@ -29,6 +29,6 @@ tools:
 	go run ./generator/tools
 
 up:
-	docker-compose -f .docker/docker-compose.yml up -d
+	docker-compose -f .docker/docker-compose.yml -p appy up -d
 
 .PHONY: bootstrap codecheck down install test testcov tools up

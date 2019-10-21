@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -47,7 +46,7 @@ func testSessionOps(s *SessionManagerSuite, session Session) {
 
 func (s *SessionManagerSuite) SetupTest() {
 	s.logger, _ = newLogger(newLoggerConfig())
-	s.config, _ = newConfig(nil, nil, s.logger)
+	s.config, _, _ = newConfig(nil, nil, s.logger)
 	s.config.HTTPSessionSecrets = [][]byte{[]byte("481e5d98a31585148b8b1dfb6a3c0465")}
 	s.config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.recorder = httptest.NewRecorder()
@@ -83,7 +82,6 @@ func (s *SessionManagerSuite) TestSessionRedisStore() {
 	ctx, _ := test.CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
-	fmt.Println(s.config.HTTPSessionRedisAddr)
 	SessionManager(s.config)(ctx)
 
 	session := DefaultSession(ctx)
