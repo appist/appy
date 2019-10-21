@@ -426,7 +426,7 @@ func (s *AppServer) initSSRView() error {
 			return err
 		}
 
-		fis, err = file.Readdir(-1)
+		fis, _ = file.Readdir(-1)
 	}
 
 	commonTpls := []string{}
