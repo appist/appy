@@ -45,6 +45,6 @@ jobs:
           ./wewatch serve &
         env:
           APPY_MASTER_KEY: ${{ secrets.WEWATCH_APPY_MASTER_KEY_DEVELOPMENT }}
-          DB_ADDR_PRIMARY: localhost:${{ job.services.pg-master.ports[6379] }}
+          DB_ADDR_PRIMARY: localhost:${{ job.services.pg-master.ports[5432] }}
       - working-directory: examples/wewatch/web
         run: npm run test:e2e -- --url http://0.0.0.0:3000
