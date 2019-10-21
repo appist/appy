@@ -11,23 +11,23 @@ jobs:
         ports:
           - 5432/tcp
         env:
-          - POSTGRESQL_REPLICATION_MODE=master
-          - POSTGRESQL_REPLICATION_USER=pg-slave
-          - POSTGRESQL_REPLICATION_PASSWORD=whatever
-          - POSTGRESQL_USERNAME=postgres
-          - POSTGRESQL_PASSWORD=whatever
-          - POSTGRESQL_DATABASE=wewatch
+          POSTGRESQL_REPLICATION_MODE: master
+          POSTGRESQL_REPLICATION_USER: pg-slave
+          POSTGRESQL_REPLICATION_PASSWORD: whatever
+          POSTGRESQL_USERNAME: postgres
+          POSTGRESQL_PASSWORD: whatever
+          POSTGRESQL_DATABASE: wewatch
       pg-slave:
         image: bitnami/postgresql:11
         ports:
           - 5433/tcp
         env:
-          - POSTGRESQL_REPLICATION_MODE=slave
-          - POSTGRESQL_REPLICATION_USER=pg-slave
-          - POSTGRESQL_REPLICATION_PASSWORD=whatever
-          - POSTGRESQL_MASTER_HOST=pg-master
-          - POSTGRESQL_PASSWORD=whatever
-          - POSTGRESQL_MASTER_PORT_NUMBER=5432
+          POSTGRESQL_REPLICATION_MODE: slave
+          POSTGRESQL_REPLICATION_USER: pg-slave
+          POSTGRESQL_REPLICATION_PASSWORD: whatever
+          POSTGRESQL_MASTER_HOST: pg-master
+          POSTGRESQL_PASSWORD: whatever
+          POSTGRESQL_MASTER_PORT_NUMBER: 5432
     steps:
       - uses: actions/setup-go@master
         with:
