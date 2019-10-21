@@ -21,8 +21,6 @@ jobs:
         image: bitnami/postgresql:11
         ports:
           - 5433/tcp
-        depends_on:
-          - pg-master
         environment:
           - POSTGRESQL_REPLICATION_MODE=slave
           - POSTGRESQL_REPLICATION_USER=pg-slave
