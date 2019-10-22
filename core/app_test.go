@@ -24,19 +24,20 @@ func (s *AppSuite) TearDownTest() {
 func (s *AppSuite) TestNewApp() {
 	os.Setenv("HTTP_CSRF_SECRET", "58f364f29b568807ab9cffa22c99b538")
 	os.Setenv("HTTP_SESSION_SECRETS", "58f364f29b568807ab9cffa22c99b538")
+	oldConfigPath := SSRPaths["config"]
+	SSRPaths["config"] = "./testdata/.ssr/app/config"
 
 	app, err := NewApp(nil, nil, nil)
 	s.Nil(err)
 	s.NotNil(app.Config)
 	s.NotNil(app.Logger)
 	s.NotNil(app.Server)
+	SSRPaths["config"] = oldConfigPath
 }
 
 func (s *AppSuite) TestNewAppWithMissingRequiredEnvVariables() {
-	output := CaptureOutput(func() {
-		NewApp(nil, nil, nil)
-	})
-	s.Contains(output, "* ERROR required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
+	_, err := NewApp(nil, nil, nil)
+	s.Contains(err.Error(), "required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
 }
 
 func TestApp(t *testing.T) {

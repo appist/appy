@@ -11,7 +11,7 @@ import (
 func NewSSLCleanCommand(s core.AppServer) *AppCmd {
 	return &AppCmd{
 		Use:   "ssl:clean",
-		Short: "Uninstall the locally trusted SSL certs using \"mkcert\", only available for debug build.",
+		Short: "Uninstalls the locally trusted SSL certs using \"mkcert\", only available for debug build.",
 		Run: func(cmd *AppCmd, args []string) {
 			_, err := exec.LookPath("mkcert")
 			if err != nil {
