@@ -147,7 +147,7 @@ func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (
 		errs = append(errs, err.Error())
 	}
 
-	if reader == nil {
+	if Build == "release" && reader == nil {
 		errs = append(errs, "unable to read config from static assets")
 	} else {
 		envMap, _ := godotenv.Parse(reader)
