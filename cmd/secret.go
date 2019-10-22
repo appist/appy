@@ -13,7 +13,7 @@ func NewSecretCommand() *AppCmd {
 
 	cmd := &AppCmd{
 		Use:   "secret",
-		Short: "Generate a cryptographically secure secret key for encrypting cookie, CSRF token and config.",
+		Short: "Generates a cryptographically secure secret key for encrypting cookie, CSRF token and config.",
 		Run: func(cmd *AppCmd, args []string) {
 			bytes := make([]byte, length)
 

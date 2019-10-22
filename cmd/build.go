@@ -19,7 +19,7 @@ import (
 func NewBuildCommand(s core.AppServer) *AppCmd {
 	return &AppCmd{
 		Use:   "build",
-		Short: "Compile the static assets into go files and build the release mode binary, only available for debug build.",
+		Short: "Compiles the static assets into go files and build the release mode binary, only available for debug build.",
 		Run: func(cmd *AppCmd, args []string) {
 			wd, err := os.Getwd()
 			if err != nil {

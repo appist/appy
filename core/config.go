@@ -133,34 +133,24 @@ func getConfigInfo(assets http.FileSystem) (string, io.Reader, error) {
 }
 
 func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (AppConfig, map[string]AppDbConfig, error) {
-	appyConf := &AppConfig{}
-
-	// Skip config parsing for all the commands that don't need `config/.env.<APPY_ENV>` to work.
-	if support.ArrayContains(os.Args, "build") || support.ArrayContains(os.Args, "routes") || support.ArrayContains(os.Args, "secret") ||
-		support.ArrayContains(os.Args, "config:dec") || support.ArrayContains(os.Args, "config:enc") || support.ArrayContains(os.Args, "start") ||
-		support.ArrayContains(os.Args, "middleware") || support.ArrayContains(os.Args, "ssl:clean") || support.ArrayContains(os.Args, "ssl:setup") ||
-		support.ArrayContains(os.Args, "-h") || support.ArrayContains(os.Args, "--help") || (Build == "release" && len(os.Args) == 1) {
-		// Don't have to handle required config error as these commands are not used to serve requests.
-		support.ParseEnv(appyConf)
-
-		if appConf != nil {
-			support.ParseEnv(appConf)
-		}
-
-		return *appyConf, nil, nil
-	}
-
+	var (
+		err  error
+		errs []string
+	)
 	masterKey, err := MasterKey()
 	if err != nil {
-		logger.Info(err.Error())
+		errs = append(errs, err.Error())
 	}
 
 	configPath, reader, err := getConfigInfo(assets)
-	if err == nil {
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
+	if reader != nil {
 		envMap, _ := godotenv.Parse(reader)
 		currentEnv := map[string]bool{}
 		rawEnv := os.Environ()
-
 		for _, rawEnvLine := range rawEnv {
 			key := strings.Split(rawEnvLine, "=")[0]
 			currentEnv[key] = true
@@ -172,10 +162,7 @@ func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (
 					decodeStr, _ := hex.DecodeString(value)
 					plaintext, err := support.Decrypt(decodeStr, masterKey)
 					if len(plaintext) < 1 || err != nil {
-						if support.ArrayContains(os.Args, "serve") {
-							logger.Info(fmt.Sprintf("* ERROR unable to decrypt the value for '%s' in '%s'", key, configPath))
-						}
-
+						errs = append(errs, fmt.Sprintf("unable to decrypt the value for '%s' in '%s'", key, configPath))
 						continue
 					}
 
@@ -185,21 +172,26 @@ func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (
 		}
 	}
 
+	appyConf := &AppConfig{}
 	err = support.ParseEnv(appyConf)
 	if err != nil {
-		logger.Info(fmt.Sprintf("* ERROR %s", err.Error()))
+		errs = append(errs, err.Error())
 	}
 
 	dbConfig, err := parseDbConfig()
 	if err != nil {
-		logger.Info(fmt.Sprintf("* ERROR %s", err.Error()))
+		errs = append(errs, err.Error())
 	}
 
 	if appConf != nil {
 		err = support.ParseEnv(appConf)
 		if err != nil {
-			logger.Info(fmt.Sprintf("* ERROR %s", err.Error()))
+			errs = append(errs, err.Error())
 		}
+	}
+
+	if len(errs) > 0 {
+		err = errors.New(strings.Join(errs, "\n"))
 	}
 
 	return *appyConf, dbConfig, err

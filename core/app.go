@@ -3,6 +3,9 @@ package core
 import (
 	"html/template"
 	"net/http"
+	"os"
+
+	"github.com/appist/appy/support"
 )
 
 const (
@@ -25,16 +28,34 @@ func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.Fun
 	if err != nil {
 		return app, err
 	}
+	app.Logger = logger
 
 	config, dbConfig, err := newConfig(assets, appConf, logger)
 	if err != nil {
-		return app, err
-	}
+		optionalConfig := false
+		optConfigCmds := []string{"build", "config:dec", "config:enc", "middleware", "routes", "secret", "ssl:clean", "ssl:setup", "start", "-h", "--help"}
 
-	server := newServer(assets, config, logger, viewHelper)
+		// Don't exit on config error for all the commands that don't need `app/config/.env.<APPY_ENV>` to work.
+		for _, optConfigCmd := range optConfigCmds {
+			if support.ArrayContains(os.Args, optConfigCmd) {
+				optionalConfig = true
+				break
+			}
+		}
+
+		if !optionalConfig && len(os.Args) > 1 {
+			return app, err
+		}
+
+		err = nil
+	}
+	app.Config = config
+
+	server := newServer(assets, app.Config, app.Logger, viewHelper)
 	if err != nil {
 		return app, err
 	}
+	app.Server = server
 
 	app.Db = map[string]*AppDb{}
 	for name, val := range dbConfig {
@@ -44,8 +65,5 @@ func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.Fun
 		}
 	}
 
-	app.Config = config
-	app.Logger = logger
-	app.Server = server
 	return app, nil
 }

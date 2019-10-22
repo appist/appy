@@ -35,7 +35,7 @@ var (
 func NewStartCommand(s core.AppServer) *AppCmd {
 	return &AppCmd{
 		Use:   "start",
-		Short: "Run the GRPC/HTTP web server in development watch mode, only available for debug build.",
+		Short: "Runs the GRPC/HTTP web server in development watch mode, only available for debug build.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if s.Config.HTTPSSLEnabled == true && !s.IsSSLCertsExist() {
 				s.Logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")

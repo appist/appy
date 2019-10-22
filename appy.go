@@ -3,6 +3,7 @@ package appy
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -44,6 +45,9 @@ type AppDbHandler = core.AppDbHandler
 
 // AppLogger keeps the logging functionality.
 type AppLogger = core.AppLogger
+
+// AppModel associates a type struct to a database table.
+type AppModel = core.AppModel
 
 // AppServer is the core that serves HTTP/GRPC requests.
 type AppServer = core.AppServer
@@ -220,6 +224,7 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	var err error
 	app, err = core.NewApp(assets, appConf, viewHelper)
 	if err != nil {
+		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
@@ -251,6 +256,8 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	Middlewares = app.Server.Router.Handlers
 
 	cmd.Init(app)
+	cmd.AddCommand(cmd.NewDbCreateCommand(app.Config, app.Db))
+	cmd.AddCommand(cmd.NewDbDropCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewMiddlewareCommand(app.Server))
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())

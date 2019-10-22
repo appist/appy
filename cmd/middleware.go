@@ -13,7 +13,7 @@ import (
 func NewMiddlewareCommand(s core.AppServer) *AppCmd {
 	cmd := &AppCmd{
 		Use:   "middleware",
-		Short: "Print out the middleware list.",
+		Short: "Prints out the middleware list.",
 		Run: func(cmd *AppCmd, args []string) {
 			regex := regexp.MustCompile(`\.func.*`)
 

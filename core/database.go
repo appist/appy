@@ -21,7 +21,10 @@ import (
 type AppDbConn = pg.Conn
 
 // AppDbConfig keeps database connection options.
-type AppDbConfig = pg.Options
+type AppDbConfig struct {
+	pg.Options
+	Replica bool
+}
 
 // AppDbHandler is a database handle representing a pool of zero or more
 // underlying connections. It's safe for concurrent use by multiple
@@ -78,6 +81,14 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 		appName := "appy"
 		if val, ok := os.LookupEnv("DB_APP_NAME_" + dbName); ok && val != "" {
 			appName = val
+		}
+
+		replica := false
+		if val, ok := os.LookupEnv("DB_REPLICA_" + dbName); ok && val != "" {
+			replica, err = strconv.ParseBool(val)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		maxRetries := 0
@@ -172,32 +183,34 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 			}
 		}
 
-		dbConfig[dbName] = AppDbConfig{
-			ApplicationName:       appName,
-			Addr:                  addr,
-			User:                  user,
-			Password:              password,
-			Database:              database,
-			MaxRetries:            maxRetries,
-			PoolSize:              poolSize,
-			PoolTimeout:           poolTimeout,
-			DialTimeout:           dialTimeout,
-			IdleCheckFrequency:    idleCheckFrequency,
-			IdleTimeout:           idleTimeout,
-			ReadTimeout:           readTimeout,
-			WriteTimeout:          writeTimeout,
-			RetryStatementTimeout: retryStatement,
-			MinIdleConns:          minIdleConns,
-			MaxConnAge:            maxConnAge,
-			OnConnect: func(conn *AppDbConn) error {
-				_, err := conn.Exec("SET search_path=?", defaultSchema)
-				if err != nil {
-					return err
-				}
+		config := AppDbConfig{}
+		config.ApplicationName = appName
+		config.Addr = addr
+		config.User = user
+		config.Password = password
+		config.Database = database
+		config.MaxRetries = maxRetries
+		config.PoolSize = poolSize
+		config.PoolTimeout = poolTimeout
+		config.DialTimeout = dialTimeout
+		config.IdleCheckFrequency = idleCheckFrequency
+		config.IdleTimeout = idleTimeout
+		config.ReadTimeout = readTimeout
+		config.WriteTimeout = writeTimeout
+		config.RetryStatementTimeout = retryStatement
+		config.MinIdleConns = minIdleConns
+		config.MaxConnAge = maxConnAge
+		config.Replica = replica
+		config.OnConnect = func(conn *AppDbConn) error {
+			_, err := conn.Exec("SET search_path=?", defaultSchema)
+			if err != nil {
+				return err
+			}
 
-				return nil
-			},
+			return nil
 		}
+
+		dbConfig[dbName] = config
 	}
 
 	return dbConfig, nil
@@ -212,7 +225,7 @@ func newDb(config AppDbConfig) (*AppDb, error) {
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent
 // use by multiple goroutines and maintains its own connection pool.
 func (db *AppDb) Connect() error {
-	db.Handler = pg.Connect(&db.Config)
+	db.Handler = pg.Connect(&db.Config.Options)
 	_, err := db.Handler.Exec("SELECT 1")
 	return err
 }
