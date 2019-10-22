@@ -32,18 +32,17 @@ func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.Fun
 
 	config, dbConfig, err := newConfig(assets, appConf, logger)
 	if err != nil {
-		optionalConfig := false
-		optConfigCmds := []string{"build", "config:dec", "config:enc", "middleware", "routes", "secret", "ssl:clean", "ssl:setup", "start", "-h", "--help"}
+		isConfigOptional := false
+		configOptionalCmds := []string{"build", "config:dec", "config:enc", "middleware", "routes", "secret", "ssl:clean", "ssl:setup", "start", "-h", "--help"}
 
-		// Don't exit on config error for all the commands that don't need `app/config/.env.<APPY_ENV>` to work.
-		for _, optConfigCmd := range optConfigCmds {
-			if support.ArrayContains(os.Args, optConfigCmd) {
-				optionalConfig = true
+		for _, configOptionalCmd := range configOptionalCmds {
+			if support.ArrayContains(os.Args, configOptionalCmd) {
+				isConfigOptional = true
 				break
 			}
 		}
 
-		if !optionalConfig && len(os.Args) > 1 {
+		if !isConfigOptional && len(os.Args) > 1 {
 			return app, err
 		}
 

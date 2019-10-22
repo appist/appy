@@ -285,13 +285,24 @@ func Run() {
 		app.Server.InitCSR()
 	}
 
-	for _, db := range app.Db {
-		err := db.Connect()
-		if err != nil {
-			Logger.Fatal(err)
+	isDbRequired := false
+	dbRequiredCmds := []string{"db:create", "db:drop", "db:migrate", "db:migrate:status", "db:rollback", "db:seed", "serve"}
+	for _, dbRequiredCmd := range dbRequiredCmds {
+		if support.ArrayContains(os.Args, dbRequiredCmd) {
+			isDbRequired = true
+			break
 		}
+	}
 
-		defer db.Close()
+	if isDbRequired {
+		for _, db := range app.Db {
+			err := db.Connect()
+			if err != nil {
+				Logger.Fatal(err)
+			}
+
+			defer db.Close()
+		}
 	}
 
 	cmd.Run()
