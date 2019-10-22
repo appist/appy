@@ -226,7 +226,7 @@ func newDb(config AppDbConfig) (*AppDb, error) {
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent
 // use by multiple goroutines and maintains its own connection pool.
 func (db *AppDb) Connect() error {
-	fmt.Println(db.Config.Options)
+	fmt.Printf("%+v\n", db.Config.Options)
 	db.Handler = pg.Connect(&db.Config.Options)
 	_, err := db.Handler.Exec("SELECT 1")
 	return err

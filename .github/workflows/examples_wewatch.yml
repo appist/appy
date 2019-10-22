@@ -39,8 +39,9 @@ jobs:
       - working-directory: examples/wewatch/web
         run: npm install
       - working-directory: examples/wewatch
+        run: go mod download
+      - working-directory: examples/wewatch
         run: |
-          go mod download
           go run . build
           ./wewatch serve &
         env:
