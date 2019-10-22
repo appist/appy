@@ -43,6 +43,7 @@ jobs:
       - working-directory: examples/wewatch
         run: |
           go run . build
+          printenv | grep APPY
           ./wewatch serve &
         env:
           APPY_MASTER_KEY: ${{ secrets.WEWATCH_APPY_MASTER_KEY_DEVELOPMENT }}
