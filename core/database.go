@@ -37,6 +37,7 @@ type AppDb struct {
 	Handler *AppDbHandler
 }
 
+// AppDbQueryEvent keeps the query event information.
 type AppDbQueryEvent = pg.QueryEvent
 
 func parseDbConfig() (map[string]AppDbConfig, error) {
