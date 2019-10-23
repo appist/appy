@@ -22,6 +22,9 @@ type App = core.App
 // AppConfig keeps the parsed environment variables.
 type AppConfig = core.AppConfig
 
+// AppCmd wraps the information of what a command line is about.
+type AppCmd = cmd.AppCmd
+
 // AppDb keeps database connection with its configuration.
 type AppDb = core.AppDb
 
@@ -181,6 +184,9 @@ var (
 	// NewAssert returns an Assert instance that provides the unit test helpers to test various conditions.
 	NewAssert = test.NewAssert
 
+	// AddCommand adds a custom command.
+	AddCommand = cmd.AddCommand
+
 	// ArrayContains checks if a value is in a slice of the same type.
 	ArrayContains = support.ArrayContains
 
@@ -255,18 +261,18 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	Use = app.Server.Router.Use
 	Middlewares = app.Server.Router.Handlers
 
-	cmd.Init(app)
+	cmd.Init(app.Logger)
 	cmd.AddCommand(cmd.NewDbCreateCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbDropCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewMiddlewareCommand(app.Server))
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())
-	cmd.AddCommand(cmd.NewServeCommand(app.Server))
+	cmd.AddCommand(cmd.NewServeCommand(app.Server, app.Db))
 
 	if Build != "release" {
 		cmd.AddCommand(cmd.NewBuildCommand(app.Server))
-		cmd.AddCommand(cmd.NewConfigDecryptCommand(app.Server))
-		cmd.AddCommand(cmd.NewConfigEncryptCommand(app.Server))
+		cmd.AddCommand(cmd.NewConfigDecryptCommand())
+		cmd.AddCommand(cmd.NewConfigEncryptCommand())
 		cmd.AddCommand(cmd.NewStartCommand(app.Server))
 		cmd.AddCommand(cmd.NewSSLCleanCommand(app.Server))
 		cmd.AddCommand(cmd.NewSSLSetupCommand(app.Server))
@@ -283,26 +289,6 @@ func Run() {
 	// should rely on webpack-dev-server.
 	if Build == "release" {
 		app.Server.InitCSR()
-	}
-
-	isDbRequired := false
-	dbRequiredCmds := []string{"db:create", "db:drop", "db:migrate", "db:migrate:status", "db:rollback", "db:seed", "serve"}
-	for _, dbRequiredCmd := range dbRequiredCmds {
-		if support.ArrayContains(os.Args, dbRequiredCmd) {
-			isDbRequired = true
-			break
-		}
-	}
-
-	if isDbRequired {
-		for _, db := range app.Db {
-			err := db.Connect()
-			if err != nil {
-				Logger.Fatal(err)
-			}
-
-			defer db.Close()
-		}
 	}
 
 	cmd.Run()

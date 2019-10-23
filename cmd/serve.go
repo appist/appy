@@ -11,7 +11,7 @@ import (
 )
 
 // NewServeCommand runs the GRPC/HTTP web server.
-func NewServeCommand(s core.AppServer) *AppCmd {
+func NewServeCommand(s core.AppServer, dbMap map[string]*core.AppDb) *AppCmd {
 	return &AppCmd{
 		Use:   "serve",
 		Short: "Runs the GRPC/HTTP web server.",
@@ -20,12 +20,12 @@ func NewServeCommand(s core.AppServer) *AppCmd {
 				s.Logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
 			}
 
-			serve(s)
+			serve(s, dbMap)
 		},
 	}
 }
 
-func serve(s core.AppServer) {
+func serve(s core.AppServer, dbMap map[string]*core.AppDb) {
 	s.PrintInfo()
 
 	httpDone := make(chan bool, 1)
@@ -35,6 +35,7 @@ func serve(s core.AppServer) {
 	go func() {
 		<-httpQuit
 		s.Logger.Infof("* Gracefully shutting down the server within %s...\n", s.Config.HTTPGracefulTimeout)
+		core.CloseDb(dbMap)
 		ctx, cancel := context.WithTimeout(context.Background(), s.Config.HTTPGracefulTimeout)
 		defer cancel()
 
@@ -46,6 +47,11 @@ func serve(s core.AppServer) {
 	}()
 
 	var err error
+	err = core.ConnectDb(dbMap)
+	if err != nil {
+		s.Logger.Fatal(err)
+	}
+
 	if s.Config.HTTPSSLEnabled == true {
 		err = s.HTTP.ListenAndServeTLS(s.Config.HTTPSSLCertPath+"/cert.pem", s.Config.HTTPSSLCertPath+"/key.pem")
 	} else {

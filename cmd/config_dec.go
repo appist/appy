@@ -14,7 +14,7 @@ import (
 //
 // 1. via the `APPY_ENV` environment variable which will be used to locate `app/config/<APPY_ENV>.key` file.
 // 2. via the `APPY_MASTER_KEY` environment variable which will always take precedence over `app/config/<APPY_ENV>.key` file.
-func NewConfigDecryptCommand(s core.AppServer) *AppCmd {
+func NewConfigDecryptCommand() *AppCmd {
 	return &AppCmd{
 		Use:   "config:dec",
 		Short: "Decrypts a value using the AES algorithm.",

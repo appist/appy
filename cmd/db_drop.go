@@ -15,6 +15,12 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 		Short: "Drops all databases from \"app/config/.env.<APPY_ENV>\".",
 		Run: func(cmd *AppCmd, args []string) {
 			checkProtectedEnvs(config)
+
+			err := core.ConnectDb(dbMap)
+			if err != nil {
+				logger.Fatal(err)
+			}
+
 			fmt.Printf("Dropping databases from app/config/.env.%s...\n", config.AppyEnv)
 
 			if len(dbMap) < 1 {
@@ -41,6 +47,8 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 			for _, msg := range msgs {
 				fmt.Println(msg)
 			}
+
+			core.CloseDb(dbMap)
 		},
 	}
 

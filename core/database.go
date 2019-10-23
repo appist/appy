@@ -222,6 +222,27 @@ func newDb(config AppDbConfig) (*AppDb, error) {
 	}, nil
 }
 
+// ConnectDb establishes connections to all the databases.
+func ConnectDb(dbMap map[string]*AppDb) error {
+	for _, db := range dbMap {
+		err := db.Connect()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// CloseDb closes connections to all the databases.
+func CloseDb(dbMap map[string]*AppDb) error {
+	for _, db := range dbMap {
+		db.Close()
+	}
+
+	return nil
+}
+
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent
 // use by multiple goroutines and maintains its own connection pool.
 func (db *AppDb) Connect() error {

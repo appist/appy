@@ -12,8 +12,13 @@ import (
 func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppCmd {
 	cmd := &AppCmd{
 		Use:   "db:create",
-		Short: "Creates all databases from app/config/.env.<APPY_ENV>.",
+		Short: "Creates all databases from \"app/config/.env.<APPY_ENV>\".",
 		Run: func(cmd *AppCmd, args []string) {
+			err := core.ConnectDb(dbMap)
+			if err != nil {
+				logger.Fatal(err)
+			}
+
 			fmt.Printf("Creating databases from app/config/.env.%s...\n", config.AppyEnv)
 
 			if len(dbMap) < 1 {
@@ -40,6 +45,8 @@ func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *Ap
 			for _, msg := range msgs {
 				fmt.Println(msg)
 			}
+
+			core.CloseDb(dbMap)
 		},
 	}
 

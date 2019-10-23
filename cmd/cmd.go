@@ -14,7 +14,7 @@ type AppCmd = cobra.Command
 
 var (
 	mainAssets       = "main_assets.go"
-	app              core.App
+	logger           *core.AppLogger
 	root             *AppCmd
 	reservedCmdNames = map[string]bool{}
 
@@ -43,8 +43,8 @@ var (
 )
 
 // Init initializes the root command instance.
-func Init(a core.App) {
-	app = a
+func Init(l *core.AppLogger) {
+	logger = l
 	cmdName := path.Base(os.Args[0])
 	if cmdName == "main" {
 		wd, _ := os.Getwd()
@@ -61,7 +61,7 @@ func Init(a core.App) {
 // AddCommand adds a custom command.
 func AddCommand(command *AppCmd) {
 	if _, ok := reservedCmdNames[command.Name()]; ok {
-		app.Logger.Fatalf("\"%s\" command name is reserved, please update the command name.", command.Name())
+		logger.Fatalf("\"%s\" command name is reserved, please update the command name.", command.Name())
 	}
 
 	root.AddCommand(command)
@@ -83,6 +83,6 @@ var assets http.FileSystem
 `)
 	err := ioutil.WriteFile(mainAssets, template, 0644)
 	if err != nil {
-		app.Logger.Fatal(err)
+		logger.Fatal(err)
 	}
 }

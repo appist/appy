@@ -9,11 +9,11 @@ import (
 	"github.com/appist/appy/core"
 )
 
-// NewMiddlewareCommand prints out the middleware list.
+// NewMiddlewareCommand lists all the middlewares.
 func NewMiddlewareCommand(s core.AppServer) *AppCmd {
 	cmd := &AppCmd{
 		Use:   "middleware",
-		Short: "Prints out the middleware list.",
+		Short: "Lists all the middlewares.",
 		Run: func(cmd *AppCmd, args []string) {
 			regex := regexp.MustCompile(`\.func.*`)
 
