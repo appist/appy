@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 
 	"go.uber.org/zap"
@@ -15,6 +16,22 @@ type SugaredLogger = zap.SugaredLogger
 // AppLogger keeps the logging functionality.
 type AppLogger struct {
 	*SugaredLogger
+}
+
+// BeforeQuery is a hook before a go-pg query.
+func (l AppLogger) BeforeQuery(c context.Context, q *AppDbQueryEvent) (context.Context, error) {
+	return c, nil
+}
+
+// AfterQuery is a hook after a go-pg query.
+func (l AppLogger) AfterQuery(c context.Context, q *AppDbQueryEvent) error {
+	query, err := q.FormattedQuery()
+	if err != nil {
+		return err
+	}
+
+	l.SugaredLogger.Infof("SQL: %s", query)
+	return nil
 }
 
 func newLoggerConfig() loggerConfig {

@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/appist/appy/core"
 )
@@ -14,15 +12,15 @@ func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *Ap
 		Use:   "db:create",
 		Short: "Creates all databases from \"app/config/.env.<APPY_ENV>\".",
 		Run: func(cmd *AppCmd, args []string) {
-			err := core.ConnectDb(dbMap)
+			logger.Infof("Creating databases from app/config/.env.%s...", config.AppyEnv)
+
+			err := core.ConnectDb(dbMap, logger)
 			if err != nil {
 				logger.Fatal(err)
 			}
 
-			fmt.Printf("Creating databases from app/config/.env.%s...\n", config.AppyEnv)
-
 			if len(dbMap) < 1 {
-				fmt.Printf("No database is defined in app/config/.env.%s.\n", config.AppyEnv)
+				logger.Infof("No database is defined in app/config/.env.%s.", config.AppyEnv)
 				os.Exit(-1)
 			}
 
@@ -38,12 +36,15 @@ func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *Ap
 			}
 
 			if len(errs) > 0 {
-				fmt.Println(strings.Join(errs, "\n"))
+				for _, err := range errs {
+					logger.Infof(err)
+				}
+
 				os.Exit(-1)
 			}
 
 			for _, msg := range msgs {
-				fmt.Println(msg)
+				logger.Info(msg)
 			}
 
 			core.CloseDb(dbMap)

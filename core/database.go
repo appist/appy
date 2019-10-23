@@ -37,6 +37,8 @@ type AppDb struct {
 	Handler *AppDbHandler
 }
 
+type AppDbQueryEvent = pg.QueryEvent
+
 func parseDbConfig() (map[string]AppDbConfig, error) {
 	var err error
 	dbConfig := map[string]AppDbConfig{}
@@ -223,9 +225,9 @@ func newDb(config AppDbConfig) (*AppDb, error) {
 }
 
 // ConnectDb establishes connections to all the databases.
-func ConnectDb(dbMap map[string]*AppDb) error {
+func ConnectDb(dbMap map[string]*AppDb, logger *AppLogger) error {
 	for _, db := range dbMap {
-		err := db.Connect()
+		err := db.Connect(logger)
 		if err != nil {
 			return err
 		}
@@ -245,8 +247,9 @@ func CloseDb(dbMap map[string]*AppDb) error {
 
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent
 // use by multiple goroutines and maintains its own connection pool.
-func (db *AppDb) Connect() error {
+func (db *AppDb) Connect(logger *AppLogger) error {
 	db.Handler = pg.Connect(&db.Config.Options)
+	db.Handler.AddQueryHook(logger)
 	_, err := db.Handler.Exec("SELECT 1")
 	return err
 }

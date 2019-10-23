@@ -264,6 +264,7 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	cmd.Init(app.Logger)
 	cmd.AddCommand(cmd.NewDbCreateCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbDropCommand(app.Config, app.Db))
+	cmd.AddCommand(cmd.NewDbMigrateCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewMiddlewareCommand(app.Server))
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())

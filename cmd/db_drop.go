@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/appist/appy/core"
 )
@@ -15,16 +13,15 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 		Short: "Drops all databases from \"app/config/.env.<APPY_ENV>\".",
 		Run: func(cmd *AppCmd, args []string) {
 			checkProtectedEnvs(config)
+			logger.Infof("Dropping databases from app/config/.env.%s...", config.AppyEnv)
 
-			err := core.ConnectDb(dbMap)
+			err := core.ConnectDb(dbMap, logger)
 			if err != nil {
 				logger.Fatal(err)
 			}
 
-			fmt.Printf("Dropping databases from app/config/.env.%s...\n", config.AppyEnv)
-
 			if len(dbMap) < 1 {
-				fmt.Printf("No database is defined in app/config/.env.%s.\n", config.AppyEnv)
+				logger.Infof("No database is defined in app/config/.env.%s.", config.AppyEnv)
 				os.Exit(-1)
 			}
 
@@ -40,12 +37,15 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 			}
 
 			if len(errs) > 0 {
-				fmt.Println(strings.Join(errs, "\n"))
+				for _, err := range errs {
+					logger.Infof(err)
+				}
+
 				os.Exit(-1)
 			}
 
 			for _, msg := range msgs {
-				fmt.Println(msg)
+				logger.Info(msg)
 			}
 
 			core.CloseDb(dbMap)
