@@ -17,6 +17,7 @@ func (s *AppSuite) SetupTest() {
 
 func (s *AppSuite) TearDownTest() {
 	os.Unsetenv("APPY_ENV")
+	os.Unsetenv("APPY_MASTER_KEY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
@@ -36,6 +37,7 @@ func (s *AppSuite) TestNewApp() {
 }
 
 func (s *AppSuite) TestNewAppWithMissingRequiredEnvVariables() {
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
 	_, err := NewApp(nil, nil, nil)
 	s.Contains(err.Error(), "required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
 }

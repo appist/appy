@@ -88,7 +88,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"HTTPSSLProxyHeaders":             map[string]string{},
 	}
 
-	c, _, _ := newConfig(nil, nil, s.logger)
+	c, _, _ := newConfig(nil, nil, nil, s.logger)
 	cv := reflect.ValueOf(c)
 	for key, defaultVal := range tests {
 		fv := cv.FieldByName(key)
@@ -142,13 +142,13 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 func (s *ConfigSuite) TestNewConfigRequiredConfig() {
 	os.Setenv("APPY_ENV", "invalid")
 	Build = "release"
-	c, _, _ := newConfig(http.Dir("./testdata/config"), nil, s.logger)
+	c, _, _ := newConfig(http.Dir("./testdata/config"), nil, nil, s.logger)
 	s.Equal(false, c.HTTPSSLEnabled)
 }
 
 func (s *ConfigSuite) TestNewConfigWithUnparsableEnvVariable() {
 	os.Setenv("HTTP_DEBUG_ENABLED", "nil")
-	_, _, _ = newConfig(nil, nil, s.logger)
+	_, _, _ = newConfig(nil, nil, nil, s.logger)
 	os.Unsetenv("HTTP_DEBUG_ENABLED")
 }
 
@@ -183,7 +183,7 @@ func (s *ConfigSuite) TestMasterKeyWithZeroLength() {
 func (s *ConfigSuite) TestUndecryptableConfigFallbackToDefault() {
 	os.Setenv("APPY_ENV", "undecryptable")
 	SSRPaths["config"] = "./testdata/.ssr/app/config"
-	c, _, _ := newConfig(nil, nil, s.logger)
+	c, _, _ := newConfig(nil, nil, nil, s.logger)
 	s.Equal("3000", c.HTTPPort)
 }
 
@@ -195,7 +195,7 @@ func (s *ConfigSuite) TestNonHTTPServeCommand() {
 	os.Args = append(os.Args, "build")
 	SSRPaths["config"] = "./testdata/.ssr/app/config"
 	appConf := &config{}
-	appyConf, _, _ := newConfig(nil, appConf, s.logger)
+	appyConf, _, _ := newConfig(nil, appConf, nil, s.logger)
 	s.Equal("3000", appyConf.HTTPPort)
 	s.Equal("tester", appConf.AppName)
 	os.Args = os.Args[:len(os.Args)-1]
@@ -210,7 +210,7 @@ func (s *ConfigSuite) TestHTTPServeCommand() {
 	os.Args = append(os.Args, "serve")
 	SSRPaths["config"] = "./testdata/.ssr/app/config"
 	appConf := &config{}
-	appyConf, _, _ := newConfig(nil, appConf, s.logger)
+	appyConf, _, _ := newConfig(nil, appConf, nil, s.logger)
 	s.Equal("3000", appyConf.HTTPPort)
 	s.Equal("tester", appConf.AppName)
 	s.Equal("", appConf.AppType)
@@ -226,7 +226,7 @@ func (s *ConfigSuite) TestHTTPServeCommandDebugBuildWithUndecryptableConfig() {
 	os.Args = append(os.Args, "serve")
 	SSRPaths["config"] = "./testdata/.ssr/app/config"
 	appConf := &config{}
-	appyConf, _, _ := newConfig(nil, appConf, s.logger)
+	appyConf, _, _ := newConfig(nil, appConf, nil, s.logger)
 	s.Equal("3000", appyConf.HTTPPort)
 	s.Equal("tester", appConf.AppName)
 	os.Args = os.Args[:len(os.Args)-1]
@@ -243,7 +243,7 @@ func (s *ConfigSuite) TestHTTPServeCommandReleaseBuildWithUndecryptableConfig() 
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
 	os.Args = append(os.Args, "serve")
 	appConf := &config{}
-	appyConf, _, _ := newConfig(http.Dir("./testdata"), appConf, s.logger)
+	appyConf, _, _ := newConfig(http.Dir("./testdata"), appConf, nil, s.logger)
 	s.Equal("3000", appyConf.HTTPPort)
 	s.Equal("tester", appConf.AppName)
 	s.Equal("", appConf.AppType)

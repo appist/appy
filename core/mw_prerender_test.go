@@ -19,7 +19,7 @@ type PrerenderSuite struct {
 
 func (s *PrerenderSuite) SetupTest() {
 	s.logger, _ = newLogger(newLoggerConfig())
-	s.config, _, _ = newConfig(nil, nil, s.logger)
+	s.config, _, _ = newConfig(nil, nil, nil, s.logger)
 	s.config.HTTPSessionSecrets = [][]byte{[]byte("481e5d98a31585148b8b1dfb6a3c0465")}
 	s.config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
 	s.recorder = httptest.NewRecorder()

@@ -132,15 +132,11 @@ func getConfigInfo(assets http.FileSystem) (string, io.Reader, error) {
 	return path, reader, err
 }
 
-func newConfig(assets http.FileSystem, appConf interface{}, logger *AppLogger) (AppConfig, map[string]AppDbConfig, error) {
+func newConfig(assets http.FileSystem, appConf interface{}, masterKey []byte, logger *AppLogger) (AppConfig, map[string]AppDbConfig, error) {
 	var (
 		err  error
 		errs []string
 	)
-	masterKey, err := MasterKey()
-	if err != nil {
-		errs = append(errs, err.Error())
-	}
 
 	configPath, reader, err := getConfigInfo(assets)
 	if err != nil {
@@ -214,15 +210,17 @@ func MasterKey() ([]byte, error) {
 		key []byte
 	)
 
-	if Build == "debug" {
-		key, err = ioutil.ReadFile(SSRPaths["config"] + "/" + appyEnv + ".key")
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	if os.Getenv("APPY_MASTER_KEY") != "" {
 		key = []byte(os.Getenv("APPY_MASTER_KEY"))
+	}
+
+	if len(key) == 0 {
+		if Build == "debug" {
+			key, err = ioutil.ReadFile(SSRPaths["config"] + "/" + appyEnv + ".key")
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	key = []byte(strings.Trim(string(key), "\n"))

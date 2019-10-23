@@ -30,19 +30,24 @@ func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.Fun
 	}
 	app.Logger = logger
 
-	config, dbConfig, err := newConfig(assets, appConf, logger)
+	masterKey, err := MasterKey()
 	if err != nil {
-		isConfigOptional := false
-		configOptionalCmds := []string{"build", "config:dec", "config:enc", "middleware", "routes", "secret", "ssl:clean", "ssl:setup", "start", "-h", "--help"}
+		return app, err
+	}
 
-		for _, configOptionalCmd := range configOptionalCmds {
-			if support.ArrayContains(os.Args, configOptionalCmd) {
-				isConfigOptional = true
+	config, dbConfig, err := newConfig(assets, appConf, masterKey, logger)
+	if err != nil {
+		isConfigRequired := true
+		configRequiredCmds := []string{"db:create", "db:drop", "db:migrate", "db:migrate:status", "db:rollback", "db:seed", "serve", "start"}
+
+		for _, configRequiredCmd := range configRequiredCmds {
+			if support.ArrayContains(os.Args, configRequiredCmd) {
+				isConfigRequired = false
 				break
 			}
 		}
 
-		if !isConfigOptional && len(os.Args) > 1 {
+		if isConfigRequired && len(os.Args) > 1 {
 			return app, err
 		}
 
