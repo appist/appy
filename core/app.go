@@ -24,6 +24,17 @@ type App struct {
 // NewApp initializes the app singleton.
 func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.FuncMap) (App, error) {
 	app := App{}
+	isConfigRequired := false
+	// Keeps track of the commands that require master key & config check.
+	configRequiredCmds := []string{"db:create", "db:drop", "db:migrate", "db:migrate:status", "db:rollback", "db:seed", "serve", "start"}
+
+	for _, configRequiredCmd := range configRequiredCmds {
+		if support.ArrayContains(os.Args, configRequiredCmd) {
+			isConfigRequired = true
+			break
+		}
+	}
+
 	logger, err := newLogger(newLoggerConfig())
 	if err != nil {
 		return app, err
@@ -31,22 +42,12 @@ func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.Fun
 	app.Logger = logger
 
 	masterKey, err := MasterKey()
-	if err != nil {
+	if err != nil && isConfigRequired && len(os.Args) > 1 {
 		return app, err
 	}
 
 	config, dbConfig, err := newConfig(assets, appConf, masterKey, logger)
 	if err != nil {
-		isConfigRequired := true
-		configRequiredCmds := []string{"db:create", "db:drop", "db:migrate", "db:migrate:status", "db:rollback", "db:seed", "serve", "start"}
-
-		for _, configRequiredCmd := range configRequiredCmds {
-			if support.ArrayContains(os.Args, configRequiredCmd) {
-				isConfigRequired = false
-				break
-			}
-		}
-
 		if isConfigRequired && len(os.Args) > 1 {
 			return app, err
 		}

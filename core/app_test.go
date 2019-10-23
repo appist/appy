@@ -38,8 +38,10 @@ func (s *AppSuite) TestNewApp() {
 
 func (s *AppSuite) TestNewAppWithMissingRequiredEnvVariables() {
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Args = append(os.Args, "serve")
 	_, err := NewApp(nil, nil, nil)
 	s.Contains(err.Error(), "required environment variable \"HTTP_SESSION_SECRETS\" is not set. required environment variable \"HTTP_CSRF_SECRET\" is not set")
+	os.Args = os.Args[:len(os.Args)-1]
 }
 
 func TestApp(t *testing.T) {
