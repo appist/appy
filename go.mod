@@ -10,12 +10,12 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20191009033829-c22f49c9ff0a
 	github.com/chromedp/chromedp v0.5.0
 	github.com/dustin/go-humanize v1.0.0
+	github.com/fatih/camelcase v1.0.0
 	github.com/gin-contrib/gzip v0.0.1
 	github.com/gin-contrib/multitemplate v0.0.0-20190528082104-30e424939505
 	github.com/gin-contrib/secure v0.0.0-20190528141218-312887ea6e1f
 	github.com/gin-contrib/sessions v0.0.1
 	github.com/gin-gonic/gin v1.4.1-0.20190922073534-0b96dd8ae554
-	github.com/go-pg/pg v8.0.6+incompatible
 	github.com/go-pg/pg/v9 v9.0.0-beta.15
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/gorilla/context v1.1.1

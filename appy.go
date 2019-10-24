@@ -46,6 +46,9 @@ type AppDbConfig = core.AppDbConfig
 // goroutines.
 type AppDbHandler = core.AppDbHandler
 
+// AppDbMigration keeps database migration options.
+type AppDbMigration = core.AppDbMigration
+
 // AppLogger keeps the logging functionality.
 type AppLogger = core.AppLogger
 
@@ -265,6 +268,7 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	cmd.AddCommand(cmd.NewDbCreateCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbDropCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbMigrateCommand(app.Config, app.Db))
+	cmd.AddCommand(cmd.NewGenMigrationCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewMiddlewareCommand(app.Server))
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())

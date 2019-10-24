@@ -6,11 +6,11 @@ import (
 	"github.com/appist/appy/core"
 )
 
-// NewDbCreateCommand creates all databases from app/config/.env.<APPY_ENV>.
+// NewDbCreateCommand creates all databases for the current environment.
 func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppCmd {
 	cmd := &AppCmd{
 		Use:   "db:create",
-		Short: "Creates all databases from \"app/config/.env.<APPY_ENV>\".",
+		Short: "Creates all databases for the current environment.",
 		Run: func(cmd *AppCmd, args []string) {
 			logger.Infof("Creating databases from app/config/.env.%s...", config.AppyEnv)
 
@@ -18,6 +18,7 @@ func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *Ap
 			if err != nil {
 				logger.Fatal(err)
 			}
+			defer core.CloseDb(dbMap)
 
 			if len(dbMap) < 1 {
 				logger.Infof("No database is defined in app/config/.env.%s.", config.AppyEnv)
@@ -46,8 +47,6 @@ func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *Ap
 			for _, msg := range msgs {
 				logger.Info(msg)
 			}
-
-			core.CloseDb(dbMap)
 		},
 	}
 

@@ -33,8 +33,14 @@ type AppDbHandler = pg.DB
 
 // AppDb keeps database connection with its configuration.
 type AppDb struct {
-	Config  AppDbConfig
-	Handler *AppDbHandler
+	Config     AppDbConfig
+	Handler    *AppDbHandler
+	Migrations []AppDbMigration
+}
+
+// AppDbMigration keeps database migration options.
+type AppDbMigration struct {
+	Version int64
 }
 
 // AppDbQueryEvent keeps the query event information.
@@ -57,7 +63,7 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 
 	for _, dbName := range dbNames {
 		defaultSchema := "public"
-		if val, ok := os.LookupEnv("DB_DEFAULT_SCHEMA_" + dbName); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_SCHEMA_" + dbName); ok && val != "" {
 			defaultSchema = val
 		}
 
@@ -213,7 +219,7 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 			return nil
 		}
 
-		dbConfig[dbName] = config
+		dbConfig[strings.ToLower(dbName)] = config
 	}
 
 	return dbConfig, nil
@@ -244,6 +250,14 @@ func CloseDb(dbMap map[string]*AppDb) error {
 	}
 
 	return nil
+}
+
+func (db *AppDb) AddMigration(func(*AppDb) error, func(*AppDb) error) {
+
+}
+
+func (db *AppDb) AddMigrationTx(func(*AppDb) error, func(*AppDb) error) {
+
 }
 
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent

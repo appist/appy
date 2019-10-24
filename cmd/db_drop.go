@@ -6,11 +6,11 @@ import (
 	"github.com/appist/appy/core"
 )
 
-// NewDbDropCommand drops all databases from app/config/.env.<APPY_ENV>.
+// NewDbDropCommand drops all databases for the current environment.
 func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppCmd {
 	cmd := &AppCmd{
 		Use:   "db:drop",
-		Short: "Drops all databases from \"app/config/.env.<APPY_ENV>\".",
+		Short: "Drops all databases for the current environment.",
 		Run: func(cmd *AppCmd, args []string) {
 			checkProtectedEnvs(config)
 			logger.Infof("Dropping databases from app/config/.env.%s...", config.AppyEnv)
@@ -19,6 +19,7 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 			if err != nil {
 				logger.Fatal(err)
 			}
+			defer core.CloseDb(dbMap)
 
 			if len(dbMap) < 1 {
 				logger.Infof("No database is defined in app/config/.env.%s.", config.AppyEnv)
@@ -47,8 +48,6 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 			for _, msg := range msgs {
 				logger.Info(msg)
 			}
-
-			core.CloseDb(dbMap)
 		},
 	}
 
