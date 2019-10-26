@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -30,7 +31,7 @@ func (l AppLogger) AfterQuery(c context.Context, q *AppDbQueryEvent) error {
 		return err
 	}
 
-	l.SugaredLogger.Infof("SQL: %s", query)
+	l.SugaredLogger.Infof("* DB (%s) %s", time.Since(q.StartTime), query)
 	return nil
 }
 

@@ -13,7 +13,7 @@ import (
 type AppCmd = cobra.Command
 
 var (
-	mainAssets       = "main_assets.go"
+	mainAssets       = "app/assets.go"
 	logger           *core.AppLogger
 	root             *AppCmd
 	reservedCmdNames = map[string]bool{}

@@ -1,10 +1,14 @@
 package core
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-pg/pg/v9"
@@ -23,7 +27,8 @@ type AppDbConn = pg.Conn
 // AppDbConfig keeps database connection options.
 type AppDbConfig struct {
 	pg.Options
-	Replica bool
+	Replica               bool
+	SchemaMigrationsTable string
 }
 
 // AppDbHandler is a database handle representing a pool of zero or more
@@ -35,12 +40,17 @@ type AppDbHandler = pg.DB
 type AppDb struct {
 	Config     AppDbConfig
 	Handler    *AppDbHandler
-	Migrations []AppDbMigration
+	Migrations []*AppDbMigration
+	mu         sync.Mutex
 }
 
 // AppDbMigration keeps database migration options.
 type AppDbMigration struct {
-	Version int64
+	Version string
+	Down    func(*AppDb) error
+	DownTx  bool
+	Up      func(*AppDb) error
+	UpTx    bool
 }
 
 // AppDbQueryEvent keeps the query event information.
@@ -192,6 +202,11 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 			}
 		}
 
+		schemaMigrationsTable := "schema_migrations"
+		if val, ok := os.LookupEnv("DB_SCHEMA_MIGRATIONS_TABLE_" + dbName); ok && val != "" {
+			schemaMigrationsTable = val
+		}
+
 		config := AppDbConfig{}
 		config.ApplicationName = appName
 		config.Addr = addr
@@ -210,6 +225,7 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 		config.MinIdleConns = minIdleConns
 		config.MaxConnAge = maxConnAge
 		config.Replica = replica
+		config.SchemaMigrationsTable = schemaMigrationsTable
 		config.OnConnect = func(conn *AppDbConn) error {
 			_, err := conn.Exec("SET search_path=?", defaultSchema)
 			if err != nil {
@@ -252,14 +268,6 @@ func CloseDb(dbMap map[string]*AppDb) error {
 	return nil
 }
 
-func (db *AppDb) AddMigration(func(*AppDb) error, func(*AppDb) error) {
-
-}
-
-func (db *AppDb) AddMigrationTx(func(*AppDb) error, func(*AppDb) error) {
-
-}
-
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent
 // use by multiple goroutines and maintains its own connection pool.
 func (db *AppDb) Connect(logger *AppLogger) error {
@@ -273,4 +281,86 @@ func (db *AppDb) Connect(logger *AppLogger) error {
 // meant to be long-lived and shared between many goroutines.
 func (db *AppDb) Close() {
 	db.Handler.Close()
+}
+
+// RegisterMigration inserts the up/down migrations that won't be executed in transaction.
+func (db *AppDb) RegisterMigration(up func(*AppDb) error, down func(*AppDb) error) {
+	db.registerMigration(false, up, down)
+}
+
+// RegisterMigrationTx inserts the up/down migrations that will be executed in transaction.
+func (db *AppDb) RegisterMigrationTx(up func(*AppDb) error, down func(*AppDb) error) {
+	db.registerMigration(true, up, down)
+}
+
+func (db *AppDb) registerMigration(tx bool, up func(*AppDb) error, down func(*AppDb) error) error {
+	file := migrationFile()
+	version, err := migrationVersion(file)
+	if err != nil {
+		return err
+	}
+
+	db.addMigration(&AppDbMigration{
+		Version: version,
+		Down:    down,
+		DownTx:  tx,
+		Up:      up,
+		UpTx:    tx,
+	})
+
+	return nil
+}
+
+func (db *AppDb) addMigration(newMigration *AppDbMigration) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	for idx, m := range db.Migrations {
+		if m.Version > newMigration.Version {
+			db.Migrations = insertAt(db.Migrations, idx, newMigration)
+			return
+		}
+	}
+
+	db.Migrations = append(db.Migrations, newMigration)
+}
+
+func insertAt(s []*AppDbMigration, idx int, m *AppDbMigration) []*AppDbMigration {
+	s = append(s, nil)
+	copy(s[idx+1:], s[idx:])
+	s[idx] = m
+
+	return s
+}
+
+func migrationFile() string {
+	const depth = 32
+	var pcs [depth]uintptr
+	n := runtime.Callers(1, pcs[:])
+	frames := runtime.CallersFrames(pcs[:n])
+
+	for {
+		f, ok := frames.Next()
+		if !ok {
+			break
+		}
+
+		if !strings.Contains(f.Function, "/appist/appy") {
+			return f.File
+		}
+	}
+
+	return ""
+}
+
+func migrationVersion(name string) (string, error) {
+	base := filepath.Base(name)
+	splits := strings.Split(base, "_")
+	_, err := time.Parse("20060102150405", splits[0])
+	if len(splits) < 3 || err != nil {
+		err := fmt.Errorf("invalid filename '%q', a valid example: 20060102150405_create_users.go", base)
+		return "", err
+	}
+
+	return splits[0], nil
 }

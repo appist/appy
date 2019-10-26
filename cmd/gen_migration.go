@@ -77,7 +77,7 @@ import (
 )
 
 func init() {
-	appy.Db["{{.Database}}"].AddMigration{{if .Tx}}Tx{{end}}(
+	appy.Db["{{.Database}}"].RegisterMigration{{if .Tx}}Tx{{end}}(
 		// Up migration
 		func(db *appy.AppDb) error {
 			return nil

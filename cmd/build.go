@@ -80,7 +80,7 @@ func NewBuildCommand(s core.AppServer) *AppCmd {
 
 			generateMainAssets()
 			s.Logger.Infof("Compiling assets folder into '%s'...", mainAssets)
-			err = vfsgen.Generate(http.Dir(assetsPath), vfsgen.Options{Filename: mainAssets, VariableName: "assets"})
+			err = vfsgen.Generate(http.Dir(assetsPath), vfsgen.Options{PackageName: "app", Filename: mainAssets, VariableName: "assets"})
 			if err != nil {
 				s.Logger.Fatal(err)
 			}
