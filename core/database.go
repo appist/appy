@@ -44,6 +44,7 @@ type AppDbHandlerTx = pg.Tx
 type AppDb struct {
 	Config     AppDbConfig
 	Handler    *AppDbHandler
+	Logger     *AppLogger
 	Migrations []*AppDbMigration
 	mu         sync.Mutex
 }
@@ -266,16 +267,17 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 	return dbConfig, nil
 }
 
-func newDb(config AppDbConfig) (*AppDb, error) {
+func newDb(config AppDbConfig, logger *AppLogger) (*AppDb, error) {
 	return &AppDb{
 		Config: config,
+		Logger: logger,
 	}, nil
 }
 
 // DbConnect establishes connections to all the databases.
-func DbConnect(dbMap map[string]*AppDb, logger *AppLogger, sameDb bool) error {
+func DbConnect(dbMap map[string]*AppDb, sameDb bool) error {
 	for _, db := range dbMap {
-		err := db.Connect(logger, sameDb)
+		err := db.Connect(sameDb)
 		if err != nil {
 			return err
 		}
@@ -295,7 +297,7 @@ func DbClose(dbMap map[string]*AppDb) error {
 
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent
 // use by multiple goroutines and maintains its own connection pool.
-func (db *AppDb) Connect(logger *AppLogger, sameDb bool) error {
+func (db *AppDb) Connect(sameDb bool) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -305,7 +307,7 @@ func (db *AppDb) Connect(logger *AppLogger, sameDb bool) error {
 	}
 
 	db.Handler = pg.Connect(&opts)
-	db.Handler.AddQueryHook(logger)
+	db.Handler.AddQueryHook(db.Logger)
 	_, err := db.Handler.Exec("SELECT 1")
 	return err
 }
@@ -417,12 +419,18 @@ func (db *AppDb) ensureSchemaMigrationsTable() error {
 
 // RegisterMigration registers the up/down migrations that won't be executed in transaction.
 func (db *AppDb) RegisterMigration(up func(*AppDbHandler) error, down func(*AppDbHandler) error) {
-	db.registerMigration(up, down, nil, nil)
+	err := db.registerMigration(up, down, nil, nil)
+	if err != nil {
+		db.Logger.Fatal(err)
+	}
 }
 
 // RegisterMigrationTx registers the up/down migrations that will be executed in transaction.
 func (db *AppDb) RegisterMigrationTx(upTx func(*AppDbHandlerTx) error, downTx func(*AppDbHandlerTx) error) {
-	db.registerMigration(nil, nil, upTx, downTx)
+	err := db.registerMigration(nil, nil, upTx, downTx)
+	if err != nil {
+		db.Logger.Fatal(err)
+	}
 }
 
 func (db *AppDb) registerMigration(up func(*AppDbHandler) error, down func(*AppDbHandler) error, upTx func(*AppDbHandlerTx) error, downTx func(*AppDbHandlerTx) error) error {
@@ -448,13 +456,6 @@ func (db *AppDb) addMigration(newMigration *AppDbMigration) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	for idx, m := range db.Migrations {
-		if m.Version > newMigration.Version {
-			db.Migrations = insertAt(db.Migrations, idx, newMigration)
-			return
-		}
-	}
-
 	db.Migrations = append(db.Migrations, newMigration)
 }
 
@@ -477,14 +478,6 @@ func (db *AppDb) addSchemaMigrations(handler *AppDbHandler, handlerTx *AppDbHand
 		SafeQuery(newMigration.Version),
 	)
 	return err
-}
-
-func insertAt(s []*AppDbMigration, idx int, m *AppDbMigration) []*AppDbMigration {
-	s = append(s, nil)
-	copy(s[idx+1:], s[idx:])
-	s[idx] = m
-
-	return s
 }
 
 func migrationFile() string {

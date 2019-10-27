@@ -14,7 +14,7 @@ func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *Ap
 		Run: func(cmd *AppCmd, args []string) {
 			logger.Infof("Creating databases from app/config/.env.%s...", config.AppyEnv)
 
-			err := core.DbConnect(dbMap, logger, false)
+			err := core.DbConnect(dbMap, false)
 			if err != nil {
 				logger.Fatal(err)
 			}
@@ -25,14 +25,13 @@ func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *Ap
 				os.Exit(-1)
 			}
 
-			var msgs, errs []string
+			var errs []string
 			for _, db := range dbMap {
 				if db.Config.Replica {
 					continue
 				}
 
-				tmpMsgs, tmpErrs := dbCreate(db)
-				msgs = append(msgs, tmpMsgs...)
+				tmpErrs := dbCreate(db)
 				errs = append(errs, tmpErrs...)
 			}
 
@@ -42,10 +41,6 @@ func NewDbCreateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *Ap
 				}
 
 				os.Exit(-1)
-			}
-
-			for _, msg := range msgs {
-				logger.Info(msg)
 			}
 		},
 	}

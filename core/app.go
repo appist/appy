@@ -64,7 +64,7 @@ func NewApp(assets http.FileSystem, appConf interface{}, viewHelper template.Fun
 
 	app.Db = map[string]*AppDb{}
 	for name, val := range dbConfig {
-		app.Db[name], err = newDb(val)
+		app.Db[name], err = newDb(val, app.Logger)
 		if err != nil {
 			return app, err
 		}

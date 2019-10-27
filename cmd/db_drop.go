@@ -15,7 +15,7 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 			checkProtectedEnvs(config)
 			logger.Infof("Dropping databases from app/config/.env.%s...", config.AppyEnv)
 
-			err := core.DbConnect(dbMap, logger, false)
+			err := core.DbConnect(dbMap, false)
 			if err != nil {
 				logger.Fatal(err)
 			}
@@ -26,14 +26,13 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 				os.Exit(-1)
 			}
 
-			var msgs, errs []string
+			var errs []string
 			for _, db := range dbMap {
 				if db.Config.Replica {
 					continue
 				}
 
-				tmpMsgs, tmpErrs := dbDrop(db)
-				msgs = append(msgs, tmpMsgs...)
+				tmpErrs := dbDrop(db)
 				errs = append(errs, tmpErrs...)
 			}
 
@@ -43,10 +42,6 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 				}
 
 				os.Exit(-1)
-			}
-
-			for _, msg := range msgs {
-				logger.Info(msg)
 			}
 		},
 	}

@@ -48,7 +48,7 @@ func serve(s core.AppServer, dbMap map[string]*core.AppDb) {
 	}()
 
 	var err error
-	err = core.DbConnect(dbMap, logger, true)
+	err = core.DbConnect(dbMap, true)
 	if err != nil {
 		s.Logger.Fatal(err)
 	}

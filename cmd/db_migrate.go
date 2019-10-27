@@ -14,7 +14,7 @@ func NewDbMigrateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *A
 		Run: func(cmd *AppCmd, args []string) {
 			logger.Infof("Migrating databases from app/config/.env.%s...", config.AppyEnv)
 
-			err := core.DbConnect(dbMap, logger, true)
+			err := core.DbConnect(dbMap, true)
 			if err != nil {
 				logger.Fatal(err)
 			}
