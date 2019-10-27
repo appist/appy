@@ -31,7 +31,7 @@ func (l AppLogger) AfterQuery(c context.Context, q *AppDbQueryEvent) error {
 		return err
 	}
 
-	l.SugaredLogger.Infof("* DB (%s) %s", time.Since(q.StartTime), query)
+	l.SugaredLogger.Infof("[DB] %s in %s", query, time.Since(q.StartTime))
 	return nil
 }
 

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/appist/appy/support"
 	"github.com/go-pg/pg/v9"
 )
 
@@ -28,13 +29,16 @@ type AppDbConn = pg.Conn
 type AppDbConfig struct {
 	pg.Options
 	Replica               bool
+	Schema                string
 	SchemaMigrationsTable string
 }
 
-// AppDbHandler is a database handle representing a pool of zero or more
-// underlying connections. It's safe for concurrent use by multiple
-// goroutines.
+// AppDbHandler is a database handle representing a pool of zero or more underlying connections. It's safe
+// for concurrent use by multiple goroutines.
 type AppDbHandler = pg.DB
+
+// AppDbHandlerTx is an in-progress database transaction. It is safe for concurrent use by multiple goroutines.
+type AppDbHandlerTx = pg.Tx
 
 // AppDb keeps database connection with its configuration.
 type AppDb struct {
@@ -46,15 +50,35 @@ type AppDb struct {
 
 // AppDbMigration keeps database migration options.
 type AppDbMigration struct {
+	File    string
 	Version string
-	Down    func(*AppDb) error
-	DownTx  bool
-	Up      func(*AppDb) error
-	UpTx    bool
+	Down    func(*AppDbHandler) error
+	DownTx  func(*AppDbHandlerTx) error
+	Up      func(*AppDbHandler) error
+	UpTx    func(*AppDbHandlerTx) error
+}
+
+// AppDbSchemaMigration is the model that maps to schema_migrations table.
+type AppDbSchemaMigration struct {
+	Version string
 }
 
 // AppDbQueryEvent keeps the query event information.
 type AppDbQueryEvent = pg.QueryEvent
+
+// AppDbTx is an in-progress database transaction. It is safe for concurrent use by multiple goroutines.
+type AppDbTx = pg.Tx
+
+var (
+	// Array accepts a slice and returns a wrapper for working with PostgreSQL array data type.
+	Array = pg.Array
+
+	// SafeQuery replaces any placeholders found in the query.
+	SafeQuery = pg.SafeQuery
+
+	// Scan returns ColumnScanner that copies the columns in the row into the values.
+	Scan = pg.Scan
+)
 
 func parseDbConfig() (map[string]AppDbConfig, error) {
 	var err error
@@ -72,9 +96,9 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 	}
 
 	for _, dbName := range dbNames {
-		defaultSchema := "public"
+		schema := "public"
 		if val, ok := os.LookupEnv("DB_SCHEMA_" + dbName); ok && val != "" {
-			defaultSchema = val
+			schema = val
 		}
 
 		addr := "0.0.0.0:5432"
@@ -225,9 +249,10 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 		config.MinIdleConns = minIdleConns
 		config.MaxConnAge = maxConnAge
 		config.Replica = replica
+		config.Schema = schema
 		config.SchemaMigrationsTable = schemaMigrationsTable
 		config.OnConnect = func(conn *AppDbConn) error {
-			_, err := conn.Exec("SET search_path=?", defaultSchema)
+			_, err := conn.Exec("SET search_path=?", schema)
 			if err != nil {
 				return err
 			}
@@ -247,10 +272,10 @@ func newDb(config AppDbConfig) (*AppDb, error) {
 	}, nil
 }
 
-// ConnectDb establishes connections to all the databases.
-func ConnectDb(dbMap map[string]*AppDb, logger *AppLogger) error {
+// DbConnect establishes connections to all the databases.
+func DbConnect(dbMap map[string]*AppDb, logger *AppLogger, sameDb bool) error {
 	for _, db := range dbMap {
-		err := db.Connect(logger)
+		err := db.Connect(logger, sameDb)
 		if err != nil {
 			return err
 		}
@@ -259,8 +284,8 @@ func ConnectDb(dbMap map[string]*AppDb, logger *AppLogger) error {
 	return nil
 }
 
-// CloseDb closes connections to all the databases.
-func CloseDb(dbMap map[string]*AppDb) error {
+// DbClose closes connections to all the databases.
+func DbClose(dbMap map[string]*AppDb) error {
 	for _, db := range dbMap {
 		db.Close()
 	}
@@ -270,8 +295,16 @@ func CloseDb(dbMap map[string]*AppDb) error {
 
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent
 // use by multiple goroutines and maintains its own connection pool.
-func (db *AppDb) Connect(logger *AppLogger) error {
-	db.Handler = pg.Connect(&db.Config.Options)
+func (db *AppDb) Connect(logger *AppLogger, sameDb bool) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	opts := db.Config.Options
+	if !sameDb {
+		opts.Database = "postgres"
+	}
+
+	db.Handler = pg.Connect(&opts)
 	db.Handler.AddQueryHook(logger)
 	_, err := db.Handler.Exec("SELECT 1")
 	return err
@@ -283,17 +316,116 @@ func (db *AppDb) Close() {
 	db.Handler.Close()
 }
 
-// RegisterMigration inserts the up/down migrations that won't be executed in transaction.
-func (db *AppDb) RegisterMigration(up func(*AppDb) error, down func(*AppDb) error) {
-	db.registerMigration(false, up, down)
+// Migrate runs migrations for the current environment that have not run yet.
+func (db *AppDb) Migrate() error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	err := db.ensureSchemaMigrationsTable()
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Handler.Begin()
+	defer tx.Close()
+	if err != nil {
+		return err
+	}
+
+	migratedVersions, err := db.migratedVersions(tx)
+	if err != nil {
+		return err
+	}
+
+	for _, m := range db.Migrations {
+		if !support.ArrayContains(migratedVersions, m.Version) {
+			if m.UpTx != nil {
+				err = m.UpTx(tx)
+				if err != nil {
+					return err
+				}
+
+				err = db.addSchemaMigrations(nil, tx, m)
+				if err != nil {
+					return err
+				}
+
+				continue
+			}
+
+			err = m.Up(db.Handler)
+			if err != nil {
+				return err
+			}
+
+			err = db.addSchemaMigrations(db.Handler, nil, m)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// RegisterMigrationTx inserts the up/down migrations that will be executed in transaction.
-func (db *AppDb) RegisterMigrationTx(up func(*AppDb) error, down func(*AppDb) error) {
-	db.registerMigration(true, up, down)
+func (db *AppDb) migratedVersions(tx *AppDbTx) ([]string, error) {
+	var schemaMigrations []AppDbSchemaMigration
+	_, err := tx.Query(&schemaMigrations, `SELECT version FROM ?.? ORDER BY version ASC`, SafeQuery(db.Config.Schema), SafeQuery(db.Config.SchemaMigrationsTable))
+	if err != nil {
+		return nil, err
+	}
+
+	migratedVersions := []string{}
+	for _, m := range schemaMigrations {
+		migratedVersions = append(migratedVersions, m.Version)
+	}
+
+	return migratedVersions, nil
 }
 
-func (db *AppDb) registerMigration(tx bool, up func(*AppDb) error, down func(*AppDb) error) error {
+func (db *AppDb) ensureSchemaMigrationsTable() error {
+	count, err := db.Handler.
+		Model().
+		Table("pg_tables").
+		Where("schemaname = '?'", SafeQuery(db.Config.Schema)).
+		Where("tablename = '?'", SafeQuery(db.Config.SchemaMigrationsTable)).
+		Count()
+
+	if err != nil {
+		return err
+	}
+
+	if count < 1 {
+		_, err = db.Handler.Exec(`CREATE SCHEMA IF NOT EXISTS ?`, SafeQuery(db.Config.Schema))
+		if err != nil {
+			return err
+		}
+
+		_, err = db.Handler.Exec(`CREATE TABLE ? (version VARCHAR PRIMARY KEY)`, SafeQuery(db.Config.SchemaMigrationsTable))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// RegisterMigration registers the up/down migrations that won't be executed in transaction.
+func (db *AppDb) RegisterMigration(up func(*AppDbHandler) error, down func(*AppDbHandler) error) {
+	db.registerMigration(up, down, nil, nil)
+}
+
+// RegisterMigrationTx registers the up/down migrations that will be executed in transaction.
+func (db *AppDb) RegisterMigrationTx(upTx func(*AppDbHandlerTx) error, downTx func(*AppDbHandlerTx) error) {
+	db.registerMigration(nil, nil, upTx, downTx)
+}
+
+func (db *AppDb) registerMigration(up func(*AppDbHandler) error, down func(*AppDbHandler) error, upTx func(*AppDbHandlerTx) error, downTx func(*AppDbHandlerTx) error) error {
 	file := migrationFile()
 	version, err := migrationVersion(file)
 	if err != nil {
@@ -301,11 +433,12 @@ func (db *AppDb) registerMigration(tx bool, up func(*AppDb) error, down func(*Ap
 	}
 
 	db.addMigration(&AppDbMigration{
+		File:    file,
 		Version: version,
 		Down:    down,
-		DownTx:  tx,
+		DownTx:  downTx,
 		Up:      up,
-		UpTx:    tx,
+		UpTx:    upTx,
 	})
 
 	return nil
@@ -323,6 +456,27 @@ func (db *AppDb) addMigration(newMigration *AppDbMigration) {
 	}
 
 	db.Migrations = append(db.Migrations, newMigration)
+}
+
+func (db *AppDb) addSchemaMigrations(handler *AppDbHandler, handlerTx *AppDbHandlerTx, newMigration *AppDbMigration) error {
+	query := `INSERT INTO ?.? (version) VALUES (?)`
+	if handler != nil {
+		_, err := handler.Exec(
+			query,
+			SafeQuery(db.Config.Schema),
+			SafeQuery(db.Config.SchemaMigrationsTable),
+			SafeQuery(newMigration.Version),
+		)
+		return err
+	}
+
+	_, err := handlerTx.Exec(
+		query,
+		SafeQuery(db.Config.Schema),
+		SafeQuery(db.Config.SchemaMigrationsTable),
+		SafeQuery(newMigration.Version),
+	)
+	return err
 }
 
 func insertAt(s []*AppDbMigration, idx int, m *AppDbMigration) []*AppDbMigration {

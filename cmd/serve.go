@@ -35,7 +35,7 @@ func serve(s core.AppServer, dbMap map[string]*core.AppDb) {
 	go func() {
 		<-httpQuit
 		s.Logger.Infof("* Gracefully shutting down the server within %s...\n", s.Config.HTTPGracefulTimeout)
-		defer core.CloseDb(dbMap)
+		defer core.DbClose(dbMap)
 
 		ctx, cancel := context.WithTimeout(context.Background(), s.Config.HTTPGracefulTimeout)
 		defer cancel()
@@ -48,7 +48,7 @@ func serve(s core.AppServer, dbMap map[string]*core.AppDb) {
 	}()
 
 	var err error
-	err = core.ConnectDb(dbMap, logger)
+	err = core.DbConnect(dbMap, logger, true)
 	if err != nil {
 		s.Logger.Fatal(err)
 	}

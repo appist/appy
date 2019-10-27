@@ -15,11 +15,11 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 			checkProtectedEnvs(config)
 			logger.Infof("Dropping databases from app/config/.env.%s...", config.AppyEnv)
 
-			err := core.ConnectDb(dbMap, logger)
+			err := core.DbConnect(dbMap, logger, false)
 			if err != nil {
 				logger.Fatal(err)
 			}
-			defer core.CloseDb(dbMap)
+			defer core.DbClose(dbMap)
 
 			if len(dbMap) < 1 {
 				logger.Infof("No database is defined in app/config/.env.%s.", config.AppyEnv)

@@ -41,10 +41,12 @@ type AppDbConn = core.AppDbConn
 // AppDbConfig keeps database connection options.
 type AppDbConfig = core.AppDbConfig
 
-// AppDbHandler is a database handle representing a pool of zero or more
-// underlying connections. It's safe for concurrent use by multiple
-// goroutines.
+// AppDbHandler is a database handle representing a pool of zero or more underlying connections. It's safe
+// for concurrent use by multiple goroutines.
 type AppDbHandler = core.AppDbHandler
+
+// AppDbHandlerTx is an in-progress database transaction. It is safe for concurrent use by multiple goroutines.
+type AppDbHandlerTx = core.AppDbHandlerTx
 
 // AppDbMigration keeps database migration options.
 type AppDbMigration = core.AppDbMigration

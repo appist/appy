@@ -79,12 +79,12 @@ import (
 func init() {
 	appy.Db["{{.Database}}"].RegisterMigration{{if .Tx}}Tx{{end}}(
 		// Up migration
-		func(db *appy.AppDb) error {
+		func(db *appy.AppDbHandler{{if .Tx}}Tx{{end}}) error {
 			return nil
 		},
 
 		// Down migration
-		func(db *appy.AppDb) error {
+		func(db *appy.AppDbHandler{{if .Tx}}Tx{{end}}) error {
 			return nil
 		},
 	)
