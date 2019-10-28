@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"os"
 	"strings"
 	"time"
 
@@ -32,8 +33,11 @@ func (l AppLogger) AfterQuery(c context.Context, q *AppDbQueryEvent) error {
 		return err
 	}
 
-	replacer := strings.NewReplacer("\n", "", "\t", "", ",", ", ")
-	l.SugaredLogger.Infof("[DB] %s in %s", replacer.Replace(query), time.Since(q.StartTime))
+	if !strings.Contains(query, "SET search_path=") && query != dbPingQuery && os.Getenv("APPY_DB_LOGGER") != "false" {
+		replacer := strings.NewReplacer("\n", "", "\t", "", ",", ", ")
+		l.SugaredLogger.Infof("[DB] %s in %s", replacer.Replace(query), time.Since(q.StartTime))
+	}
+
 	return nil
 }
 

@@ -209,6 +209,15 @@ var (
 	T = core.T
 )
 
+func init() {
+	// TODO: Refactor Init() to be init() so that we can initialize db before app's migration is imported.
+	masterKey, _ := core.MasterKey()
+	if masterKey == nil {
+		fmt.Println("the master key should not be blank")
+		os.Exit(-1)
+	}
+}
+
 // CaptureLoggerOutput captures the Logger's output.
 func CaptureLoggerOutput(f func()) string {
 	var buffer bytes.Buffer
@@ -270,6 +279,7 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	cmd.AddCommand(cmd.NewDbCreateCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbDropCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbMigrateCommand(app.Config, app.Db))
+	cmd.AddCommand(cmd.NewDbMigrateStatusCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbRollbackCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewGenMigrationCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewMiddlewareCommand(app.Server))

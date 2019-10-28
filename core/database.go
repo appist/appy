@@ -79,6 +79,8 @@ var (
 
 	// Scan returns ColumnScanner that copies the columns in the row into the values.
 	Scan = pg.Scan
+
+	dbPingQuery = "SELECT 1"
 )
 
 func parseDbConfig() (map[string]AppDbConfig, error) {
@@ -308,7 +310,7 @@ func (db *AppDb) Connect(sameDb bool) error {
 
 	db.Handler = pg.Connect(&opts)
 	db.Handler.AddQueryHook(db.Logger)
-	_, err := db.Handler.Exec("SELECT 1")
+	_, err := db.Handler.Exec(dbPingQuery)
 	return err
 }
 
@@ -410,6 +412,46 @@ func (db *AppDb) Migrate() error {
 	}
 
 	return nil
+}
+
+// MigrateStatus returns the migration status for the current environment.
+func (db *AppDb) MigrateStatus() ([][]string, error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	err := db.ensureSchemaMigrationsTable()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := db.Handler.Begin()
+	defer tx.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	var migrationStatus [][]string
+	migratedVersions, err := db.migratedVersions(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	wd, _ := os.Getwd()
+	for _, m := range db.Migrations {
+		status := "down"
+		if support.ArrayContains(migratedVersions, m.Version) {
+			status = "up"
+		}
+
+		migrationStatus = append(migrationStatus, []string{status, m.Version, strings.ReplaceAll(m.File, wd+"/", "")})
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return migrationStatus, nil
 }
 
 // Rollback rolls back the last migration for the current environment.
