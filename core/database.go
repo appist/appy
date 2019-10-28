@@ -98,6 +98,10 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 		}
 	}
 
+	if len(dbNames) < 1 {
+		dbNames = append(dbNames, "primary")
+	}
+
 	for _, dbName := range dbNames {
 		schema := "public"
 		if val, ok := os.LookupEnv("DB_SCHEMA_" + dbName); ok && val != "" {
@@ -269,11 +273,15 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 	return dbConfig, nil
 }
 
-func newDb(config AppDbConfig, logger *AppLogger) (*AppDb, error) {
+func newDb(config AppDbConfig, logger *AppLogger) *AppDb {
 	return &AppDb{
 		Config: config,
 		Logger: logger,
-	}, nil
+	}
+}
+
+func newDefaultDb() {
+
 }
 
 // DbConnect establishes connections to all the databases.

@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"os"
 	"strings"
 	"time"
 
@@ -26,6 +25,10 @@ func (l AppLogger) BeforeQuery(c context.Context, q *AppDbQueryEvent) (context.C
 	return c, nil
 }
 
+var (
+	dbLogging = true
+)
+
 // AfterQuery is a hook after a go-pg query.
 func (l AppLogger) AfterQuery(c context.Context, q *AppDbQueryEvent) error {
 	query, err := q.FormattedQuery()
@@ -33,7 +36,7 @@ func (l AppLogger) AfterQuery(c context.Context, q *AppDbQueryEvent) error {
 		return err
 	}
 
-	if !strings.Contains(query, "SET search_path=") && query != dbPingQuery && os.Getenv("APPY_DB_LOGGER") != "false" {
+	if !strings.Contains(query, "SET search_path=") && query != dbPingQuery && dbLogging {
 		replacer := strings.NewReplacer("\n", "", "\t", "", ",", ", ")
 		l.SugaredLogger.Infof("[DB] %s in %s", replacer.Replace(query), time.Since(q.StartTime))
 	}
@@ -65,4 +68,9 @@ func newLogger(c loggerConfig) (*AppLogger, error) {
 	return &AppLogger{
 		SugaredLogger: logger.Sugar(),
 	}, nil
+}
+
+// SetDbLogging can be used to toggle the DB logging.
+func SetDbLogging(enabled bool) {
+	dbLogging = enabled
 }

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/appist/appy/core"
 	"github.com/bndr/gotabulate"
@@ -14,7 +13,7 @@ func NewDbMigrateStatusCommand(config core.AppConfig, dbMap map[string]*core.App
 		Use:   "db:migrate:status",
 		Short: "Displays status of migrations for all databases in the current environment.",
 		Run: func(cmd *AppCmd, args []string) {
-			os.Setenv("APPY_DB_LOGGER", "false")
+			core.SetDbLogging(false)
 			err := core.DbConnect(dbMap, true)
 			if err != nil {
 				logger.Fatal(err)

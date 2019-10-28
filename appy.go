@@ -209,15 +209,6 @@ var (
 	T = core.T
 )
 
-func init() {
-	// TODO: Refactor Init() to be init() so that we can initialize db before app's migration is imported.
-	masterKey, _ := core.MasterKey()
-	if masterKey == nil {
-		fmt.Println("the master key should not be blank")
-		os.Exit(-1)
-	}
-}
-
 // CaptureLoggerOutput captures the Logger's output.
 func CaptureLoggerOutput(f func()) string {
 	var buffer bytes.Buffer
