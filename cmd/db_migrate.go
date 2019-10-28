@@ -4,13 +4,13 @@ import (
 	"github.com/appist/appy/core"
 )
 
-// NewDbMigrateCommand migrates all the databases(or specific database with --database) for the current environment.
+// NewDbMigrateCommand migrates the database(default: all, use --database for specific one) for the current environment.
 func NewDbMigrateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppCmd {
 	var target string
 
 	cmd := &AppCmd{
 		Use:   "db:migrate",
-		Short: "Migrates all the databases(or specific database with --database) for the current environment.",
+		Short: "Migrates the database(default: all, use --database for specific one) for the current environment.",
 		Run: func(cmd *AppCmd, args []string) {
 			logger.Infof("Migrating databases from app/config/.env.%s...", config.AppyEnv)
 

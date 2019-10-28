@@ -6,13 +6,14 @@ import (
 	"github.com/appist/appy/core"
 )
 
-// NewDbRollbackCommand rolls back specific database(default: primary) to the last migration for the current environment.
+// NewDbRollbackCommand rolls back the database(default: primary, use --database for specific one) to previous version
+// for the current environment.
 func NewDbRollbackCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppCmd {
 	var target string
 
 	cmd := &AppCmd{
 		Use:   "db:rollback",
-		Short: "Rolls back specific database(default: primary) to the last migration for the current environment.",
+		Short: "Rolls back the database(default: primary, use --database for specific one) to previous version for the current environment.",
 		Run: func(cmd *AppCmd, args []string) {
 			logger.Infof("Rolling back '%s' database from app/config/.env.%s...", target, config.AppyEnv)
 
