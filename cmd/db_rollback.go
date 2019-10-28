@@ -28,7 +28,13 @@ func NewDbRollbackCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *
 				os.Exit(-1)
 			}
 
-			err = dbMap[target].Rollback()
+			db := dbMap[target]
+			if db.Config.Replica {
+				logger.Infof("Unable to rollback '%s' replica database from app/config/.env.%s.", target, config.AppyEnv)
+				os.Exit(-1)
+			}
+
+			err = db.Rollback()
 			if err != nil {
 				logger.Fatal(err)
 			}

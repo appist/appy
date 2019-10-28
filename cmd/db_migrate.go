@@ -25,8 +25,11 @@ func NewDbMigrateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *A
 			}
 
 			for name, db := range dbMap {
-				logger.Infof("Migrating '%s' database...", name)
+				if db.Config.Replica {
+					continue
+				}
 
+				logger.Infof("Migrating '%s' database...", name)
 				err := db.Migrate()
 				if err != nil {
 					logger.Fatal(err)

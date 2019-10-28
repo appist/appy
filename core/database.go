@@ -318,6 +318,43 @@ func (db *AppDb) Close() {
 	db.Handler.Close()
 }
 
+// CreateDb creates the database.
+func (db *AppDb) CreateDb() []error {
+	var errs []error
+	_, err := db.Handler.Exec(`CREATE DATABASE ?`, SafeQuery(db.Config.Database))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	_, err = db.Handler.Exec(`CREATE DATABASE ?`, SafeQuery(db.Config.Database+"_test"))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return errs
+}
+
+// DropDb creates the database.
+func (db *AppDb) DropDb() []error {
+	var errs []error
+	_, err := db.Handler.Exec(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '?'`, SafeQuery(db.Config.Database))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	_, err = db.Handler.Exec(`DROP DATABASE ?`, SafeQuery(db.Config.Database))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	_, err = db.Handler.Exec(`DROP DATABASE ?`, SafeQuery(db.Config.Database+"_test"))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return errs
+}
+
 // Migrate runs migrations for the current environment that have not run yet.
 func (db *AppDb) Migrate() error {
 	db.mu.Lock()
@@ -396,35 +433,37 @@ func (db *AppDb) Rollback() error {
 		return err
 	}
 
-	for i := len(db.Migrations) - 1; i > -1; i-- {
-		m := db.Migrations[i]
+	if len(migratedVersions) > 0 {
+		for i := len(db.Migrations) - 1; i > -1; i-- {
+			m := db.Migrations[i]
 
-		if migratedVersions[len(migratedVersions)-1] == m.Version {
-			if m.DownTx != nil {
-				err = m.DownTx(tx)
+			if migratedVersions[len(migratedVersions)-1] == m.Version {
+				if m.DownTx != nil {
+					err = m.DownTx(tx)
+					if err != nil {
+						return err
+					}
+
+					err = db.removeSchemaMigration(nil, tx, m)
+					if err != nil {
+						return err
+					}
+
+					continue
+				}
+
+				err = m.Down(db.Handler)
 				if err != nil {
 					return err
 				}
 
-				err = db.removeSchemaMigration(nil, tx, m)
+				err = db.removeSchemaMigration(db.Handler, nil, m)
 				if err != nil {
 					return err
 				}
 
-				continue
+				break
 			}
-
-			err = m.Down(db.Handler)
-			if err != nil {
-				return err
-			}
-
-			err = db.removeSchemaMigration(db.Handler, nil, m)
-			if err != nil {
-				return err
-			}
-
-			break
 		}
 	}
 

@@ -26,19 +26,19 @@ func NewDbDropCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *AppC
 				os.Exit(-1)
 			}
 
-			var errs []string
+			var errs []error
 			for _, db := range dbMap {
 				if db.Config.Replica {
 					continue
 				}
 
-				tmpErrs := dbDrop(db)
+				tmpErrs := db.DropDb()
 				errs = append(errs, tmpErrs...)
 			}
 
 			if len(errs) > 0 {
 				for _, err := range errs {
-					logger.Infof(err)
+					logger.Infof(err.Error())
 				}
 
 				os.Exit(-1)
