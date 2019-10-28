@@ -347,7 +347,7 @@ func (db *AppDb) Migrate() error {
 					return err
 				}
 
-				err = db.addSchemaMigrations(nil, tx, m)
+				err = db.addSchemaMigration(nil, tx, m)
 				if err != nil {
 					return err
 				}
@@ -360,7 +360,7 @@ func (db *AppDb) Migrate() error {
 				return err
 			}
 
-			err = db.addSchemaMigrations(db.Handler, nil, m)
+			err = db.addSchemaMigration(db.Handler, nil, m)
 			if err != nil {
 				return err
 			}
@@ -375,19 +375,130 @@ func (db *AppDb) Migrate() error {
 	return nil
 }
 
-func (db *AppDb) migratedVersions(tx *AppDbTx) ([]string, error) {
-	var schemaMigrations []AppDbSchemaMigration
-	_, err := tx.Query(&schemaMigrations, `SELECT version FROM ?.? ORDER BY version ASC`, SafeQuery(db.Config.Schema), SafeQuery(db.Config.SchemaMigrationsTable))
+// Rollback rolls back the last migration for the current environment.
+func (db *AppDb) Rollback() error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	err := db.ensureSchemaMigrationsTable()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	migratedVersions := []string{}
-	for _, m := range schemaMigrations {
-		migratedVersions = append(migratedVersions, m.Version)
+	tx, err := db.Handler.Begin()
+	defer tx.Close()
+	if err != nil {
+		return err
 	}
 
-	return migratedVersions, nil
+	migratedVersions, err := db.migratedVersions(tx)
+	if err != nil {
+		return err
+	}
+
+	for i := len(db.Migrations) - 1; i > -1; i-- {
+		m := db.Migrations[i]
+
+		if migratedVersions[len(migratedVersions)-1] == m.Version {
+			if m.DownTx != nil {
+				err = m.DownTx(tx)
+				if err != nil {
+					return err
+				}
+
+				err = db.removeSchemaMigration(nil, tx, m)
+				if err != nil {
+					return err
+				}
+
+				continue
+			}
+
+			err = m.Down(db.Handler)
+			if err != nil {
+				return err
+			}
+
+			err = db.removeSchemaMigration(db.Handler, nil, m)
+			if err != nil {
+				return err
+			}
+
+			break
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RegisterMigration registers the up/down migrations that won't be executed in transaction.
+func (db *AppDb) RegisterMigration(up func(*AppDbHandler) error, down func(*AppDbHandler) error) {
+	err := db.registerMigration(up, down, nil, nil)
+	if err != nil {
+		db.Logger.Fatal(err)
+	}
+}
+
+// RegisterMigrationTx registers the up/down migrations that will be executed in transaction.
+func (db *AppDb) RegisterMigrationTx(upTx func(*AppDbHandlerTx) error, downTx func(*AppDbHandlerTx) error) {
+	err := db.registerMigration(nil, nil, upTx, downTx)
+	if err != nil {
+		db.Logger.Fatal(err)
+	}
+}
+
+func (db *AppDb) addMigration(newMigration *AppDbMigration) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	db.Migrations = append(db.Migrations, newMigration)
+}
+
+func (db *AppDb) addSchemaMigration(handler *AppDbHandler, handlerTx *AppDbHandlerTx, targetMigration *AppDbMigration) error {
+	query := `INSERT INTO ?.? (version) VALUES (?)`
+	if handler != nil {
+		_, err := handler.Exec(
+			query,
+			SafeQuery(db.Config.Schema),
+			SafeQuery(db.Config.SchemaMigrationsTable),
+			SafeQuery(targetMigration.Version),
+		)
+		return err
+	}
+
+	_, err := handlerTx.Exec(
+		query,
+		SafeQuery(db.Config.Schema),
+		SafeQuery(db.Config.SchemaMigrationsTable),
+		SafeQuery(targetMigration.Version),
+	)
+	return err
+}
+
+func (db *AppDb) removeSchemaMigration(handler *AppDbHandler, handlerTx *AppDbHandlerTx, targetMigration *AppDbMigration) error {
+	query := `DELETE FROM ?.? WHERE version = '?'`
+	if handler != nil {
+		_, err := handler.Exec(
+			query,
+			SafeQuery(db.Config.Schema),
+			SafeQuery(db.Config.SchemaMigrationsTable),
+			SafeQuery(targetMigration.Version),
+		)
+		return err
+	}
+
+	_, err := handlerTx.Exec(
+		query,
+		SafeQuery(db.Config.Schema),
+		SafeQuery(db.Config.SchemaMigrationsTable),
+		SafeQuery(targetMigration.Version),
+	)
+	return err
 }
 
 func (db *AppDb) ensureSchemaMigrationsTable() error {
@@ -417,20 +528,19 @@ func (db *AppDb) ensureSchemaMigrationsTable() error {
 	return nil
 }
 
-// RegisterMigration registers the up/down migrations that won't be executed in transaction.
-func (db *AppDb) RegisterMigration(up func(*AppDbHandler) error, down func(*AppDbHandler) error) {
-	err := db.registerMigration(up, down, nil, nil)
+func (db *AppDb) migratedVersions(tx *AppDbTx) ([]string, error) {
+	var schemaMigrations []AppDbSchemaMigration
+	_, err := tx.Query(&schemaMigrations, `SELECT version FROM ?.? ORDER BY version ASC`, SafeQuery(db.Config.Schema), SafeQuery(db.Config.SchemaMigrationsTable))
 	if err != nil {
-		db.Logger.Fatal(err)
+		return nil, err
 	}
-}
 
-// RegisterMigrationTx registers the up/down migrations that will be executed in transaction.
-func (db *AppDb) RegisterMigrationTx(upTx func(*AppDbHandlerTx) error, downTx func(*AppDbHandlerTx) error) {
-	err := db.registerMigration(nil, nil, upTx, downTx)
-	if err != nil {
-		db.Logger.Fatal(err)
+	migratedVersions := []string{}
+	for _, m := range schemaMigrations {
+		migratedVersions = append(migratedVersions, m.Version)
 	}
+
+	return migratedVersions, nil
 }
 
 func (db *AppDb) registerMigration(up func(*AppDbHandler) error, down func(*AppDbHandler) error, upTx func(*AppDbHandlerTx) error, downTx func(*AppDbHandlerTx) error) error {
@@ -450,34 +560,6 @@ func (db *AppDb) registerMigration(up func(*AppDbHandler) error, down func(*AppD
 	})
 
 	return nil
-}
-
-func (db *AppDb) addMigration(newMigration *AppDbMigration) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	db.Migrations = append(db.Migrations, newMigration)
-}
-
-func (db *AppDb) addSchemaMigrations(handler *AppDbHandler, handlerTx *AppDbHandlerTx, newMigration *AppDbMigration) error {
-	query := `INSERT INTO ?.? (version) VALUES (?)`
-	if handler != nil {
-		_, err := handler.Exec(
-			query,
-			SafeQuery(db.Config.Schema),
-			SafeQuery(db.Config.SchemaMigrationsTable),
-			SafeQuery(newMigration.Version),
-		)
-		return err
-	}
-
-	_, err := handlerTx.Exec(
-		query,
-		SafeQuery(db.Config.Schema),
-		SafeQuery(db.Config.SchemaMigrationsTable),
-		SafeQuery(newMigration.Version),
-	)
-	return err
 }
 
 func migrationFile() string {

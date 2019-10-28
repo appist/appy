@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -31,7 +32,8 @@ func (l AppLogger) AfterQuery(c context.Context, q *AppDbQueryEvent) error {
 		return err
 	}
 
-	l.SugaredLogger.Infof("[DB] %s in %s", query, time.Since(q.StartTime))
+	replacer := strings.NewReplacer("\n", "", "\t", "", ",", ", ")
+	l.SugaredLogger.Infof("[DB] %s in %s", replacer.Replace(query), time.Since(q.StartTime))
 	return nil
 }
 
