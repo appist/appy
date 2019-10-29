@@ -80,12 +80,14 @@ func init() {
 	appy.Db["{{.Database}}"].RegisterMigration{{if .Tx}}Tx{{end}}(
 		// Up migration
 		func(db *appy.AppDbHandler{{if .Tx}}Tx{{end}}) error {
-			return nil
+			_, err := db.Exec(` + "`" + "`" + `)
+			return err
 		},
 
 		// Down migration
 		func(db *appy.AppDbHandler{{if .Tx}}Tx{{end}}) error {
-			return nil
+			_, err := db.Exec(` + "`" + "`" + `)
+			return err
 		},
 	)
 }
