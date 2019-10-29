@@ -21,7 +21,7 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA public;
+CREATE SCHEMA IF NOT EXISTS public;
 
 
 SET default_tablespace = '';
@@ -32,7 +32,7 @@ SET default_with_oids = false;
 -- Name: admins; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.admins (
+CREATE TABLE IF NOT EXISTS public.admins (
     id integer NOT NULL,
     email character varying(355) NOT NULL,
     created_at timestamp with time zone NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE public.admins (
 -- Name: admins_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.admins_id_seq
+CREATE SEQUENCE IF NOT EXISTS public.admins_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -64,7 +64,7 @@ ALTER SEQUENCE public.admins_id_seq OWNED BY public.admins.id;
 -- Name: articles; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.articles (
+CREATE TABLE IF NOT EXISTS public.articles (
     id integer NOT NULL,
     email character varying(355) NOT NULL,
     created_at timestamp with time zone NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE public.articles (
 -- Name: articles_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.articles_id_seq
+CREATE SEQUENCE IF NOT EXISTS public.articles_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -96,7 +96,7 @@ ALTER SEQUENCE public.articles_id_seq OWNED BY public.articles.id;
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.schema_migrations (
+CREATE TABLE IF NOT EXISTS public.schema_migrations (
     version character varying NOT NULL
 );
 
@@ -105,7 +105,7 @@ CREATE TABLE public.schema_migrations (
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.users (
+CREATE TABLE IF NOT EXISTS public.users (
     id integer NOT NULL,
     email character varying(355) NOT NULL,
     created_at timestamp with time zone NOT NULL,
@@ -117,7 +117,7 @@ CREATE TABLE public.users (
 -- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.users_id_seq
+CREATE SEQUENCE IF NOT EXISTS public.users_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1

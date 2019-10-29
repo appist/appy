@@ -80,8 +80,6 @@ var (
 
 	// Scan returns ColumnScanner that copies the columns in the row into the values.
 	Scan = pg.Scan
-
-	dbPingQuery = "SELECT 1"
 )
 
 func parseDbConfig() (map[string]AppDbConfig, error) {
@@ -260,7 +258,7 @@ func parseDbConfig() (map[string]AppDbConfig, error) {
 		config.Schema = schema
 		config.SchemaMigrationsTable = schemaMigrationsTable
 		config.OnConnect = func(conn *AppDbConn) error {
-			_, err := conn.Exec("SET search_path=?", schema)
+			_, err := conn.Exec("SET search_path=? /* appy framework */", schema)
 			if err != nil {
 				return err
 			}
@@ -315,7 +313,7 @@ func (db *AppDb) Connect(sameDb bool) error {
 
 	db.Handler = pg.Connect(&opts)
 	db.Handler.AddQueryHook(db.Logger)
-	_, err := db.Handler.Exec(dbPingQuery)
+	_, err := db.Handler.Exec("SELECT 1 /* appy framework */")
 	return err
 }
 

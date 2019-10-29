@@ -55,6 +55,10 @@ func dumpSchema(name string, db *core.AppDb) error {
 	out = outBytes.String()
 	out = regexp.MustCompile(`(?i)--\n-- postgresql database dump.*\n--\n\n`).ReplaceAllString(out, "")
 	out = regexp.MustCompile(`(?i)--\ dumped.*\n(\n)?`).ReplaceAllString(out, "")
+	out = regexp.MustCompile(`(?i)create\ extension`).ReplaceAllString(out, "CREATE EXTENSION IF NOT EXISTS")
+	out = regexp.MustCompile(`(?i)create\ schema`).ReplaceAllString(out, "CREATE SCHEMA IF NOT EXISTS")
+	out = regexp.MustCompile(`(?i)create\ sequence`).ReplaceAllString(out, "CREATE SEQUENCE IF NOT EXISTS")
+	out = regexp.MustCompile(`(?i)create\ table`).ReplaceAllString(out, "CREATE TABLE IF NOT EXISTS")
 	out = strings.Trim(out, "\n")
 	out += fmt.Sprintf("\n\nINSERT INTO %s.%s (version) VALUES\n", db.Config.Schema, db.Config.SchemaMigrationsTable)
 
