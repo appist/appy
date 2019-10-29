@@ -27,6 +27,7 @@ func NewDbSchemaLoadCommand(config core.AppConfig, dbMap map[string]*core.AppDb)
 				if err != nil {
 					logger.Fatal(err)
 				}
+				logger.Infof("Loading db/migrations/%s/schema.go into the database... DONE", name)
 			}
 		},
 	}
