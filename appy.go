@@ -274,6 +274,7 @@ func Init(assets http.FileSystem, appConf interface{}, viewHelper template.FuncM
 	cmd.AddCommand(cmd.NewDbRollbackCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbSchemaDumpCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewDbSchemaLoadCommand(app.Config, app.Db))
+	cmd.AddCommand(cmd.NewDbSeedCommand(app.Config, app.Db))
 	cmd.AddCommand(cmd.NewMiddlewareCommand(app.Server))
 	cmd.AddCommand(cmd.NewRoutesCommand(app.Server))
 	cmd.AddCommand(cmd.NewSecretCommand())

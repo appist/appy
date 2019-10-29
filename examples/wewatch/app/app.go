@@ -2,8 +2,6 @@ package app
 
 import (
 	"github.com/appist/appy"
-
-	"wewatch/app/handler"
 )
 
 type config struct {
@@ -18,7 +16,4 @@ func init() {
 
 	// Setup the app instance.
 	appy.Init(assets, Config, nil)
-
-	// Configure the application routes.
-	appy.GET("/welcome", handler.WelcomeIndex())
 }
