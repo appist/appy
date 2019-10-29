@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"log"
 )
 
 // NewSecretCommand generates a cryptographically secure secret key for encrypting cookie, CSRF token and config.
@@ -18,7 +17,7 @@ func NewSecretCommand() *AppCmd {
 			bytes := make([]byte, length)
 
 			if _, err := rand.Read(bytes); err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 
 			fmt.Println(hex.EncodeToString(bytes))

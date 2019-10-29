@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/hex"
 	"fmt"
-	"log"
 
 	"github.com/appist/appy/core"
 	"github.com/appist/appy/support"
@@ -22,17 +21,17 @@ func NewConfigDecryptCommand() *AppCmd {
 		Run: func(cmd *AppCmd, args []string) {
 			key, err := core.MasterKey()
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 
 			ciphertext, err := hex.DecodeString(args[0])
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 
 			decrypted, err := support.Decrypt(ciphertext, key)
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 
 			fmt.Println(string(decrypted))

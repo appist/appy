@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/hex"
 	"fmt"
-	"log"
 
 	"github.com/appist/appy/core"
 	"github.com/appist/appy/support"
@@ -22,13 +21,13 @@ func NewConfigEncryptCommand() *AppCmd {
 		Run: func(cmd *AppCmd, args []string) {
 			key, err := core.MasterKey()
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 
 			plaintext := []byte(args[0])
 			ciphertext, err := support.Encrypt(plaintext, key)
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 
 			fmt.Println(hex.EncodeToString(ciphertext))

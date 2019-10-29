@@ -46,6 +46,7 @@ type AppDb struct {
 	Handler    *AppDbHandler
 	Logger     *AppLogger
 	Migrations []*AppDbMigration
+	Schema     string
 	mu         sync.Mutex
 }
 
@@ -278,10 +279,6 @@ func newDb(config AppDbConfig, logger *AppLogger) *AppDb {
 		Config: config,
 		Logger: logger,
 	}
-}
-
-func newDefaultDb() {
-
 }
 
 // DbConnect establishes connections to all the databases.

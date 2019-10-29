@@ -15,7 +15,7 @@ func NewSSLCleanCommand(s core.AppServer) *AppCmd {
 		Run: func(cmd *AppCmd, args []string) {
 			_, err := exec.LookPath("mkcert")
 			if err != nil {
-				panic(err)
+				logger.Fatal(err)
 			}
 
 			os.RemoveAll(s.Config.HTTPSSLCertPath)

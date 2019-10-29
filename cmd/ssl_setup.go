@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"os"
 	"os/exec"
 
@@ -16,7 +15,7 @@ func NewSSLSetupCommand(s core.AppServer) *AppCmd {
 		Run: func(cmd *AppCmd, args []string) {
 			_, err := exec.LookPath("mkcert")
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 
 			os.MkdirAll(s.Config.HTTPSSLCertPath, os.ModePerm)

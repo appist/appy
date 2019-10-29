@@ -34,6 +34,11 @@ func NewDbMigrateCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *A
 				if err != nil {
 					logger.Fatal(err)
 				}
+
+				err = dumpSchema(name, db)
+				if err != nil {
+					logger.Fatal(err)
+				}
 			}
 		},
 	}

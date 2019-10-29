@@ -38,6 +38,11 @@ func NewDbRollbackCommand(config core.AppConfig, dbMap map[string]*core.AppDb) *
 			if err != nil {
 				logger.Fatal(err)
 			}
+
+			err = dumpSchema(target, db)
+			if err != nil {
+				logger.Fatal(err)
+			}
 		},
 	}
 
