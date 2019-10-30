@@ -10,7 +10,6 @@ An opinionated productive web framework that helps scaling business easier.
 
 [![Build Status](https://github.com/appist/appy/workflows/Code%20Check/badge.svg)](https://github.com/appist/appy/actions?workflow=Code+Check)
 [![Build Status](https://github.com/appist/appy/workflows/Unit%20Test/badge.svg)](https://github.com/appist/appy/actions?workflow=Unit+Test)
-[![Build Status](https://github.com/appist/appy/workflows/Examples%20-%20WeWatch/badge.svg)](https://github.com/appist/appy/actions?workflow=Examples+-+WeWatch)
 
 ###### Code Quality
 
