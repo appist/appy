@@ -102,6 +102,24 @@ var (
 	// Db is the application's database manager.
 	Db map[string]*AppDb
 
+	// DbArray accepts a slice and returns a wrapper for working with PostgreSQL array data type.
+	// For struct fields you can use array tag:
+	//
+	//    Emails  []string `pg:",array"`
+	DbArray = core.DbArray
+
+	// DbHstore accepts a map and returns a wrapper for working with hstore data type.
+	// For struct fields you can use hstore tag:
+	//
+	//    Attrs map[string]string `pg:",hstore"`
+	DbHstore = core.DbHstore
+
+	// DbSafeQuery replaces any placeholders found in the query.
+	DbSafeQuery = core.DbSafeQuery
+
+	// DbScan returns ColumnScanner that copies the columns in the row into the values.
+	DbScan = core.DbScan
+
 	// Logger is the application's logger singleton.
 	Logger *AppLogger
 

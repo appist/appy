@@ -63,7 +63,12 @@ func dumpSchema(name string, db *core.AppDb) error {
 	out += fmt.Sprintf("\n\nINSERT INTO %s.%s (version) VALUES\n", db.Config.Schema, db.Config.SchemaMigrationsTable)
 
 	var schemaMigrations []core.AppDbSchemaMigration
-	_, err = db.Handler.Query(&schemaMigrations, `SELECT version FROM ?.? ORDER BY version ASC`, core.SafeQuery(db.Config.Schema), core.SafeQuery(db.Config.SchemaMigrationsTable))
+	_, err = db.Handler.Query(
+		&schemaMigrations,
+		`SELECT version FROM ?.? ORDER BY version ASC`,
+		core.DbSafeQuery(db.Config.Schema),
+		core.DbSafeQuery(db.Config.SchemaMigrationsTable),
+	)
 	if err != nil {
 		return err
 	}

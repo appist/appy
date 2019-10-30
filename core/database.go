@@ -72,14 +72,23 @@ type AppDbQueryEvent = pg.QueryEvent
 type AppDbTx = pg.Tx
 
 var (
-	// Array accepts a slice and returns a wrapper for working with PostgreSQL array data type.
-	Array = pg.Array
+	// DbArray accepts a slice and returns a wrapper for working with PostgreSQL array data type.
+	// For struct fields you can use array tag:
+	//
+	//    Emails  []string `pg:",array"`
+	DbArray = pg.Array
 
-	// SafeQuery replaces any placeholders found in the query.
-	SafeQuery = pg.SafeQuery
+	// DbSafeQuery replaces any placeholders found in the query.
+	DbSafeQuery = pg.SafeQuery
 
-	// Scan returns ColumnScanner that copies the columns in the row into the values.
-	Scan = pg.Scan
+	// DbScan returns ColumnScanner that copies the columns in the row into the values.
+	DbScan = pg.Scan
+
+	// DbHstore accepts a map and returns a wrapper for working with hstore data type.
+	// For struct fields you can use hstore tag:
+	//
+	//    Attrs map[string]string `pg:",hstore"`
+	DbHstore = pg.Hstore
 )
 
 func parseDbConfig() (map[string]AppDbConfig, error) {
@@ -326,12 +335,12 @@ func (db *AppDb) Close() {
 // CreateDb creates the database.
 func (db *AppDb) CreateDb() []error {
 	var errs []error
-	_, err := db.Handler.Exec(`CREATE DATABASE ?`, SafeQuery(db.Config.Database))
+	_, err := db.Handler.Exec(`CREATE DATABASE ?`, DbSafeQuery(db.Config.Database))
 	if err != nil {
 		errs = append(errs, err)
 	}
 
-	_, err = db.Handler.Exec(`CREATE DATABASE ?`, SafeQuery(db.Config.Database+"_test"))
+	_, err = db.Handler.Exec(`CREATE DATABASE ?`, DbSafeQuery(db.Config.Database+"_test"))
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -342,17 +351,20 @@ func (db *AppDb) CreateDb() []error {
 // DropDb creates the database.
 func (db *AppDb) DropDb() []error {
 	var errs []error
-	_, err := db.Handler.Exec(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '?'`, SafeQuery(db.Config.Database))
+	_, err := db.Handler.Exec(
+		`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '?'`,
+		DbSafeQuery(db.Config.Database),
+	)
 	if err != nil {
 		errs = append(errs, err)
 	}
 
-	_, err = db.Handler.Exec(`DROP DATABASE ?`, SafeQuery(db.Config.Database))
+	_, err = db.Handler.Exec(`DROP DATABASE ?`, DbSafeQuery(db.Config.Database))
 	if err != nil {
 		errs = append(errs, err)
 	}
 
-	_, err = db.Handler.Exec(`DROP DATABASE ?`, SafeQuery(db.Config.Database+"_test"))
+	_, err = db.Handler.Exec(`DROP DATABASE ?`, DbSafeQuery(db.Config.Database+"_test"))
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -548,18 +560,18 @@ func (db *AppDb) addSchemaMigration(handler *AppDbHandler, handlerTx *AppDbHandl
 	if handler != nil {
 		_, err := handler.Exec(
 			query,
-			SafeQuery(db.Config.Schema),
-			SafeQuery(db.Config.SchemaMigrationsTable),
-			SafeQuery(targetMigration.Version),
+			DbSafeQuery(db.Config.Schema),
+			DbSafeQuery(db.Config.SchemaMigrationsTable),
+			DbSafeQuery(targetMigration.Version),
 		)
 		return err
 	}
 
 	_, err := handlerTx.Exec(
 		query,
-		SafeQuery(db.Config.Schema),
-		SafeQuery(db.Config.SchemaMigrationsTable),
-		SafeQuery(targetMigration.Version),
+		DbSafeQuery(db.Config.Schema),
+		DbSafeQuery(db.Config.SchemaMigrationsTable),
+		DbSafeQuery(targetMigration.Version),
 	)
 	return err
 }
@@ -569,18 +581,18 @@ func (db *AppDb) removeSchemaMigration(handler *AppDbHandler, handlerTx *AppDbHa
 	if handler != nil {
 		_, err := handler.Exec(
 			query,
-			SafeQuery(db.Config.Schema),
-			SafeQuery(db.Config.SchemaMigrationsTable),
-			SafeQuery(targetMigration.Version),
+			DbSafeQuery(db.Config.Schema),
+			DbSafeQuery(db.Config.SchemaMigrationsTable),
+			DbSafeQuery(targetMigration.Version),
 		)
 		return err
 	}
 
 	_, err := handlerTx.Exec(
 		query,
-		SafeQuery(db.Config.Schema),
-		SafeQuery(db.Config.SchemaMigrationsTable),
-		SafeQuery(targetMigration.Version),
+		DbSafeQuery(db.Config.Schema),
+		DbSafeQuery(db.Config.SchemaMigrationsTable),
+		DbSafeQuery(targetMigration.Version),
 	)
 	return err
 }
@@ -589,8 +601,8 @@ func (db *AppDb) ensureSchemaMigrationsTable() error {
 	count, err := db.Handler.
 		Model().
 		Table("pg_tables").
-		Where("schemaname = '?'", SafeQuery(db.Config.Schema)).
-		Where("tablename = '?'", SafeQuery(db.Config.SchemaMigrationsTable)).
+		Where("schemaname = '?'", DbSafeQuery(db.Config.Schema)).
+		Where("tablename = '?'", DbSafeQuery(db.Config.SchemaMigrationsTable)).
 		Count()
 
 	if err != nil {
@@ -598,12 +610,12 @@ func (db *AppDb) ensureSchemaMigrationsTable() error {
 	}
 
 	if count < 1 {
-		_, err = db.Handler.Exec(`CREATE SCHEMA IF NOT EXISTS ?`, SafeQuery(db.Config.Schema))
+		_, err = db.Handler.Exec(`CREATE SCHEMA IF NOT EXISTS ?`, DbSafeQuery(db.Config.Schema))
 		if err != nil {
 			return err
 		}
 
-		_, err = db.Handler.Exec(`CREATE TABLE ? (version VARCHAR PRIMARY KEY)`, SafeQuery(db.Config.SchemaMigrationsTable))
+		_, err = db.Handler.Exec(`CREATE TABLE ? (version VARCHAR PRIMARY KEY)`, DbSafeQuery(db.Config.SchemaMigrationsTable))
 		if err != nil {
 			return err
 		}
@@ -614,7 +626,12 @@ func (db *AppDb) ensureSchemaMigrationsTable() error {
 
 func (db *AppDb) migratedVersions(tx *AppDbTx) ([]string, error) {
 	var schemaMigrations []AppDbSchemaMigration
-	_, err := tx.Query(&schemaMigrations, `SELECT version FROM ?.? ORDER BY version ASC`, SafeQuery(db.Config.Schema), SafeQuery(db.Config.SchemaMigrationsTable))
+	_, err := tx.Query(
+		&schemaMigrations,
+		`SELECT version FROM ?.? ORDER BY version ASC`,
+		DbSafeQuery(db.Config.Schema),
+		DbSafeQuery(db.Config.SchemaMigrationsTable),
+	)
 	if err != nil {
 		return nil, err
 	}

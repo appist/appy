@@ -109,7 +109,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     id integer NOT NULL,
     email character varying(355) NOT NULL,
     created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone
 );
 
 
@@ -212,6 +213,7 @@ ALTER TABLE ONLY public.users
 INSERT INTO public.schema_migrations (version) VALUES
 ('20191028142316'),
 ('20191028144025'),
-('20191028144825');
+('20191028144825'),
+('20191030154150');
 `
 }
