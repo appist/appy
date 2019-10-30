@@ -34,7 +34,7 @@ func serve(s core.AppServer, dbMap map[string]*core.AppDb) {
 	signal.Notify(httpQuit, syscall.SIGTERM)
 	go func() {
 		<-httpQuit
-		s.Logger.Infof("* Gracefully shutting down the server within %s...\n", s.Config.HTTPGracefulTimeout)
+		s.Logger.Infof("* Gracefully shutting down the server within %s...", s.Config.HTTPGracefulTimeout)
 		defer core.DbClose(dbMap)
 
 		ctx, cancel := context.WithTimeout(context.Background(), s.Config.HTTPGracefulTimeout)

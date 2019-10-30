@@ -23,7 +23,7 @@ var _ orm.BeforeDeleteHook = (*AppModel)(nil)
 var _ orm.AfterDeleteHook = (*AppModel)(nil)
 
 // AfterScan is the hook to trigger after a model's scan.
-func (*AppModel) AfterScan(ctx context.Context) error {
+func (m *AppModel) AfterScan(ctx context.Context) error {
 	return nil
 }
 
