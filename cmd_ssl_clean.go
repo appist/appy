@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func newSSLCleanCommand(config *Config, logger *Logger) *Cmd {
+func newSSLCleanCommand(logger *Logger, server *Server) *Cmd {
 	return &Cmd{
 		Use:   "ssl:clean",
 		Short: `Uninstalls the locally trusted SSL certs using "mkcert"`,
@@ -15,7 +15,7 @@ func newSSLCleanCommand(config *Config, logger *Logger) *Cmd {
 				logger.Fatal(err)
 			}
 
-			os.RemoveAll(config.HTTPSSLCertPath)
+			os.RemoveAll(server.config.HTTPSSLCertPath)
 			cleanCmd := exec.Command("mkcert", "-uninstall")
 			cleanCmd.Stdout = os.Stdout
 			cleanCmd.Stderr = os.Stderr

@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func newSSLSetupCommand(config *Config, logger *Logger, s *Server) *Cmd {
+func newSSLSetupCommand(logger *Logger, server *Server) *Cmd {
 	return &Cmd{
 		Use:   "ssl:setup",
 		Short: `Generates and installs the locally trusted SSL certs using "mkcert"`,
@@ -15,9 +15,9 @@ func newSSLSetupCommand(config *Config, logger *Logger, s *Server) *Cmd {
 				logger.Fatal(err)
 			}
 
-			os.MkdirAll(config.HTTPSSLCertPath, os.ModePerm)
-			setupArgs := []string{"-install", "-cert-file", config.HTTPSSLCertPath + "/cert.pem", "-key-file", config.HTTPSSLCertPath + "/key.pem"}
-			hosts, _ := s.Hosts(config)
+			os.MkdirAll(server.config.HTTPSSLCertPath, os.ModePerm)
+			setupArgs := []string{"-install", "-cert-file", server.config.HTTPSSLCertPath + "/cert.pem", "-key-file", server.config.HTTPSSLCertPath + "/key.pem"}
+			hosts, _ := server.Hosts()
 			setupArgs = append(setupArgs, hosts...)
 			setupCmd := exec.Command("mkcert", setupArgs...)
 			setupCmd.Stdout = os.Stdout

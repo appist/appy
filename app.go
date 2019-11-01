@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"html/template"
 	"net/http"
 	"os"
 )
@@ -50,13 +51,13 @@ func init() {
 // server - provides the capability to serve HTTP/GRPC requests
 // dbManager - manages the databases along with their pool connections
 // support - provides utility helpers/extensions
-func NewApp(assets http.FileSystem) *App {
+func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 	cmd := NewCmd()
 	support := NewSupport()
 	logger := NewLogger(Build)
 	config := NewConfig(Build, logger, support, assets)
 	dbManager := NewDbManager(logger, support)
-	server := NewServer()
+	server := NewServer(config, logger, support, assets, viewHelper)
 
 	if Build == DebugBuild {
 		cmd.AddCommand()
@@ -68,8 +69,9 @@ func NewApp(assets http.FileSystem) *App {
 		newDbCreateCommand(config, dbManager, logger),
 		newDbDropCommand(config, dbManager, logger),
 		newSecretCommand(logger),
-		newSSLCleanCommand(config, logger),
-		newSSLSetupCommand(config, logger, server),
+		newServeCommand( dbManager, server),
+		newSSLCleanCommand(logger, server),
+		newSSLSetupCommand(logger, server),
 	)
 
 	return &App{
