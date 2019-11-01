@@ -18,14 +18,14 @@ func (s *LoggerSuite) TearDownTest() {
 }
 
 func (s *LoggerSuite) TestNewLogger() {
-	l := appy.NewLogger("debug")
+	l := appy.NewLogger(appy.DebugBuild)
 	_, ok := reflect.TypeOf(l).MethodByName("Desugar")
-	s.Equal("debug", l.Build())
+	s.Equal(appy.DebugBuild, l.Build())
 	s.Equal(true, l.DbLogging())
 	s.Equal(true, ok)
 
-	l = appy.NewLogger("release")
-	s.Equal("release", l.Build())
+	l = appy.NewLogger(appy.ReleaseBuild)
+	s.Equal(appy.ReleaseBuild, l.Build())
 	s.Equal(true, l.DbLogging())
 }
 

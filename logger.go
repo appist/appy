@@ -1,6 +1,10 @@
 package appy
 
 import (
+	"context"
+	"strings"
+	"time"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -60,6 +64,23 @@ func NewLogger(build string) *Logger {
 	}
 }
 
+// BeforeQuery is a hook before a db query.
+func (l Logger) BeforeQuery(c context.Context, e *DbQueryEvent) (context.Context, error) {
+	return c, nil
+}
+
+// AfterQuery is a hook after a db query.
+func (l Logger) AfterQuery(c context.Context, e *DbQueryEvent) error {
+	query, err := e.FormattedQuery()
+
+	if !strings.Contains(query, "/* appy framework */") && l.dbLogging {
+		replacer := strings.NewReplacer("\n", "", ",\n", ", ", "\t", "")
+		l.SugaredLogger.Infof("[DB] %s in %s", replacer.Replace(query), time.Since(e.StartTime))
+	}
+
+	return err
+}
+
 // Build indicates if the logger is using debug or release config.
 func (l Logger) Build() string {
 	return l.build
@@ -81,7 +102,7 @@ func newLoggerConfig(build string) zap.Config {
 	c.EncoderConfig.CallerKey = ""
 	c.EncoderConfig.EncodeTime = nil
 
-	if build != "debug" {
+	if build == ReleaseBuild {
 		c = zap.NewProductionConfig()
 		c.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	}

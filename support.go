@@ -248,6 +248,21 @@ func (s Support) ParseEnv(c interface{}) error {
 	return nil
 }
 
+// ToCamelCase converts a string to camelCase style.
+func (s Support) ToCamelCase(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+
+	fields := splitToLowerFields(str)
+	for i, f := range fields {
+		if i != 0 {
+			fields[i] = toUpperFirstRune(f)
+		}
+	}
+	return strings.Join(fields, "")
+}
+
 // ToSnakeCase converts a string to snake_case style.
 func (s Support) ToSnakeCase(str string) string {
 	if len(str) == 0 {
@@ -311,4 +326,9 @@ func splitToLowerFields(s string) []string {
 		}
 	}
 	return fields
+}
+
+func toUpperFirstRune(s string) string {
+	rs := []rune(s)
+	return strings.ToUpper(string(rs[0])) + string(rs[1:])
 }

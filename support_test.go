@@ -169,6 +169,27 @@ func (s *SupportSuite) TestIsPascalCase() {
 	}
 }
 
+func (s *SupportSuite) TestToCamelCase() {
+	tt := [][]string{
+		{"foo_bar", "fooBar"},
+		{"foo-bar", "fooBar"},
+		{"foo-bar_baz", "fooBarBaz"},
+		{"foo--bar__baz", "fooBarBaz"},
+		{"fooBar", "fooBar"},
+		{"FooBar", "fooBar"},
+		{"foo bar", "fooBar"},
+		{"   foo   bar   ", "fooBar"},
+		{"fooBar111", "fooBar111"},
+		{"111FooBar", "111FooBar"},
+		{"foo-111-Bar", "foo111Bar"},
+		{"", ""},
+	}
+
+	for _, t := range tt {
+		s.Equal(t[1], s.support.ToCamelCase(t[0]))
+	}
+}
+
 func (s *SupportSuite) TestToSnakeCase() {
 	tt := [][]string{
 		{"foo_bar", "foo_bar"},

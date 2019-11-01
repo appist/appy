@@ -15,7 +15,7 @@ type AppSuite struct {
 func (s *AppSuite) SetupTest() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-	s.app = appy.NewApp()
+	s.app = appy.NewApp(nil)
 }
 
 func (s *AppSuite) TearDownTest() {

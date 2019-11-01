@@ -1,5 +1,10 @@
 package appy
 
+import (
+	"net/http"
+	"os"
+)
+
 type (
 	// App is the core of appy framework which determines how an application is driven.
 	App struct {
@@ -13,6 +18,12 @@ type (
 )
 
 const (
+	// DebugBuild tends to be slow as it includes debug lvl logging which is more verbose.
+	DebugBuild = "debug"
+
+	// ReleaseBuild tends to be faster as it excludes debug lvl logging.
+	ReleaseBuild = "release"
+
 	// VERSION follows semantic versioning to indicate the framework's release status.
 	VERSION = "0.1.0"
 
@@ -22,8 +33,14 @@ const (
 var (
 	// Build is the current build type for the application, can be `debug` or `release`. Please take note that this
 	// value will be updated to `release` by `go run . build` command.
-	Build = "debug"
+	Build = DebugBuild
 )
+
+func init() {
+	if os.Getenv("APPY_ENV") == "" {
+		os.Setenv("APPY_ENV", "development")
+	}
+}
 
 // NewApp initializes App instance that comes with:
 //
@@ -33,15 +50,15 @@ var (
 // server - provides the capability to serve HTTP/GRPC requests
 // dbManager - manages the databases along with their pool connections
 // support - provides utility helpers/extensions
-func NewApp() *App {
+func NewApp(assets http.FileSystem) *App {
+	cmd := NewCmd()
 	support := NewSupport()
 	logger := NewLogger(Build)
-	config := NewConfig(Build, logger, support)
+	config := NewConfig(Build, logger, support, assets)
+	dbManager := NewDbManager(logger, support)
 	server := NewServer()
 
-	cmd := NewCmd()
-
-	if Build == "debug" {
+	if Build == DebugBuild {
 		cmd.AddCommand()
 	}
 
@@ -52,11 +69,12 @@ func NewApp() *App {
 	)
 
 	return &App{
-		cmd:     cmd,
-		config:  config,
-		logger:  logger,
-		server:  server,
-		support: support,
+		cmd:       cmd,
+		config:    config,
+		dbManager: dbManager,
+		logger:    logger,
+		server:    server,
+		support:   support,
 	}
 }
 

@@ -1,7 +1,17 @@
 package appy
 
 import (
+	"encoding/hex"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type (
@@ -77,25 +87,340 @@ type (
 		HTTPIENoOpen                bool              `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
 		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:""`
 
-		build  string
-		errors []error
+		build, masterKey, path string
+		errors                 []error
 	}
 )
 
+var (
+	_csrPaths = map[string]string{
+		"root": "web",
+	}
+
+	_ssrPaths = map[string]string{
+		"root":   ".ssr",
+		"config": "pkg/config",
+		"locale": "pkg/locales",
+		"view":   "pkg/views",
+	}
+
+	_staticExtRegex = regexp.MustCompile(`\.(bmp|css|csv|eot|exif|gif|html|ico|ini|jpg|jpeg|js|json|mp4|otf|pdf|png|svg|webp|woff|woff2|tiff|ttf|toml|txt|xml|xlsx|yml|yaml)$`)
+)
+
 // NewConfig initializes Config instance.
-func NewConfig(build string, logger *Logger, support *Support) *Config {
-	var errs []error
-	config := &Config{}
-	err := support.ParseEnv(config)
+func NewConfig(build string, logger *Logger, support *Support, assets http.FileSystem) *Config {
+	var (
+		errs []error
+	)
+
+	masterKey, err := parseMasterKey()
 	if err != nil {
 		errs = append(errs, err)
 	}
 
-	config.errors = errs
+	config := &Config{}
+	if masterKey != nil {
+		config.path = configPath(build)
+		errs = append(errs, decryptConfig(build, config.path, assets, masterKey, support)...)
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		err = support.ParseEnv(config)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		config.errors = errs
+	}
+
 	return config
+}
+
+// MasterKey returns the master key for the current environment.
+func (c Config) MasterKey() string {
+	return c.masterKey
 }
 
 // Errors returns all the config retrieving/parsing errors.
 func (c Config) Errors() []error {
 	return c.errors
+}
+
+func configPath(build string) string {
+	path := _ssrPaths["config"] + "/.env." + os.Getenv("APPY_ENV")
+	if build == DebugBuild {
+		return path
+	}
+
+	return _ssrPaths["root"] + "/" + path
+}
+
+func decryptConfig(build, path string, assets http.FileSystem, masterKey []byte, support *Support) []error {
+	file, err := os.Open(path)
+	if err != nil {
+		return []error{err}
+	}
+
+	if build == DebugBuild && file == nil {
+		return []error{ErrNoConfigInAssets}
+	}
+
+	envMap, err := godotenv.Parse(file)
+	if err != nil {
+		return []error{err}
+	}
+
+	currentEnv := map[string]bool{}
+	rawEnv := os.Environ()
+	for _, rawEnvLine := range rawEnv {
+		key := strings.Split(rawEnvLine, "=")[0]
+		currentEnv[key] = true
+	}
+
+	var errs []error
+	if len(masterKey) != 0 {
+		for key, value := range envMap {
+			if !currentEnv[key] {
+				decodeStr, _ := hex.DecodeString(value)
+				plaintext, err := support.AESDecrypt(decodeStr, masterKey)
+				if len(plaintext) < 1 || err != nil {
+					errs = append(errs, fmt.Errorf("unable to decrypt '%s' value in '%s'", key, path))
+				}
+
+				os.Setenv(key, string(plaintext))
+			}
+		}
+	}
+
+	return errs
+}
+
+func parseDbConfig(support *Support) (map[string]DbConfig, []error) {
+	var (
+		err  error
+		errs []error
+	)
+	dbConfig := map[string]DbConfig{}
+	dbNames := []string{}
+
+	for _, val := range os.Environ() {
+		re := regexp.MustCompile("DB_ADDR_(.*)")
+		match := re.FindStringSubmatch(val)
+
+		if len(match) > 1 {
+			splits := strings.Split(match[1], "=")
+			dbNames = append(dbNames, splits[0])
+		}
+	}
+
+	if len(dbNames) < 1 {
+		dbNames = append(dbNames, "primary")
+	}
+
+	for _, dbName := range dbNames {
+		schemaSearchPath := "public"
+		if val, ok := os.LookupEnv("DB_SCHEMA_" + dbName); ok && val != "" {
+			schemaSearchPath = val
+		}
+
+		addr := "0.0.0.0:5432"
+		if val, ok := os.LookupEnv("DB_ADDR_" + dbName); ok && val != "" {
+			addr = val
+		}
+
+		user := "postgres"
+		if val, ok := os.LookupEnv("DB_USER_" + dbName); ok && val != "" {
+			user = val
+		}
+
+		password := "postgres"
+		if val, ok := os.LookupEnv("DB_PASSWORD_" + dbName); ok && val != "" {
+			password = val
+		}
+
+		database := "appy"
+		if val, ok := os.LookupEnv("DB_NAME_" + dbName); ok && val != "" {
+			database = val
+		}
+
+		appName := "appy"
+		if val, ok := os.LookupEnv("DB_APP_NAME_" + dbName); ok && val != "" {
+			appName = val
+		}
+
+		replica := false
+		if val, ok := os.LookupEnv("DB_REPLICA_" + dbName); ok && val != "" {
+			replica, err = strconv.ParseBool(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		maxRetries := 0
+		if val, ok := os.LookupEnv("DB_MAX_RETRIES_" + dbName); ok && val != "" {
+			maxRetries, err = strconv.Atoi(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		retryStatement := false
+		if val, ok := os.LookupEnv("DB_RETRY_STATEMENT_" + dbName); ok && val != "" {
+			retryStatement, err = strconv.ParseBool(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		poolSize := 10
+		if val, ok := os.LookupEnv("DB_POOL_SIZE_" + dbName); ok && val != "" {
+			poolSize, err = strconv.Atoi(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		poolTimeout := 31 * time.Second
+		if val, ok := os.LookupEnv("DB_POOL_TIMEOUT_" + dbName); ok && val != "" {
+			poolTimeout, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		minIdleConns := 0
+		if val, ok := os.LookupEnv("DB_MIN_IDLE_CONNS_" + dbName); ok && val != "" {
+			minIdleConns, err = strconv.Atoi(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		maxConnAge := 0 * time.Second
+		if val, ok := os.LookupEnv("DB_MAX_CONN_AGE_" + dbName); ok && val != "" {
+			maxConnAge, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		dialTimeout := 30 * time.Second
+		if val, ok := os.LookupEnv("DB_DIAL_TIMEOUT_" + dbName); ok && val != "" {
+			dialTimeout, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		idleCheckFrequency := 1 * time.Minute
+		if val, ok := os.LookupEnv("DB_IDLE_CHECK_FREQUENCY_" + dbName); ok && val != "" {
+			idleCheckFrequency, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		idleTimeout := 5 * time.Minute
+		if val, ok := os.LookupEnv("DB_IDLE_TIMEOUT_" + dbName); ok && val != "" {
+			idleTimeout, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		readTimeout := 30 * time.Second
+		if val, ok := os.LookupEnv("DB_READ_TIMEOUT_" + dbName); ok && val != "" {
+			readTimeout, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+
+			if poolTimeout == 31*time.Second {
+				poolTimeout = readTimeout + 1*time.Second
+			}
+		}
+
+		writeTimeout := 30 * time.Second
+		if val, ok := os.LookupEnv("DB_WRITE_TIMEOUT_" + dbName); ok && val != "" {
+			writeTimeout, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		schemaMigrationsTable := "schema_migrations"
+		if val, ok := os.LookupEnv("DB_SCHEMA_MIGRATIONS_TABLE_" + dbName); ok && val != "" {
+			schemaMigrationsTable = val
+		}
+
+		config := DbConfig{}
+		config.ApplicationName = appName
+		config.Addr = addr
+		config.User = user
+		config.Password = password
+		config.Database = database
+		config.MaxRetries = maxRetries
+		config.PoolSize = poolSize
+		config.PoolTimeout = poolTimeout
+		config.DialTimeout = dialTimeout
+		config.IdleCheckFrequency = idleCheckFrequency
+		config.IdleTimeout = idleTimeout
+		config.ReadTimeout = readTimeout
+		config.WriteTimeout = writeTimeout
+		config.RetryStatementTimeout = retryStatement
+		config.MinIdleConns = minIdleConns
+		config.MaxConnAge = maxConnAge
+		config.Replica = replica
+		config.SchemaSearchPath = schemaSearchPath
+		config.SchemaMigrationsTable = schemaMigrationsTable
+		config.OnConnect = func(conn *DbConn) error {
+			_, err := conn.Exec("SET search_path=? /* appy framework */", schemaSearchPath)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		dbConfig[support.ToCamelCase(dbName)] = config
+	}
+
+	return dbConfig, errs
+}
+
+func parseMasterKey() ([]byte, error) {
+	var (
+		err error
+		key []byte
+	)
+
+	env := "development"
+	if os.Getenv("APPY_ENV") != "" {
+		env = os.Getenv("APPY_ENV")
+	}
+
+	if os.Getenv("APPY_MASTER_KEY") != "" {
+		key = []byte(os.Getenv("APPY_MASTER_KEY"))
+	}
+
+	if len(key) == 0 {
+		if Build == DebugBuild {
+			key, err = ioutil.ReadFile(_ssrPaths["config"] + "/" + env + ".key")
+			if err != nil {
+				return nil, ErrReadMasterKeyFile
+			}
+		}
+	}
+
+	key = []byte(strings.Trim(string(key), "\n"))
+	key = []byte(strings.Trim(string(key), " "))
+
+	if len(key) == 0 {
+		return nil, ErrNoMasterKey
+	}
+
+	return key, nil
 }
