@@ -1,6 +1,7 @@
 package appy
 
 type (
+	// App is the core of appy framework which determines how an application is driven.
 	App struct {
 		cmd       *Cmd
 		config    *Config
@@ -11,8 +12,16 @@ type (
 	}
 )
 
+const (
+	// VERSION follows semantic versioning to indicate the framework's release status.
+	VERSION = "0.1.0"
+
+	_description = "An opinionated productive web framework that helps scaling business easier."
+)
+
 var (
-	// Build is the current build type for the application, can be `debug` or `release`.
+	// Build is the current build type for the application, can be `debug` or `release`. Please take note that this
+	// value will be updated to `release` by `go run . build` command.
 	Build = "debug"
 )
 
@@ -24,13 +33,31 @@ var (
 // server - provides the capability to serve HTTP/GRPC requests
 // dbManager - manages the databases along with their pool connections
 // support - provides utility helpers/extensions
-func NewApp() App {
-	app := App{
-		logger:  NewLogger(Build),
-		support: NewSupport(),
+func NewApp() *App {
+	support := NewSupport()
+	logger := NewLogger(Build)
+	config := NewConfig(Build, logger, support)
+	server := NewServer()
+
+	cmd := NewCmd()
+
+	if Build == "debug" {
+		cmd.AddCommand()
 	}
 
-	return app
+	cmd.AddCommand(
+		newSecretCommand(logger),
+		newSSLCleanCommand(config, logger),
+		newSSLSetupCommand(config, logger, server),
+	)
+
+	return &App{
+		cmd:     cmd,
+		config:  config,
+		logger:  logger,
+		server:  server,
+		support: support,
+	}
 }
 
 // Cmd returns the app's Cmd instance.
@@ -63,6 +90,7 @@ func (a App) Support() *Support {
 	return a.support
 }
 
+// Run starts the application.
 func (a App) Run() {
-
+	a.Cmd().Execute()
 }

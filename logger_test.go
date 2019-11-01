@@ -29,6 +29,6 @@ func (s *LoggerSuite) TestNewLogger() {
 	s.Equal(true, l.DbLogging())
 }
 
-func TestLogger(t *testing.T) {
+func TestLoggerSuite(t *testing.T) {
 	appy.RunTestSuite(t, new(LoggerSuite))
 }

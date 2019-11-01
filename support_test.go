@@ -225,6 +225,6 @@ func (s *SupportSuite) TestParseEnvWithInvalidFormat() {
 	s.Equal(map[string]string{}, c.Users)
 }
 
-func TestSupport(t *testing.T) {
+func TestSupportSuite(t *testing.T) {
 	appy.RunTestSuite(t, new(SupportSuite))
 }
