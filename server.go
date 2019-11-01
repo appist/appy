@@ -190,7 +190,7 @@ func (s Server) IsSSLCertExisted() bool {
 func (s Server) PrintInfo() {
 	lines := []string{}
 	lines = append(lines,
-		fmt.Sprintf("* Version %s (%s), build: %s, environment: %s, config: %s",
+		fmt.Sprintf("* appy %s (%s), build: %s, environment: %s, config: %s",
 			VERSION, runtime.Version(), Build, s.config.AppyEnv, s.config.path,
 		),
 	)

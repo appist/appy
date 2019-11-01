@@ -58,9 +58,12 @@ func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 	config := NewConfig(Build, logger, support, assets)
 	dbManager := NewDbManager(logger, support)
 	server := NewServer(config, logger, support, assets, viewHelper)
+	server.InitSSR(support)
 
 	if Build == DebugBuild {
-		cmd.AddCommand()
+		cmd.AddCommand(
+			newStartCommand(server),
+		)
 	}
 
 	cmd.AddCommand(
@@ -68,8 +71,8 @@ func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 		newConfigEncryptCommand(config, logger, support),
 		newDbCreateCommand(config, dbManager, logger),
 		newDbDropCommand(config, dbManager, logger),
-		newMiddlewareCommand(server),
-		newRoutesCommand(server),
+		newMiddlewareCommand(config, logger, server),
+		newRoutesCommand(config, logger, server),
 		newSecretCommand(logger),
 		newServeCommand(dbManager, server),
 		newSSLCleanCommand(logger, server),
@@ -118,5 +121,15 @@ func (a App) Support() *Support {
 
 // Run starts the application.
 func (a App) Run() {
+	// Shows the default welcome page with appy logo/slogan if `GET /` isn't defined.
+	a.server.AddDefaultWelcomePage()
+
+	// Must be located right before the server runs due to CSR utilizes `NoRoute` to achieve pretty URL navigation
+	// with HTML5 history API. In addition, we only enable CSR hosting for `release` build due to `debug` build
+	// should rely on webpack-dev-server.
+	if Build == ReleaseBuild {
+		a.server.InitCSR()
+	}
+
 	a.Cmd().Execute()
 }

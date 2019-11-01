@@ -11,6 +11,8 @@ func newConfigDecryptCommand(config *Config, logger *Logger, support *Support) *
 		Short: "Decrypts a value using the AES algorithm",
 		Args:  ExactArgs(1),
 		Run: func(cmd *Cmd, args []string) {
+			CheckConfig(config, logger)
+
 			masterKey := config.MasterKey()
 			if masterKey == nil {
 				logger.Fatal(config.Errors())

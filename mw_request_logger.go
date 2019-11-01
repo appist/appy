@@ -20,7 +20,7 @@ func RequestLogger(config *Config, logger *Logger) HandlerFunc {
 			scheme = "https"
 		}
 
-		logger.Infof("[%s] %s '%s://%s%s %s' from %s - %d %dB in %s", requestID, r.Method, scheme, r.Host, filterParams(r, config),
+		logger.Infof("[HTTP] %s %s '%s://%s%s %s' from %s - %d %dB in %s", requestID, r.Method, scheme, r.Host, filterParams(r, config),
 			r.Proto, r.RemoteAddr, ctx.Writer.Status(), ctx.Writer.Size(), time.Since(start))
 	}
 }

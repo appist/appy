@@ -3,6 +3,7 @@ module github.com/appist/appy
 go 1.13.1
 
 require (
+	github.com/99designs/gqlgen v0.10.1
 	github.com/BurntSushi/toml v0.3.1
 	github.com/bndr/gotabulate v1.1.2
 	github.com/caarlos0/env v3.5.0+incompatible
@@ -16,6 +17,7 @@ require (
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/joho/godotenv v1.3.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.2
+	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0

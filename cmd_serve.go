@@ -51,6 +51,7 @@ func serve(dbManager *DbManager, s *Server) {
 		s.logger.Fatal(err)
 	}
 
+	dbManager.PrintInfo()
 	s.PrintInfo()
 
 	if s.config.HTTPSSLEnabled == true {

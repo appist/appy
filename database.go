@@ -2,6 +2,7 @@ package appy
 
 import (
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/go-pg/pg/v9"
@@ -55,6 +56,7 @@ type (
 	DbManager struct {
 		dbs    map[string]*Db
 		errors []error
+		logger *Logger
 		mu     sync.Mutex
 	}
 
@@ -92,7 +94,8 @@ var (
 // NewDbManager initializes DbManager instance.
 func NewDbManager(logger *Logger, support *Support) *DbManager {
 	dbManager := &DbManager{
-		dbs: map[string]*Db{},
+		dbs:    map[string]*Db{},
+		logger: logger,
 	}
 	dbConfig, errs := parseDbConfig(support)
 	if errs != nil {
@@ -140,6 +143,21 @@ func (m *DbManager) Db(name string) *Db {
 	}
 
 	return nil
+}
+
+// PrintInfo prints the database manager info.
+func (m *DbManager) PrintInfo() {
+	var dbNames []string
+	for name := range m.dbs {
+		dbNames = append(dbNames, name)
+	}
+
+	dbs := "none"
+	if len(dbNames) > 0 {
+		dbs = strings.Join(dbNames, ", ")
+	}
+
+	m.logger.Infof("* Available DBs: %s", dbs)
 }
 
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent

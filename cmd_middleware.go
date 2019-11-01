@@ -7,11 +7,12 @@ import (
 	"runtime"
 )
 
-func newMiddlewareCommand(s *Server) *Cmd {
+func newMiddlewareCommand(config *Config, logger *Logger, s *Server) *Cmd {
 	cmd := &Cmd{
 		Use:   "middleware",
 		Short: "Lists all the middlewares",
 		Run: func(cmd *Cmd, args []string) {
+			CheckConfig(config, logger)
 			regex := regexp.MustCompile(`\.func.*`)
 
 			for _, mw := range s.router.Handlers {
