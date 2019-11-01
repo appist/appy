@@ -35,6 +35,8 @@ type (
 		Warnf(template string, args ...interface{})
 		Warnw(msg string, keysAndValues ...interface{})
 		With(args ...interface{}) *SugaredLogger
+		BeforeQuery(c context.Context, e *DbQueryEvent) (context.Context, error)
+		AfterQuery(c context.Context, e *DbQueryEvent) error
 		Build() string
 		DbLogging() bool
 		SetDbLogging(enabled bool)

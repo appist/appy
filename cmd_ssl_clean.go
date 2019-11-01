@@ -8,7 +8,7 @@ import (
 func newSSLCleanCommand(config *Config, logger *Logger) *Cmd {
 	return &Cmd{
 		Use:   "ssl:clean",
-		Short: "Uninstalls the locally trusted SSL certs using \"mkcert\", only available for debug build.",
+		Short: `Uninstalls the locally trusted SSL certs using "mkcert"`,
 		Run: func(cmd *Cmd, args []string) {
 			_, err := exec.LookPath("mkcert")
 			if err != nil {

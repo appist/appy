@@ -8,7 +8,7 @@ import (
 func newSSLSetupCommand(config *Config, logger *Logger, s *Server) *Cmd {
 	return &Cmd{
 		Use:   "ssl:setup",
-		Short: "Generates and installs the locally trusted SSL certs using \"mkcert\", only available for debug build.",
+		Short: `Generates and installs the locally trusted SSL certs using "mkcert"`,
 		Run: func(cmd *Cmd, args []string) {
 			_, err := exec.LookPath("mkcert")
 			if err != nil {

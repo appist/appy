@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"os"
 	"sync"
 
 	"github.com/go-pg/pg/v9"
@@ -68,6 +69,26 @@ type (
 	}
 )
 
+var (
+	// DbArray accepts a slice and returns a wrapper for working with PostgreSQL array data type.
+	// For struct fields you can use array tag:
+	//
+	//    Emails  []string `pg:",array"`
+	DbArray = pg.Array
+
+	// DbHstore accepts a map and returns a wrapper for working with hstore data type.
+	// For struct fields you can use hstore tag:
+	//
+	//    Attrs map[string]string `pg:",hstore"`
+	DbHstore = pg.Hstore
+
+	// DbSafeQuery replaces any placeholders found in the query.
+	DbSafeQuery = pg.SafeQuery
+
+	// DbScan returns ColumnScanner that copies the columns in the row into the values.
+	DbScan = pg.Scan
+)
+
 // NewDbManager initializes DbManager instance.
 func NewDbManager(logger *Logger, support *Support) *DbManager {
 	dbManager := &DbManager{
@@ -89,7 +110,7 @@ func NewDbManager(logger *Logger, support *Support) *DbManager {
 }
 
 // Connect establishes connections to all the databases.
-func (m DbManager) Connect(sameDb bool) error {
+func (m *DbManager) Connect(sameDb bool) error {
 	for _, db := range m.dbs {
 		err := db.Connect(sameDb)
 		if err != nil {
@@ -101,7 +122,7 @@ func (m DbManager) Connect(sameDb bool) error {
 }
 
 // Close closes connections to all the databases.
-func (m DbManager) Close() error {
+func (m *DbManager) Close() error {
 	for _, db := range m.dbs {
 		err := db.Close()
 		if err != nil {
@@ -112,9 +133,18 @@ func (m DbManager) Close() error {
 	return nil
 }
 
+// Db returns the Db instance with the specified name.
+func (m *DbManager) Db(name string) *Db {
+	if db, ok := m.dbs[name]; ok {
+		return db
+	}
+
+	return nil
+}
+
 // Connect connects to a database using provided options and assign the database Handler which is safe for concurrent
 // use by multiple goroutines and maintains its own connection pool.
-func (db Db) Connect(sameDb bool) error {
+func (db *Db) Connect(sameDb bool) error {
 	opts := db.config.Options
 	if !sameDb {
 		opts.Database = "postgres"
@@ -129,6 +159,57 @@ func (db Db) Connect(sameDb bool) error {
 
 // Close closes the database connection and release any open resources. It is rare to Close a DB, as the DB handle is
 // meant to be long-lived and shared between many goroutines.
-func (db Db) Close() error {
+func (db *Db) Close() error {
 	return nil
+}
+
+// CreateDb creates the database.
+func (db *Db) CreateDb() []error {
+	var errs []error
+	_, err := db.handle.Exec(`CREATE DATABASE ?`, DbSafeQuery(db.config.Database))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	_, err = db.handle.Exec(`CREATE DATABASE ?`, DbSafeQuery(db.config.Database+"_test"))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return errs
+}
+
+// DropDb creates the database.
+func (db *Db) DropDb() []error {
+	var errs []error
+	_, err := db.handle.Exec(
+		`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '?'`,
+		DbSafeQuery(db.config.Database),
+	)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	_, err = db.handle.Exec(`DROP DATABASE ?`, DbSafeQuery(db.config.Database))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	_, err = db.handle.Exec(`DROP DATABASE ?`, DbSafeQuery(db.config.Database+"_test"))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return errs
+}
+
+// CheckDbManager is used to check if DB manager contains any error during initialization.
+func CheckDbManager(config *Config, dbManager *DbManager, logger *Logger) {
+	if dbManager != nil && dbManager.errors != nil {
+		for _, err := range dbManager.errors {
+			logger.Info(err.Error())
+		}
+
+		os.Exit(-1)
+	}
 }

@@ -63,6 +63,10 @@ func NewApp(assets http.FileSystem) *App {
 	}
 
 	cmd.AddCommand(
+		newConfigDecryptCommand(config, logger, support),
+		newConfigEncryptCommand(config, logger, support),
+		newDbCreateCommand(config, dbManager, logger),
+		newDbDropCommand(config, dbManager, logger),
 		newSecretCommand(logger),
 		newSSLCleanCommand(config, logger),
 		newSSLSetupCommand(config, logger, server),

@@ -87,8 +87,9 @@ type (
 		HTTPIENoOpen                bool              `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
 		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:""`
 
-		build, masterKey, path string
-		errors                 []error
+		build, path string
+		masterKey   []byte
+		errors      []error
 	}
 )
 
@@ -121,6 +122,7 @@ func NewConfig(build string, logger *Logger, support *Support, assets http.FileS
 	config := &Config{}
 	if masterKey != nil {
 		config.path = configPath(build)
+		config.masterKey = masterKey
 		errs = append(errs, decryptConfig(build, config.path, assets, masterKey, support)...)
 		if err != nil {
 			errs = append(errs, err)
@@ -140,13 +142,32 @@ func NewConfig(build string, logger *Logger, support *Support, assets http.FileS
 }
 
 // MasterKey returns the master key for the current environment.
-func (c Config) MasterKey() string {
+func (c Config) MasterKey() []byte {
 	return c.masterKey
 }
 
 // Errors returns all the config retrieving/parsing errors.
 func (c Config) Errors() []error {
 	return c.errors
+}
+
+// CheckConfig is used to check if config contains any error during initialization.
+func CheckConfig(config *Config, logger *Logger) {
+	if config != nil && config.errors != nil {
+		for _, err := range config.errors {
+			logger.Info(err.Error())
+		}
+
+		os.Exit(-1)
+	}
+}
+
+// CheckProtectedEnvs is used to protect the app from being destroyed by a command accidentally.
+func CheckProtectedEnvs(config *Config) {
+	if config.AppyEnv == "production" {
+		fmt.Printf("You are attempting to run a destructive action against your database in '%s' environment.\n", config.AppyEnv)
+		os.Exit(-1)
+	}
 }
 
 func configPath(build string) string {
@@ -214,10 +235,6 @@ func parseDbConfig(support *Support) (map[string]DbConfig, []error) {
 			splits := strings.Split(match[1], "=")
 			dbNames = append(dbNames, splits[0])
 		}
-	}
-
-	if len(dbNames) < 1 {
-		dbNames = append(dbNames, "primary")
 	}
 
 	for _, dbName := range dbNames {
