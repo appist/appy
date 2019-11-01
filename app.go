@@ -68,8 +68,10 @@ func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 		newConfigEncryptCommand(config, logger, support),
 		newDbCreateCommand(config, dbManager, logger),
 		newDbDropCommand(config, dbManager, logger),
+		newMiddlewareCommand(server),
+		newRoutesCommand(server),
 		newSecretCommand(logger),
-		newServeCommand( dbManager, server),
+		newServeCommand(dbManager, server),
 		newSSLCleanCommand(logger, server),
 		newSSLSetupCommand(logger, server),
 	)

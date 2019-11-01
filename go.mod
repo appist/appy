@@ -4,6 +4,7 @@ go 1.13.1
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/bndr/gotabulate v1.1.2
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/fatih/camelcase v1.0.0
 	github.com/gin-contrib/gzip v0.0.1
