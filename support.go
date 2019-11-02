@@ -14,27 +14,8 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-// Supporter is the
-type Supporter interface {
-	AESDecrypt(ciphertext []byte, key []byte) ([]byte, error)
-	AESEncrypt(plaintext []byte, key []byte) ([]byte, error)
-	ArrayContains(arr interface{}, val interface{}) bool
-	DeepClone(dst, src interface{}) error
-	IsPascalCase(str string) bool
-	ParseEnv(c interface{}) error
-	ToSnakeCase(str string) string
-}
-
-// Support is a collection of utility helpers/extensions that were found useful for the appy framework.
-type Support struct{}
-
-// NewSupport initializes Support instance.
-func NewSupport() *Support {
-	return &Support{}
-}
-
 // AESDecrypt decrypts a cipher text into a plain text using the key with AES.
-func (s Support) AESDecrypt(ciphertext []byte, key []byte) ([]byte, error) {
+func AESDecrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -60,7 +41,7 @@ func (s Support) AESDecrypt(ciphertext []byte, key []byte) ([]byte, error) {
 }
 
 // AESEncrypt encrypts a plaintext into a cipher text using the key with AES.
-func (s Support) AESEncrypt(plaintext []byte, key []byte) ([]byte, error) {
+func AESEncrypt(plaintext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -80,7 +61,7 @@ func (s Support) AESEncrypt(plaintext []byte, key []byte) ([]byte, error) {
 }
 
 // ArrayContains checks if a value is in a slice of the same type.
-func (s Support) ArrayContains(arr interface{}, val interface{}) bool {
+func ArrayContains(arr interface{}, val interface{}) bool {
 	arrT := reflect.TypeOf(arr)
 	valT := reflect.TypeOf(val)
 	if (arrT.Kind().String() != "array" && arrT.Kind().String() != "slice") ||
@@ -197,12 +178,12 @@ func (s Support) ArrayContains(arr interface{}, val interface{}) bool {
 }
 
 // DeepClone deeply clones from 1 interface to another.
-func (s Support) DeepClone(dst, src interface{}) error {
+func DeepClone(dst, src interface{}) error {
 	return copier.Copy(dst, src)
 }
 
 // IsPascalCase checks if a string is a PascalCase.
-func (s Support) IsPascalCase(str string) bool {
+func IsPascalCase(str string) bool {
 	if isFirstRuneDigit(str) {
 		return false
 	}
@@ -211,7 +192,7 @@ func (s Support) IsPascalCase(str string) bool {
 }
 
 // ParseEnv parses the environment variables into the config.
-func (s Support) ParseEnv(c interface{}) error {
+func ParseEnv(c interface{}) error {
 	err := env.ParseWithFuncs(c, map[reflect.Type]env.ParserFunc{
 		reflect.TypeOf(map[string]string{}): func(v string) (interface{}, error) {
 			newMaps := map[string]string{}
@@ -249,7 +230,7 @@ func (s Support) ParseEnv(c interface{}) error {
 }
 
 // ToCamelCase converts a string to camelCase style.
-func (s Support) ToCamelCase(str string) string {
+func ToCamelCase(str string) string {
 	if len(str) == 0 {
 		return str
 	}
@@ -264,7 +245,7 @@ func (s Support) ToCamelCase(str string) string {
 }
 
 // ToSnakeCase converts a string to snake_case style.
-func (s Support) ToSnakeCase(str string) string {
+func ToSnakeCase(str string) string {
 	if len(str) == 0 {
 		return str
 	}

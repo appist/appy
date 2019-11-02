@@ -28,9 +28,8 @@ func (s *ConfigSuite) TearDownTest() {
 
 func (s *ConfigSuite) TestNewConfigWithoutSettingRequiredConfig() {
 	build := DebugBuild
-	support := NewSupport()
 	logger := NewLogger(build)
-	config := NewConfig(build, logger, support, nil)
+	config := NewConfig(build, logger, nil)
 	s.NotNil(config.Errors())
 	s.EqualError(config.Errors()[0], `required environment variable "HTTP_SESSION_SECRETS" is not set. required environment variable "HTTP_CSRF_SECRET" is not set`)
 }
@@ -40,9 +39,8 @@ func (s *ConfigSuite) TestNewConfigWithSettingRequiredConfig() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	build := DebugBuild
-	support := NewSupport()
 	logger := NewLogger(build)
-	config := NewConfig(build, logger, support, nil)
+	config := NewConfig(build, logger, nil)
 	s.Nil(config.Errors())
 
 	os.Unsetenv("HTTP_CSRF_SECRET")

@@ -18,11 +18,11 @@ func newDbDropCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd
 
 			logger.Infof("Dropping databases from pkg/config/.env.%s...", config.AppyEnv)
 
-			err := dbManager.Connect(false)
+			err := dbManager.ConnectAll(false)
 			if err != nil {
 				logger.Fatal(err)
 			}
-			defer dbManager.Close()
+			defer dbManager.CloseAll()
 
 			var errs []error
 			for _, db := range dbManager.dbs {
@@ -30,7 +30,7 @@ func newDbDropCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd
 					continue
 				}
 
-				tmpErrs := db.DropDb()
+				tmpErrs := db.Drop()
 				errs = append(errs, tmpErrs...)
 			}
 

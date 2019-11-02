@@ -14,7 +14,6 @@ type (
 		logger    *Logger
 		server    *Server
 		dbManager *DbManager
-		support   *Support
 	}
 )
 
@@ -50,28 +49,30 @@ func init() {
 // logger - provides logger
 // server - provides the capability to serve HTTP/GRPC requests
 // dbManager - manages the databases along with their pool connections
-// support - provides utility helpers/extensions
 func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 	cmd := NewCmd()
-	support := NewSupport()
 	logger := NewLogger(Build)
-	config := NewConfig(Build, logger, support, assets)
-	dbManager := NewDbManager(logger, support)
-	server := NewServer(config, logger, support, assets, viewHelper)
-	server.InitSSR(support)
+	config := NewConfig(Build, logger, assets)
+	dbManager := NewDbManager(logger)
+	server := NewServer(config, logger, assets, viewHelper)
+	server.InitSSR()
 
 	if Build == DebugBuild {
 		cmd.AddCommand(
 			newBuildCommand(server),
+			newDbSchemaDumpCommand(config, dbManager, logger),
 			newStartCommand(server),
 		)
 	}
 
 	cmd.AddCommand(
-		newConfigDecryptCommand(config, logger, support),
-		newConfigEncryptCommand(config, logger, support),
+		newConfigDecryptCommand(config, logger),
+		newConfigEncryptCommand(config, logger),
 		newDbCreateCommand(config, dbManager, logger),
 		newDbDropCommand(config, dbManager, logger),
+		newDbMigrateCommand(config, dbManager, logger),
+		newDbMigrateStatusCommand(config, dbManager, logger),
+		newDbRollbackCommand(config, dbManager, logger),
 		newMiddlewareCommand(config, logger, server),
 		newRoutesCommand(config, logger, server),
 		newSecretCommand(logger),
@@ -86,7 +87,6 @@ func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 		dbManager: dbManager,
 		logger:    logger,
 		server:    server,
-		support:   support,
 	}
 }
 
@@ -113,11 +113,6 @@ func (a App) Logger() *Logger {
 // Server returns the app's Server instance.
 func (a App) Server() *Server {
 	return a.server
-}
-
-// Support returns the app's Support instance.
-func (a App) Support() *Support {
-	return a.support
 }
 
 // Run starts the application.

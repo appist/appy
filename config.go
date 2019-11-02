@@ -110,7 +110,7 @@ var (
 )
 
 // NewConfig initializes Config instance.
-func NewConfig(build string, logger *Logger, support *Support, assets http.FileSystem) *Config {
+func NewConfig(build string, logger *Logger, assets http.FileSystem) *Config {
 	var (
 		errs []error
 	)
@@ -124,12 +124,12 @@ func NewConfig(build string, logger *Logger, support *Support, assets http.FileS
 	if masterKey != nil {
 		config.path = configPath(build)
 		config.masterKey = masterKey
-		errs = append(errs, decryptConfig(build, config.path, assets, masterKey, support)...)
+		errs = append(errs, decryptConfig(build, config.path, assets, masterKey)...)
 		if err != nil {
 			errs = append(errs, err)
 		}
 
-		err = support.ParseEnv(config)
+		err = ParseEnv(config)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -180,7 +180,7 @@ func configPath(build string) string {
 	return _ssrPaths["root"] + "/" + path
 }
 
-func decryptConfig(build, path string, assets http.FileSystem, masterKey []byte, support *Support) []error {
+func decryptConfig(build, path string, assets http.FileSystem, masterKey []byte) []error {
 	var (
 		file io.Reader
 		err  error
@@ -221,7 +221,7 @@ func decryptConfig(build, path string, assets http.FileSystem, masterKey []byte,
 		for key, value := range envMap {
 			if !currentEnv[key] {
 				decodeStr, _ := hex.DecodeString(value)
-				plaintext, err := support.AESDecrypt(decodeStr, masterKey)
+				plaintext, err := AESDecrypt(decodeStr, masterKey)
 				if len(plaintext) < 1 || err != nil {
 					errs = append(errs, fmt.Errorf("unable to decrypt '%s' value in '%s'", key, path))
 				}
@@ -234,7 +234,7 @@ func decryptConfig(build, path string, assets http.FileSystem, masterKey []byte,
 	return errs
 }
 
-func parseDbConfig(support *Support) (map[string]DbConfig, []error) {
+func parseDbConfig() (map[string]DbConfig, []error) {
 	var (
 		err  error
 		errs []error
@@ -254,7 +254,7 @@ func parseDbConfig(support *Support) (map[string]DbConfig, []error) {
 
 	for _, dbName := range dbNames {
 		schemaSearchPath := "public"
-		if val, ok := os.LookupEnv("DB_SCHEMA_" + dbName); ok && val != "" {
+		if val, ok := os.LookupEnv("DB_SCHEMA_SEARCH_PATH_" + dbName); ok && val != "" {
 			schemaSearchPath = val
 		}
 
@@ -417,7 +417,7 @@ func parseDbConfig(support *Support) (map[string]DbConfig, []error) {
 			return nil
 		}
 
-		dbConfig[support.ToCamelCase(dbName)] = config
+		dbConfig[ToCamelCase(dbName)] = config
 	}
 
 	return dbConfig, errs

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func newConfigDecryptCommand(config *Config, logger *Logger, support *Support) *Cmd {
+func newConfigDecryptCommand(config *Config, logger *Logger) *Cmd {
 	return &Cmd{
 		Use:   "config:dec",
 		Short: "Decrypts a value using the AES algorithm",
@@ -23,7 +23,7 @@ func newConfigDecryptCommand(config *Config, logger *Logger, support *Support) *
 				logger.Fatal(err)
 			}
 
-			decrypted, err := support.AESDecrypt(ciphertext, masterKey)
+			decrypted, err := AESDecrypt(ciphertext, masterKey)
 			if err != nil {
 				logger.Fatal(err)
 			}

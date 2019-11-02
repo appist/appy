@@ -41,10 +41,6 @@ func (s *AppSuite) TestAppLogger() {
 func (s *AppSuite) TestAppServer() {
 }
 
-func (s *AppSuite) TestAppSupport() {
-	s.NotNil(s.app.Support())
-}
-
 func TestAppSuite(t *testing.T) {
 	appy.RunTestSuite(t, new(AppSuite))
 }

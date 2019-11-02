@@ -38,17 +38,17 @@ var (
 )
 
 // CSRF is a middleware that provides Cross-Site Request Forgery protection.
-func CSRF(config *Config, logger *Logger, support *Support) HandlerFunc {
+func CSRF(config *Config, logger *Logger) HandlerFunc {
 	csrfSecureCookie = securecookie.New(config.HTTPCSRFSecret, nil)
 	csrfSecureCookie.SetSerializer(securecookie.JSONEncoder{})
 	csrfSecureCookie.MaxAge(config.HTTPCSRFCookieMaxAge)
 
 	return func(c *Context) {
-		csrfHandler(c, config, logger, support)
+		csrfHandler(c, config, logger)
 	}
 }
 
-func csrfHandler(ctx *Context, config *Config, logger *Logger, support *Support) {
+func csrfHandler(ctx *Context, config *Config, logger *Logger) {
 	if IsAPIOnly(ctx) == true {
 		ctx.Set(csrfCtxSkipCheckKey, true)
 	}
@@ -80,7 +80,7 @@ func csrfHandler(ctx *Context, config *Config, logger *Logger, support *Support)
 	ctx.Set(csrfCtxFieldNameKey, strings.ToLower(config.HTTPCSRFFieldName))
 
 	r := ctx.Request
-	if !support.ArrayContains(csrfSafeMethods, r.Method) {
+	if !ArrayContains(csrfSafeMethods, r.Method) {
 		// Enforce an origin check for HTTPS connections. As per the Django CSRF implementation (https://goo.gl/vKA7GE)
 		// the Referer header is almost always present for same-domain HTTP requests.
 		if r.TLS != nil {

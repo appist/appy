@@ -83,14 +83,14 @@ func init() {
 }
 
 // NewServer initializes Server instance.
-func NewServer(c *Config, l *Logger, s *Support, assets http.FileSystem, viewHelper template.FuncMap) *Server {
+func NewServer(c *Config, l *Logger, assets http.FileSystem, viewHelper template.FuncMap) *Server {
 	// Initialize the error templates.
 	renderer := multitemplate.NewRenderer()
 	renderer.AddFromString("error/404", errorTpl404())
 	renderer.AddFromString("error/500", errorTpl500())
 	renderer.AddFromString("default/welcome", welcomeTpl())
 
-	r := newRouter(c, l, s)
+	r := newRouter(c, l)
 	r.HTMLRender = renderer
 
 	http := &http.Server{
@@ -315,12 +315,12 @@ func (s *Server) serveCSR(prefix string, assets http.FileSystem) HandlerFunc {
 }
 
 // InitSSR initiates the SSR setup.
-func (s Server) InitSSR(support *Support) error {
+func (s Server) InitSSR() error {
 	if err := s.initSSRLocale(); err != nil {
 		return err
 	}
 
-	if err := s.initSSRView(support); err != nil {
+	if err := s.initSSRView(); err != nil {
 		return err
 	}
 
@@ -379,7 +379,7 @@ func (s *Server) initSSRLocale() error {
 	return nil
 }
 
-func (s *Server) initSSRView(support *Support) error {
+func (s *Server) initSSRView() error {
 	var (
 		fis []os.FileInfo
 		err error
@@ -410,7 +410,7 @@ func (s *Server) initSSRView(support *Support) error {
 			continue
 		}
 
-		if support.ArrayContains(reservedViewDirs, fi.Name()) == true {
+		if ArrayContains(reservedViewDirs, fi.Name()) == true {
 			tpls, err := getCommonTemplates(s.assets, Build, viewDir+"/"+fi.Name())
 			if err != nil {
 				return err
@@ -421,7 +421,7 @@ func (s *Server) initSSRView(support *Support) error {
 	}
 
 	for _, fi := range fis {
-		if fi.IsDir() == false || support.ArrayContains(reservedViewDirs, fi.Name()) == true {
+		if fi.IsDir() == false || ArrayContains(reservedViewDirs, fi.Name()) == true {
 			continue
 		}
 
@@ -522,12 +522,12 @@ func isSSRPath(routes []RouteInfo, path string) bool {
 	return false
 }
 
-func newRouter(c *Config, l *Logger, s *Support) *Router {
+func newRouter(c *Config, l *Logger) *Router {
 	r := gin.New()
 	r.AppEngine = true
 	r.HandleMethodNotAllowed = true
 
-	r.Use(CSRF(c, l, s))
+	r.Use(CSRF(c, l))
 	r.Use(RequestID())
 	r.Use(RequestLogger(c, l))
 	r.Use(RealIP())

@@ -30,6 +30,7 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
+	github.com/uudashr/go-module v0.0.0-20180827225833-c0ca9c3a4966
 	go.uber.org/zap v1.12.0
 	golang.org/x/text v0.3.2
 	google.golang.org/grpc v1.24.0

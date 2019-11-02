@@ -33,7 +33,7 @@ func serve(dbManager *DbManager, s *Server) {
 	go func() {
 		<-httpQuit
 		s.logger.Infof("* Gracefully shutting down the server within %s...", s.config.HTTPGracefulTimeout)
-		defer dbManager.Close()
+		defer dbManager.CloseAll()
 
 		ctx, cancel := context.WithTimeout(context.Background(), s.config.HTTPGracefulTimeout)
 		defer cancel()
@@ -46,7 +46,7 @@ func serve(dbManager *DbManager, s *Server) {
 	}()
 
 	var err error
-	err = dbManager.Connect(true)
+	err = dbManager.ConnectAll(true)
 	if err != nil {
 		s.logger.Fatal(err)
 	}

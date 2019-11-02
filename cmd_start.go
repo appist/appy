@@ -31,7 +31,7 @@ var (
 func newStartCommand(s *Server) *Cmd {
 	return &Cmd{
 		Use:   "start",
-		Short: "Runs the GRPC/HTTP web server in development watch mode, only available for debug build.",
+		Short: "Runs the GRPC/HTTP web server in development watch mode (debug build only)",
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(s.config, s.logger)
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func newConfigEncryptCommand(config *Config, logger *Logger, support *Support) *Cmd {
+func newConfigEncryptCommand(config *Config, logger *Logger) *Cmd {
 	return &Cmd{
 		Use:   "config:enc",
 		Short: "Encrypts a value using the AES algorithm",
@@ -19,7 +19,7 @@ func newConfigEncryptCommand(config *Config, logger *Logger, support *Support) *
 			}
 
 			plaintext := []byte(args[0])
-			ciphertext, err := support.AESEncrypt(plaintext, masterKey)
+			ciphertext, err := AESEncrypt(plaintext, masterKey)
 			if err != nil {
 				logger.Fatal(err)
 			}

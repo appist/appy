@@ -17,11 +17,11 @@ func newDbCreateCommand(config *Config, dbManager *DbManager, logger *Logger) *C
 
 			logger.Infof("Creating databases from pkg/config/.env.%s...", config.AppyEnv)
 
-			err := dbManager.Connect(false)
+			err := dbManager.ConnectAll(false)
 			if err != nil {
 				logger.Fatal(err)
 			}
-			defer dbManager.Close()
+			defer dbManager.CloseAll()
 
 			var errs []error
 			for _, db := range dbManager.dbs {
@@ -29,7 +29,7 @@ func newDbCreateCommand(config *Config, dbManager *DbManager, logger *Logger) *C
 					continue
 				}
 
-				tmpErrs := db.CreateDb()
+				tmpErrs := db.Create()
 				errs = append(errs, tmpErrs...)
 			}
 
