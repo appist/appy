@@ -12,11 +12,11 @@ func newDbDropCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd
 			CheckDbManager(config, dbManager, logger)
 
 			if len(dbManager.dbs) < 1 {
-				logger.Infof("No database is defined in app/config/.env.%s", config.AppyEnv)
+				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
 				os.Exit(0)
 			}
 
-			logger.Infof("Dropping databases from app/config/.env.%s...", config.AppyEnv)
+			logger.Infof("Dropping databases from pkg/config/.env.%s...", config.AppyEnv)
 
 			err := dbManager.Connect(false)
 			if err != nil {

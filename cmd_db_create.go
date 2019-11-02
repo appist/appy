@@ -11,11 +11,11 @@ func newDbCreateCommand(config *Config, dbManager *DbManager, logger *Logger) *C
 			CheckDbManager(config, dbManager, logger)
 
 			if len(dbManager.dbs) < 1 {
-				logger.Infof("No database is defined in app/config/.env.%s", config.AppyEnv)
+				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
 				os.Exit(0)
 			}
 
-			logger.Infof("Creating databases from app/config/.env.%s...", config.AppyEnv)
+			logger.Infof("Creating databases from pkg/config/.env.%s...", config.AppyEnv)
 
 			err := dbManager.Connect(false)
 			if err != nil {

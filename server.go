@@ -340,7 +340,7 @@ func (s *Server) initSSRLocale() error {
 	)
 	localeDir := s.ssrPaths["locale"]
 
-	// Try getting all the locale files from `app/locales`, but fallback to `assets` http.FileSystem.
+	// Try getting all the locale files from `pkg/locales`, but fallback to `assets` http.FileSystem.
 	if Build == "debug" {
 		localeFiles, err = ioutil.ReadDir(localeDir)
 
@@ -405,7 +405,7 @@ func (s *Server) initSSRView(support *Support) error {
 
 	commonTpls := []string{}
 	for _, fi := range fis {
-		// We should only see directories in `app/views`.
+		// We should only see directories in `pkg/views`.
 		if fi.IsDir() == false {
 			continue
 		}

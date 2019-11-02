@@ -54,8 +54,6 @@ func newBuildCommand(s *Server) *Cmd {
 				s.logger.Info("Building the web app... DONE")
 			}
 
-			// Add GraphQL/GRPC compile
-
 			s.logger.Info("Copying server-side assets...")
 			err = copy.Copy(s.ssrPaths["view"], assetsPathForSSR+"/"+s.ssrPaths["view"])
 			if err != nil {
@@ -78,7 +76,6 @@ func newBuildCommand(s *Server) *Cmd {
 			}
 
 			s.logger.Info("Copying server-side assets... DONE")
-
 			oldStdout := os.Stdout
 			os.Stdout = nil
 
@@ -91,13 +88,22 @@ func newBuildCommand(s *Server) *Cmd {
 			s.logger.Infof("Compiling assets folder into '%s'... DONE", mainAssets)
 			os.Stdout = oldStdout
 
-			// Add GraphQL/GRPC generator step
+			if _, err := os.Stat(wd + "pkg/graphql/schema.gql"); !os.IsNotExist(err) {
+				s.logger.Info("Generating GraphQL boilerplate code...")
+				err = generateGQL(s)
+				if err != nil {
+					s.logger.Fatal(err.Error())
+				}
+
+				s.logger.Info("Generating GraphQL boilerplate code... DONE")
+			}
+
+			s.logger.Info("Building the binary...")
 			goPath, err := exec.LookPath("go")
 			if err != nil {
 				s.logger.Fatal(err)
 			}
 
-			s.logger.Info("Building the binary...")
 			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo", "-ldflags", "-w -extldflags '-static' -X github.com/appist/appy.Build=release", "-o", binaryName, ".")
 			buildBinaryCmd.Stderr = os.Stderr
 			if err = buildBinaryCmd.Run(); err != nil {

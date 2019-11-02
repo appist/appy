@@ -78,7 +78,13 @@ func watchHandler(e watcher.Event, s *Server) {
 
 	isGenerating = true
 	if strings.Contains(e.Path, ".gql") || strings.Contains(e.Path, ".graphql") {
-		generateGQL(s)
+		s.logger.Info("* Generating GraphQL boilerplate code...")
+
+		err := generateGQL(s)
+		if err != nil {
+			s.logger.Info(err.Error())
+		}
+
 		isGenerating = false
 		return
 	}
@@ -95,21 +101,22 @@ func watchHandler(e watcher.Event, s *Server) {
 
 func gqlgenLoadConfig() (*gqlgenCfg.Config, error) {
 	wd, _ := os.Getwd()
-	return gqlgenCfg.LoadConfig(wd + "/app/graphql/config.yml")
+	return gqlgenCfg.LoadConfig(wd + "/pkg/graphql/config.yml")
 }
 
-func generateGQL(s *Server) {
+func generateGQL(s *Server) error {
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 	defer func() {
 		log.SetOutput(os.Stderr)
 	}()
 
-	s.logger.Info("* Generating GraphQL boilerplate code...")
 	gqlgenConfig, _ := gqlgenLoadConfig()
 	if err := api.Generate(gqlgenConfig); err != nil {
-		s.logger.Info(err.Error())
+		return err
 	}
+
+	return nil
 }
 
 func killAPIServeCmd() {
