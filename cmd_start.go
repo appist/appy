@@ -41,8 +41,9 @@ func newStartCommand(s *Server) *Cmd {
 
 			wd, _ := os.Getwd()
 			watchPaths := []string{
-				wd + "/app",
 				wd + "/cmd",
+				wd + "/db",
+				wd + "/pkg",
 				wd + "/go.sum",
 				wd + "/go.mod",
 				wd + "/main.go",

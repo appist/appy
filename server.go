@@ -225,6 +225,11 @@ func (s Server) Routes() []RouteInfo {
 	return routes
 }
 
+// SetRoutes configures routes for the server.
+func (s Server) SetRoutes(cb func(router *Router)) {
+	cb(s.router)
+}
+
 // InitCSR initializes the client-side rendering/routing with index.html fallback.
 func (s Server) InitCSR() {
 	// Setup CSR hosting at "/".
@@ -527,12 +532,12 @@ func newRouter(c *Config, l *Logger, s *Support) *Router {
 	r.Use(RequestLogger(c, l))
 	r.Use(RealIP())
 	r.Use(ResponseHeaderFilter())
-	// r.Use(SessionManager(c))
+	r.Use(SessionManager(c))
 	r.Use(HealthCheck(c.HTTPHealthCheckURL))
-	// r.Use(Prerender(c, l))
+	r.Use(Prerender(c, l))
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(secure.New(newSecureConfig(c)))
-	// r.Use(Recovery(l))
+	r.Use(Recovery(l))
 
 	return r
 }
