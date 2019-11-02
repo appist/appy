@@ -29,6 +29,14 @@ func newGMigrationCommand(config *Config, dbManager *DbManager, logger *Logger) 
 				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
 				os.Exit(0)
 			}
+
+			db := dbManager.Db(target)
+			if db == nil {
+				logger.Infof("No database called '%s' defined in pkg/config/.env.%s", target, config.AppyEnv)
+				os.Exit(0)
+			}
+
+			db.generateMigration(args[0], target, tx)
 		},
 	}
 

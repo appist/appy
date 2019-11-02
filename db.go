@@ -389,7 +389,7 @@ func (db *Db) dumpSchema(name string) error {
 		out      string
 	)
 
-	path := "db/migrations/" + name
+	path := "db/migrate/" + name
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return err
@@ -500,6 +500,31 @@ func (db *Db) ensureSchemaMigrationsTable() error {
 	return nil
 }
 
+func (db *Db) generateMigration(name, target string, tx bool) error {
+	path := "db/migrate/" + target
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	ts := time.Now()
+	fn := path + "/" + ts.Format("20060102150405") + "_" + ToSnakeCase(name) + ".go"
+	db.logger.Infof("Creating migration '%s' for '%s' database...", fn, target)
+
+	tpl, err := migrationTpl(target, tx)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(fn, tpl, 0644)
+	if err != nil {
+		return err
+	}
+
+	db.logger.Infof("Creating migration '%s' for '%s' database... DONE", fn, target)
+	return nil
+}
+
 func (db *Db) migratedVersions(tx *DbHandleTx) ([]string, error) {
 	var schemaMigrations []SchemaMigration
 	_, err := tx.Query(
@@ -579,6 +604,60 @@ func (db *Db) Schema() string {
 // SetSchema stores the database schema.
 func (db *Db) SetSchema(schema string) {
 	db.schema = schema
+}
+
+func migrationTpl(database string, tx bool) ([]byte, error) {
+	type data struct {
+		Database, Module string
+		Tx               bool
+	}
+
+	t, err := template.New("migration").Parse(
+		`package {{.Database}}
+
+import (
+	"github.com/appist/appy"
+
+	"{{.Module}}/pkg/app"
+)
+
+func init() {
+	db := app.Default().DbManager().Db("{{.Database}}")
+
+	if db != nil {
+		db.RegisterMigration{{if .Tx}}Tx{{end}}(
+			// Up migration
+			func(db *appy.DbHandle{{if .Tx}}Tx{{end}}) error {
+				_, err := db.Exec(` + "`" + "`" + `)
+				return err
+			},
+
+			// Down migration
+			func(db *appy.DbHandle{{if .Tx}}Tx{{end}}) error {
+				_, err := db.Exec(` + "`" + "`" + `)
+				return err
+			},
+		)
+	}
+}
+`)
+
+	if err != nil {
+		return []byte(""), err
+	}
+
+	var tpl bytes.Buffer
+	err = t.Execute(&tpl, data{
+		Database: database,
+		Module:   moduleName(),
+		Tx:       tx,
+	})
+
+	if err != nil {
+		return []byte(""), err
+	}
+
+	return tpl.Bytes(), err
 }
 
 func schemaDumpTpl(database, schema string) ([]byte, error) {
