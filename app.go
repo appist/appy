@@ -62,6 +62,7 @@ func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 
 	if Build == DebugBuild {
 		cmd.AddCommand(
+			newBuildCommand(server),
 			newStartCommand(server),
 		)
 	}

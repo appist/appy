@@ -3,6 +3,7 @@ package appy
 import (
 	"encoding/hex"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -69,7 +70,7 @@ type (
 		HTTPCSRFCookieMaxAge        int               `env:"HTTP_CSRF_COOKIE_MAX_AGE" envDefault:"43200"`
 		HTTPCSRFCookieName          string            `env:"HTTP_CSRF_COOKIE_NAME" envDefault:"_csrf_token"`
 		HTTPCSRFCookiePath          string            `env:"HTTP_CSRF_COOKIE_PATH" envDefault:"/"`
-		HTTPCSRFCookieSecure        bool              `env:"HTTP_CSRF_COOKIE_SECURE" envDefault:"true"`
+		HTTPCSRFCookieSecure        bool              `env:"HTTP_CSRF_COOKIE_SECURE" envDefault:"false"`
 		HTTPCSRFFieldName           string            `env:"HTTP_CSRF_FIELD_NAME" envDefault:"authenticity_token"`
 		HTTPCSRFRequestHeader       string            `env:"HTTP_CSRF_REQUEST_HEADER" envDefault:"X-CSRF-Token"`
 		HTTPCSRFSecret              []byte            `env:"HTTP_CSRF_SECRET,required" envDefault:""`
@@ -180,13 +181,27 @@ func configPath(build string) string {
 }
 
 func decryptConfig(build, path string, assets http.FileSystem, masterKey []byte, support *Support) []error {
-	file, err := os.Open(path)
-	if err != nil {
-		return []error{err}
-	}
+	var (
+		file io.Reader
+		err  error
+	)
 
-	if build == DebugBuild && file == nil {
-		return []error{ErrNoConfigInAssets}
+	if build == DebugBuild {
+		file, err = os.Open(path)
+		if err != nil {
+			return []error{err}
+		}
+	} else {
+		if assets != nil {
+			file, err = assets.Open(path)
+			if err != nil {
+				return []error{err}
+			}
+		}
+
+		if file == nil {
+			return []error{ErrNoConfigInAssets}
+		}
 	}
 
 	envMap, err := godotenv.Parse(file)
