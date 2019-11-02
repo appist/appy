@@ -10,7 +10,7 @@ import (
 func newDbMigrateStatusCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd {
 	cmd := &Cmd{
 		Use:   "db:migrate:status",
-		Short: "Migrates the database(default: all, use --database for specific one) for the current environment",
+		Short: "Migrates the database(default: all, use --database to specify just 1) for the current environment",
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(config, logger)
 			CheckDbManager(config, dbManager, logger)

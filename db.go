@@ -594,10 +594,14 @@ import (
 )
 
 func init() {
-	app.Default().DbManager().Db("{{.Database}}").SetSchema(` + "`" +
+	db := app.Default().DbManager().Db("{{.Database}}")
+
+	if db != nil {
+		db.SetSchema(` + "`" +
 			"{{.Schema}}" +
 			"`)" +
 			`
+	}
 }
 `)
 
