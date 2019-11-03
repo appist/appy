@@ -294,11 +294,7 @@ func (s Server) InitSSR() error {
 		return err
 	}
 
-	if err := s.initSSRView(); err != nil {
-		return err
-	}
-
-	return nil
+	return s.initSSRView()
 }
 
 func (s *Server) initSSRLocale() error {

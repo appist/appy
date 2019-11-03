@@ -117,11 +117,7 @@ func generateGQL(s *Server) error {
 	}()
 
 	gqlgenConfig, _ := gqlgenLoadConfig()
-	if err := api.Generate(gqlgenConfig); err != nil {
-		return err
-	}
-
-	return nil
+	return api.Generate(gqlgenConfig)
 }
 
 func killAPIServeCmd() {
