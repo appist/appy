@@ -48,6 +48,7 @@ type (
 		SchemaMigrationsTable string
 	}
 
+	// Dber implements all the Db's methods.
 	Dber interface {
 	}
 
@@ -71,7 +72,7 @@ type (
 		UpTx    func(*DbHandleTx) error
 	}
 
-	// SchemaMigration
+	// SchemaMigration is a model that maps to `schema_migrations` table.
 	SchemaMigration struct {
 		Version string
 	}

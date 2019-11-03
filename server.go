@@ -55,10 +55,6 @@ type (
 		prefix     string
 	}
 
-	Serverer interface {
-		Hosts() []string
-	}
-
 	// Server is the engine that serves HTTP/GRPC requests.
 	Server struct {
 		assets       http.FileSystem

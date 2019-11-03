@@ -7,6 +7,7 @@ import (
 )
 
 type (
+	// DbManagerer implements all the DbManager's methods.
 	DbManagerer interface {
 	}
 
