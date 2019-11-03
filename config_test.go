@@ -1,7 +1,6 @@
 package appy
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"reflect"
@@ -232,6 +231,7 @@ func (s *ConfigSuite) TestNewConfigWithUnparsableConfig() {
 
 func (s *ConfigSuite) TestNewConfigWithInvalidDatabaseConfig() {
 	oldAppyEnv := os.Getenv("APPY_ENV")
+	oldDbAddr := os.Getenv("DB_ADDR_PRIMARY")
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
 	os.Setenv("DB_ADDR_PRIMARY", "dummy")
 	os.Setenv("DB_APP_NAME_PRIMARY", "dummy")
@@ -263,8 +263,8 @@ func (s *ConfigSuite) TestNewConfigWithInvalidDatabaseConfig() {
 	s.NotNil(dbManager.Errors())
 
 	os.Setenv("APPY_ENV", oldAppyEnv)
+	os.Setenv("DB_ADDR_PRIMARY", oldDbAddr)
 	os.Unsetenv("APPY_MASTER_KEY")
-	os.Unsetenv("DB_ADDR_PRIMARY")
 	os.Unsetenv("DB_APP_NAME_PRIMARY")
 	os.Unsetenv("DB_DIAL_TIMEOUT_PRIMARY")
 	os.Unsetenv("DB_IDLE_CHECK_FREQUENCY_PRIMARY")
@@ -294,7 +294,6 @@ func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
-	fmt.Println("DEBUG: " + os.Getenv("DB_ADDR_PRIMARY"))
 	build := DebugBuild
 	logger := NewLogger(build)
 	config := NewConfig(build, logger, nil)
@@ -305,7 +304,6 @@ func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
 
 	os.Setenv("APPY_ENV", oldAppyEnv)
 	os.Unsetenv("APPY_MASTER_KEY")
-	os.Unsetenv("DB_ADDR_PRIMARY")
 	os.Unsetenv("DB_NAME_PRIMARY")
 	os.Unsetenv("DB_PASSWORD_PRIMARY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
