@@ -18,33 +18,45 @@ func newDcDownCommand(logger *Logger, assets http.FileSystem) *Cmd {
 				logger.Fatal(err)
 			}
 
-			var data []byte
-			dcPath := ".docker/docker-compose.yml"
-
-			if Build == DebugBuild {
-				data, err = ioutil.ReadFile(dcPath)
-				if err != nil {
-					logger.Fatal(err)
-				}
-			} else {
-				file, err := assets.Open(_ssrPaths["docker"] + "/" + dcPath)
-				if err != nil {
-					logger.Fatal(err)
-				}
-
-				data, err = ioutil.ReadAll(file)
-				if err != nil {
-					logger.Fatal(err)
-				}
+			err = dcDown(assets)
+			if err != nil {
+				logger.Fatal(err)
 			}
-
-			dcDownCmd := exec.Command("docker-compose", "-f", "-", "-p", appName, "down", "--remove-orphans")
-			dcDownCmd.Stdin = bytes.NewBuffer(data)
-			dcDownCmd.Stdout = os.Stdout
-			dcDownCmd.Stderr = os.Stderr
-			dcDownCmd.Run()
 		},
 	}
 
 	return cmd
+}
+
+func dcDown(assets http.FileSystem) error {
+	var (
+		data []byte
+		err  error
+	)
+	dcPath := _ssrPaths["docker"] + "/docker-compose.yml"
+
+	if Build == DebugBuild {
+		data, err = ioutil.ReadFile(dcPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		file, err := assets.Open(_ssrPaths["root"] + "/" + dcPath)
+		if err != nil {
+			return err
+		}
+
+		data, err = ioutil.ReadAll(file)
+		if err != nil {
+			return err
+		}
+	}
+
+	dcDownCmd := exec.Command("docker-compose", "-f", "-", "-p", appName, "down", "--remove-orphans")
+	dcDownCmd.Stdin = bytes.NewBuffer(data)
+	dcDownCmd.Stdout = os.Stdout
+	dcDownCmd.Stderr = os.Stderr
+	dcDownCmd.Run()
+
+	return nil
 }
