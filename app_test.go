@@ -44,9 +44,11 @@ func (s *AppSuite) TestServer() {
 }
 
 func (s *AppSuite) TestRunUnknownCommand() {
+	oldArgs := os.Args
 	os.Args = append(os.Args, "dummy")
 	err := s.app.Run()
 	s.NotNil(err)
+	os.Args = oldArgs
 }
 
 func TestAppSuite(t *testing.T) {
