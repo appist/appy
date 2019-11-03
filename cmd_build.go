@@ -55,6 +55,11 @@ func newBuildCommand(s *Server) *Cmd {
 			}
 
 			s.logger.Info("Copying server-side assets...")
+			err = copy.Copy(s.ssrPaths["docker"], assetsPathForSSR+"/"+s.ssrPaths["docker"])
+			if err != nil {
+				s.logger.Fatal(err)
+			}
+
 			err = copy.Copy(s.ssrPaths["view"], assetsPathForSSR+"/"+s.ssrPaths["view"])
 			if err != nil {
 				s.logger.Fatal(err)

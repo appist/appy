@@ -6,8 +6,10 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -123,32 +125,6 @@ func NewServer(c *Config, l *Logger, assets http.FileSystem, viewHelper template
 	}
 }
 
-// AddDefaultWelcomePage adds the default welcome page for `/` route.
-func (s Server) AddDefaultWelcomePage() {
-	routes := s.Routes()
-	rootDefined := false
-
-	for _, route := range routes {
-		if route.Path == "/" {
-			rootDefined = true
-			break
-		}
-	}
-
-	csrRootDefined := false
-	if Build == "release" && s.assets != nil {
-		if _, err := s.assets.Open("/index.html"); err == nil {
-			csrRootDefined = true
-		}
-	}
-
-	if !rootDefined && !csrRootDefined {
-		s.router.GET("/", func(c *Context) {
-			c.HTML(200, "default/welcome", nil)
-		})
-	}
-}
-
 // Hosts returns the server hosts list.
 func (s Server) Hosts() ([]string, error) {
 	var hosts = []string{s.config.HTTPHost}
@@ -238,27 +214,8 @@ func (s Server) InitCSR() {
 	// Setup CSR hosting at "/tools".
 	// s.Router.Use(s.serveCSR("/tools", tools.Assets))
 
+	// Note: This might be not needed once we're sure everything is supposed to be on the PWA.
 	s.router.NoRoute(CSRFSkipCheck(), func(ctx *Context) {
-		request := ctx.Request
-
-		if request.Method == "GET" && !_staticExtRegex.MatchString(request.URL.Path) {
-			ctx.Header("Cache-Control", "no-cache")
-			resource := s.csrResource(request.URL.Path)
-
-			if resource.assets != nil {
-				file, _ := resource.assets.Open("/index.html")
-
-				if file != nil {
-					data, _ := ioutil.ReadAll(file)
-
-					if data != nil {
-						ctx.Data(http.StatusOK, "text/html; charset=utf-8", data)
-						return
-					}
-				}
-			}
-		}
-
 		ctx.HTML(http.StatusNotFound, "error/404", H{
 			"title": "404 Page Not Found",
 		})
@@ -297,13 +254,34 @@ func (s *Server) serveCSR(prefix string, assets http.FileSystem) HandlerFunc {
 	return func(ctx *Context) {
 		request := ctx.Request
 
-		// Serve from the assets FS if the URL path isn't matching any of the SSR paths.
+		// Serve from the webpack-dev-server(debug) or assets(release) if the URL path isn't matching any of the SSR
+		// paths.
 		if !isSSRPath(s.Routes(), request.URL.Path) && !strings.HasPrefix(request.URL.Path, "/"+s.ssrPaths["root"]) {
 			resource := s.csrResource(request.URL.Path)
+
+			if Build == DebugBuild {
+				director := func(req *http.Request) {
+					port, _ := strconv.Atoi(s.config.HTTPPort)
+					req.URL.Scheme = "http"
+					if s.config.HTTPSSLEnabled {
+						port, _ = strconv.Atoi(s.config.HTTPSSLPort)
+						req.URL.Scheme = "https"
+					}
+
+					hostname := s.config.HTTPHost + ":" + strconv.Itoa(port+1)
+					req.URL.Host = hostname
+					req.Host = hostname
+				}
+				proxy := &httputil.ReverseProxy{Director: director}
+				proxy.ServeHTTP(ctx.Writer, ctx.Request)
+				ctx.Abort()
+				return
+			}
 
 			if resource.assets != nil {
 				assetPath := strings.Replace(request.URL.Path, resource.prefix, "", 1)
 				_, err := resource.assets.Open(assetPath)
+
 				// Only serve the request from assets if the file is in the assets filesystem.
 				if err == nil {
 					resource.fileServer.ServeHTTP(ctx.Writer, request)
@@ -562,7 +540,7 @@ func newSecureConfig(c *Config) secure.Config {
 	}
 }
 
-func errorUpper() string {
+func errorTplUpper() string {
 	return `
 	<!DOCTYPE html>
 	<html lang="en">
@@ -583,7 +561,7 @@ func errorUpper() string {
 	`
 }
 
-func errorLower() string {
+func errorTplLower() string {
 	return `
 			</main>
 			<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -594,18 +572,18 @@ func errorLower() string {
 }
 
 func errorTpl404() string {
-	return errorUpper() + `
+	return errorTplUpper() + `
 <div class="card mx-auto bg-light" style="max-width:30rem;margin-top:3rem;">
 	<div class="card-body">
 		<p class="card-text">The page that you are looking for does not exist, please contact the website administrator for more details.</p>
 	</div>
 </div>
-		` + errorLower()
+		` + errorTplLower()
 }
 
 func errorTpl500() string {
 	if Build == "debug" {
-		return errorUpper() + `
+		return errorTplUpper() + `
 <h2 class="text-danger">Full Trace</h2>
 <pre class="pre-scrollable bg-light p-2">{{range $error := .errors}}{{$error}}{{end}}</pre>
 <h2 class="text-danger">Request</h2>
@@ -615,16 +593,16 @@ func errorTpl500() string {
 <pre class="pre-scrollable bg-light p-2">{{.qsParams}}</pre>
 <h6>Session Variables</h6>
 <pre class="pre-scrollable bg-light p-2">{{.sessionVars}}</pre>
-		` + errorLower()
+		` + errorTplLower()
 	}
 
-	return errorUpper() + `
+	return errorTplUpper() + `
 <div class="card mx-auto bg-light" style="max-width:30rem;margin-top:3rem;">
 	<div class="card-body">
 		<p class="card-text">If you are the administrator of this website, then please read this web application's log file and/or the web server's log file to find out what went wrong.</p>
 	</div>
 </div>
-	` + errorLower()
+	` + errorTplLower()
 }
 
 func welcomeTpl() string {

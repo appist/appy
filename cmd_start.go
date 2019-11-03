@@ -24,6 +24,7 @@ var (
 	gqlgenConfig        *gqlgenCfg.Config
 	apiServeCmd         *exec.Cmd
 	webServeCmd         *exec.Cmd
+	webServeCmdReady    chan os.Signal
 	isGenerating                      = false
 	watcherPollInterval time.Duration = 1
 )
@@ -49,21 +50,26 @@ func newStartCommand(s *Server) *Cmd {
 				wd + "/main.go",
 			}
 			quit := make(chan os.Signal, 1)
+			webServeCmdReady = make(chan os.Signal, 1)
 
 			signal.Notify(quit, os.Interrupt)
 			signal.Notify(quit, syscall.SIGTERM)
 
 			go func() {
 				<-quit
-				killAPIServeCmd()
 				killWebServeCmd()
+				killAPIServeCmd()
 			}()
 
-			go runAPIServeCmd(s)
 			if _, err := os.Stat(wd + "/package.json"); !os.IsNotExist(err) {
-				time.Sleep(2 * time.Second)
 				go runWebServeCmd(s)
 			}
+
+			go func() {
+				<-webServeCmdReady
+				runAPIServeCmd(s)
+			}()
+
 			watch(s, watchPaths, func(e watcher.Event) {
 				watchHandler(e, s)
 			})
@@ -208,6 +214,7 @@ func runWebServeCmd(s *Server) {
 
 				if isFirstTime {
 					isFirstTime = false
+					close(webServeCmdReady)
 					s.logger.Infof("* [wds] Listening on %s", host)
 				}
 			} else if strings.HasPrefix(outText, "ERROR  Failed to compile") {
@@ -237,7 +244,10 @@ func runWebServeCmd(s *Server) {
 
 		killAPIServeCmd()
 		time.Sleep(1 * time.Second)
-		s.logger.Fatal(fatalErr)
+
+		if fatalErr != "" {
+			s.logger.Fatal(fatalErr)
+		}
 	}(webServeCmdErr)
 
 	webServeCmd.Run()

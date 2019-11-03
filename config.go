@@ -101,6 +101,7 @@ var (
 
 	_ssrPaths = map[string]string{
 		"root":   ".ssr",
+		"docker": ".docker",
 		"config": "pkg/config",
 		"locale": "pkg/locales",
 		"view":   "pkg/views",
