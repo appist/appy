@@ -1,7 +1,11 @@
 package appy
 
 import (
+	"bytes"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"os/exec"
 	"path"
 
 	"github.com/spf13/cobra"
@@ -52,4 +56,62 @@ func NewCmd() *Cmd {
 		Short:   _description,
 		Version: VERSION,
 	}
+}
+
+func runDockerCompose(action string, assets http.FileSystem) error {
+	var (
+		data []byte
+		err  error
+	)
+	dcPath := _ssrPaths["docker"] + "/docker-compose.yml"
+
+	if Build == DebugBuild {
+		data, err = ioutil.ReadFile(dcPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		file, err := assets.Open(_ssrPaths["root"] + "/" + dcPath)
+		if err != nil {
+			return err
+		}
+
+		data, err = ioutil.ReadAll(file)
+		if err != nil {
+			return err
+		}
+	}
+
+	var cmd *exec.Cmd
+	switch action {
+	case "down":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", appName, action, "--remove-orphans")
+	case "up":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", appName, action, "-d")
+	case "restart":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", appName, action)
+	}
+
+	cmd.Stdin = bytes.NewBuffer(data)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkDocker() error {
+	binaries := []string{"docker", "docker-compose"}
+
+	for _, binary := range binaries {
+		_, err := exec.LookPath(binary)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
