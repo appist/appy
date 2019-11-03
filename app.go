@@ -4,6 +4,9 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/suite"
 )
 
 type (
@@ -15,6 +18,9 @@ type (
 		server    *Server
 		dbManager *DbManager
 	}
+
+	// TestSuite is a basic testing suite with methods for storing and retrieving the current *testing.T context.
+	TestSuite = suite.Suite
 )
 
 const (
@@ -34,6 +40,12 @@ var (
 	// Build is the current build type for the application, can be `debug` or `release`. Please take note that this
 	// value will be updated to `release` by `go run . build` command.
 	Build = DebugBuild
+
+	// CreateTestContext returns a fresh router w/ context for testing purposes.
+	CreateTestContext = gin.CreateTestContext
+
+	// RunTestSuite takes a testing suite and runs all of the tests attached to it.
+	RunTestSuite = suite.Run
 )
 
 func init() {
