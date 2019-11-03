@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"reflect"
@@ -293,6 +294,7 @@ func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
+	fmt.Println(os.Getenv("DB_ADDR_PRIMARY"))
 	build := DebugBuild
 	logger := NewLogger(build)
 	config := NewConfig(build, logger, nil)
