@@ -7,7 +7,7 @@ import (
 func newDbSchemaLoadCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd {
 	cmd := &Cmd{
 		Use:   "db:schema:load",
-		Short: "Loads all the databases schema for the current environment (debug build only)",
+		Short: "Load all the databases schema for the current environment (debug build only)",
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(config, logger)
 			CheckDbManager(config, dbManager, logger)

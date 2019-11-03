@@ -8,7 +8,7 @@ import (
 func newDbSchemaDumpCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd {
 	cmd := &Cmd{
 		Use:   "db:schema:dump",
-		Short: "Dumps all the databases schema for the current environment (debug build only)",
+		Short: "Dump all the databases schema for the current environment (debug build only)",
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(config, logger)
 			CheckDbManager(config, dbManager, logger)

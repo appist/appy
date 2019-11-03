@@ -3,7 +3,6 @@ package appy
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -180,15 +179,6 @@ func runWebServeCmd(s *Server) {
 			}
 		}()
 
-		scheme := "http"
-		port, _ := strconv.Atoi(s.config.HTTPPort)
-		if s.config.HTTPSSLEnabled == true {
-			scheme = "https"
-			port, _ = strconv.Atoi(s.config.HTTPSSLPort)
-		}
-
-		hosts, _ := s.Hosts()
-		host := fmt.Sprintf("%s://%s:%s", scheme, hosts[0], strconv.Itoa(port+1))
 		timeRe := regexp.MustCompile(` [0-9]+ms`)
 		isFirstTime := true
 		isWDSCompiling := false
@@ -215,7 +205,6 @@ func runWebServeCmd(s *Server) {
 				if isFirstTime {
 					isFirstTime = false
 					close(webServeCmdReady)
-					s.logger.Infof("* [wds] Listening on %s", host)
 				}
 			} else if strings.HasPrefix(outText, "ERROR  Failed to compile") {
 				s.logger.Info("* [wds] Failed to compile.")

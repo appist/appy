@@ -10,7 +10,7 @@ import (
 func newMiddlewareCommand(config *Config, logger *Logger, s *Server) *Cmd {
 	cmd := &Cmd{
 		Use:   "middleware",
-		Short: "Lists all the middleware",
+		Short: "List all the middleware",
 		Run: func(cmd *Cmd, args []string) {
 			regex := regexp.MustCompile(`\.func.*`)
 

@@ -11,7 +11,7 @@ func newSecretCommand(logger *Logger) *Cmd {
 
 	cmd := &Cmd{
 		Use:   "secret",
-		Short: "Generates a cryptographically secure secret key for encrypting cookie, CSRF token and config",
+		Short: "Generate a cryptographically secure secret key for encrypting cookie, CSRF token and config",
 		Run: func(cmd *Cmd, args []string) {
 			bytes := make([]byte, length)
 

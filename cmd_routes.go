@@ -9,7 +9,7 @@ import (
 func newRoutesCommand(config *Config, logger *Logger, s *Server) *Cmd {
 	return &Cmd{
 		Use:   "routes",
-		Short: "Lists all the routes",
+		Short: "List all the server-side routes",
 		Run: func(cmd *Cmd, args []string) {
 			var routes [][]string
 			for _, route := range s.Routes() {

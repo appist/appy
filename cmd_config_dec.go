@@ -8,7 +8,7 @@ import (
 func newConfigDecryptCommand(config *Config, logger *Logger) *Cmd {
 	return &Cmd{
 		Use:   "config:dec",
-		Short: "Decrypts a value using the AES algorithm",
+		Short: "Decrypt a value using the AES algorithm",
 		Args:  ExactArgs(1),
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(config, logger)

@@ -35,11 +35,13 @@ var (
 
 	// RangeArgs returns an error if the number of args is not within the expected range.
 	RangeArgs = cobra.RangeArgs
+
+	appName string
 )
 
 // NewCmd initializes the root command instance.
 func NewCmd() *Cmd {
-	appName := path.Base(os.Args[0])
+	appName = path.Base(os.Args[0])
 	if appName == "main" {
 		wd, _ := os.Getwd()
 		appName = path.Base(wd)

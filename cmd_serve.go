@@ -11,7 +11,7 @@ import (
 func newServeCommand(dbManager *DbManager, s *Server) *Cmd {
 	return &Cmd{
 		Use:   "serve",
-		Short: "Runs the GRPC/HTTP web server",
+		Short: "Run the GRPC/HTTP web server",
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(s.config, s.logger)
 			CheckDbManager(s.config, dbManager, s.logger)

@@ -5,7 +5,7 @@ import "os"
 func newDbCreateCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd {
 	cmd := &Cmd{
 		Use:   "db:create",
-		Short: "Creates all databases for the current environment",
+		Short: "Create all databases for the current environment",
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(config, logger)
 			CheckDbManager(config, dbManager, logger)

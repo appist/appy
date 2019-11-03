@@ -7,7 +7,7 @@ func newDbRollbackCommand(config *Config, dbManager *DbManager, logger *Logger) 
 
 	cmd := &Cmd{
 		Use:   "db:rollback",
-		Short: "Rolls back the database(default: primary, use --database to specify another 1) to previous version for the current environment",
+		Short: "Rollback the database(default: primary, use --database to specify another 1) to previous version for the current environment",
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(config, logger)
 			CheckDbManager(config, dbManager, logger)

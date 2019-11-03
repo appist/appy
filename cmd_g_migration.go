@@ -13,7 +13,7 @@ func newGMigrationCommand(config *Config, dbManager *DbManager, logger *Logger) 
 
 	cmd := &Cmd{
 		Use:   "g:migration",
-		Short: "Generates a database migration file(default: primary, use --database to specify another 1) for the current environment",
+		Short: "Generate database migration file(default: primary, use --database to specify another 1) for the current environment",
 		Args: func(cmd *Cmd, args []string) error {
 			if len(args) < 1 || !IsPascalCase(args[0]) {
 				return errors.New("please provide migration name in pascal case, e.g. CreateUsers")

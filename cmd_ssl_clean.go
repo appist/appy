@@ -8,7 +8,7 @@ import (
 func newSSLCleanCommand(logger *Logger, server *Server) *Cmd {
 	return &Cmd{
 		Use:   "ssl:clean",
-		Short: `Uninstalls the locally trusted SSL certs using "mkcert"`,
+		Short: `Uninstall the locally trusted SSL certs using "mkcert"`,
 		Run: func(cmd *Cmd, args []string) {
 			_, err := exec.LookPath("mkcert")
 			if err != nil {

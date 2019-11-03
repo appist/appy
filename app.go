@@ -75,6 +75,8 @@ func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 		newDbMigrateStatusCommand(config, dbManager, logger),
 		newDbRollbackCommand(config, dbManager, logger),
 		newDbSchemaLoadCommand(config, dbManager, logger),
+		newDcUpCommand(logger, assets),
+		newDcDownCommand(logger, assets),
 		newMiddlewareCommand(config, logger, server),
 		newRoutesCommand(config, logger, server),
 		newSecretCommand(logger),

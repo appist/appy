@@ -5,7 +5,7 @@ import "os"
 func newDbDropCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd {
 	cmd := &Cmd{
 		Use:   "db:drop",
-		Short: "Drops all databases for the current environment",
+		Short: "Drop all databases for the current environment",
 		Run: func(cmd *Cmd, args []string) {
 			CheckProtectedEnvs(config)
 			CheckConfig(config, logger)

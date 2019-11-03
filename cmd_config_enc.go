@@ -8,7 +8,7 @@ import (
 func newConfigEncryptCommand(config *Config, logger *Logger) *Cmd {
 	return &Cmd{
 		Use:   "config:enc",
-		Short: "Encrypts a value using the AES algorithm",
+		Short: "Encrypt a value using the AES algorithm",
 		Args:  ExactArgs(1),
 		Run: func(cmd *Cmd, args []string) {
 			CheckConfig(config, logger)
