@@ -291,10 +291,6 @@ func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
-	if os.Getenv("DB_ADDR_PRIMARY") == "" {
-		os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
-	}
-
 	build := DebugBuild
 	logger := NewLogger(build)
 	config := NewConfig(build, logger, nil)
@@ -306,6 +302,8 @@ func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
 	os.Setenv("APPY_ENV", oldAppyEnv)
 	os.Unsetenv("APPY_MASTER_KEY")
 	os.Unsetenv("DB_ADDR_PRIMARY")
+	os.Unsetenv("DB_NAME_PRIMARY")
+	os.Unsetenv("DB_PASSWORD_PRIMARY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
