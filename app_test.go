@@ -23,22 +23,30 @@ func (s *AppSuite) TearDownTest() {
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
-func (s *AppSuite) TestAppCmd() {
+func (s *AppSuite) TestCmd() {
 	s.NotNil(s.app.Cmd())
 }
 
-func (s *AppSuite) TestAppConfig() {
+func (s *AppSuite) TestConfig() {
 	s.NotNil(s.app.Config())
 }
 
-func (s *AppSuite) TestAppDbManager() {
+func (s *AppSuite) TestDbManager() {
+	s.NotNil(s.app.DbManager())
 }
 
-func (s *AppSuite) TestAppLogger() {
+func (s *AppSuite) TestLogger() {
 	s.NotNil(s.app.Logger())
 }
 
-func (s *AppSuite) TestAppServer() {
+func (s *AppSuite) TestServer() {
+	s.NotNil(s.app.Server())
+}
+
+func (s *AppSuite) TestRunUnknownCommand() {
+	os.Args = append(os.Args, "dummy")
+	err := s.app.Run()
+	s.NotNil(err)
 }
 
 func TestAppSuite(t *testing.T) {

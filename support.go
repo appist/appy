@@ -1,10 +1,12 @@
 package appy
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
+	"os"
 	"reflect"
 	"strings"
 	"unicode"
@@ -13,6 +15,41 @@ import (
 	"github.com/fatih/camelcase"
 	"github.com/jinzhu/copier"
 )
+
+type (
+	capturer struct {
+		stdout bool
+		stderr bool
+	}
+)
+
+func (c *capturer) capture(f func()) string {
+	r, w, _ := os.Pipe()
+
+	if c.stdout {
+		stdout := os.Stdout
+		os.Stdout = w
+		defer func() {
+			os.Stdout = stdout
+		}()
+	}
+
+	if c.stderr {
+		stderr := os.Stderr
+		os.Stderr = w
+		defer func() {
+			os.Stderr = stderr
+		}()
+	}
+
+	f()
+	w.Close()
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+
+	return buf.String()
+}
 
 // AESDecrypt decrypts a cipher text into a plain text using the key with AES.
 func AESDecrypt(ciphertext []byte, key []byte) ([]byte, error) {
@@ -175,6 +212,12 @@ func ArrayContains(arr interface{}, val interface{}) bool {
 	}
 
 	return false
+}
+
+// CaptureOutput captures stdout and stderr.
+func CaptureOutput(f func()) string {
+	capturer := &capturer{stdout: true, stderr: true}
+	return capturer.capture(f)
 }
 
 // DeepClone deeply clones from 1 interface to another.

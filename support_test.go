@@ -1,6 +1,8 @@
 package appy_test
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/appist/appy"
@@ -108,6 +110,15 @@ func (s *SupportSuite) TestArrayContains() {
 	for _, t := range tt {
 		s.Equal(t.expected, appy.ArrayContains(t.arr, t.val))
 	}
+}
+
+func (s *SupportSuite) TestCaptureOutput() {
+	output := appy.CaptureOutput(func() {
+		fmt.Fprint(os.Stdout, "foo")
+		fmt.Fprint(os.Stderr, "bar")
+	})
+
+	s.Equal("foobar", output)
 }
 
 func (s *SupportSuite) TestDeepClone() {

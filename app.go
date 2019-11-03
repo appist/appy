@@ -121,11 +121,11 @@ func (a App) Server() *Server {
 }
 
 // Run starts the application.
-func (a App) Run() {
+func (a App) Run() error {
 	// Must be located right before the server runs due to CSR utilizes `NoRoute` to achieve pretty URL navigation
 	// with HTML5 history API.
 	a.server.InitCSR()
 
 	// Start executing the root command.
-	a.Cmd().Execute()
+	return a.Cmd().Execute()
 }
