@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"net/http"
 	"os"
 	"reflect"
 	"testing"
@@ -191,6 +192,28 @@ func (s *ConfigSuite) TestNewConfigWithUndecryptableConfig() {
 	os.Unsetenv("APPY_MASTER_KEY")
 }
 
+func (s *ConfigSuite) TestNewConfigWithInvalidAssetsPath() {
+	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	build := ReleaseBuild
+	logger := NewLogger(build)
+	config := NewConfig(build, logger, http.Dir("testdata"))
+	s.Contains(config.Errors()[0].Error(), "open testdata/testdata/.ssr/testdata/pkg/config/.env.development: no such file or directory")
+
+	os.Unsetenv("APPY_MASTER_KEY")
+}
+
+func (s *ConfigSuite) TestNewConfigWithMissingConfigInAssets() {
+	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	build := ReleaseBuild
+	logger := NewLogger(build)
+	config := NewConfig(build, logger, nil)
+	s.EqualError(config.Errors()[0], ErrNoConfigInAssets.Error())
+
+	os.Unsetenv("APPY_MASTER_KEY")
+}
+
 func (s *ConfigSuite) TestNewConfigWithUnparsableConfig() {
 	oldAppyEnv := os.Getenv("APPY_ENV")
 	os.Setenv("APPY_ENV", "unparsable")
@@ -203,6 +226,24 @@ func (s *ConfigSuite) TestNewConfigWithUnparsableConfig() {
 
 	os.Setenv("APPY_ENV", oldAppyEnv)
 	os.Unsetenv("APPY_MASTER_KEY")
+}
+
+func (s *ConfigSuite) TestNewConfigWithDatabaseConfig() {
+	oldAppyEnv := os.Getenv("APPY_ENV")
+	os.Setenv("APPY_ENV", "database")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	build := DebugBuild
+	logger := NewLogger(build)
+	config := NewConfig(build, logger, nil)
+	s.Nil(config.Errors())
+
+	os.Setenv("APPY_ENV", oldAppyEnv)
+	os.Unsetenv("APPY_MASTER_KEY")
+	os.Unsetenv("HTTP_CSRF_SECRET")
+	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
 func (s *ConfigSuite) TestMasterKeyWithMissingKeyFile() {
