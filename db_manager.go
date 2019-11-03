@@ -74,6 +74,11 @@ func (m *DbManager) Db(name string) *Db {
 	return nil
 }
 
+// Errors returns all the DB manager setup errors.
+func (m *DbManager) Errors() []error {
+	return m.errors
+}
+
 // PrintInfo prints the database manager info.
 func (m *DbManager) PrintInfo() {
 	var dbNames []string

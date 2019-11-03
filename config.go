@@ -370,10 +370,6 @@ func parseDbConfig() (map[string]DbConfig, []error) {
 			if err != nil {
 				errs = append(errs, err)
 			}
-
-			if poolTimeout == 31*time.Second {
-				poolTimeout = readTimeout + 1*time.Second
-			}
 		}
 
 		writeTimeout := 30 * time.Second

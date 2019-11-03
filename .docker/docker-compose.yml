@@ -1,6 +1,32 @@
 version: "3.7"
 
 services:
+  pg-master:
+    image: bitnami/postgresql:11
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=pg-slave
+      - POSTGRESQL_REPLICATION_PASSWORD=whatever
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=whatever
+      - POSTGRESQL_DATABASE=appy
+
+  pg-slave:
+    image: bitnami/postgresql:11
+    ports:
+      - "5433:5432"
+    depends_on:
+      - pg-master
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=pg-slave
+      - POSTGRESQL_REPLICATION_PASSWORD=whatever
+      - POSTGRESQL_MASTER_HOST=pg-master
+      - POSTGRESQL_PASSWORD=whatever
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+
   redis:
     image: bitnami/redis:5.0.5
     ports:

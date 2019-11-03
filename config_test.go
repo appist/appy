@@ -158,6 +158,7 @@ func (s *ConfigSuite) TestNewConfigWithSettingRequiredConfig() {
 	build := DebugBuild
 	logger := NewLogger(build)
 	config := NewConfig(build, logger, nil)
+	s.Equal([]byte("481e5d98a31585148b8b1dfb6a3c0465"), config.MasterKey())
 	s.Nil(config.Errors())
 
 	os.Unsetenv("APPY_MASTER_KEY")
@@ -228,20 +229,83 @@ func (s *ConfigSuite) TestNewConfigWithUnparsableConfig() {
 	os.Unsetenv("APPY_MASTER_KEY")
 }
 
-func (s *ConfigSuite) TestNewConfigWithDatabaseConfig() {
+func (s *ConfigSuite) TestNewConfigWithInvalidDatabaseConfig() {
 	oldAppyEnv := os.Getenv("APPY_ENV")
-	os.Setenv("APPY_ENV", "database")
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("DB_ADDR_PRIMARY", "dummy")
+	os.Setenv("DB_APP_NAME_PRIMARY", "dummy")
+	os.Setenv("DB_DIAL_TIMEOUT_PRIMARY", "dummy")
+	os.Setenv("DB_IDLE_CHECK_FREQUENCY_PRIMARY", "dummy")
+	os.Setenv("DB_IDLE_TIMEOUT_PRIMARY", "dummy")
+	os.Setenv("DB_MAX_CONN_AGE_PRIMARY", "dummy")
+	os.Setenv("DB_MAX_RETRIES_PRIMARY", "dummy")
+	os.Setenv("DB_MIN_IDLE_CONNS_PRIMARY", "dummy")
+	os.Setenv("DB_PASSWORD_PRIMARY", "dummy")
+	os.Setenv("DB_POOL_SIZE_PRIMARY", "dummy")
+	os.Setenv("DB_POOL_TIMEOUT_PRIMARY", "dummy")
+	os.Setenv("DB_READ_TIMEOUT_PRIMARY", "dummy")
+	os.Setenv("DB_REPLICA_PRIMARY", "dummy")
+	os.Setenv("DB_RETRY_STATEMENT_PRIMARY", "dummy")
+	os.Setenv("DB_SCHEMA_SEARCH_PATH_PRIMARY", "dummy")
+	os.Setenv("DB_SCHEMA_MIGRATIONS_TABLE_PRIMARY", "true")
+	os.Setenv("DB_USER_PRIMARY", "dummy")
+	os.Setenv("DB_WRITE_TIMEOUT_PRIMARY", "dummy")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	build := DebugBuild
 	logger := NewLogger(build)
 	config := NewConfig(build, logger, nil)
+	dbManager := NewDbManager(logger)
 	s.Nil(config.Errors())
+	s.NotNil(dbManager.Errors())
 
 	os.Setenv("APPY_ENV", oldAppyEnv)
 	os.Unsetenv("APPY_MASTER_KEY")
+	os.Unsetenv("DB_ADDR_PRIMARY")
+	os.Unsetenv("DB_APP_NAME_PRIMARY")
+	os.Unsetenv("DB_DIAL_TIMEOUT_PRIMARY")
+	os.Unsetenv("DB_IDLE_CHECK_FREQUENCY_PRIMARY")
+	os.Unsetenv("DB_IDLE_TIMEOUT_PRIMARY")
+	os.Unsetenv("DB_MAX_CONN_AGE_PRIMARY")
+	os.Unsetenv("DB_MAX_RETRIES_PRIMARY")
+	os.Unsetenv("DB_MIN_IDLE_CONNS_PRIMARY")
+	os.Unsetenv("DB_PASSWORD_PRIMARY")
+	os.Unsetenv("DB_POOL_SIZE_PRIMARY")
+	os.Unsetenv("DB_POOL_TIMEOUT_PRIMARY")
+	os.Unsetenv("DB_READ_TIMEOUT_PRIMARY")
+	os.Unsetenv("DB_REPLICA_PRIMARY")
+	os.Unsetenv("DB_RETRY_STATEMENT_PRIMARY")
+	os.Unsetenv("DB_SCHEMA_SEARCH_PATH_PRIMARY")
+	os.Unsetenv("DB_SCHEMA_MIGRATIONS_TABLE_PRIMARY")
+	os.Unsetenv("DB_USER_PRIMARY")
+	os.Unsetenv("DB_WRITE_TIMEOUT_PRIMARY")
+	os.Unsetenv("HTTP_CSRF_SECRET")
+	os.Unsetenv("HTTP_SESSION_SECRETS")
+}
+
+func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
+	oldAppyEnv := os.Getenv("APPY_ENV")
+	os.Setenv("APPY_ENV", "valid_db")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	if os.Getenv("DB_ADDR_PRIMARY") == "" {
+		os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
+	}
+
+	build := DebugBuild
+	logger := NewLogger(build)
+	config := NewConfig(build, logger, nil)
+	dbManager := NewDbManager(logger)
+	s.Nil(config.Errors())
+	s.Nil(dbManager.Errors())
+	s.Nil(dbManager.ConnectAll(true))
+
+	os.Setenv("APPY_ENV", oldAppyEnv)
+	os.Unsetenv("APPY_MASTER_KEY")
+	os.Unsetenv("DB_ADDR_PRIMARY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
