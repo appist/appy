@@ -19,7 +19,7 @@ install:
 	cd tools && npm i
 
 test:
-	go test -cover -coverprofile=coverage.out -race ./...
+	go test -covermode=atomic -coverprofile=coverage.out -race -failfast ./...
 
 testcov:
 	go tool cover -html=coverage.out
