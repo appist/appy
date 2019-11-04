@@ -82,7 +82,8 @@ func (s *SessionManagerSuite) TestSessionCookieStore() {
 }
 
 func (s *SessionManagerSuite) TestSessionRedisStore() {
-	if os.Getenv("GITHUB_WORKFLOW") != "" {
+	// A workaround for Github Action
+	if os.Getenv("HTTP_SESSION_REDIS_ADDR") == "" {
 		os.Setenv("HTTP_SESSION_REDIS_ADDR", "localhost:32770")
 	}
 
