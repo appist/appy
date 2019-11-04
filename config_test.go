@@ -66,7 +66,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"HTTPAllowedHosts":                []string{},
 		"HTTPCSRFCookieDomain":            "localhost",
 		"HTTPCSRFCookieHTTPOnly":          true,
-		"HTTPCSRFCookieMaxAge":            43200,
+		"HTTPCSRFCookieMaxAge":            0,
 		"HTTPCSRFCookieName":              "_csrf_token",
 		"HTTPCSRFCookiePath":              "/",
 		"HTTPCSRFCookieSecure":            false,
