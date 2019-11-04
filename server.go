@@ -55,7 +55,7 @@ type (
 		prefix     string
 	}
 
-	// Server is the engine that serves HTTP/GRPC requests.
+	// Server is the engine that serves HTTP requests.
 	Server struct {
 		assets       http.FileSystem
 		config       *Config

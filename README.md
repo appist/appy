@@ -2,10 +2,6 @@
 
 An opinionated productive web framework that helps scaling business easier.
 
-###### Project Status
-
-[![Project Status](https://img.shields.io/badge/production--ready-not%20yet-brightgreen)](https://github.com/appist/appy)
-
 ###### Build Status
 
 [![Build Status](https://github.com/appist/appy/workflows/Code%20Check/badge.svg)](https://github.com/appist/appy/actions?workflow=Code+Check)
@@ -27,7 +23,7 @@ An opinionated productive web framework that helps scaling business easier.
 - [Highly performant](https://github.com/gin-gonic/gin/blob/master/BENCHMARKS.md) routing HTTP server using [Gin](https://github.com/gin-gonic/gin).
 - [Highly performant](https://github.com/go-pg/pg/wiki/FAQ#why-go-pg) PostgreSQL ORM using [go-pg](https://github.com/go-pg/pg).
 - Automatically re-compile upon file changes.
-- Automatically re-generate GraphQL or gRPC boilerplate codes upon schema changes using [gqlgen](https://gqlgen.com/) or [protoc](https://github.com/protocolbuffers/protobuf).
+- Automatically re-generate GraphQL boilerplate codes upon schema changes using [gqlgen](https://gqlgen.com/).
 - Server-side rendered **View** templates with [html/template](https://golang.org/pkg/html/template/).
 - Client-side rendered **Progressive Web App** with [Webpack](https://webpack.js.org/) + [Svelte](https://svelte.dev/).
 - Single binary support with **View** + **Progressive Web App** embedded.

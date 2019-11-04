@@ -59,7 +59,7 @@ func init() {
 // cmd - provides appy's built-in commands and allow custom command constructing
 // config - provides appy's global configuration
 // logger - provides logger
-// server - provides the capability to serve HTTP/GRPC requests
+// server - provides the capability to serve HTTP requests
 // dbManager - manages the databases along with their pool connections
 func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 	cmd := NewCmd()

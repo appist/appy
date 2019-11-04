@@ -11,7 +11,7 @@ import (
 func newServeCommand(dbManager *DbManager, s *Server) *Cmd {
 	return &Cmd{
 		Use:   "serve",
-		Short: "Run the GRPC/HTTP web server",
+		Short: "Run the HTTP web server",
 		Run: func(cmd *Cmd, args []string) {
 			if IsConfigErrored(s.config, s.logger) || IsDbManagerErrored(s.config, dbManager, s.logger) {
 				os.Exit(-1)

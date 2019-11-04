@@ -31,7 +31,7 @@ var (
 func newStartCommand(s *Server) *Cmd {
 	return &Cmd{
 		Use:   "start",
-		Short: "Runs the GRPC/HTTP web server in development watch mode (debug build only)",
+		Short: "Runs the HTTP web server in development watch mode (debug build only)",
 		Run: func(cmd *Cmd, args []string) {
 			if IsConfigErrored(s.config, s.logger) {
 				os.Exit(-1)
