@@ -76,7 +76,15 @@ func csrfHandler(ctx *Context, config *Config, logger *Logger) {
 		}
 	}
 
-	ctx.Set(csrfCtxTokenKey, getCSRFMaskedToken(realToken))
+	authenticityToken := getCSRFMaskedToken(realToken)
+	err = saveAuthenticityTokenIntoCookie(authenticityToken, ctx, config)
+	if err != nil {
+		logger.Error(err)
+		ctx.AbortWithError(http.StatusForbidden, err)
+		return
+	}
+
+	ctx.Set(csrfCtxTokenKey, authenticityToken)
 	ctx.Set(csrfCtxFieldNameKey, strings.ToLower(config.HTTPCSRFFieldName))
 
 	r := ctx.Request
@@ -276,6 +284,20 @@ func saveCSRFTokenIntoCookie(token []byte, ctx *Context, config *Config) error {
 		config.HTTPCSRFCookieDomain,
 		config.HTTPCSRFCookieSecure,
 		config.HTTPCSRFCookieHTTPOnly,
+	)
+
+	return nil
+}
+
+func saveAuthenticityTokenIntoCookie(token string, ctx *Context, config *Config) error {
+	ctx.SetCookie(
+		config.HTTPCSRFFieldName,
+		token,
+		config.HTTPCSRFCookieMaxAge,
+		config.HTTPCSRFCookiePath,
+		config.HTTPCSRFCookieDomain,
+		config.HTTPCSRFCookieSecure,
+		false,
 	)
 
 	return nil
