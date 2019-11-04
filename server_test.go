@@ -113,7 +113,27 @@ func (s *ServerSuite) TestInitSSRWithDebugBuild() {
 	Build = DebugBuild
 	config := NewConfig(Build, s.logger, nil)
 	server := NewServer(config, s.logger, s.assets, s.viewHelper)
-	server.InitSSR()
+	s.NoError(server.InitSSR())
+
+	server.router.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "welcome/index", nil)
+	})
+	request, _ := http.NewRequest("GET", "/", nil)
+	server.router.ServeHTTP(s.recorder, request)
+	s.Equal(500, s.recorder.Code)
+
+	server = NewServer(config, s.logger, s.assets, s.viewHelper)
+	s.NoError(server.InitSSR())
+	server.router.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "welcome/index.html", H{"message": "i am testing"})
+	})
+	s.recorder = CreateTestResponseRecorder()
+	request, _ = http.NewRequest("GET", "/", nil)
+	server.router.ServeHTTP(s.recorder, request)
+
+	s.Equal(200, s.recorder.Code)
+	s.Contains(s.recorder.Body.String(), "i am testing")
+	s.Contains(s.recorder.Body.String(), "i am view helper")
 }
 
 func (s *ServerSuite) TestInitSSRWithReleaseBuild() {
@@ -131,7 +151,27 @@ func (s *ServerSuite) TestInitSSRWithReleaseBuild() {
 	}
 	config := NewConfig(Build, s.logger, nil)
 	server := NewServer(config, s.logger, s.assets, s.viewHelper)
-	server.InitSSR()
+	s.NoError(server.InitSSR())
+
+	server.router.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "welcome/index", nil)
+	})
+	request, _ := http.NewRequest("GET", "/", nil)
+	server.router.ServeHTTP(s.recorder, request)
+	s.Equal(500, s.recorder.Code)
+
+	server = NewServer(config, s.logger, s.assets, s.viewHelper)
+	s.NoError(server.InitSSR())
+	server.router.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "welcome/index.html", H{"message": "i am testing"})
+	})
+	s.recorder = CreateTestResponseRecorder()
+	request, _ = http.NewRequest("GET", "/", nil)
+	server.router.ServeHTTP(s.recorder, request)
+
+	s.Equal(200, s.recorder.Code)
+	s.Contains(s.recorder.Body.String(), "i am testing")
+	s.Contains(s.recorder.Body.String(), "i am view helper")
 }
 
 func (s *ServerSuite) TestIsSSLCertsExist() {
