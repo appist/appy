@@ -250,6 +250,10 @@ func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
+	if os.Getenv("GITHUB_WORKFLOW") != "" {
+		os.Setenv("DB_ADDR_PRIMARY", "localhost:32768")
+	}
+
 	build := DebugBuild
 	logger := NewLogger(build)
 	config := NewConfig(build, logger, nil)

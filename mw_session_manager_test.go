@@ -48,6 +48,7 @@ func (s *SessionManagerSuite) SetupTest() {
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
 	s.logger = NewLogger(DebugBuild)
 	s.config = NewConfig(DebugBuild, s.logger, nil)
 	s.recorder = httptest.NewRecorder()
@@ -81,6 +82,10 @@ func (s *SessionManagerSuite) TestSessionCookieStore() {
 }
 
 func (s *SessionManagerSuite) TestSessionRedisStore() {
+	if os.Getenv("GITHUB_WORKFLOW") != "" {
+		os.Setenv("HTTP_SESSION_REDIS_ADDR", "localhost:32770")
+	}
+
 	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
