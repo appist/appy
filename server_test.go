@@ -65,6 +65,7 @@ func (s *ServerSuite) SetupTest() {
 
 func (s *ServerSuite) TearDownTest() {
 	_ssrPaths = s.oldSSRPaths
+	Build = DebugBuild
 	os.Clearenv()
 }
 
@@ -103,6 +104,36 @@ func (s *ServerSuite) TestNewServerWithSSLEnabled() {
 	s.Equal("localhost:3443", server.http.Addr)
 }
 
+func (s *ServerSuite) TestInitSSRWithDebugBuild() {
+	os.Setenv("APPY_ENV", "development")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	Build = DebugBuild
+	config := NewConfig(Build, s.logger, nil)
+	server := NewServer(config, s.logger, s.assets, s.viewHelper)
+	server.InitSSR()
+}
+
+func (s *ServerSuite) TestInitSSRWithReleaseBuild() {
+	os.Setenv("APPY_ENV", "development")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	Build = ReleaseBuild
+	_ssrPaths = map[string]string{
+		"root":   ".ssr",
+		"config": "config",
+		"locale": "locales",
+		"view":   "views",
+	}
+	config := NewConfig(Build, s.logger, nil)
+	server := NewServer(config, s.logger, s.assets, s.viewHelper)
+	server.InitSSR()
+}
+
 func (s *ServerSuite) TestIsSSLCertsExist() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
@@ -110,7 +141,7 @@ func (s *ServerSuite) TestIsSSLCertsExist() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	config := NewConfig(DebugBuild, s.logger, nil)
-	server := NewServer(config, s.logger, s.assets, nil)
+	server := NewServer(config, s.logger, s.assets, s.viewHelper)
 	s.Equal(false, server.IsSSLCertExisted())
 
 	config.HTTPSSLCertPath = "testdata/ssl"
@@ -203,6 +234,21 @@ func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 	output = s.buffer.String()
 	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: testdata/pkg/config/.env.development", runtime.Version()))
 	s.Contains(output, "* Listening on https://0.0.0.0:3443")
+}
+
+func (s *ServerSuite) TestSetRoutes() {
+	os.Setenv("APPY_ENV", "development")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	config := NewConfig(Build, s.logger, nil)
+	server := NewServer(config, s.logger, nil, nil)
+	server.SetRoutes(func(r *Router) {
+		r.GET("/dummy", func(ctx *Context) {})
+	})
+
+	s.Equal("/dummy", server.Routes()[0].Path)
 }
 
 func TestServer(t *testing.T) {

@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -251,7 +252,8 @@ func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	// A workaround for Github Action
-	if os.Getenv("DB_ADDR_PRIMARY") == "" {
+	_, err := net.Dial("tcp", "0.0.0.0:5432")
+	if err != nil {
 		os.Setenv("DB_ADDR_PRIMARY", "localhost:32768")
 	}
 

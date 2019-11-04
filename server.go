@@ -311,7 +311,7 @@ func (s *Server) initSSRLocale() error {
 	localeDir := s.ssrPaths["locale"]
 
 	// Try getting all the locale files from `pkg/locales`, but fallback to `assets` http.FileSystem.
-	if Build == "debug" {
+	if Build == DebugBuild {
 		localeFiles, err = ioutil.ReadDir(localeDir)
 
 		if err != nil {
@@ -320,7 +320,6 @@ func (s *Server) initSSRLocale() error {
 	} else {
 		localeDir = "/" + s.ssrPaths["root"] + "/" + localeDir
 		file, err := s.assets.Open(localeDir)
-
 		if err != nil {
 			return err
 		}
@@ -331,7 +330,7 @@ func (s *Server) initSSRLocale() error {
 	for _, localeFile := range localeFiles {
 		localeFn := localeFile.Name()
 
-		if Build == "debug" {
+		if Build == DebugBuild {
 			data, _ = ioutil.ReadFile(localeDir + "/" + localeFn)
 		} else {
 			file, err := s.assets.Open(localeDir + "/" + localeFn)
@@ -358,7 +357,7 @@ func (s *Server) initSSRView() error {
 	viewDir := s.ssrPaths["view"]
 
 	// We will always read from local file system when it's debug build. Otherwise, read from the bind assets.
-	if Build == "debug" {
+	if Build == DebugBuild {
 		if fis, err = ioutil.ReadDir(viewDir); err != nil {
 			return err
 		}
@@ -397,7 +396,7 @@ func (s *Server) initSSRView() error {
 
 		var fileInfos []os.FileInfo
 		targetDir := viewDir + "/" + fi.Name()
-		if Build == "debug" {
+		if Build == DebugBuild {
 			fileInfos, _ = ioutil.ReadDir(targetDir)
 		} else {
 			var file http.File
@@ -437,7 +436,7 @@ func getCommonTemplates(assets http.FileSystem, build, path string) ([]string, e
 	)
 
 	tpls := []string{}
-	if build == "debug" {
+	if build == DebugBuild {
 		fis, _ = ioutil.ReadDir(path)
 	} else {
 		var file http.File
@@ -468,7 +467,7 @@ func getCommonTemplates(assets http.FileSystem, build, path string) ([]string, e
 
 func getTemplateContent(assets http.FileSystem, build, path string) (string, error) {
 	var data []byte
-	if build == "debug" {
+	if build == DebugBuild {
 		data, _ := ioutil.ReadFile(path)
 		return string(data), nil
 	}
@@ -574,7 +573,7 @@ func errorTpl404() string {
 }
 
 func errorTpl500() string {
-	if Build == "debug" {
+	if Build == DebugBuild {
 		return errorTplUpper() + `
 <h2 class="text-danger">Full Trace</h2>
 <pre class="pre-scrollable bg-light p-2">{{range $error := .errors}}{{$error}}{{end}}</pre>

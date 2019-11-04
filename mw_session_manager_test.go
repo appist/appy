@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -50,7 +51,8 @@ func (s *SessionManagerSuite) SetupTest() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	// A workaround for Github Action
-	if os.Getenv("HTTP_SESSION_REDIS_ADDR") == "" {
+	_, err := net.Dial("tcp", "0.0.0.0:6379")
+	if err != nil {
 		os.Setenv("HTTP_SESSION_REDIS_ADDR", "localhost:32770")
 	}
 
