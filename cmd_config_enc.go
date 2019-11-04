@@ -3,6 +3,7 @@ package appy
 import (
 	"encoding/hex"
 	"fmt"
+	"os"
 )
 
 func newConfigEncryptCommand(config *Config, logger *Logger) *Cmd {
@@ -11,7 +12,9 @@ func newConfigEncryptCommand(config *Config, logger *Logger) *Cmd {
 		Short: "Encrypt a value using the AES algorithm",
 		Args:  ExactArgs(1),
 		Run: func(cmd *Cmd, args []string) {
-			CheckConfig(config, logger)
+			if IsConfigErrored(config, logger) {
+				os.Exit(-1)
+			}
 
 			masterKey := config.MasterKey()
 			if masterKey == nil {

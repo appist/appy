@@ -10,8 +10,9 @@ func newDbSchemaDumpCommand(config *Config, dbManager *DbManager, logger *Logger
 		Use:   "db:schema:dump",
 		Short: "Dump all the databases schema for the current environment (debug build only)",
 		Run: func(cmd *Cmd, args []string) {
-			CheckConfig(config, logger)
-			CheckDbManager(config, dbManager, logger)
+			if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
+				os.Exit(-1)
+			}
 
 			if len(dbManager.dbs) < 1 {
 				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)

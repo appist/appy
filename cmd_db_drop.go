@@ -1,15 +1,23 @@
 package appy
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 func newDbDropCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd {
 	cmd := &Cmd{
 		Use:   "db:drop",
 		Short: "Drop all databases for the current environment",
 		Run: func(cmd *Cmd, args []string) {
-			CheckProtectedEnvs(config)
-			CheckConfig(config, logger)
-			CheckDbManager(config, dbManager, logger)
+			if IsProtectedEnv(config) {
+				fmt.Printf("You are attempting to run a destructive action against your database in '%s' environment.\n", config.AppyEnv)
+				os.Exit(-1)
+			}
+
+			if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
+				os.Exit(-1)
+			}
 
 			if len(dbManager.dbs) < 1 {
 				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)

@@ -12,10 +12,11 @@ func newDbMigrateStatusCommand(config *Config, dbManager *DbManager, logger *Log
 		Use:   "db:migrate:status",
 		Short: "Migrate the database(default: all, use --database to specify just 1) for the current environment",
 		Run: func(cmd *Cmd, args []string) {
-			CheckConfig(config, logger)
-			CheckDbManager(config, dbManager, logger)
-			logger.SetDbLogging(false)
+			if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
+				os.Exit(-1)
+			}
 
+			logger.SetDbLogging(false)
 			if len(dbManager.dbs) < 1 {
 				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
 				os.Exit(0)

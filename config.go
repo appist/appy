@@ -125,9 +125,9 @@ func NewConfig(build string, logger *Logger, assets http.FileSystem) *Config {
 	if masterKey != nil {
 		config.path = configPath(build)
 		config.masterKey = masterKey
-		errs = append(errs, decryptConfig(build, config.path, assets, masterKey)...)
-		if err != nil {
-			errs = append(errs, err)
+		decryptErrs := decryptConfig(build, config.path, assets, masterKey)
+		if len(decryptErrs) > 0 {
+			errs = append(errs, decryptErrs...)
 		}
 
 		err = ParseEnv(config)
@@ -153,23 +153,26 @@ func (c Config) Errors() []error {
 	return c.errors
 }
 
-// CheckConfig is used to check if config contains any error during initialization.
-func CheckConfig(config *Config, logger *Logger) {
+// IsConfigErrored is used to check if config contains any error during initialization.
+func IsConfigErrored(config *Config, logger *Logger) bool {
 	if config != nil && config.errors != nil {
 		for _, err := range config.errors {
 			logger.Info(err.Error())
 		}
 
-		os.Exit(-1)
+		return true
 	}
+
+	return false
 }
 
-// CheckProtectedEnvs is used to protect the app from being destroyed by a command accidentally.
-func CheckProtectedEnvs(config *Config) {
+// IsProtectedEnv is used to protect the app from being destroyed by a command accidentally.
+func IsProtectedEnv(config *Config) bool {
 	if config.AppyEnv == "production" {
-		fmt.Printf("You are attempting to run a destructive action against your database in '%s' environment.\n", config.AppyEnv)
-		os.Exit(-1)
+		return true
 	}
+
+	return false
 }
 
 func configPath(build string) string {

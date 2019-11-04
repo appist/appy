@@ -310,6 +310,47 @@ func (s *ConfigSuite) TestNewConfigWithValidDatabaseConfig() {
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
+func (s *ConfigSuite) TestIsConfigErrored() {
+	build := DebugBuild
+	logger := NewLogger(build)
+	config := NewConfig(build, logger, nil)
+	s.Equal(true, IsConfigErrored(config, logger))
+
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	logger = NewLogger(build)
+	config = NewConfig(build, logger, nil)
+	s.Equal(false, IsConfigErrored(config, logger))
+
+	os.Unsetenv("APPY_MASTER_KEY")
+	os.Unsetenv("HTTP_CSRF_SECRET")
+	os.Unsetenv("HTTP_SESSION_SECRETS")
+}
+
+func (s *ConfigSuite) TestIsProtectedEnv() {
+	oldAppyEnv := os.Getenv("APPY_ENV")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+
+	build := DebugBuild
+	logger := NewLogger(build)
+	config := NewConfig(build, logger, nil)
+	s.Equal(false, IsProtectedEnv(config))
+
+	os.Setenv("APPY_ENV", "production")
+	logger = NewLogger(build)
+	config = NewConfig(build, logger, nil)
+	s.Equal(true, IsProtectedEnv(config))
+
+	os.Setenv("APPY_ENV", oldAppyEnv)
+	os.Unsetenv("APPY_MASTER_KEY")
+	os.Unsetenv("HTTP_CSRF_SECRET")
+	os.Unsetenv("HTTP_SESSION_SECRETS")
+}
+
 func (s *ConfigSuite) TestMasterKeyWithMissingKeyFile() {
 	_, err := parseMasterKey()
 	s.EqualError(err, ErrReadMasterKeyFile.Error())

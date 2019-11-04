@@ -33,9 +33,11 @@ func newStartCommand(s *Server) *Cmd {
 		Use:   "start",
 		Short: "Runs the GRPC/HTTP web server in development watch mode (debug build only)",
 		Run: func(cmd *Cmd, args []string) {
-			CheckConfig(s.config, s.logger)
+			if IsConfigErrored(s.config, s.logger) {
+				os.Exit(-1)
+			}
 
-			if s.config.HTTPSSLEnabled == true && !s.IsSSLCertExisted() {
+			if s.config.HTTPSSLEnabled && !s.IsSSLCertExisted() {
 				s.logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
 			}
 

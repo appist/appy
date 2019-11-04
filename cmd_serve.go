@@ -13,8 +13,9 @@ func newServeCommand(dbManager *DbManager, s *Server) *Cmd {
 		Use:   "serve",
 		Short: "Run the GRPC/HTTP web server",
 		Run: func(cmd *Cmd, args []string) {
-			CheckConfig(s.config, s.logger)
-			CheckDbManager(s.config, dbManager, s.logger)
+			if IsConfigErrored(s.config, s.logger) || IsDbManagerErrored(s.config, dbManager, s.logger) {
+				os.Exit(-1)
+			}
 
 			if s.config.HTTPSSLEnabled == true && !s.IsSSLCertExisted() {
 				s.logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")

@@ -1,7 +1,6 @@
 package appy
 
 import (
-	"os"
 	"strings"
 	"sync"
 )
@@ -94,13 +93,15 @@ func (m *DbManager) PrintInfo() {
 	m.logger.Infof("* Available DBs: %s", dbs)
 }
 
-// CheckDbManager is used to check if DB manager contains any error during initialization.
-func CheckDbManager(config *Config, dbManager *DbManager, logger *Logger) {
+// IsDbManagerErrored is used to check if DB manager contains any error during initialization.
+func IsDbManagerErrored(config *Config, dbManager *DbManager, logger *Logger) bool {
 	if dbManager != nil && dbManager.errors != nil {
 		for _, err := range dbManager.errors {
 			logger.Info(err.Error())
 		}
 
-		os.Exit(-1)
+		return true
 	}
+
+	return false
 }
