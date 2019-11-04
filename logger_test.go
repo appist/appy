@@ -1,14 +1,32 @@
-package appy_test
+package appy
 
 import (
+	"bufio"
+	"bytes"
 	"reflect"
 	"testing"
 
-	"github.com/appist/appy"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type LoggerSuite struct {
-	appy.TestSuite
+	TestSuite
+}
+
+func newMockedLogger() (*Logger, *bytes.Buffer, *bufio.Writer) {
+	var buffer bytes.Buffer
+	writer := bufio.NewWriter(&buffer)
+
+	return &Logger{
+		SugaredLogger: zap.New(
+			zapcore.NewCore(
+				zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+				zapcore.AddSync(writer),
+				zapcore.DebugLevel,
+			),
+		).Sugar(),
+	}, &buffer, writer
 }
 
 func (s *LoggerSuite) SetupTest() {
@@ -18,24 +36,24 @@ func (s *LoggerSuite) TearDownTest() {
 }
 
 func (s *LoggerSuite) TestNewLogger() {
-	logger := appy.NewLogger(appy.DebugBuild)
+	logger := NewLogger(DebugBuild)
 	_, ok := reflect.TypeOf(logger).MethodByName("Desugar")
-	s.Equal(appy.DebugBuild, logger.Build())
+	s.Equal(DebugBuild, logger.Build())
 	s.Equal(true, logger.DbLogging())
 	s.Equal(true, ok)
 
-	logger = appy.NewLogger(appy.ReleaseBuild)
-	s.Equal(appy.ReleaseBuild, logger.Build())
+	logger = NewLogger(ReleaseBuild)
+	s.Equal(ReleaseBuild, logger.Build())
 	s.Equal(true, logger.DbLogging())
 }
 
 func (s *LoggerSuite) TestSetDbLogging() {
-	logger := appy.NewLogger(appy.DebugBuild)
+	logger := NewLogger(DebugBuild)
 	s.Equal(true, logger.DbLogging())
 	logger.SetDbLogging(false)
 	s.Equal(false, logger.DbLogging())
 }
 
 func TestLoggerSuite(t *testing.T) {
-	appy.RunTestSuite(t, new(LoggerSuite))
+	RunTestSuite(t, new(LoggerSuite))
 }

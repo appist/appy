@@ -1,6 +1,8 @@
 package appy
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/tls"
 	"errors"
 	"mime/multipart"
@@ -17,15 +19,18 @@ type CSRFSuite struct {
 	TestSuite
 	config   *Config
 	logger   *Logger
+	buffer   *bytes.Buffer
+	writer   *bufio.Writer
 	recorder *httptest.ResponseRecorder
 }
 
 func (s *CSRFSuite) SetupTest() {
-	Build = DebugBuild
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-	s.logger = NewLogger(DebugBuild)
+
+	Build = DebugBuild
+	s.logger, s.buffer, s.writer = newMockedLogger()
 	s.config = NewConfig(DebugBuild, s.logger, nil)
 	s.recorder = httptest.NewRecorder()
 	csrfSecureCookie = securecookie.New([]byte("481e5d98a31585148b8b1dfb6a3c0465"), nil)

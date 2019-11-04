@@ -1,15 +1,13 @@
-package appy_test
+package appy
 
 import (
 	"fmt"
 	"os"
 	"testing"
-
-	"github.com/appist/appy"
 )
 
 type SupportSuite struct {
-	appy.TestSuite
+	TestSuite
 }
 
 func (s *SupportSuite) SetupTest() {
@@ -19,32 +17,32 @@ func (s *SupportSuite) TearDownTest() {
 }
 
 func (s *SupportSuite) TestAESEncryptInvalidKeyLength() {
-	_, err := appy.AESEncrypt([]byte("dummy"), []byte("key"))
+	_, err := AESEncrypt([]byte("dummy"), []byte("key"))
 	s.EqualError(err, "crypto/aes: invalid key size 3")
 }
 
 func (s *SupportSuite) TestAESDecryptInvalidKeyLength() {
-	_, err := appy.AESDecrypt([]byte("dummy"), []byte("key"))
+	_, err := AESDecrypt([]byte("dummy"), []byte("key"))
 	s.EqualError(err, "crypto/aes: invalid key size 3")
 }
 
 func (s *SupportSuite) TestAESEncryptAESDecryptWithValidKey() {
 	var err error
 	key := []byte("58f364f29b568807ab9cffa22c99b538")
-	ciphertext, err := appy.AESEncrypt([]byte("!@#$%^&*()"), key)
+	ciphertext, err := AESEncrypt([]byte("!@#$%^&*()"), key)
 	s.NoError(err)
 
-	plaintext, err := appy.AESDecrypt(ciphertext, key)
+	plaintext, err := AESDecrypt(ciphertext, key)
 	s.NoError(err)
 	s.Equal(plaintext, []byte("!@#$%^&*()"))
 }
 
 func (s *SupportSuite) TestAESEncryptAESDecryptWithInvalidKey() {
 	var err error
-	ciphertext, err := appy.AESEncrypt([]byte("!@#$%^&*()"), []byte("58f364f29b568807ab9cffa22c99b538"))
+	ciphertext, err := AESEncrypt([]byte("!@#$%^&*()"), []byte("58f364f29b568807ab9cffa22c99b538"))
 	s.NoError(err)
 
-	_, err = appy.AESDecrypt(ciphertext, []byte("58f364f29b568807ab9cffa22c99b583"))
+	_, err = AESDecrypt(ciphertext, []byte("58f364f29b568807ab9cffa22c99b583"))
 	s.Error(err)
 }
 
@@ -108,12 +106,12 @@ func (s *SupportSuite) TestArrayContains() {
 	}
 
 	for _, t := range tt {
-		s.Equal(t.expected, appy.ArrayContains(t.arr, t.val))
+		s.Equal(t.expected, ArrayContains(t.arr, t.val))
 	}
 }
 
 func (s *SupportSuite) TestCaptureOutput() {
-	output := appy.CaptureOutput(func() {
+	output := CaptureOutput(func() {
 		fmt.Fprint(os.Stdout, "foo")
 		fmt.Fprint(os.Stderr, "bar")
 	})
@@ -135,12 +133,12 @@ func (s *SupportSuite) TestDeepClone() {
 
 	user := User{Email: "john_doe@gmail.com", Name: "John Doe"}
 	employee := Employee{}
-	appy.DeepClone(&employee, &user)
+	DeepClone(&employee, &user)
 	s.Equal("john_doe@gmail.com", employee.Email)
 	s.Equal("John Doe", employee.Name)
 
 	employees := []Employee{}
-	appy.DeepClone(&employees, &user)
+	DeepClone(&employees, &user)
 	s.Equal(1, len(employees))
 	s.Equal("john_doe@gmail.com", employees[0].Email)
 	s.Equal("John Doe", employees[0].Name)
@@ -150,7 +148,7 @@ func (s *SupportSuite) TestDeepClone() {
 		{Email: "john_doe2@gmail.com", Name: "John Doe 2"},
 	}
 	employees = []Employee{}
-	appy.DeepClone(&employees, &users)
+	DeepClone(&employees, &users)
 	s.Equal(2, len(employees))
 	s.Equal("john_doe1@gmail.com", employees[0].Email)
 	s.Equal("John Doe 1", employees[0].Name)
@@ -174,7 +172,7 @@ func (s *SupportSuite) TestIsPascalCase() {
 	}
 
 	for _, t := range tt {
-		s.Equal(t[1], appy.IsPascalCase(t[0].(string)))
+		s.Equal(t[1], IsPascalCase(t[0].(string)))
 	}
 }
 
@@ -195,7 +193,7 @@ func (s *SupportSuite) TestToCamelCase() {
 	}
 
 	for _, t := range tt {
-		s.Equal(t[1], appy.ToCamelCase(t[0]))
+		s.Equal(t[1], ToCamelCase(t[0]))
 	}
 }
 
@@ -216,7 +214,7 @@ func (s *SupportSuite) TestToSnakeCase() {
 	}
 
 	for _, t := range tt {
-		s.Equal(t[1], appy.ToSnakeCase(t[0]))
+		s.Equal(t[1], ToSnakeCase(t[0]))
 	}
 }
 
@@ -229,7 +227,7 @@ func (s *SupportSuite) TestParseEnvWithSupportedTypes() {
 	}
 
 	c := &testConfig{}
-	appy.ParseEnv(c)
+	ParseEnv(c)
 	s.Equal(map[string]string{"user1": "pass1", "user2": "pass2"}, c.Admins)
 	s.Equal([]string{"0.0.0.0", "1.1.1.1"}, c.Hosts)
 	s.Equal([]byte("hello"), c.Secret)
@@ -241,7 +239,7 @@ func (s *SupportSuite) TestParseEnvWithUnsupportedTypes() {
 		Users map[string]int `env:"TEST_USERS" envDefault:"user1:1,user2:2"`
 	}
 
-	err := appy.ParseEnv(&testConfig{})
+	err := ParseEnv(&testConfig{})
 	s.NotNil(err)
 }
 
@@ -251,10 +249,10 @@ func (s *SupportSuite) TestParseEnvWithInvalidFormat() {
 	}
 
 	c := &testConfig{}
-	appy.ParseEnv(c)
+	ParseEnv(c)
 	s.Equal(map[string]string{}, c.Users)
 }
 
 func TestSupportSuite(t *testing.T) {
-	appy.RunTestSuite(t, new(SupportSuite))
+	RunTestSuite(t, new(SupportSuite))
 }

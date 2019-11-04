@@ -1,1 +1,1 @@
-package appy_test
+package appy

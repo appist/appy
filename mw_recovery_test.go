@@ -1,6 +1,8 @@
 package appy
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"net"
 	"net/http"
@@ -13,6 +15,8 @@ type RecoverySuite struct {
 	TestSuite
 	config   *Config
 	logger   *Logger
+	buffer   *bytes.Buffer
+	writer   *bufio.Writer
 	recorder *httptest.ResponseRecorder
 	server   *Server
 }
@@ -21,16 +25,15 @@ func (s *RecoverySuite) SetupTest() {
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-	s.logger = NewLogger(DebugBuild)
+
+	s.logger, s.buffer, s.writer = newMockedLogger()
 	s.config = NewConfig(DebugBuild, s.logger, nil)
 	s.recorder = httptest.NewRecorder()
 	s.server = NewServer(s.config, s.logger, nil, nil)
 }
 
 func (s *RecoverySuite) TearDownTest() {
-	os.Unsetenv("APPY_MASTER_KEY")
-	os.Unsetenv("HTTP_CSRF_SECRET")
-	os.Unsetenv("HTTP_SESSION_SECRETS")
+	os.Clearenv()
 }
 
 func (s *RecoverySuite) TestPanicRenders500() {

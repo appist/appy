@@ -96,6 +96,7 @@ func renderErrors(ctx *Context, logger *Logger) {
 		"sessionVars": template.HTML(sessionVars),
 		"title":       "500 Internal Server Error",
 	})
+	ctx.Abort()
 }
 
 // recoveryStack returns a nicely formatted stack frame, skipping skip frames.

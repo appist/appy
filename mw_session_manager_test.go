@@ -1,4 +1,4 @@
-package appy_test
+package appy
 
 import (
 	"net/http"
@@ -6,18 +6,17 @@ import (
 	"os"
 	"testing"
 
-	"github.com/appist/appy"
 	ginsessions "github.com/gin-contrib/sessions"
 )
 
 type SessionManagerSuite struct {
-	appy.TestSuite
-	config   *appy.Config
-	logger   *appy.Logger
+	TestSuite
+	config   *Config
+	logger   *Logger
 	recorder *httptest.ResponseRecorder
 }
 
-func testSessionOps(s *SessionManagerSuite, session appy.Sessioner) {
+func testSessionOps(s *SessionManagerSuite, session Sessioner) {
 	session.AddFlash("i am a bot", "message")
 	s.Nil(session.Save())
 
@@ -49,32 +48,30 @@ func (s *SessionManagerSuite) SetupTest() {
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-	s.logger = appy.NewLogger(appy.DebugBuild)
-	s.config = appy.NewConfig(appy.DebugBuild, s.logger, nil)
+	s.logger = NewLogger(DebugBuild)
+	s.config = NewConfig(DebugBuild, s.logger, nil)
 	s.recorder = httptest.NewRecorder()
 }
 
 func (s *SessionManagerSuite) TearDownTest() {
-	os.Unsetenv("APPY_MASTER_KEY")
-	os.Unsetenv("HTTP_CSRF_SECRET")
-	os.Unsetenv("HTTP_SESSION_SECRETS")
+	os.Clearenv()
 }
 
 func (s *SessionManagerSuite) TestSessionUnknownStore() {
-	ctx, _ := appy.CreateTestContext(s.recorder)
+	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 
 	s.config.HTTPSessionProvider = "unknown"
-	s.Panics(func() { appy.SessionManager(s.config)(ctx) })
+	s.Panics(func() { SessionManager(s.config)(ctx) })
 }
 
 func (s *SessionManagerSuite) TestSessionCookieStore() {
-	ctx, _ := appy.CreateTestContext(s.recorder)
+	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "cookie"
-	appy.SessionManager(s.config)(ctx)
+	SessionManager(s.config)(ctx)
 
-	session := appy.DefaultSession(ctx)
+	session := DefaultSession(ctx)
 	session.Options(ginsessions.Options{
 		MaxAge: 368400,
 	})
@@ -84,39 +81,39 @@ func (s *SessionManagerSuite) TestSessionCookieStore() {
 }
 
 func (s *SessionManagerSuite) TestSessionRedisStore() {
-	ctx, _ := appy.CreateTestContext(s.recorder)
+	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
-	appy.SessionManager(s.config)(ctx)
+	SessionManager(s.config)(ctx)
 
-	session := appy.DefaultSession(ctx)
+	session := DefaultSession(ctx)
 	testSessionOps(s, session)
 }
 
 func (s *SessionManagerSuite) TestSessionRedisStoreWrongAddr() {
-	ctx, _ := appy.CreateTestContext(s.recorder)
+	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
 	s.config.HTTPSessionRedisAddr = "localhost:1234"
-	s.Panics(func() { appy.SessionManager(s.config)(ctx) })
+	s.Panics(func() { SessionManager(s.config)(ctx) })
 }
 
 func (s *SessionManagerSuite) TestSessionRedisStoreWrongAuth() {
-	ctx, _ := appy.CreateTestContext(s.recorder)
+	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
 	s.config.HTTPSessionRedisAuth = "authme"
-	s.Panics(func() { appy.SessionManager(s.config)(ctx) })
+	s.Panics(func() { SessionManager(s.config)(ctx) })
 }
 
 func (s *SessionManagerSuite) TestSessionRedisStoreInvalidDb() {
-	ctx, _ := appy.CreateTestContext(s.recorder)
+	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
 	s.config.HTTPSessionRedisDb = "-1"
-	s.Panics(func() { appy.SessionManager(s.config)(ctx) })
+	s.Panics(func() { SessionManager(s.config)(ctx) })
 }
 
 func TestSessionManager(t *testing.T) {
-	appy.RunTestSuite(t, new(SessionManagerSuite))
+	RunTestSuite(t, new(SessionManagerSuite))
 }

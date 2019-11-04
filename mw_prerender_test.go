@@ -1,6 +1,8 @@
 package appy
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +15,8 @@ type PrerenderSuite struct {
 	TestSuite
 	config   *Config
 	logger   *Logger
+	buffer   *bytes.Buffer
+	writer   *bufio.Writer
 	recorder *httptest.ResponseRecorder
 }
 
@@ -20,15 +24,14 @@ func (s *PrerenderSuite) SetupTest() {
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-	s.logger = NewLogger(DebugBuild)
+
+	s.logger, s.buffer, s.writer = newMockedLogger()
 	s.config = NewConfig(DebugBuild, s.logger, nil)
 	s.recorder = httptest.NewRecorder()
 }
 
 func (s *PrerenderSuite) TearDownTest() {
-	os.Unsetenv("APPY_MASTER_KEY")
-	os.Unsetenv("HTTP_CSRF_SECRET")
-	os.Unsetenv("HTTP_SESSION_SECRETS")
+	os.Clearenv()
 }
 
 func (s *PrerenderSuite) TestRequestWithNonSEOBot() {

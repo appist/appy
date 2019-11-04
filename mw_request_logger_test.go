@@ -24,9 +24,7 @@ func (s *RequestLoggerSuite) SetupTest() {
 }
 
 func (s *RequestLoggerSuite) TearDownTest() {
-	os.Unsetenv("APPY_MASTER_KEY")
-	os.Unsetenv("HTTP_CSRF_SECRET")
-	os.Unsetenv("HTTP_SESSION_SECRETS")
+	os.Clearenv()
 }
 
 func (s *RequestLoggerSuite) TestRequestLogger() {

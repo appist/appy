@@ -1,4 +1,4 @@
-package appy_test
+package appy
 
 import (
 	"net/http"
@@ -6,14 +6,12 @@ import (
 	"net/url"
 	"os"
 	"testing"
-
-	"github.com/appist/appy"
 )
 
 type HealthCheckSuite struct {
-	appy.TestSuite
-	config   *appy.Config
-	logger   *appy.Logger
+	TestSuite
+	config   *Config
+	logger   *Logger
 	recorder *httptest.ResponseRecorder
 }
 
@@ -21,19 +19,17 @@ func (s *HealthCheckSuite) SetupTest() {
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-	s.logger = appy.NewLogger(appy.DebugBuild)
-	s.config = appy.NewConfig(appy.DebugBuild, s.logger, nil)
+	s.logger = NewLogger(DebugBuild)
+	s.config = NewConfig(DebugBuild, s.logger, nil)
 	s.recorder = httptest.NewRecorder()
 }
 
 func (s *HealthCheckSuite) TearDownTest() {
-	os.Unsetenv("APPY_MASTER_KEY")
-	os.Unsetenv("HTTP_CSRF_SECRET")
-	os.Unsetenv("HTTP_SESSION_SECRETS")
+	os.Clearenv()
 }
 
 func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathMatches() {
-	ctx, _ := appy.CreateTestContext(s.recorder)
+	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "GET",
@@ -41,14 +37,14 @@ func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathMatches() {
 			Path: "/ping",
 		},
 	}
-	appy.HealthCheck("/ping")(ctx)
+	HealthCheck("/ping")(ctx)
 
 	s.Equal("text/plain; charset=utf-8", ctx.Writer.Header().Get("Content-Type"))
 	s.Equal(200, ctx.Writer.Status())
 }
 
 func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathDoesNotMatch() {
-	ctx, _ := appy.CreateTestContext(s.recorder)
+	ctx, _ := CreateTestContext(s.recorder)
 	ctx.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
@@ -56,11 +52,11 @@ func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathDoesNotMatch() {
 			Path: "/ping",
 		},
 	}
-	appy.HealthCheck("/health_check")(ctx)
+	HealthCheck("/health_check")(ctx)
 
 	s.NotEqual("text/plain; charset=utf-8", ctx.Writer.Header().Get("Content-Type"))
 }
 
 func TestHealthCheck(t *testing.T) {
-	appy.RunTestSuite(t, new(HealthCheckSuite))
+	RunTestSuite(t, new(HealthCheckSuite))
 }
