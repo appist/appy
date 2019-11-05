@@ -93,7 +93,7 @@ func newBuildCommand(s *Server) *Cmd {
 			s.logger.Infof("Compiling assets folder into '%s'... DONE", mainAssets)
 			os.Stdout = oldStdout
 
-			if _, err := os.Stat(wd + "/pkg/graphql/schema.gql"); !os.IsNotExist(err) {
+			if _, err := os.Stat(wd + "/pkg/graphql/config.yml"); !os.IsNotExist(err) {
 				s.logger.Info("Generating GraphQL boilerplate code...")
 				err = generateGQL(s)
 				if err != nil {
