@@ -33,5 +33,5 @@ require (
 	go.uber.org/zap v1.12.0
 	golang.org/x/text v0.3.2
 	google.golang.org/grpc v1.24.0
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.5
 )
