@@ -84,7 +84,7 @@ func watchHandler(e watcher.Event, s *Server) {
 	}
 
 	isGenerating = true
-	if strings.Contains(e.Path, ".gql") || strings.Contains(e.Path, ".graphql") {
+	if strings.Contains(e.Path, ".gql") || strings.Contains(e.Path, ".graphql") || strings.Contains(e.Path, "pkg/graphql/config.yml") {
 		s.logger.Info("* Generating GraphQL boilerplate code...")
 
 		err := generateGQL(s)

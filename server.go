@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
+	gqlgenHandler "github.com/99designs/gqlgen/handler"
 	"github.com/BurntSushi/toml"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/multitemplate"
@@ -195,6 +197,75 @@ func (s Server) Routes() []RouteInfo {
 	}
 
 	return routes
+}
+
+// InitGQL initializes the GraphQL routes.
+func (s Server) InitGQL(path string, playgroundPath string, schema graphql.ExecutableSchema) {
+	s.router.Any(path, gqlHandler(schema))
+
+	if playgroundPath != "" {
+		s.router.GET(playgroundPath, CSRFSkipCheck(), func(ctx *Context) {
+			ctx.Data(http.StatusOK, "text/html", gqlPlaygroundTpl(path, ctx))
+		})
+	}
+}
+
+func gqlHandler(schema graphql.ExecutableSchema) HandlerFunc {
+	h := gqlgenHandler.GraphQL(schema)
+
+	return func(ctx *Context) {
+		h.ServeHTTP(ctx.Writer, ctx.Request)
+	}
+}
+
+func gqlPlaygroundTpl(path string, ctx *Context) []byte {
+	return []byte(`
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8/>
+	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+	<title>GraphQL Playground</title>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/graphql-playground-react/build/static/css/index.css" />
+	<link rel="shortcut icon" href="//cdn.jsdelivr.net/npm/graphql-playground-react/build/favicon.png" />
+	<script src="//cdn.jsdelivr.net/npm/graphql-playground-react/build/static/js/middleware.js"></script>
+</head>
+<body>
+	<div id="root">
+	<style>
+		body { background-color: rgb(23, 42, 58); font-family: Open Sans, sans-serif; height: 90vh; }
+		#root { height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; }
+		.loading { font-size: 32px; font-weight: 200; color: rgba(255, 255, 255, .6); margin-left: 20px; }
+		img { width: 78px; height: 78px; }
+		.title { font-weight: 400; }
+	</style>
+	<img src='//cdn.jsdelivr.net/npm/graphql-playground-react/build/logo.png' alt=''>
+	<div class="loading"> Loading
+		<span class="title">GraphQL Playground</span>
+	</div>
+	</div>
+	<script>
+		function getCookie(name) {
+			var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+			return v ? v[2] : null;
+		}
+
+		window.addEventListener('load', function (event) {
+			GraphQLPlayground.init(document.getElementById('root'), {
+				endpoint: '` + path + `',
+				subscriptionEndpoint: '` + path + `',
+				headers: {
+					'X-CSRF-Token': unescape(getCookie("` + csrfTemplateFieldName(ctx) + `"))
+				},
+				settings: {
+					'request.credentials': 'include'
+				}
+			})
+		})
+	</script>
+</body>
+</html>
+`)
 }
 
 // SetRoutes configures routes for the server.
