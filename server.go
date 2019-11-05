@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/99designs/gqlgen-contrib/gqlapollotracing"
 	"github.com/99designs/gqlgen/graphql"
 	gqlgenHandler "github.com/99designs/gqlgen/handler"
 	"github.com/BurntSushi/toml"
@@ -19,6 +20,7 @@ import (
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-contrib/secure"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"go.uber.org/zap"
 	"golang.org/x/text/language"
@@ -201,7 +203,18 @@ func (s Server) Routes() []RouteInfo {
 
 // InitGQL initializes the GraphQL routes.
 func (s Server) InitGQL(path string, playgroundPath string, schema graphql.ExecutableSchema) {
-	s.router.Any(path, gqlHandler(schema))
+	opts := []gqlgenHandler.Option{
+		gqlgenHandler.WebsocketUpgrader(websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		}),
+		gqlgenHandler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
+		gqlgenHandler.Tracer(gqlapollotracing.NewTracer()),
+	}
+
+	s.router.GET(path, gqlHandler(schema, opts))
+	s.router.POST(path, gqlHandler(schema, opts))
 
 	if playgroundPath != "" {
 		s.router.GET(playgroundPath, CSRFSkipCheck(), func(ctx *Context) {
@@ -210,8 +223,8 @@ func (s Server) InitGQL(path string, playgroundPath string, schema graphql.Execu
 	}
 }
 
-func gqlHandler(schema graphql.ExecutableSchema) HandlerFunc {
-	h := gqlgenHandler.GraphQL(schema)
+func gqlHandler(schema graphql.ExecutableSchema, opts []gqlgenHandler.Option) HandlerFunc {
+	h := gqlgenHandler.GraphQL(schema, opts...)
 
 	return func(ctx *Context) {
 		h.ServeHTTP(ctx.Writer, ctx.Request)
