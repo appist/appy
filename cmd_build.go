@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	mainAssets = "pkg/app/assets.go"
+	mainAssets = "pkg/bootstrap/assets.go"
 )
 
 func newBuildCommand(s *Server) *Cmd {
@@ -86,7 +86,7 @@ func newBuildCommand(s *Server) *Cmd {
 
 			generateMainAssets(s.logger)
 			s.logger.Infof("Compiling assets folder into '%s'...", mainAssets)
-			err = vfsgen.Generate(http.Dir(assetsPath), vfsgen.Options{PackageName: "app", Filename: mainAssets, VariableName: "assets"})
+			err = vfsgen.Generate(http.Dir(assetsPath), vfsgen.Options{PackageName: "bootstrap", Filename: mainAssets, VariableName: "assets"})
 			if err != nil {
 				s.logger.Fatal(err)
 			}

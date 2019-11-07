@@ -73,6 +73,15 @@ func (m *DbManager) Db(name string) *Db {
 	return nil
 }
 
+// DbHandle returns the handle for the database instance with the specified name.
+func (m *DbManager) DbHandle(name string) *DbHandle {
+	if db, ok := m.dbs[name]; ok {
+		return db.handle
+	}
+
+	return nil
+}
+
 // Errors returns all the DB manager setup errors.
 func (m *DbManager) Errors() []error {
 	return m.errors

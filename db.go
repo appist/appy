@@ -159,6 +159,11 @@ func (db *Db) Drop() []error {
 	return errs
 }
 
+// Handle returns the DB handle.
+func (db *Db) Handle() *DbHandle {
+	return db.handle
+}
+
 // Migrate runs migrations for the current environment that have not run yet.
 func (db *Db) Migrate() error {
 	db.mu.Lock()
@@ -609,8 +614,8 @@ func (db *Db) SetSchema(schema string) {
 
 func migrationTpl(database string, tx bool) ([]byte, error) {
 	type data struct {
-		Database, Module string
-		Tx               bool
+		Database string
+		Tx       bool
 	}
 
 	t, err := template.New("migration").Parse(
@@ -618,12 +623,10 @@ func migrationTpl(database string, tx bool) ([]byte, error) {
 
 import (
 	"github.com/appist/appy"
-
-	"{{.Module}}/pkg/app"
 )
 
 func init() {
-	db := app.Default().DbManager().Db("{{.Database}}")
+	db := appy.Default().DbManager().Db("{{.Database}}")
 
 	if db != nil {
 		db.RegisterMigration{{if .Tx}}Tx{{end}}(
@@ -650,7 +653,6 @@ func init() {
 	var tpl bytes.Buffer
 	err = t.Execute(&tpl, data{
 		Database: database,
-		Module:   moduleName(),
 		Tx:       tx,
 	})
 
@@ -663,18 +665,18 @@ func init() {
 
 func schemaDumpTpl(database, schema string) ([]byte, error) {
 	type data struct {
-		Database, Module, Schema string
+		Database, Schema string
 	}
 
 	t, err := template.New("schemaDump").Parse(
 		`package {{.Database}}
 
 import (
-	"{{.Module}}/pkg/app"
+	"github.com/appist/appy"
 )
 
 func init() {
-	db := app.Default().DbManager().Db("{{.Database}}")
+	db := appy.Default().DbManager().Db("{{.Database}}")
 
 	if db != nil {
 		db.SetSchema(` + "`" +
@@ -692,7 +694,6 @@ func init() {
 	var tpl bytes.Buffer
 	err = t.Execute(&tpl, data{
 		Database: database,
-		Module:   moduleName(),
 		Schema:   "\n" + schema,
 	})
 

@@ -46,6 +46,8 @@ var (
 
 	// RunTestSuite takes a testing suite and runs all of the tests attached to it.
 	RunTestSuite = suite.Run
+
+	app *App
 )
 
 func init() {
@@ -54,14 +56,14 @@ func init() {
 	}
 }
 
-// NewApp initializes App instance that comes with:
+// Init initializes App instance that comes with:
 //
 // cmd - provides appy's built-in commands and allow custom command constructing
 // config - provides appy's global configuration
 // logger - provides logger
 // server - provides the capability to serve HTTP requests
 // dbManager - manages the databases along with their pool connections
-func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
+func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	cmd := NewCmd()
 	logger := NewLogger(Build)
 	config := NewConfig(Build, logger, assets)
@@ -98,7 +100,7 @@ func NewApp(assets http.FileSystem, viewHelper template.FuncMap) *App {
 		newSSLSetupCommand(logger, server),
 	)
 
-	return &App{
+	app = &App{
 		cmd:       cmd,
 		config:    config,
 		dbManager: dbManager,
@@ -140,4 +142,9 @@ func (a App) Run() error {
 
 	// Start executing the root command.
 	return a.Cmd().Execute()
+}
+
+// Default returns the app instance that is attached to appy module.
+func Default() *App {
+	return app
 }
