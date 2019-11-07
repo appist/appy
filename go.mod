@@ -22,7 +22,7 @@ require (
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.0
-	github.com/gorilla/websocket v1.2.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/joho/godotenv v1.3.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.2
