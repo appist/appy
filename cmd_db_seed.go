@@ -9,6 +9,15 @@ func newDbSeedCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd
 		Use:   "db:seed",
 		Short: "Seed the database(default: all, use --database to specify just 1) for the current environment",
 		Run: func(cmd *Cmd, args []string) {
+			if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
+				os.Exit(-1)
+			}
+
+			if len(dbManager.dbs) < 1 {
+				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
+				os.Exit(0)
+			}
+
 			runDbSeedAll(config, dbManager, logger, target)
 		},
 	}
@@ -18,15 +27,6 @@ func newDbSeedCommand(config *Config, dbManager *DbManager, logger *Logger) *Cmd
 }
 
 func runDbSeedAll(config *Config, dbManager *DbManager, logger *Logger, target string) {
-	if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
-		os.Exit(-1)
-	}
-
-	if len(dbManager.dbs) < 1 {
-		logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
-		os.Exit(0)
-	}
-
 	err := dbManager.ConnectAll(true)
 	if err != nil {
 		logger.Fatal(err)

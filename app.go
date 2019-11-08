@@ -97,7 +97,7 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 		newRoutesCommand(config, logger, server),
 		newSecretCommand(logger),
 		newServeCommand(dbManager, server),
-		newSSLCleanCommand(logger, server),
+		newSSLTeardownCommand(logger, server),
 		newSSLSetupCommand(logger, server),
 		newSetupCommand(config, dbManager, logger, assets),
 		newTeardownCommand(logger, assets),

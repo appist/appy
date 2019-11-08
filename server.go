@@ -127,10 +127,10 @@ func NewServer(c *Config, l *Logger, assets http.FileSystem, viewHelper template
 
 // Hosts returns the server hosts list.
 func (s Server) Hosts() ([]string, error) {
-	var hosts = []string{s.config.HTTPHost}
+	var hosts = []string{}
 
-	if s.config.HTTPHost != "localhost" {
-		hosts = append(hosts, "localhost")
+	if s.config.HTTPHost != "" && !ArrayContains(hosts, s.config.HTTPHost) {
+		hosts = append(hosts, s.config.HTTPHost)
 	}
 
 	addresses, err := net.InterfaceAddrs()

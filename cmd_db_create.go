@@ -7,6 +7,15 @@ func newDbCreateCommand(config *Config, dbManager *DbManager, logger *Logger) *C
 		Use:   "db:create",
 		Short: "Create all databases for the current environment",
 		Run: func(cmd *Cmd, args []string) {
+			if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
+				os.Exit(-1)
+			}
+
+			if len(dbManager.dbs) < 1 {
+				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
+				os.Exit(0)
+			}
+
 			runDbCreateAll(config, dbManager, logger)
 		},
 	}
@@ -15,15 +24,6 @@ func newDbCreateCommand(config *Config, dbManager *DbManager, logger *Logger) *C
 }
 
 func runDbCreateAll(config *Config, dbManager *DbManager, logger *Logger) {
-	if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
-		os.Exit(-1)
-	}
-
-	if len(dbManager.dbs) < 1 {
-		logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
-		os.Exit(0)
-	}
-
 	logger.Infof("Creating databases from pkg/config/.env.%s...", config.AppyEnv)
 
 	err := dbManager.ConnectAll(false)

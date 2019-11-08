@@ -9,6 +9,15 @@ func newDbSchemaLoadCommand(config *Config, dbManager *DbManager, logger *Logger
 		Use:   "db:schema:load",
 		Short: "Load all the databases schema for the current environment (debug build only)",
 		Run: func(cmd *Cmd, args []string) {
+			if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
+				os.Exit(-1)
+			}
+
+			if len(dbManager.dbs) < 1 {
+				logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
+				os.Exit(0)
+			}
+
 			runDbSchemaLoad(config, dbManager, logger)
 		},
 	}
@@ -17,15 +26,6 @@ func newDbSchemaLoadCommand(config *Config, dbManager *DbManager, logger *Logger
 }
 
 func runDbSchemaLoad(config *Config, dbManager *DbManager, logger *Logger) {
-	if IsConfigErrored(config, logger) || IsDbManagerErrored(config, dbManager, logger) {
-		os.Exit(-1)
-	}
-
-	if len(dbManager.dbs) < 1 {
-		logger.Infof("No database is defined in pkg/config/.env.%s", config.AppyEnv)
-		os.Exit(0)
-	}
-
 	logger.SetDbLogging(false)
 	err := dbManager.ConnectAll(true)
 	if err != nil {
