@@ -5,12 +5,27 @@ import (
 )
 
 type (
-	AfterScanHook    = orm.AfterScanHook
-	AfterSelectHook  = orm.AfterSelectHook
+	// AfterScanHook is the hook to trigger after a model's scan.
+	AfterScanHook = orm.AfterScanHook
+
+	// AfterSelectHook is the hook to trigger after a model's SELECT query.
+	AfterSelectHook = orm.AfterSelectHook
+
+	// BeforeInsertHook is the hook to trigger before a model's INSERT query.
 	BeforeInsertHook = orm.BeforeInsertHook
-	AfterInsertHook  = orm.AfterInsertHook
+
+	// AfterInsertHook is the hook to trigger after a model's INSERT query.
+	AfterInsertHook = orm.AfterInsertHook
+
+	// BeforeUpdateHook is the hook to trigger before a model's UPDATE query.
 	BeforeUpdateHook = orm.BeforeUpdateHook
-	AfterUpdateHook  = orm.AfterUpdateHook
+
+	// AfterUpdateHook is the hook to trigger after a model's UPDATE query.
+	AfterUpdateHook = orm.AfterUpdateHook
+
+	// BeforeDeleteHook is the hook to trigger before a model's DELETE query.
 	BeforeDeleteHook = orm.BeforeDeleteHook
-	AfterDeleteHook  = orm.AfterDeleteHook
+
+	// AfterDeleteHook is the hook to trigger after a model's DELETE query.
+	AfterDeleteHook = orm.AfterDeleteHook
 )
