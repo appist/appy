@@ -79,7 +79,7 @@ type (
 		HTTPSSLHost                 string            `env:"HTTP_SSL_HOST" envDefault:""`
 		HTTPSTSSeconds              int64             `env:"HTTP_STS_SECONDS" envDefault:"0"`
 		HTTPSTSIncludeSubdomains    bool              `env:"HTTP_STS_INCLUDE_SUBDOMAINS" envDefault:"false"`
-		HTTPFrameDeny               bool              `env:"HTTP_FRAME_DENY" envDefault:"false"`
+		HTTPFrameDeny               bool              `env:"HTTP_FRAME_DENY" envDefault:"true"`
 		HTTPCustomFrameOptionsValue string            `env:"HTTP_CUSTOM_FRAME_OPTIONS_VALUE" envDefault:""`
 		HTTPContentTypeNosniff      bool              `env:"HTTP_CONTENT_TYPE_NOSNIFF" envDefault:"false"`
 		HTTPBrowserXSSFilter        bool              `env:"HTTP_BROWSER_XSS_FILTER" envDefault:"false"`
