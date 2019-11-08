@@ -76,7 +76,7 @@ type (
 		HTTPCSRFSecret              []byte            `env:"HTTP_CSRF_SECRET,required" envDefault:""`
 		HTTPSSLRedirect             bool              `env:"HTTP_SSL_REDIRECT" envDefault:"false"`
 		HTTPSSLTemporaryRedirect    bool              `env:"HTTP_SSL_TEMPORARY_REDIRECT" envDefault:"false"`
-		HTTPSSLHost                 string            `env:"HTTP_SSL_HOST" envDefault:""`
+		HTTPSSLHost                 string            `env:"HTTP_SSL_HOST" envDefault:"localhost:3443"`
 		HTTPSTSSeconds              int64             `env:"HTTP_STS_SECONDS" envDefault:"0"`
 		HTTPSTSIncludeSubdomains    bool              `env:"HTTP_STS_INCLUDE_SUBDOMAINS" envDefault:"false"`
 		HTTPFrameDeny               bool              `env:"HTTP_FRAME_DENY" envDefault:"true"`

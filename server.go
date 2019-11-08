@@ -66,6 +66,7 @@ type (
 		csrResources []csrResource
 		grpc         *grpc.Server
 		http         *http.Server
+		https        *http.Server
 		htmlRenderer multitemplate.Renderer
 		i18nBundle   *i18n.Bundle
 		logger       *Logger
@@ -95,7 +96,7 @@ func NewServer(c *Config, l *Logger, assets http.FileSystem, viewHelper template
 	r := newRouter(c, l)
 	r.HTMLRender = renderer
 
-	http := &http.Server{
+	h := &http.Server{
 		Addr:              c.HTTPHost + ":" + c.HTTPPort,
 		Handler:           r,
 		MaxHeaderBytes:    c.HTTPMaxHeaderBytes,
@@ -104,18 +105,26 @@ func NewServer(c *Config, l *Logger, assets http.FileSystem, viewHelper template
 		WriteTimeout:      c.HTTPWriteTimeout,
 		IdleTimeout:       c.HTTPIdleTimeout,
 	}
-	http.ErrorLog = zap.NewStdLog(l.Desugar())
+	h.ErrorLog = zap.NewStdLog(l.Desugar())
 
-	if c.HTTPSSLEnabled == true {
-		http.Addr = c.HTTPHost + ":" + c.HTTPSSLPort
+	hs := &http.Server{
+		Addr:              c.HTTPHost + ":" + c.HTTPSSLPort,
+		Handler:           r,
+		MaxHeaderBytes:    c.HTTPMaxHeaderBytes,
+		ReadTimeout:       c.HTTPReadTimeout,
+		ReadHeaderTimeout: c.HTTPReadHeaderTimeout,
+		WriteTimeout:      c.HTTPWriteTimeout,
+		IdleTimeout:       c.HTTPIdleTimeout,
 	}
+	hs.ErrorLog = zap.NewStdLog(l.Desugar())
 
 	return &Server{
 		assets:       assets,
 		config:       c,
 		csrResources: []csrResource{},
 		grpc:         nil,
-		http:         http,
+		http:         h,
+		https:        hs,
 		htmlRenderer: renderer,
 		logger:       l,
 		router:       r,
@@ -175,7 +184,7 @@ func (s Server) PrintInfo() {
 	host := fmt.Sprintf("http://%s:%s", hosts[0], s.config.HTTPPort)
 
 	if s.config.HTTPSSLEnabled == true {
-		host = fmt.Sprintf("https://%s:%s", hosts[0], s.config.HTTPSSLPort)
+		host += fmt.Sprintf(", https://%s:%s", hosts[0], s.config.HTTPSSLPort)
 	}
 
 	lines = append(lines, fmt.Sprintf("* Listening on %s", host))

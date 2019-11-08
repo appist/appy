@@ -43,11 +43,16 @@ func serve(dbManager *DbManager, s *Server) {
 			s.logger.Fatal(err)
 		}
 
+		if s.config.HTTPSSLEnabled == true {
+			if err := s.https.Shutdown(ctx); err != nil {
+				s.logger.Fatal(err)
+			}
+		}
+
 		close(httpDone)
 	}()
 
-	var err error
-	err = dbManager.ConnectAll(true)
+	err := dbManager.ConnectAll(true)
 	if err != nil {
 		s.logger.Fatal(err)
 	}
@@ -55,12 +60,16 @@ func serve(dbManager *DbManager, s *Server) {
 	dbManager.PrintInfo()
 	s.PrintInfo()
 
-	if s.config.HTTPSSLEnabled == true {
-		err = s.http.ListenAndServeTLS(s.config.HTTPSSLCertPath+"/cert.pem", s.config.HTTPSSLCertPath+"/key.pem")
-	} else {
-		err = s.http.ListenAndServe()
-	}
+	go func() {
+		if s.config.HTTPSSLEnabled == true {
+			err := s.https.ListenAndServeTLS(s.config.HTTPSSLCertPath+"/cert.pem", s.config.HTTPSSLCertPath+"/key.pem")
+			if err != http.ErrServerClosed {
+				s.logger.Fatal(err)
+			}
+		}
+	}()
 
+	err = s.http.ListenAndServe()
 	if err != http.ErrServerClosed {
 		s.logger.Fatal(err)
 	}
