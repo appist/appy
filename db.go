@@ -59,6 +59,7 @@ type (
 		logger     *Logger
 		migrations []*DbMigration
 		mu         sync.Mutex
+		seed       func(*DbHandleTx) error
 		schema     string
 	}
 
@@ -190,11 +191,13 @@ func (db *Db) Migrate() error {
 			if m.UpTx != nil {
 				err = m.UpTx(tx)
 				if err != nil {
+					tx.Rollback()
 					return err
 				}
 
 				err = db.addSchemaMigration(nil, tx, m)
 				if err != nil {
+					tx.Rollback()
 					return err
 				}
 
@@ -290,11 +293,13 @@ func (db *Db) Rollback() error {
 				if m.DownTx != nil {
 					err = m.DownTx(tx)
 					if err != nil {
+						tx.Rollback()
 						return err
 					}
 
 					err = db.removeSchemaMigration(nil, tx, m)
 					if err != nil {
+						tx.Rollback()
 						return err
 					}
 
@@ -338,6 +343,35 @@ func (db *Db) RegisterMigrationTx(upTx func(*DbHandleTx) error, downTx func(*DbH
 	if err != nil {
 		db.logger.Fatal(err)
 	}
+}
+
+// RegisterSeedTx registers the seeding that will be executed in transaction.
+func (db *Db) RegisterSeedTx(seed func(*DbHandleTx) error) {
+	db.seed = seed
+}
+
+// Seed runs the seeding for the current environment.
+func (db *Db) Seed() error {
+	tx, err := db.handle.Begin()
+	defer tx.Close()
+	if err != nil {
+		return err
+	}
+
+	if db.seed != nil {
+		err := db.seed(tx)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (db *Db) addMigration(newMigration *DbMigration) {

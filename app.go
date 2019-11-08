@@ -89,6 +89,7 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 		newDbMigrateStatusCommand(config, dbManager, logger),
 		newDbRollbackCommand(config, dbManager, logger),
 		newDbSchemaLoadCommand(config, dbManager, logger),
+		newDbSeedCommand(config, dbManager, logger),
 		newDcDownCommand(logger, assets),
 		newDcUpCommand(logger, assets),
 		newDcRestartCommand(logger, assets),
