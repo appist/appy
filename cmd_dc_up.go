@@ -9,17 +9,21 @@ func newDcUpCommand(logger *Logger, assets http.FileSystem) *Cmd {
 		Use:   "dc:up",
 		Short: "Create and start containers that are defined in .docker/docker-compose.yml",
 		Run: func(cmd *Cmd, args []string) {
-			err := checkDocker()
-			if err != nil {
-				logger.Fatal(err)
-			}
-
-			err = runDockerCompose("up", assets)
-			if err != nil {
-				logger.Fatal(err)
-			}
+			runDcUp(logger, assets)
 		},
 	}
 
 	return cmd
+}
+
+func runDcUp(logger *Logger, assets http.FileSystem) {
+	err := checkDocker()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	err = runDockerCompose("up", assets)
+	if err != nil {
+		logger.Fatal(err)
+	}
 }

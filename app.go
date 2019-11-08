@@ -99,6 +99,8 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 		newServeCommand(dbManager, server),
 		newSSLCleanCommand(logger, server),
 		newSSLSetupCommand(logger, server),
+		newSetupCommand(config, dbManager, logger, assets),
+		newTeardownCommand(logger, assets),
 	)
 
 	app = &App{
