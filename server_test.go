@@ -85,6 +85,7 @@ func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
 	s.NotNil(server.htmlRenderer)
 	s.NotNil(server.router)
 	s.Equal("localhost:3000", server.http.Addr)
+	s.Equal("localhost:3443", server.https.Addr)
 }
 
 func (s *ServerSuite) TestNewServerWithSSLEnabled() {
@@ -101,7 +102,8 @@ func (s *ServerSuite) TestNewServerWithSSLEnabled() {
 	s.NotNil(server.http)
 	s.NotNil(server.htmlRenderer)
 	s.NotNil(server.router)
-	s.Equal("localhost:3443", server.http.Addr)
+	s.Equal("localhost:3000", server.http.Addr)
+	s.Equal("localhost:3443", server.https.Addr)
 }
 
 func (s *ServerSuite) TestInitSSRWithDebugBuild() {
@@ -263,7 +265,7 @@ func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 	s.writer.Flush()
 	output = s.buffer.String()
 	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: testdata/pkg/config/.env.development", runtime.Version()))
-	s.Contains(output, "* Listening on https://localhost:3443")
+	s.Contains(output, "* Listening on http://localhost:3000, https://localhost:3443")
 
 	os.Setenv("HTTP_HOST", "0.0.0.0")
 	config = NewConfig(Build, s.logger, http.Dir("./testdata"))
@@ -273,7 +275,7 @@ func (s *ServerSuite) TestServerPrintInfoWithDebugBuild() {
 	s.writer.Flush()
 	output = s.buffer.String()
 	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: testdata/pkg/config/.env.development", runtime.Version()))
-	s.Contains(output, "* Listening on https://0.0.0.0:3443")
+	s.Contains(output, "* Listening on http://0.0.0.0:3000, https://0.0.0.0:3443")
 }
 
 func (s *ServerSuite) TestSetRoutes() {
