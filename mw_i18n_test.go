@@ -34,7 +34,7 @@ func (s *I18nSuite) TestI18nCtxKeyIsNotSetIfNotConfigured() {
 		Header: map[string][]string{},
 	}
 
-	_, exists := ctx.Get(i18nCtxKey)
+	_, exists := ctx.Get(i18nCtxKey.String())
 	s.Equal(false, exists)
 }
 
@@ -45,7 +45,7 @@ func (s *I18nSuite) TestI18nCtxKeyIsSetIfConfigured() {
 	}
 
 	I18n(i18n.NewBundle(language.English))(ctx)
-	_, exists := ctx.Get(i18nCtxKey)
+	_, exists := ctx.Get(i18nCtxKey.String())
 	s.Equal(true, exists)
 }
 

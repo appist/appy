@@ -286,7 +286,7 @@ func (s *ServerSuite) TestSetRoutes() {
 
 	config := NewConfig(Build, s.logger, nil)
 	server := NewServer(config, s.logger, nil, nil)
-	server.SetRoutes(func(r *Router) {
+	server.SetupRoutes(func(r *Router) {
 		r.GET("/dummy", func(ctx *Context) {})
 	})
 

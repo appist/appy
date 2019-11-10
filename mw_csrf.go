@@ -18,9 +18,9 @@ const csrfTokenLength = 32
 
 var (
 	csrfSecureCookie    *securecookie.SecureCookie
-	csrfCtxFieldNameKey = "appy.csrfFieldName"
-	csrfCtxSkipCheckKey = "appy.csrfSkip"
-	csrfCtxTokenKey     = "appy.csrfToken"
+	csrfFieldNameCtxKey = ContextKey("csrfFieldName")
+	csrfSkipCheckCtxKey = ContextKey("csrfSkipCheck")
+	csrfTokenCtxKey     = ContextKey("csrfToken")
 	csrfSafeMethods     = []string{"GET", "HEAD", "OPTIONS", "TRACE"}
 	errCsrfNoReferer    = errors.New("the request referer is missing")
 	errCsrfBadReferer   = errors.New("the request referer is invalid")
@@ -50,10 +50,10 @@ func CSRF(config *Config, logger *Logger) HandlerFunc {
 
 func csrfHandler(ctx *Context, config *Config, logger *Logger) {
 	if IsAPIOnly(ctx) == true {
-		ctx.Set(csrfCtxSkipCheckKey, true)
+		ctx.Set(csrfSkipCheckCtxKey.String(), true)
 	}
 
-	skipCheck, exists := ctx.Get(csrfCtxSkipCheckKey)
+	skipCheck, exists := ctx.Get(csrfSkipCheckCtxKey.String())
 	if exists == true && skipCheck == true {
 		ctx.Next()
 		return
@@ -84,8 +84,8 @@ func csrfHandler(ctx *Context, config *Config, logger *Logger) {
 		return
 	}
 
-	ctx.Set(csrfCtxTokenKey, authenticityToken)
-	ctx.Set(csrfCtxFieldNameKey, strings.ToLower(config.HTTPCSRFFieldName))
+	ctx.Set(csrfTokenCtxKey.String(), authenticityToken)
+	ctx.Set(csrfFieldNameCtxKey.String(), strings.ToLower(config.HTTPCSRFFieldName))
 
 	r := ctx.Request
 	if !ArrayContains(csrfSafeMethods, r.Method) {
@@ -127,7 +127,7 @@ func csrfHandler(ctx *Context, config *Config, logger *Logger) {
 // CSRFSkipCheck skips the CSRF check for the request.
 func CSRFSkipCheck() HandlerFunc {
 	return func(ctx *Context) {
-		ctx.Set(csrfCtxSkipCheckKey, true)
+		ctx.Set(csrfSkipCheckCtxKey.String(), true)
 		ctx.Next()
 	}
 }
@@ -141,7 +141,7 @@ func CSRFTemplateField(c *Context) string {
 
 // CSRFToken returns the CSRF token for the request.
 func CSRFToken(ctx *Context) string {
-	val, exists := ctx.Get(csrfCtxTokenKey)
+	val, exists := ctx.Get(csrfTokenCtxKey.String())
 	if exists == true {
 		if token, ok := val.(string); ok {
 			return token
@@ -152,7 +152,7 @@ func CSRFToken(ctx *Context) string {
 }
 
 func csrfTemplateFieldName(ctx *Context) string {
-	fieldName, exists := ctx.Get(csrfCtxFieldNameKey)
+	fieldName, exists := ctx.Get(csrfFieldNameCtxKey.String())
 
 	if fieldName == "" || !exists {
 		fieldName = "authenticity_token"

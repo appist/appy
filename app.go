@@ -14,10 +14,13 @@ type (
 	App struct {
 		cmd       *Cmd
 		config    *Config
+		dbManager *DbManager
 		logger    *Logger
 		server    *Server
-		dbManager *DbManager
 	}
+
+	// ContextKey is the context key with appy namespace.
+	ContextKey string
 
 	// TestSuite is a basic testing suite with methods for storing and retrieving the current *testing.T context.
 	TestSuite = suite.Suite
@@ -147,7 +150,16 @@ func (a App) Run() error {
 	return a.Cmd().Execute()
 }
 
+// SetPlugins initializes the plugins.
+func (a *App) SetPlugins(cb func(*App)) {
+	cb(a)
+}
+
 // Default returns the app instance that is attached to appy module.
 func Default() *App {
 	return app
+}
+
+func (c ContextKey) String() string {
+	return "appy." + string(c)
 }

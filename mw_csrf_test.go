@@ -47,7 +47,7 @@ func (s *CSRFSuite) TestSkipCheckContextKey() {
 		Header: map[string][]string{},
 	}
 	csrfHandler(ctx, s.config, s.logger)
-	_, exists := ctx.Get(csrfCtxSkipCheckKey)
+	_, exists := ctx.Get(csrfSkipCheckCtxKey.String())
 	s.Equal(false, exists)
 
 	ctx, _ = CreateTestContext(s.recorder)
@@ -56,7 +56,7 @@ func (s *CSRFSuite) TestSkipCheckContextKey() {
 	}
 	ctx.Request.Header.Set("x-api-only", "1")
 	csrfHandler(ctx, s.config, s.logger)
-	_, exists = ctx.Get(csrfCtxSkipCheckKey)
+	_, exists = ctx.Get(csrfSkipCheckCtxKey.String())
 	s.Equal(true, exists)
 }
 
@@ -68,10 +68,10 @@ func (s *CSRFSuite) TestTokenAndFieldNameContextKey() {
 	}
 	csrfHandler(ctx, s.config, s.logger)
 
-	_, exists := ctx.Get(csrfCtxTokenKey)
+	_, exists := ctx.Get(csrfTokenCtxKey.String())
 	s.Equal(true, exists)
 
-	_, exists = ctx.Get(csrfCtxFieldNameKey)
+	_, exists = ctx.Get(csrfFieldNameCtxKey.String())
 	s.Equal(true, exists)
 	s.Equal("Cookie", ctx.Writer.Header().Get("Vary"))
 }
@@ -244,27 +244,27 @@ func (s *CSRFSuite) TestTokenIsValidInMultipartForm() {
 
 func (s *CSRFSuite) TestCSRFSkipCheck() {
 	ctx, _ := CreateTestContext(s.recorder)
-	_, exists := ctx.Get(csrfCtxSkipCheckKey)
+	_, exists := ctx.Get(csrfSkipCheckCtxKey.String())
 	s.Equal(false, exists)
 
 	ctx, _ = CreateTestContext(s.recorder)
 	CSRFSkipCheck()(ctx)
-	_, exists = ctx.Get(csrfCtxSkipCheckKey)
+	_, exists = ctx.Get(csrfSkipCheckCtxKey.String())
 	s.Equal(true, exists)
 }
 
 func (s *CSRFSuite) TestCSRFTemplateField() {
 	ctx, _ := CreateTestContext(s.recorder)
-	ctx.Set(csrfCtxTokenKey, "test")
+	ctx.Set(csrfTokenCtxKey.String(), "test")
 	s.Equal(`<input type="hidden" name="authenticity_token" value="test">`, CSRFTemplateField(ctx))
 
 	ctx, _ = CreateTestContext(s.recorder)
-	ctx.Set(csrfCtxTokenKey, "")
+	ctx.Set(csrfTokenCtxKey.String(), "")
 	s.Equal(`<input type="hidden" name="authenticity_token" value="">`, CSRFTemplateField(ctx))
 
 	ctx, _ = CreateTestContext(s.recorder)
-	ctx.Set(csrfCtxFieldNameKey, "my_authenticity_token")
-	ctx.Set(csrfCtxTokenKey, "test")
+	ctx.Set(csrfFieldNameCtxKey.String(), "my_authenticity_token")
+	ctx.Set(csrfTokenCtxKey.String(), "test")
 	s.Equal(`<input type="hidden" name="my_authenticity_token" value="test">`, CSRFTemplateField(ctx))
 }
 
@@ -273,7 +273,7 @@ func (s *CSRFSuite) TestCSRFToken() {
 	s.Equal("", CSRFToken(ctx))
 
 	ctx, _ = CreateTestContext(s.recorder)
-	ctx.Set(csrfCtxTokenKey, "test")
+	ctx.Set(csrfTokenCtxKey.String(), "test")
 	s.Equal("test", CSRFToken(ctx))
 }
 

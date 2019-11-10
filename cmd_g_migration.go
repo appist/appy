@@ -37,7 +37,7 @@ func newGMigrationCommand(config *Config, dbManager *DbManager, logger *Logger) 
 				os.Exit(0)
 			}
 
-			db.generateMigration(args[0], target, tx)
+			db.GenerateMigration(args[0], target, tx)
 		},
 	}
 

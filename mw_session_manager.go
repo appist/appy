@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	sessionManagerCtxKey = "appy.sessionManager"
+	sessionManagerCtxKey = ContextKey("sessionManager")
 )
 
 // SessionStore is an interface for custom session stores.
@@ -67,7 +67,7 @@ func SessionManager(config *Config) HandlerFunc {
 		}
 
 		s := &Session{config.HTTPSessionName, ctx.Request, sessionStore, nil, false, ctx.Writer}
-		ctx.Set(sessionManagerCtxKey, s)
+		ctx.Set(sessionManagerCtxKey.String(), s)
 		defer context.Clear(ctx.Request)
 		ctx.Next()
 	}
@@ -221,7 +221,7 @@ func (s *Session) Written() bool {
 
 // DefaultSession returns the session in the request context.
 func DefaultSession(ctx *Context) Sessioner {
-	s, exists := ctx.Get(sessionManagerCtxKey)
+	s, exists := ctx.Get(sessionManagerCtxKey.String())
 	if !exists {
 		return nil
 	}

@@ -34,6 +34,13 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 
 	tt := map[string]interface{}{
 		"AppyEnv":                         "development",
+		"GQLPlaygroundEnabled":            false,
+		"GQLPlaygroundPath":               "/docs/graphql",
+		"GQLCacheSize":                    1000,
+		"GQLComplexityLimit":              200,
+		"GQLUploadMaxMemory":              int64(100000000),
+		"GQLUploadMaxSize":                int64(100000000),
+		"GQLWebsocketKeepAliveDuration":   25 * time.Second,
 		"HTTPDebugEnabled":                false,
 		"HTTPLogFilterParameters":         []string{"password"},
 		"HTTPHealthCheckURL":              "/health_check",

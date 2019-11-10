@@ -540,7 +540,8 @@ func (db *Db) ensureSchemaMigrationsTable() error {
 	return nil
 }
 
-func (db *Db) generateMigration(name, target string, tx bool) error {
+// GenerateMigration generates the migration file for the target database.
+func (db *Db) GenerateMigration(name, target string, tx bool) error {
 	path := "db/migrate/" + target
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {

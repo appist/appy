@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	requestIDCtxKey = "appy.requestID"
+	requestIDCtxKey = ContextKey("requestID")
 	xRequestID      = http.CanonicalHeaderKey("x-request-id")
 )
 
@@ -21,7 +21,7 @@ func RequestID() HandlerFunc {
 			requestID = fmt.Sprintf("%s", uuidV4)
 		}
 
-		ctx.Set(requestIDCtxKey, requestID)
+		ctx.Set(requestIDCtxKey.String(), requestID)
 		ctx.Next()
 	}
 }

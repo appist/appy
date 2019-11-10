@@ -16,14 +16,18 @@ import (
 )
 
 type (
-	// Configurer is the collection of method signatures for Config struct.
-	Configurer interface {
-		Errors() []error
-	}
-
 	// Config provides the configuration functionality.
 	Config struct {
 		AppyEnv string `env:"APPY_ENV" envDefault:"development"`
+
+		// GraphQL related configuration.
+		GQLPlaygroundEnabled          bool          `env:"GQL_PLAYGROUND_ENABLED" envDefault:"false"`
+		GQLPlaygroundPath             string        `env:"GQL_PLAYGROUND_PATH" envDefault:"/docs/graphql"`
+		GQLCacheSize                  int           `env:"GQL_CACHE_SIZE" envDefault:"1000"`
+		GQLComplexityLimit            int           `env:"GQL_COMPLEXITY_LIMIT" envDefault:"200"`
+		GQLUploadMaxMemory            int64         `env:"GQL_UPLOAD_MAX_MEMORY" envDefault:"100000000"`
+		GQLUploadMaxSize              int64         `env:"GQL_UPLOAD_MAX_SIZE" envDefault:"100000000"`
+		GQLWebsocketKeepAliveDuration time.Duration `env:"GQL_WEBSOCKET_KEEP_ALIVE_DURATION" envDefault:"25s"`
 
 		// Server related configuration.
 		HTTPDebugEnabled        bool          `env:"HTTP_DEBUG_ENABLED" envDefault:"false"`
@@ -319,7 +323,7 @@ func parseDbConfig() (map[string]DbConfig, []error) {
 			}
 		}
 
-		poolTimeout := 31 * time.Second
+		poolTimeout := 30 * time.Second
 		if val, ok := os.LookupEnv("DB_POOL_TIMEOUT_" + dbName); ok && val != "" {
 			poolTimeout, err = time.ParseDuration(val)
 			if err != nil {

@@ -9,8 +9,8 @@ import (
 
 var (
 	acceptLanguage   = http.CanonicalHeaderKey("accept-language")
-	i18nCtxKey       = "appy.i18n"
-	i18nLocaleCtxKey = "appy.i18nLocale"
+	i18nCtxKey       = ContextKey("i18n")
+	i18nLocaleCtxKey = ContextKey("i18nLocale")
 )
 
 // I18n is a middleware that provides translations based on `Accept-Language` HTTP header.
@@ -18,10 +18,10 @@ func I18n(b *i18n.Bundle) HandlerFunc {
 	return func(ctx *Context) {
 		languages := strings.Split(ctx.Request.Header.Get(acceptLanguage), ",")
 		localizer := i18n.NewLocalizer(b, languages...)
-		ctx.Set(i18nCtxKey, localizer)
+		ctx.Set(i18nCtxKey.String(), localizer)
 
 		if len(languages) > 0 {
-			ctx.Set(i18nLocaleCtxKey, languages[0])
+			ctx.Set(i18nLocaleCtxKey.String(), languages[0])
 		}
 
 		ctx.Next()
@@ -30,7 +30,7 @@ func I18n(b *i18n.Bundle) HandlerFunc {
 
 // I18nLocalizer returns the I18n localizer instance.
 func I18nLocalizer(ctx *Context) *i18n.Localizer {
-	localizer, exists := ctx.Get(i18nCtxKey)
+	localizer, exists := ctx.Get(i18nCtxKey.String())
 
 	if !exists {
 		return nil
@@ -41,7 +41,7 @@ func I18nLocalizer(ctx *Context) *i18n.Localizer {
 
 // I18nLocale returns the I18n locale.
 func I18nLocale(ctx *Context) string {
-	locale, exists := ctx.Get(i18nLocaleCtxKey)
+	locale, exists := ctx.Get(i18nLocaleCtxKey.String())
 
 	if locale == "" || !exists {
 		return "en"

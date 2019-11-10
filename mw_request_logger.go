@@ -10,7 +10,7 @@ import (
 // was requested, what the response status was, and how long it took to return.
 func RequestLogger(config *Config, logger *Logger) HandlerFunc {
 	return func(ctx *Context) {
-		requestID, _ := ctx.Get(requestIDCtxKey)
+		requestID, _ := ctx.Get(requestIDCtxKey.String())
 		start := time.Now()
 		ctx.Next()
 

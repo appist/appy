@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -20,8 +21,8 @@ import (
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-contrib/secure"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/vektah/gqlparser/gqlerror"
 	"go.uber.org/zap"
 	"golang.org/x/text/language"
 	"google.golang.org/grpc"
@@ -210,23 +211,35 @@ func (s Server) Routes() []RouteInfo {
 	return routes
 }
 
-// InitGQL initializes the GraphQL routes.
-func (s Server) InitGQL(path string, playgroundPath string, schema graphql.ExecutableSchema) {
-	opts := []gqlgenHandler.Option{
-		gqlgenHandler.WebsocketUpgrader(websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				return true
-			},
-		}),
-		gqlgenHandler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
-		gqlgenHandler.Tracer(gqlapollotracing.NewTracer()),
+// SetupGraphQL sets up the GraphQL stack.
+func (s Server) SetupGraphQL(path string, schema graphql.ExecutableSchema, opts []gqlgenHandler.Option, middleware ...HandlerFunc) {
+	if opts == nil || len(opts) < 1 {
+		opts = []gqlgenHandler.Option{
+			gqlgenHandler.CacheSize(s.config.GQLCacheSize),
+			gqlgenHandler.ComplexityLimit(s.config.GQLComplexityLimit),
+			// gqlgenHandler.EnablePersistedQueryCache(nil),
+			gqlgenHandler.ErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
+				// Refer to https://gqlgen.com/reference/errors/#the-error-presenter for custom error handling.
+				return graphql.DefaultErrorPresenter(ctx, e)
+			}),
+			gqlgenHandler.RecoverFunc(func(ctx context.Context, err interface{}) error {
+				// TODO: Implement error alert.
+				return fmt.Errorf("internal server error")
+			}),
+			gqlgenHandler.IntrospectionEnabled(s.config.GQLPlaygroundEnabled),
+			gqlgenHandler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
+			gqlgenHandler.Tracer(gqlapollotracing.NewTracer()),
+			gqlgenHandler.UploadMaxMemory(s.config.GQLUploadMaxMemory),
+			gqlgenHandler.UploadMaxSize(s.config.GQLUploadMaxSize),
+			gqlgenHandler.WebsocketKeepAliveDuration(s.config.GQLWebsocketKeepAliveDuration),
+		}
 	}
 
-	s.router.GET(path, gqlHandler(schema, opts))
-	s.router.POST(path, gqlHandler(schema, opts))
+	middleware = append(middleware, gqlHandler(schema, opts))
+	s.router.Any(path, middleware...)
 
-	if playgroundPath != "" {
-		s.router.GET(playgroundPath, CSRFSkipCheck(), func(ctx *Context) {
+	if s.config.GQLPlaygroundEnabled && s.config.GQLPlaygroundPath != "" {
+		s.router.GET(s.config.GQLPlaygroundPath, CSRFSkipCheck(), func(ctx *Context) {
 			ctx.Data(http.StatusOK, "text/html", gqlPlaygroundTpl(path, ctx))
 		})
 	}
@@ -280,7 +293,8 @@ func gqlPlaygroundTpl(path string, ctx *Context) []byte {
 					'X-CSRF-Token': unescape(getCookie("` + csrfTemplateFieldName(ctx) + `"))
 				},
 				settings: {
-					'request.credentials': 'include'
+					'request.credentials': 'include',
+					'schema.polling.interval': 5000
 				}
 			})
 		})
@@ -290,8 +304,8 @@ func gqlPlaygroundTpl(path string, ctx *Context) []byte {
 `)
 }
 
-// SetRoutes configures routes for the server.
-func (s Server) SetRoutes(cb func(router *Router)) {
+// SetupRoutes configures routes for the server.
+func (s Server) SetupRoutes(cb func(router *Router)) {
 	cb(s.router)
 }
 
