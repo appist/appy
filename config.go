@@ -48,7 +48,7 @@ type (
 		// Session related configuration using cookie.
 		HTTPSessionCookieDomain   string `env:"HTTP_SESSION_COOKIE_DOMAIN" envDefault:"localhost"`
 		HTTPSessionCookieHTTPOnly bool   `env:"HTTP_SESSION_COOKIE_HTTP_ONLY" envDefault:"true"`
-		HTTPSessionCookieMaxAge   int    `env:"HTTP_SESSION_COOKIE_MAX_AGE" envDefault:"0"`
+		HTTPSessionCookieMaxAge   int    `env:"HTTP_SESSION_COOKIE_MAX_AGE" envDefault:"1209600"`
 		HTTPSessionCookiePath     string `env:"HTTP_SESSION_COOKIE_PATH" envDefault:"/"`
 		HTTPSessionCookieSecure   bool   `env:"HTTP_SESSION_COOKIE_SECURE" envDefault:"false"`
 

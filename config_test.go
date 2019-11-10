@@ -56,7 +56,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"HTTPSSLCertPath":                 "./tmp/ssl",
 		"HTTPSessionCookieDomain":         "localhost",
 		"HTTPSessionCookieHTTPOnly":       true,
-		"HTTPSessionCookieMaxAge":         0,
+		"HTTPSessionCookieMaxAge":         1209600,
 		"HTTPSessionCookiePath":           "/",
 		"HTTPSessionCookieSecure":         false,
 		"HTTPSessionRedisAddr":            "localhost:6379",

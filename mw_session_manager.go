@@ -82,13 +82,6 @@ func newSessionStore(config *Config) (SessionStore, error) {
 	switch provider := config.HTTPSessionProvider; provider {
 	case "cookie":
 		sessionStore = cookie.NewStore(config.HTTPSessionSecrets...)
-		sessionStore.Options(ginsessions.Options{
-			Domain:   config.HTTPSessionCookieDomain,
-			HttpOnly: config.HTTPSessionCookieHTTPOnly,
-			MaxAge:   config.HTTPSessionCookieMaxAge,
-			Path:     config.HTTPSessionCookiePath,
-			Secure:   config.HTTPSessionCookieSecure,
-		})
 	case "redis":
 		sessionStore, err = redis.NewStoreWithPool(
 			newSessionRedisPool(config),
@@ -96,6 +89,16 @@ func newSessionStore(config *Config) (SessionStore, error) {
 		)
 	default:
 		err = fmt.Errorf("session provider '%s' is not supported", provider)
+	}
+
+	if sessionStore != nil {
+		sessionStore.Options(ginsessions.Options{
+			Domain:   config.HTTPSessionCookieDomain,
+			HttpOnly: config.HTTPSessionCookieHTTPOnly,
+			MaxAge:   config.HTTPSessionCookieMaxAge,
+			Path:     config.HTTPSessionCookiePath,
+			Secure:   config.HTTPSessionCookieSecure,
+		})
 	}
 
 	return sessionStore, err
