@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/99designs/gqlgen-contrib/gqlapollotracing"
 	"github.com/99designs/gqlgen/graphql"
 	gqlgenHandler "github.com/99designs/gqlgen/handler"
 	"github.com/BurntSushi/toml"
@@ -218,17 +217,18 @@ func (s Server) SetupGraphQL(path string, schema graphql.ExecutableSchema, opts 
 			gqlgenHandler.CacheSize(s.config.GQLCacheSize),
 			gqlgenHandler.ComplexityLimit(s.config.GQLComplexityLimit),
 			// gqlgenHandler.EnablePersistedQueryCache(nil),
-			gqlgenHandler.ErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
+			gqlgenHandler.ErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
 				// Refer to https://gqlgen.com/reference/errors/#the-error-presenter for custom error handling.
-				return graphql.DefaultErrorPresenter(ctx, e)
+				return graphql.DefaultErrorPresenter(ctx, err)
 			}),
 			gqlgenHandler.RecoverFunc(func(ctx context.Context, err interface{}) error {
 				// TODO: Implement error alert.
+				s.logger.Error(err)
 				return fmt.Errorf("internal server error")
 			}),
 			gqlgenHandler.IntrospectionEnabled(s.config.GQLPlaygroundEnabled),
-			gqlgenHandler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
-			gqlgenHandler.Tracer(gqlapollotracing.NewTracer()),
+			// gqlgenHandler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
+			// gqlgenHandler.Tracer(gqlapollotracing.NewTracer()),
 			gqlgenHandler.UploadMaxMemory(s.config.GQLUploadMaxMemory),
 			gqlgenHandler.UploadMaxSize(s.config.GQLUploadMaxSize),
 			gqlgenHandler.WebsocketKeepAliveDuration(s.config.GQLWebsocketKeepAliveDuration),
