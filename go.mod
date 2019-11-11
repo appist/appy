@@ -4,7 +4,6 @@ go 1.13.1
 
 require (
 	github.com/99designs/gqlgen v0.10.1
-	github.com/99designs/gqlgen-contrib v0.0.0-20191030030013-7aa27db3321a
 	github.com/BurntSushi/toml v0.3.1
 	github.com/bndr/gotabulate v1.1.2
 	github.com/caarlos0/env v3.5.0+incompatible

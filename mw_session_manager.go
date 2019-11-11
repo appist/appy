@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/appist/appy/sessionstore"
 	ginsessions "github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-contrib/sessions/redis"
-	rr "github.com/gomodule/redigo/redis"
+	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/context"
 	gorsessions "github.com/gorilla/sessions"
 )
@@ -19,7 +18,15 @@ var (
 // SessionStore is an interface for custom session stores.
 type SessionStore interface {
 	gorsessions.Store
+
+	// Options sets the cookie configuration for a session.
 	Options(ginsessions.Options)
+
+	// KeyPrefix returns the prefix for the store key, not available for CookieStore.
+	KeyPrefix() string
+
+	// SetKeyPrefix sets the prefix for the store key, not available for CookieStore.
+	SetKeyPrefix(p string)
 }
 
 // Sessioner stores the values and optional configuration for a session.
@@ -28,22 +35,36 @@ type Sessioner interface {
 	// A single variadic argument is accepted, and it is optional: it defines the flash key.
 	// If not defined "_flash" is used by default.
 	AddFlash(value interface{}, vars ...string)
+
 	// Clear deletes all values in the session.
 	Clear()
+
 	// Delete removes the session value associated to the given key.
 	Delete(key interface{})
+
 	// Flashes returns a slice of flash messages from the session.
 	// A single variadic argument is accepted, and it is optional: it defines the flash key.
 	// If not defined "_flash" is used by default.
 	Flashes(vars ...string) []interface{}
+
 	// Get returns the session value associated to the given key.
 	Get(key interface{}) interface{}
-	// Options sets configuration for a session.
+
+	// Options sets the cookie configuration for a session.
 	Options(ginsessions.Options)
+
 	// Set sets the session value associated to the given key.
 	Set(key interface{}, val interface{})
+
 	// Save saves all sessions used during the current request.
 	Save() error
+
+	// KeyPrefix returns the prefix for the store key, not available for CookieStore.
+	KeyPrefix() string
+
+	// SetKeyPrefix sets the prefix for the store key, not available for CookieStore.
+	SetKeyPrefix(p string)
+
 	// Values returns all values in the session.
 	Values() map[interface{}]interface{}
 }
@@ -81,9 +102,9 @@ func newSessionStore(config *Config) (SessionStore, error) {
 
 	switch provider := config.HTTPSessionProvider; provider {
 	case "cookie":
-		sessionStore = cookie.NewStore(config.HTTPSessionSecrets...)
+		sessionStore = sessionstore.NewCookieStore(config.HTTPSessionSecrets...)
 	case "redis":
-		sessionStore, err = redis.NewStoreWithPool(
+		sessionStore, err = sessionstore.NewRedisStoreWithPool(
 			newSessionRedisPool(config),
 			config.HTTPSessionSecrets...,
 		)
@@ -104,10 +125,10 @@ func newSessionStore(config *Config) (SessionStore, error) {
 	return sessionStore, err
 }
 
-func newSessionRedisPool(config *Config) *rr.Pool {
-	return &rr.Pool{
-		Dial: func() (rr.Conn, error) {
-			conn, err := rr.Dial("tcp", config.HTTPSessionRedisAddr)
+func newSessionRedisPool(config *Config) *redis.Pool {
+	return &redis.Pool{
+		Dial: func() (redis.Conn, error) {
+			conn, err := redis.Dial("tcp", config.HTTPSessionRedisAddr)
 			if err != nil {
 				return nil, err
 			}
@@ -182,12 +203,12 @@ func (s *Session) Options(options ginsessions.Options) {
 // Save saves all sessions used during the current request.
 func (s *Session) Save() error {
 	if s.Written() {
-		e := s.Session().Save(s.request, s.writer)
-		if e == nil {
+		err := s.Session().Save(s.request, s.writer)
+		if err == nil {
 			s.written = false
 		}
 
-		return e
+		return err
 	}
 
 	return nil
@@ -204,6 +225,16 @@ func (s *Session) Session() *gorsessions.Session {
 	}
 
 	return s.session
+}
+
+// KeyPrefix returns the prefix for the store key, not available for CookieStore.
+func (s *Session) KeyPrefix() string {
+	return s.store.KeyPrefix()
+}
+
+// SetKeyPrefix sets the prefix for the store key, not available for CookieStore.
+func (s *Session) SetKeyPrefix(p string) {
+	s.store.SetKeyPrefix(p)
 }
 
 // Set sets the session value associated to the given key.

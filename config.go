@@ -27,7 +27,7 @@ type (
 		GQLComplexityLimit            int           `env:"GQL_COMPLEXITY_LIMIT" envDefault:"200"`
 		GQLUploadMaxMemory            int64         `env:"GQL_UPLOAD_MAX_MEMORY" envDefault:"100000000"`
 		GQLUploadMaxSize              int64         `env:"GQL_UPLOAD_MAX_SIZE" envDefault:"100000000"`
-		GQLWebsocketKeepAliveDuration time.Duration `env:"GQL_WEBSOCKET_KEEP_ALIVE_DURATION" envDefault:"25s"`
+		GQLWebsocketKeepAliveDuration time.Duration `env:"GQL_WEBSOCKET_KEEP_ALIVE_DURATION" envDefault:"30s"`
 
 		// Server related configuration.
 		HTTPDebugEnabled        bool          `env:"HTTP_DEBUG_ENABLED" envDefault:"false"`
@@ -56,10 +56,10 @@ type (
 		HTTPSessionRedisAddr            string        `env:"HTTP_SESSION_REDIS_ADDR" envDefault:"localhost:6379"`
 		HTTPSessionRedisAuth            string        `env:"HTTP_SESSION_REDIS_AUTH" envDefault:""`
 		HTTPSessionRedisDb              string        `env:"HTTP_SESSION_REDIS_DB" envDefault:"0"`
-		HTTPSessionRedisMaxActive       int           `env:"HTTP_SESSION_REDIS_MAX_ACTIVE" envDefault:"0"`
+		HTTPSessionRedisMaxActive       int           `env:"HTTP_SESSION_REDIS_MAX_ACTIVE" envDefault:"64"`
 		HTTPSessionRedisMaxIdle         int           `env:"HTTP_SESSION_REDIS_MAX_IDLE" envDefault:"32"`
 		HTTPSessionRedisIdleTimeout     time.Duration `env:"HTTP_SESSION_REDIS_IDLE_TIMEOUT" envDefault:"30s"`
-		HTTPSessionRedisMaxConnLifetime time.Duration `env:"HTTP_SESSION_REDIS_MAX_CONN_LIFETIME" envDefault:"0s"`
+		HTTPSessionRedisMaxConnLifetime time.Duration `env:"HTTP_SESSION_REDIS_MAX_CONN_LIFETIME" envDefault:"30s"`
 		HTTPSessionRedisWait            bool          `env:"HTTP_SESSION_REDIS_WAIT" envDefault:"true"`
 
 		// Session related configuration.
