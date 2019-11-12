@@ -45,13 +45,6 @@ type (
 		HTTPSSLEnabled          bool          `env:"HTTP_SSL_ENABLED" envDefault:"false"`
 		HTTPSSLPort             string        `env:"HTTP_SSL_PORT" envDefault:"3443"`
 
-		// Session related configuration using cookie.
-		HTTPSessionCookieDomain   string `env:"HTTP_SESSION_COOKIE_DOMAIN" envDefault:"localhost"`
-		HTTPSessionCookieHTTPOnly bool   `env:"HTTP_SESSION_COOKIE_HTTP_ONLY" envDefault:"true"`
-		HTTPSessionCookieMaxAge   int    `env:"HTTP_SESSION_COOKIE_MAX_AGE" envDefault:"1209600"`
-		HTTPSessionCookiePath     string `env:"HTTP_SESSION_COOKIE_PATH" envDefault:"/"`
-		HTTPSessionCookieSecure   bool   `env:"HTTP_SESSION_COOKIE_SECURE" envDefault:"false"`
-
 		// Session related configuration using redis pool.
 		HTTPSessionRedisAddr            string        `env:"HTTP_SESSION_REDIS_ADDR" envDefault:"localhost:6379"`
 		HTTPSessionRedisAuth            string        `env:"HTTP_SESSION_REDIS_AUTH" envDefault:""`
@@ -63,9 +56,14 @@ type (
 		HTTPSessionRedisWait            bool          `env:"HTTP_SESSION_REDIS_WAIT" envDefault:"true"`
 
 		// Session related configuration.
-		HTTPSessionName     string   `env:"HTTP_SESSION_NAME" envDefault:"_session"`
-		HTTPSessionProvider string   `env:"HTTP_SESSION_PROVIDER" envDefault:"cookie"`
-		HTTPSessionSecrets  [][]byte `env:"HTTP_SESSION_SECRETS,required" envDefault:""`
+		HTTPSessionName       string   `env:"HTTP_SESSION_NAME" envDefault:"_session"`
+		HTTPSessionProvider   string   `env:"HTTP_SESSION_PROVIDER" envDefault:"cookie"`
+		HTTPSessionExpiration int      `env:"HTTP_SESSION_EXPIRATION" envDefault:"1209600"`
+		HTTPSessionDomain     string   `env:"HTTP_SESSION_DOMAIN" envDefault:"localhost"`
+		HTTPSessionHTTPOnly   bool     `env:"HTTP_SESSION_HTTP_ONLY" envDefault:"true"`
+		HTTPSessionPath       string   `env:"HTTP_SESSION_PATH" envDefault:"/"`
+		HTTPSessionSecure     bool     `env:"HTTP_SESSION_SECURE" envDefault:"false"`
+		HTTPSessionSecrets    [][]byte `env:"HTTP_SESSION_SECRETS,required" envDefault:""`
 
 		// Security related configuration.
 		HTTPAllowedHosts            []string          `env:"HTTP_ALLOWED_HOSTS" envDefault:""`

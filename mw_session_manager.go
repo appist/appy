@@ -50,6 +50,9 @@ type Sessioner interface {
 	// Get returns the session value associated to the given key.
 	Get(key interface{}) interface{}
 
+	// Key returns the session key.
+	Key() string
+
 	// Options sets the cookie configuration for a session.
 	Options(ginsessions.Options)
 
@@ -59,10 +62,10 @@ type Sessioner interface {
 	// Save saves all sessions used during the current request.
 	Save() error
 
-	// KeyPrefix returns the prefix for the store key, not available for CookieStore.
+	// KeyPrefix returns the key prefix for the session, not available for CookieStore.
 	KeyPrefix() string
 
-	// SetKeyPrefix sets the prefix for the store key, not available for CookieStore.
+	// SetKeyPrefix sets the key prefix for the session, not available for CookieStore.
 	SetKeyPrefix(p string)
 
 	// Values returns all values in the session.
@@ -114,11 +117,11 @@ func newSessionStore(config *Config) (SessionStore, error) {
 
 	if sessionStore != nil {
 		sessionStore.Options(ginsessions.Options{
-			Domain:   config.HTTPSessionCookieDomain,
-			HttpOnly: config.HTTPSessionCookieHTTPOnly,
-			MaxAge:   config.HTTPSessionCookieMaxAge,
-			Path:     config.HTTPSessionCookiePath,
-			Secure:   config.HTTPSessionCookieSecure,
+			Domain:   config.HTTPSessionDomain,
+			HttpOnly: config.HTTPSessionHTTPOnly,
+			MaxAge:   config.HTTPSessionExpiration,
+			Path:     config.HTTPSessionPath,
+			Secure:   config.HTTPSessionSecure,
 		})
 	}
 
@@ -227,12 +230,17 @@ func (s *Session) Session() *gorsessions.Session {
 	return s.session
 }
 
-// KeyPrefix returns the prefix for the store key, not available for CookieStore.
+// Key returns the session key.
+func (s *Session) Key() string {
+	return s.store.KeyPrefix() + s.session.ID
+}
+
+// KeyPrefix returns the key prefix for the session, not available for CookieStore.
 func (s *Session) KeyPrefix() string {
 	return s.store.KeyPrefix()
 }
 
-// SetKeyPrefix sets the prefix for the store key, not available for CookieStore.
+// SetKeyPrefix sets the key prefix for the session, not available for CookieStore.
 func (s *Session) SetKeyPrefix(p string) {
 	s.store.SetKeyPrefix(p)
 }
