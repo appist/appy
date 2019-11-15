@@ -32,7 +32,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.2.0
-	go.uber.org/zap v1.12.0
+	go.uber.org/zap v1.13.0
 	golang.org/x/text v0.3.2
 	google.golang.org/grpc v1.25.1
 	gopkg.in/yaml.v2 v2.2.5
