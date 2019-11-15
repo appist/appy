@@ -3,6 +3,7 @@ package appy
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/appist/appy/sessionstore"
 	ginsessions "github.com/gin-contrib/sessions"
@@ -82,6 +83,14 @@ type Session struct {
 	writer  http.ResponseWriter
 }
 
+// RedisPoolConfig keeps the redis connection pool config.
+type RedisPoolConfig struct {
+	Addr, Auth, Db               string
+	MaxActive, MaxIdle           int
+	Wait                         bool
+	IdleTimeout, MaxConnLifetime time.Duration
+}
+
 // SessionManager is a middleware that provides the session management functionality.
 func SessionManager(config *Config) HandlerFunc {
 	return func(ctx *Context) {
@@ -107,8 +116,19 @@ func newSessionStore(config *Config) (SessionStore, error) {
 	case "cookie":
 		sessionStore = sessionstore.NewCookieStore(config.HTTPSessionSecrets...)
 	case "redis":
+		redisPoolConfig := RedisPoolConfig{
+			Addr:            config.HTTPSessionRedisAddr,
+			Auth:            config.HTTPSessionRedisAuth,
+			Db:              config.HTTPSessionRedisDb,
+			IdleTimeout:     config.HTTPSessionRedisIdleTimeout,
+			MaxConnLifetime: config.HTTPSessionRedisMaxConnLifetime,
+			MaxActive:       config.HTTPSessionRedisMaxActive,
+			MaxIdle:         config.HTTPSessionRedisMaxIdle,
+			Wait:            config.HTTPSessionRedisWait,
+		}
+
 		sessionStore, err = sessionstore.NewRedisStoreWithPool(
-			newSessionRedisPool(config),
+			NewRedisPool(redisPoolConfig),
 			config.HTTPSessionSecrets...,
 		)
 	default:
@@ -128,33 +148,34 @@ func newSessionStore(config *Config) (SessionStore, error) {
 	return sessionStore, err
 }
 
-func newSessionRedisPool(config *Config) *redis.Pool {
+// NewRedisPool initializes the redis connection pool.
+func NewRedisPool(config RedisPoolConfig) *redis.Pool {
 	return &redis.Pool{
 		Dial: func() (redis.Conn, error) {
-			conn, err := redis.Dial("tcp", config.HTTPSessionRedisAddr)
+			conn, err := redis.Dial("tcp", config.Addr)
 			if err != nil {
 				return nil, err
 			}
 
-			if config.HTTPSessionRedisAuth != "" {
-				if _, err := conn.Do("AUTH", config.HTTPSessionRedisAuth); err != nil {
+			if config.Auth != "" {
+				if _, err := conn.Do("AUTH", config.Auth); err != nil {
 					conn.Close()
 					return nil, err
 				}
 			}
 
-			if _, err := conn.Do("SELECT", config.HTTPSessionRedisDb); err != nil {
+			if _, err := conn.Do("SELECT", config.Db); err != nil {
 				conn.Close()
 				return nil, err
 			}
 
 			return conn, nil
 		},
-		IdleTimeout:     config.HTTPSessionRedisIdleTimeout,
-		MaxConnLifetime: config.HTTPSessionRedisMaxConnLifetime,
-		MaxActive:       config.HTTPSessionRedisMaxActive,
-		MaxIdle:         config.HTTPSessionRedisMaxIdle,
-		Wait:            config.HTTPSessionRedisWait,
+		IdleTimeout:     config.IdleTimeout,
+		MaxConnLifetime: config.MaxConnLifetime,
+		MaxActive:       config.MaxActive,
+		MaxIdle:         config.MaxIdle,
+		Wait:            config.Wait,
 	}
 }
 
