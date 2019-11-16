@@ -111,6 +111,11 @@ func (db *Db) Connect(sameDb bool) error {
 	return err
 }
 
+// Config returns the database config.
+func (db *Db) Config() DbConfig {
+	return db.config
+}
+
 // Close closes the database connection and release any open resources. It is rare to Close a DB, as the DB handle is
 // meant to be long-lived and shared between many goroutines.
 func (db *Db) Close() error {
@@ -420,7 +425,8 @@ func (db *Db) removeSchemaMigration(handler *DbHandle, handlerTx *DbHandleTx, ta
 	return err
 }
 
-func (db *Db) dumpSchema(name string) error {
+// DumpSchema uses pg_dump to dump the database schema.
+func (db *Db) DumpSchema(name string) error {
 	var (
 		outBytes bytes.Buffer
 		out      string

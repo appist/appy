@@ -79,6 +79,11 @@ func (m *DbManager) Db(name string) *Db {
 	return nil
 }
 
+// Dbs returns all the database instances.
+func (m *DbManager) Dbs() map[string]*Db {
+	return m.dbs
+}
+
 // DbHandle returns the handle for the database instance with the specified name.
 func (m *DbManager) DbHandle(name string) *DbHandle {
 	if db, ok := m.dbs[name]; ok {
