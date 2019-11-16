@@ -1,7 +1,11 @@
 package cmd
 
 import (
+	"bytes"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"os/exec"
 	"path"
 
 	appysupport "github.com/appist/appy/internal/support"
@@ -55,4 +59,63 @@ func getCommandName() string {
 	}
 
 	return name
+}
+
+func runDockerCompose(action string, assets http.FileSystem) error {
+	var (
+		data []byte
+		err  error
+	)
+	dcPath := appysupport.SSRPaths["docker"] + "/docker-compose.yml"
+
+	if appysupport.IsDebugBuild() {
+		data, err = ioutil.ReadFile(dcPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		file, err := assets.Open(appysupport.SSRPaths["root"] + "/" + dcPath)
+		if err != nil {
+			return err
+		}
+
+		data, err = ioutil.ReadAll(file)
+		if err != nil {
+			return err
+		}
+	}
+
+	var cmd *exec.Cmd
+	clusterName := getCommandName()
+	switch action {
+	case "down":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", clusterName, action, "--remove-orphans")
+	case "up":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", clusterName, action, "-d")
+	case "restart":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", clusterName, action)
+	}
+
+	cmd.Stdin = bytes.NewBuffer(data)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkDocker() error {
+	binaries := []string{"docker", "docker-compose"}
+
+	for _, binary := range binaries {
+		_, err := exec.LookPath(binary)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

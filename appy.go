@@ -113,13 +113,9 @@ func init() {
 // Init initializes App instance that comes with:
 //
 // - cmd: provides built-in commands and allow custom command constructing
-//
 // - config: provides configuration
-//
 // - logger: provides logger
-//
 // - server: provides the capability to serve HTTP requests
-//
 // - dbManager: manages the databases along with their pool connections
 func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	rootCmd := appycmd.NewCommand()
@@ -139,6 +135,9 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	rootCmd.AddCommand(
 		cmd.NewConfigDecryptCommand(config, logger),
 		cmd.NewConfigEncryptCommand(config, logger),
+		cmd.NewDcDownCommand(logger, assets),
+		cmd.NewDcRestartCommand(logger, assets),
+		cmd.NewDcUpCommand(logger, assets),
 		cmd.NewMiddlewareCommand(config, logger, server),
 		cmd.NewRoutesCommand(config, logger, server),
 		cmd.NewSecretCommand(logger),
