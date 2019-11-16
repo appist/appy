@@ -7,13 +7,13 @@ import (
 	appysupport "github.com/appist/appy/internal/support"
 )
 
-// NewDbSeedCommand dump all the databases schema for the current environment (debug build only).
+// NewDbSeedCommand seed the database(default: all, use --database to specify just 1) for the current environment.
 func NewDbSeedCommand(config *appysupport.Config, dbManager *appyorm.DbManager, logger *appysupport.Logger) *Command {
 	var target string
 
 	cmd := &Command{
-		Use:   "db:schema:dump",
-		Short: "Dump all the databases schema for the current environment (debug build only)",
+		Use:   "db:seed",
+		Short: "Seed the database(default: all, use --database to specify just 1) for the current environment",
 		Run: func(cmd *Command, args []string) {
 			if appysupport.IsConfigErrored(config, logger) || appyorm.IsDbManagerErrored(config, dbManager, logger) {
 				os.Exit(-1)
