@@ -88,19 +88,20 @@ type (
 		HTTPIENoOpen                bool              `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
 		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:""`
 
-		build, path        string
-		errors             []error
-		masterKey          []byte
-		CSRPaths, SSRPaths map[string]string
+		Path      string
+		errors    []error
+		masterKey []byte
 	}
 )
 
 var (
-	_csrPaths = map[string]string{
+	// CSRPaths defines the assets path for client-side rendering.
+	CSRPaths = map[string]string{
 		"root": "web",
 	}
 
-	_ssrPaths = map[string]string{
+	// SSRPaths defines the assets path for server-side rendering.
+	SSRPaths = map[string]string{
 		"root":   ".ssr",
 		"docker": ".docker",
 		"config": "pkg/config",
@@ -109,8 +110,8 @@ var (
 	}
 )
 
-// NewConfig initializes the Config instance.
-func NewConfig(build string, logger *Logger, assets http.FileSystem) *Config {
+// NewConfig initializes Config instance.
+func NewConfig(logger *Logger, assets http.FileSystem) *Config {
 	var (
 		errs []error
 	)
@@ -120,14 +121,11 @@ func NewConfig(build string, logger *Logger, assets http.FileSystem) *Config {
 		errs = append(errs, err)
 	}
 
-	config := &Config{
-		CSRPaths: _csrPaths,
-		SSRPaths: _ssrPaths,
-	}
+	config := &Config{}
 	if masterKey != nil {
-		config.path = configPath(build)
+		config.Path = configPath()
 		config.masterKey = masterKey
-		decryptErrs := decryptConfig(build, config.path, assets, masterKey)
+		decryptErrs := decryptConfig(config.Path, assets, masterKey)
 		if len(decryptErrs) > 0 {
 			errs = append(errs, decryptErrs...)
 		}
@@ -177,22 +175,22 @@ func IsProtectedEnv(config *Config) bool {
 	return false
 }
 
-func configPath(build string) string {
-	path := _ssrPaths["config"] + "/.env." + os.Getenv("APPY_ENV")
-	if build == DebugBuild {
+func configPath() string {
+	path := SSRPaths["config"] + "/.env." + os.Getenv("APPY_ENV")
+	if IsDebugBuild() {
 		return path
 	}
 
-	return _ssrPaths["root"] + "/" + path
+	return SSRPaths["root"] + "/" + path
 }
 
-func decryptConfig(build, path string, assets http.FileSystem, masterKey []byte) []error {
+func decryptConfig(path string, assets http.FileSystem, masterKey []byte) []error {
 	var (
 		file io.Reader
 		err  error
 	)
 
-	if build == DebugBuild {
+	if IsDebugBuild() {
 		file, err = os.Open(path)
 		if err != nil {
 			return []error{err}
@@ -256,8 +254,8 @@ func parseMasterKey() ([]byte, error) {
 	}
 
 	if len(key) == 0 {
-		if Build == DebugBuild {
-			key, err = ioutil.ReadFile(_ssrPaths["config"] + "/" + env + ".key")
+		if IsDebugBuild() {
+			key, err = ioutil.ReadFile(SSRPaths["config"] + "/" + env + ".key")
 			if err != nil {
 				return nil, ErrReadMasterKeyFile
 			}

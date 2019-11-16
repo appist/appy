@@ -16,8 +16,8 @@ type ConfigSuite struct {
 }
 
 func (s *ConfigSuite) SetupTest() {
-	s.oldSSRPaths = _ssrPaths
-	_ssrPaths = map[string]string{
+	s.oldSSRPaths = SSRPaths
+	SSRPaths = map[string]string{
 		"root":   "testdata/.ssr",
 		"config": "testdata/pkg/config",
 		"locale": "testdata/pkg/locales",
@@ -26,7 +26,7 @@ func (s *ConfigSuite) SetupTest() {
 }
 
 func (s *ConfigSuite) TearDownTest() {
-	_ssrPaths = s.oldSSRPaths
+	SSRPaths = s.oldSSRPaths
 }
 
 func (s *ConfigSuite) TestNewConfigDefaultValue() {
@@ -96,9 +96,8 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"HTTPSSLProxyHeaders":             map[string]string{},
 	}
 
-	build := DebugBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	cv := reflect.ValueOf(*config)
 	for key, defaultVal := range tt {
 		fv := cv.FieldByName(key)
@@ -144,9 +143,6 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 			s.Equal(fv.Interface(), defaultVal)
 		}
 	}
-
-	s.Equal(_csrPaths, config.CSRPaths)
-	s.Equal(_ssrPaths, config.SSRPaths)
 }
 
 func (s *ConfigSuite) TestNewConfigWithoutSettingRequiredConfig() {
@@ -157,9 +153,8 @@ func (s *ConfigSuite) TestNewConfigWithoutSettingRequiredConfig() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	build := DebugBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	s.NotNil(config.Errors())
 	s.EqualError(config.Errors()[0], `required environment variable "HTTP_SESSION_SECRETS" is not set. required environment variable "HTTP_CSRF_SECRET" is not set`)
 }
@@ -176,9 +171,8 @@ func (s *ConfigSuite) TestNewConfigWithSettingRequiredConfig() {
 		os.Unsetenv("HTTP_SESSION_SECRETS")
 	}()
 
-	build := DebugBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	s.Equal([]byte("481e5d98a31585148b8b1dfb6a3c0465"), config.MasterKey())
 	s.Nil(config.Errors())
 }
@@ -193,9 +187,8 @@ func (s *ConfigSuite) TestNewConfigWithUnparsableEnvVariable() {
 		os.Unsetenv("HTTP_DEBUG_ENABLED")
 	}()
 
-	build := DebugBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	s.Contains(config.Errors()[0].Error(), `strconv.ParseBool: parsing "nil": invalid syntax.`)
 }
 
@@ -207,9 +200,8 @@ func (s *ConfigSuite) TestNewConfigWithUndecryptableConfig() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	build := DebugBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	s.Contains(config.Errors()[0].Error(), "unable to decrypt 'HTTP_PORT' value in 'testdata/pkg/config/.env.undecryptable'")
 }
 
@@ -221,9 +213,10 @@ func (s *ConfigSuite) TestNewConfigWithInvalidAssetsPath() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	build := ReleaseBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, http.Dir("."))
+	Build = ReleaseBuild
+	defer func() { Build = DebugBuild }()
+	logger := NewLogger()
+	config := NewConfig(logger, http.Dir("."))
 	s.Contains(config.Errors()[0].Error(), "open testdata/.ssr/testdata/pkg/config/.env.development: no such file or directory")
 }
 
@@ -233,9 +226,10 @@ func (s *ConfigSuite) TestNewConfigWithMissingConfigInAssets() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	build := ReleaseBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	Build = ReleaseBuild
+	defer func() { Build = DebugBuild }()
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	s.EqualError(config.Errors()[0], ErrNoConfigInAssets.Error())
 }
 
@@ -247,26 +241,24 @@ func (s *ConfigSuite) TestNewConfigWithUnparsableConfig() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	build := DebugBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	s.Contains(config.Errors()[0].Error(), "Can't separate key from value")
 }
 
 func (s *ConfigSuite) TestIsConfigErrored() {
 	os.Setenv("APPY_ENV", "development")
 
-	build := DebugBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	s.Equal(true, IsConfigErrored(config, logger))
 
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
-	logger = NewLogger(build)
-	config = NewConfig(build, logger, nil)
+	logger = NewLogger()
+	config = NewConfig(logger, nil)
 	s.Equal(false, IsConfigErrored(config, logger))
 
 	os.Unsetenv("APPY_ENV")
@@ -280,14 +272,13 @@ func (s *ConfigSuite) TestIsProtectedEnv() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
-	build := DebugBuild
-	logger := NewLogger(build)
-	config := NewConfig(build, logger, nil)
+	logger := NewLogger()
+	config := NewConfig(logger, nil)
 	s.Equal(false, IsProtectedEnv(config))
 
 	os.Setenv("APPY_ENV", "production")
-	logger = NewLogger(build)
-	config = NewConfig(build, logger, nil)
+	logger = NewLogger()
+	config = NewConfig(logger, nil)
 	s.Equal(true, IsProtectedEnv(config))
 	os.Unsetenv("APPY_ENV")
 	os.Unsetenv("APPY_MASTER_KEY")

@@ -30,3 +30,13 @@ var (
 	// ErrNoConfigInAssets indicates the config is missing in the assets.
 	ErrNoConfigInAssets = errors.New("missing config in the assets")
 )
+
+// IsDebugBuild indicates the current build is debug build which is meant for local development.
+func IsDebugBuild() bool {
+	return Build == DebugBuild
+}
+
+// IsReleaseBuild indicates the current build is release build which is meant for production deployment.
+func IsReleaseBuild() bool {
+	return Build == DebugBuild
+}

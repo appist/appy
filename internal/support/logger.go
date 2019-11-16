@@ -19,24 +19,23 @@ type (
 	// Logger provides the logging functionality.
 	Logger struct {
 		*SugaredLogger
-		build     string
 		dbLogging bool
 	}
 )
 
 const (
-	comment = "/* appy framework */"
+	// DbQueryComment is used to identify which DB query is trigerred from within appy framework.
+	DbQueryComment = "/* appy framework */"
 )
 
 // NewLogger initializes Logger instance.
-func NewLogger(build string) *Logger {
-	c := newLoggerConfig(build)
+func NewLogger() *Logger {
+	c := newLoggerConfig()
 	logger, _ := c.Build()
 	defer logger.Sync()
 
 	return &Logger{
 		SugaredLogger: logger.Sugar(),
-		build:         build,
 		dbLogging:     true,
 	}
 }
@@ -66,17 +65,12 @@ func (l Logger) BeforeQuery(c context.Context, e *pg.QueryEvent) (context.Contex
 func (l Logger) AfterQuery(c context.Context, e *pg.QueryEvent) error {
 	query, err := e.FormattedQuery()
 
-	if !strings.Contains(query, comment) && l.dbLogging {
+	if !strings.Contains(query, DbQueryComment) && l.dbLogging {
 		replacer := strings.NewReplacer("\n", "", ",\n", ", ", "\t", "")
 		l.SugaredLogger.Infof("[DB] %s in %s", replacer.Replace(query), time.Since(e.StartTime))
 	}
 
 	return err
-}
-
-// Build indicates if the logger is using debug or release config.
-func (l Logger) Build() string {
-	return l.build
 }
 
 // DbLogging can be used to check if DB logging is enabled or not.
@@ -89,13 +83,13 @@ func (l *Logger) SetDbLogging(enabled bool) {
 	l.dbLogging = enabled
 }
 
-func newLoggerConfig(build string) zap.Config {
+func newLoggerConfig() zap.Config {
 	c := zap.NewDevelopmentConfig()
 	c.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	c.EncoderConfig.CallerKey = ""
 	c.EncoderConfig.EncodeTime = nil
 
-	if build == ReleaseBuild {
+	if IsReleaseBuild() {
 		c = zap.NewProductionConfig()
 		c.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	}

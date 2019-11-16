@@ -1,0 +1,6 @@
+password: 密碼
+
+message:
+  Zero: "{{.Name}}沒有訊息。"
+  One: "{{.Name}}有{{.Count}}則訊息。"
+  Other: "{{.Name}}有{{.Count}}則訊息。"
