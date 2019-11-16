@@ -112,11 +112,15 @@ func init() {
 
 // Init initializes App instance that comes with:
 //
-// cmd - provides appy's built-in commands and allow custom command constructing
-// config - provides appy's global configuration
-// logger - provides logger
-// server - provides the capability to serve HTTP requests
-// dbManager - manages the databases along with their pool connections
+// - cmd: provides appy's built-in commands and allow custom command constructing
+//
+// - config: provides appy's global configuration
+//
+// - logger: provides logger
+//
+// - server: provides the capability to serve HTTP requests
+//
+// - dbManager: manages the databases along with their pool connections
 func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	rootCmd := appycmd.NewCommand()
 	logger := appysupport.NewLogger()
