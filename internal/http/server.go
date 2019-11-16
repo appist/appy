@@ -178,6 +178,21 @@ func (s Server) Hosts() ([]string, error) {
 	return hosts, nil
 }
 
+// Config returns the server's configuration.
+func (s Server) Config() *appysupport.Config {
+	return s.config
+}
+
+// HTTP returns the HTTP server instance.
+func (s Server) HTTP() *http.Server {
+	return s.http
+}
+
+// HTTPS returns the HTTPS server instance.
+func (s Server) HTTPS() *http.Server {
+	return s.https
+}
+
 // IsSSLCertExisted checks if `./tmp/ssl` exists and contains the locally trusted SSL certificates.
 func (s Server) IsSSLCertExisted() bool {
 	_, certErr := os.Stat(s.config.HTTPSSLCertPath + "/cert.pem")

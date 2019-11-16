@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/appist/appy/internal/cmd"
 	appycmd "github.com/appist/appy/internal/cmd"
 	appyhttp "github.com/appist/appy/internal/http"
 	appyorm "github.com/appist/appy/internal/orm"
@@ -117,7 +118,7 @@ func init() {
 // server - provides the capability to serve HTTP requests
 // dbManager - manages the databases along with their pool connections
 func Init(assets http.FileSystem, viewHelper template.FuncMap) {
-	cmd := appycmd.NewCommand()
+	rootCmd := appycmd.NewCommand()
 	logger := appysupport.NewLogger()
 	config := appysupport.NewConfig(logger, assets)
 	dbManager := appyorm.NewDbManager(logger)
@@ -125,13 +126,18 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	server.InitSSR()
 
 	if appysupport.IsDebugBuild() {
-		cmd.AddCommand()
+		rootCmd.AddCommand(
+			cmd.NewBuildCommand(logger, server),
+			cmd.NewStartCommand(logger, server),
+		)
 	}
 
-	cmd.AddCommand()
+	rootCmd.AddCommand(
+		cmd.NewServeCommand(dbManager, logger, server),
+	)
 
 	app = &App{
-		cmd:       cmd,
+		cmd:       rootCmd,
 		config:    config,
 		dbManager: dbManager,
 		logger:    logger,
@@ -168,7 +174,7 @@ func (a App) Server() *appyhttp.Server {
 func (a App) Run() error {
 	// Must be located right before the server runs due to CSR utilizes `NoRoute` to achieve pretty URL navigation
 	// with HTML5 history API.
-	// a.server.InitCSR()
+	a.server.InitCSR()
 
 	// Start executing the root command.
 	return a.Cmd().Execute()

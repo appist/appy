@@ -8,6 +8,7 @@ require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/chromedp/cdproto v0.0.0-20191114225735-6626966fbae4
 	github.com/chromedp/chromedp v0.5.1
+	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/camelcase v1.0.0
 	github.com/gin-contrib/gzip v0.0.1
 	github.com/gin-contrib/multitemplate v0.0.0-20190914010127-bba2ccfe37ec
@@ -22,7 +23,10 @@ require (
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/joho/godotenv v1.3.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.2
+	github.com/otiai10/copy v1.0.2
+	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0
+	github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.2.0

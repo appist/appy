@@ -292,7 +292,7 @@ func parseDbConfig() (map[string]DbConfig, []error) {
 		config.SchemaSearchPath = schemaSearchPath
 		config.SchemaMigrationsTable = schemaMigrationsTable
 		config.OnConnect = func(conn *DbConn) error {
-			_, err := conn.Exec("SET search_path=? ?", schemaSearchPath, appysupport.DbQueryComment)
+			_, err := conn.Exec("SET search_path=? ?", DbSafeQuery(schemaSearchPath), DbSafeQuery(appysupport.DbQueryComment))
 			if err != nil {
 				return err
 			}

@@ -38,5 +38,5 @@ func IsDebugBuild() bool {
 
 // IsReleaseBuild indicates the current build is release build which is meant for production deployment.
 func IsReleaseBuild() bool {
-	return Build == DebugBuild
+	return Build == ReleaseBuild
 }
