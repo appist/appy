@@ -14,18 +14,27 @@ import (
 type (
 	// App is the core of appy framework which determines how an application is driven.
 	App struct {
-		cmd       *appycmd.Command
-		config    *appysupport.Config
-		dbManager *appyorm.DbManager
-		logger    *appysupport.Logger
-		server    *appyhttp.Server
+		cmd       *Command
+		config    *Config
+		dbManager *DbManager
+		logger    *Logger
+		server    *Server
 	}
 
-	Command   = appycmd.Command
-	Config    = appysupport.Config
+	// Command defines what a command line can do.
+	Command = appycmd.Command
+
+	// Config defines the application settings.
+	Config = appysupport.Config
+
+	// DbManager manages multiple databases.
 	DbManager = appyorm.DbManager
-	Logger    = appysupport.Logger
-	Server    = appyhttp.Server
+
+	// Logger provides the logging functionality.
+	Logger = appysupport.Logger
+
+	// Server is the engine that serves HTTP requests.
+	Server = appyhttp.Server
 )
 
 var (

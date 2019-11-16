@@ -14,7 +14,7 @@ import (
 )
 
 type (
-	// Config provides the configuration functionality.
+	// Config defines the application settings.
 	Config struct {
 		AppyEnv string `env:"APPY_ENV" envDefault:"development"`
 
