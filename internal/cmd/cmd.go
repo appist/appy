@@ -48,10 +48,11 @@ func NewCommand() *Command {
 }
 
 func getCommandName() string {
-	if appysupport.IsDebugBuild() {
-		return "go run ."
+	name := path.Base(os.Args[0])
+	if name == "main" {
+		wd, _ := os.Getwd()
+		name = path.Base(wd)
 	}
 
-	wd, _ := os.Getwd()
-	return path.Base(wd)
+	return name
 }

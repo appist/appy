@@ -21,7 +21,7 @@ var (
 	mainAssets = "pkg/bootstrap/assets.go"
 )
 
-// NewBuildCommand compiles the static assets into go files and build the release mode binary (debug build only)
+// NewBuildCommand compile the static assets into go files and build the release mode binary (debug build only)
 func NewBuildCommand(logger *appysupport.Logger, s *appyhttp.Server) *Command {
 	return &Command{
 		Use:   "build",

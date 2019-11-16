@@ -193,6 +193,11 @@ func (s Server) HTTPS() *http.Server {
 	return s.https
 }
 
+// Middleware returns the server's middleware list.
+func (s Server) Middleware() Middleware {
+	return s.router.Handlers
+}
+
 // IsSSLCertExisted checks if `./tmp/ssl` exists and contains the locally trusted SSL certificates.
 func (s Server) IsSSLCertExisted() bool {
 	_, certErr := os.Stat(s.config.HTTPSSLCertPath + "/cert.pem")

@@ -112,9 +112,9 @@ func init() {
 
 // Init initializes App instance that comes with:
 //
-// - cmd: provides appy's built-in commands and allow custom command constructing
+// - cmd: provides built-in commands and allow custom command constructing
 //
-// - config: provides appy's global configuration
+// - config: provides configuration
 //
 // - logger: provides logger
 //
@@ -137,7 +137,14 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	}
 
 	rootCmd.AddCommand(
+		cmd.NewConfigDecryptCommand(config, logger),
+		cmd.NewConfigEncryptCommand(config, logger),
+		cmd.NewMiddlewareCommand(config, logger, server),
+		cmd.NewRoutesCommand(config, logger, server),
+		cmd.NewSecretCommand(logger),
 		cmd.NewServeCommand(dbManager, logger, server),
+		cmd.NewSSLSetupCommand(logger, server),
+		cmd.NewSSLTeardownCommand(logger, server),
 	)
 
 	app = &App{

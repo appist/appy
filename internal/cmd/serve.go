@@ -12,7 +12,7 @@ import (
 	appysupport "github.com/appist/appy/internal/support"
 )
 
-// NewServeCommand runs the HTTP/HTTPS web server without webpack-dev-server.
+// NewServeCommand run the HTTP/HTTPS web server without webpack-dev-server.
 func NewServeCommand(dbManager *appyorm.DbManager, logger *appysupport.Logger, s *appyhttp.Server) *Command {
 	return &Command{
 		Use:   "serve",

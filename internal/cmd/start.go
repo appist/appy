@@ -30,7 +30,7 @@ var (
 	watcherPollInterval time.Duration = 1
 )
 
-// NewStartCommand runs the HTTP/HTTPS web server with webpack-dev-server in development watch mode (debug build only).
+// NewStartCommand run the HTTP/HTTPS web server with webpack-dev-server in development watch mode (debug build only).
 func NewStartCommand(logger *appysupport.Logger, s *appyhttp.Server) *Command {
 	return &Command{
 		Use:   "start",
