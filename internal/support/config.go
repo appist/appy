@@ -1,0 +1,275 @@
+package support
+
+import (
+	"encoding/hex"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/joho/godotenv"
+)
+
+type (
+	// Config provides the configuration functionality.
+	Config struct {
+		AppyEnv string `env:"APPY_ENV" envDefault:"development"`
+
+		// GraphQL related configuration.
+		GQLPlaygroundEnabled          bool          `env:"GQL_PLAYGROUND_ENABLED" envDefault:"false"`
+		GQLPlaygroundPath             string        `env:"GQL_PLAYGROUND_PATH" envDefault:"/docs/graphql"`
+		GQLCacheSize                  int           `env:"GQL_CACHE_SIZE" envDefault:"1000"`
+		GQLComplexityLimit            int           `env:"GQL_COMPLEXITY_LIMIT" envDefault:"200"`
+		GQLUploadMaxMemory            int64         `env:"GQL_UPLOAD_MAX_MEMORY" envDefault:"100000000"`
+		GQLUploadMaxSize              int64         `env:"GQL_UPLOAD_MAX_SIZE" envDefault:"100000000"`
+		GQLWebsocketKeepAliveDuration time.Duration `env:"GQL_WEBSOCKET_KEEP_ALIVE_DURATION" envDefault:"30s"`
+
+		// Server related configuration.
+		HTTPDebugEnabled        bool          `env:"HTTP_DEBUG_ENABLED" envDefault:"false"`
+		HTTPLogFilterParameters []string      `env:"HTTP_LOG_FILTER_PARAMETERS" envDefault:"password"`
+		HTTPHealthCheckURL      string        `env:"HTTP_HEALTH_CHECK_URL" envDefault:"/health_check"`
+		HTTPHost                string        `env:"HTTP_HOST" envDefault:"localhost"`
+		HTTPPort                string        `env:"HTTP_PORT" envDefault:"3000"`
+		HTTPGracefulTimeout     time.Duration `env:"HTTP_GRACEFUL_TIMEOUT" envDefault:"30s"`
+		HTTPIdleTimeout         time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"75s"`
+		HTTPMaxHeaderBytes      int           `env:"HTTP_MAX_HEADER_BYTES" envDefault:"0"`
+		HTTPReadTimeout         time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"60s"`
+		HTTPReadHeaderTimeout   time.Duration `env:"HTTP_READ_HEADER_TIMEOUT" envDefault:"60s"`
+		HTTPWriteTimeout        time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"60s"`
+		HTTPSSLCertPath         string        `env:"HTTP_SSL_CERT_PATH" envDefault:"./tmp/ssl"`
+		HTTPSSLEnabled          bool          `env:"HTTP_SSL_ENABLED" envDefault:"false"`
+		HTTPSSLPort             string        `env:"HTTP_SSL_PORT" envDefault:"3443"`
+
+		// Session related configuration using redis pool.
+		HTTPSessionRedisAddr            string        `env:"HTTP_SESSION_REDIS_ADDR" envDefault:"localhost:6379"`
+		HTTPSessionRedisAuth            string        `env:"HTTP_SESSION_REDIS_AUTH" envDefault:""`
+		HTTPSessionRedisDb              string        `env:"HTTP_SESSION_REDIS_DB" envDefault:"0"`
+		HTTPSessionRedisMaxActive       int           `env:"HTTP_SESSION_REDIS_MAX_ACTIVE" envDefault:"64"`
+		HTTPSessionRedisMaxIdle         int           `env:"HTTP_SESSION_REDIS_MAX_IDLE" envDefault:"32"`
+		HTTPSessionRedisIdleTimeout     time.Duration `env:"HTTP_SESSION_REDIS_IDLE_TIMEOUT" envDefault:"30s"`
+		HTTPSessionRedisMaxConnLifetime time.Duration `env:"HTTP_SESSION_REDIS_MAX_CONN_LIFETIME" envDefault:"30s"`
+		HTTPSessionRedisWait            bool          `env:"HTTP_SESSION_REDIS_WAIT" envDefault:"true"`
+
+		// Session related configuration.
+		HTTPSessionName       string   `env:"HTTP_SESSION_NAME" envDefault:"_session"`
+		HTTPSessionProvider   string   `env:"HTTP_SESSION_PROVIDER" envDefault:"cookie"`
+		HTTPSessionExpiration int      `env:"HTTP_SESSION_EXPIRATION" envDefault:"1209600"`
+		HTTPSessionDomain     string   `env:"HTTP_SESSION_DOMAIN" envDefault:"localhost"`
+		HTTPSessionHTTPOnly   bool     `env:"HTTP_SESSION_HTTP_ONLY" envDefault:"true"`
+		HTTPSessionPath       string   `env:"HTTP_SESSION_PATH" envDefault:"/"`
+		HTTPSessionSecure     bool     `env:"HTTP_SESSION_SECURE" envDefault:"false"`
+		HTTPSessionSecrets    [][]byte `env:"HTTP_SESSION_SECRETS,required" envDefault:""`
+
+		// Security related configuration.
+		HTTPAllowedHosts            []string          `env:"HTTP_ALLOWED_HOSTS" envDefault:""`
+		HTTPCSRFCookieDomain        string            `env:"HTTP_CSRF_COOKIE_DOMAIN" envDefault:"localhost"`
+		HTTPCSRFCookieHTTPOnly      bool              `env:"HTTP_CSRF_COOKIE_HTTP_ONLY" envDefault:"true"`
+		HTTPCSRFCookieMaxAge        int               `env:"HTTP_CSRF_COOKIE_MAX_AGE" envDefault:"0"`
+		HTTPCSRFCookieName          string            `env:"HTTP_CSRF_COOKIE_NAME" envDefault:"_csrf_token"`
+		HTTPCSRFCookiePath          string            `env:"HTTP_CSRF_COOKIE_PATH" envDefault:"/"`
+		HTTPCSRFCookieSecure        bool              `env:"HTTP_CSRF_COOKIE_SECURE" envDefault:"false"`
+		HTTPCSRFFieldName           string            `env:"HTTP_CSRF_FIELD_NAME" envDefault:"authenticity_token"`
+		HTTPCSRFRequestHeader       string            `env:"HTTP_CSRF_REQUEST_HEADER" envDefault:"X-CSRF-Token"`
+		HTTPCSRFSecret              []byte            `env:"HTTP_CSRF_SECRET,required" envDefault:""`
+		HTTPSSLRedirect             bool              `env:"HTTP_SSL_REDIRECT" envDefault:"false"`
+		HTTPSSLTemporaryRedirect    bool              `env:"HTTP_SSL_TEMPORARY_REDIRECT" envDefault:"false"`
+		HTTPSSLHost                 string            `env:"HTTP_SSL_HOST" envDefault:"localhost:3443"`
+		HTTPSTSSeconds              int64             `env:"HTTP_STS_SECONDS" envDefault:"0"`
+		HTTPSTSIncludeSubdomains    bool              `env:"HTTP_STS_INCLUDE_SUBDOMAINS" envDefault:"false"`
+		HTTPFrameDeny               bool              `env:"HTTP_FRAME_DENY" envDefault:"true"`
+		HTTPCustomFrameOptionsValue string            `env:"HTTP_CUSTOM_FRAME_OPTIONS_VALUE" envDefault:""`
+		HTTPContentTypeNosniff      bool              `env:"HTTP_CONTENT_TYPE_NOSNIFF" envDefault:"false"`
+		HTTPBrowserXSSFilter        bool              `env:"HTTP_BROWSER_XSS_FILTER" envDefault:"false"`
+		HTTPContentSecurityPolicy   string            `env:"HTTP_CONTENT_SECURITY_POLICY" envDefault:""`
+		HTTPReferrerPolicy          string            `env:"HTTP_REFERRER_POLICY" envDefault:""`
+		HTTPIENoOpen                bool              `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
+		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:""`
+
+		build, path        string
+		errors             []error
+		masterKey          []byte
+		CSRPaths, SSRPaths map[string]string
+	}
+)
+
+var (
+	_csrPaths = map[string]string{
+		"root": "web",
+	}
+
+	_ssrPaths = map[string]string{
+		"root":   ".ssr",
+		"docker": ".docker",
+		"config": "pkg/config",
+		"locale": "pkg/locales",
+		"view":   "pkg/views",
+	}
+)
+
+// NewConfig initializes the Config instance.
+func NewConfig(build string, logger *Logger, assets http.FileSystem) *Config {
+	var (
+		errs []error
+	)
+
+	masterKey, err := parseMasterKey()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	config := &Config{
+		CSRPaths: _csrPaths,
+		SSRPaths: _ssrPaths,
+	}
+	if masterKey != nil {
+		config.path = configPath(build)
+		config.masterKey = masterKey
+		decryptErrs := decryptConfig(build, config.path, assets, masterKey)
+		if len(decryptErrs) > 0 {
+			errs = append(errs, decryptErrs...)
+		}
+
+		err = ParseEnv(config)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		config.errors = errs
+	}
+
+	return config
+}
+
+// MasterKey returns the master key for the current environment.
+func (c Config) MasterKey() []byte {
+	return c.masterKey
+}
+
+// Errors returns all the config retrieving/parsing errors.
+func (c Config) Errors() []error {
+	return c.errors
+}
+
+// IsConfigErrored is used to check if config contains any error during initialization.
+func IsConfigErrored(config *Config, logger *Logger) bool {
+	if config != nil && config.errors != nil {
+		for _, err := range config.errors {
+			logger.Info(err.Error())
+		}
+
+		return true
+	}
+
+	return false
+}
+
+// IsProtectedEnv is used to protect the app from being destroyed by a command accidentally.
+func IsProtectedEnv(config *Config) bool {
+	if config.AppyEnv == "production" {
+		return true
+	}
+
+	return false
+}
+
+func configPath(build string) string {
+	path := _ssrPaths["config"] + "/.env." + os.Getenv("APPY_ENV")
+	if build == DebugBuild {
+		return path
+	}
+
+	return _ssrPaths["root"] + "/" + path
+}
+
+func decryptConfig(build, path string, assets http.FileSystem, masterKey []byte) []error {
+	var (
+		file io.Reader
+		err  error
+	)
+
+	if build == DebugBuild {
+		file, err = os.Open(path)
+		if err != nil {
+			return []error{err}
+		}
+	} else {
+		if assets != nil {
+			file, err = assets.Open(path)
+			if err != nil {
+				return []error{err}
+			}
+		}
+
+		if file == nil {
+			return []error{ErrNoConfigInAssets}
+		}
+	}
+
+	envMap, err := godotenv.Parse(file)
+	if err != nil {
+		return []error{err}
+	}
+
+	currentEnv := map[string]bool{}
+	rawEnv := os.Environ()
+	for _, rawEnvLine := range rawEnv {
+		key := strings.Split(rawEnvLine, "=")[0]
+		currentEnv[key] = true
+	}
+
+	var errs []error
+	if len(masterKey) != 0 {
+		for key, value := range envMap {
+			if !currentEnv[key] {
+				decodeStr, _ := hex.DecodeString(value)
+				plaintext, err := AESDecrypt(decodeStr, masterKey)
+				if len(plaintext) < 1 || err != nil {
+					errs = append(errs, fmt.Errorf("unable to decrypt '%s' value in '%s'", key, path))
+				}
+
+				os.Setenv(key, string(plaintext))
+			}
+		}
+	}
+
+	return errs
+}
+
+func parseMasterKey() ([]byte, error) {
+	var (
+		err error
+		key []byte
+	)
+
+	env := "development"
+	if os.Getenv("APPY_ENV") != "" {
+		env = os.Getenv("APPY_ENV")
+	}
+
+	if os.Getenv("APPY_MASTER_KEY") != "" {
+		key = []byte(os.Getenv("APPY_MASTER_KEY"))
+	}
+
+	if len(key) == 0 {
+		if Build == DebugBuild {
+			key, err = ioutil.ReadFile(_ssrPaths["config"] + "/" + env + ".key")
+			if err != nil {
+				return nil, ErrReadMasterKeyFile
+			}
+		}
+	}
+
+	key = []byte(strings.Trim(string(key), "\n"))
+	key = []byte(strings.Trim(string(key), " "))
+
+	if len(key) == 0 {
+		return nil, ErrNoMasterKey
+	}
+
+	return key, nil
+}
