@@ -3,7 +3,7 @@ package orm
 import (
 	"bytes"
 	"fmt"
-	"html/template"
+	"text/template"
 	"io/ioutil"
 	"net/url"
 	"os"
