@@ -27,18 +27,80 @@ type (
 	// Config defines the application settings.
 	Config = appysupport.Config
 
+	// DbHandle is a database handle representing a pool of zero or more underlying connections. It's safe
+	// for concurrent use by multiple goroutines.
+	DbHandle = appyorm.DbHandle
+
+	// DbHandleTx is an in-progress database transaction. It is safe for concurrent use by multiple goroutines.
+	DbHandleTx = appyorm.DbHandleTx
+
 	// DbManager manages multiple databases.
 	DbManager = appyorm.DbManager
 
 	// Logger provides the logging functionality.
 	Logger = appysupport.Logger
 
+	// Context contains the HTTP request information.
+	Context = appyhttp.Context
+
+	// ContextKey is the HTTP context key with appy namespace.
+	ContextKey = appyhttp.ContextKey
+
+	// H is a type alias to map[string]string.
+	H = appyhttp.H
+
+	// Middleware is the middleware list attached to the server.
+	Middleware = appyhttp.Middleware
+
+	// HandlerFunc is a type alias to gin.HandlerFunc.
+	HandlerFunc = appyhttp.HandlerFunc
+
+	// RouterGroup can be used to group routes.
+	RouterGroup = appyhttp.RouterGroup
+
+	// RouteInfo provides the information about a route.
+	RouteInfo = appyhttp.RouteInfo
+
+	// Router manages the routing logic.
+	Router = appyhttp.Router
+
 	// Server is the engine that serves HTTP requests.
 	Server = appyhttp.Server
+
+	// AfterScanHook is the hook to trigger after a model's scan.
+	AfterScanHook = appyorm.AfterScanHook
+
+	// AfterSelectHook is the hook to trigger after a model's select.
+	AfterSelectHook = appyorm.AfterSelectHook
+
+	// BeforeInsertHook is the hook to trigger before a model's insert.
+	BeforeInsertHook = appyorm.BeforeInsertHook
+
+	// AfterInsertHook is the hook to trigger after a model's insert.
+	AfterInsertHook = appyorm.AfterInsertHook
+
+	// BeforeUpdateHook is the hook to trigger before a model's update.
+	BeforeUpdateHook = appyorm.BeforeUpdateHook
+
+	// AfterUpdateHook is the hook to trigger after a model's update.
+	AfterUpdateHook = appyorm.AfterUpdateHook
+
+	// BeforeDeleteHook is the hook to trigger before a model's delete.
+	BeforeDeleteHook = appyorm.BeforeDeleteHook
+
+	// AfterDeleteHook is the hook to trigger after a model's delete.
+	AfterDeleteHook = appyorm.AfterDeleteHook
 )
 
 var (
 	app *App
+
+	// ParseEnv parses the environment variables into the config.
+	ParseEnv = appysupport.ParseEnv
+
+	// T translates a message based on the given key. Furthermore, we can pass in template data with `Count` in it to
+	// support singular/plural cases.
+	T = appyhttp.T
 )
 
 func init() {
@@ -62,7 +124,7 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	server := appyhttp.NewServer(config, logger, assets, viewHelper)
 	server.InitSSR()
 
-	if appysupport.Build == appysupport.DebugBuild {
+	if appysupport.IsDebugBuild() {
 		cmd.AddCommand()
 	}
 

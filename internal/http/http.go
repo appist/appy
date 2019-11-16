@@ -13,19 +13,19 @@ type (
 	// HandlerFunc is a type alias to gin.HandlerFunc.
 	HandlerFunc = gin.HandlerFunc
 
-	// Context is a type alias to gin.Context.
+	// Context contains the HTTP request information.
 	Context = gin.Context
 
-	// HandlersChain is a type alias to gin.HandlersChain.
-	HandlersChain = gin.HandlersChain
+	// Middleware is the middleware list attached to the server.
+	Middleware = gin.HandlersChain
 
-	// Router is a type alias to gin.Engine.
+	// Router manages the routing logic.
 	Router = gin.Engine
 
-	// RouterGroup is a type alias to gin.RouterGroup.
+	// RouterGroup can be used to group routes.
 	RouterGroup = gin.RouterGroup
 
-	// RouteInfo is a type alias to gin.RouteInfo.
+	// RouteInfo provides the information about a route.
 	RouteInfo = gin.RouteInfo
 
 	// Routes is a type alias to gin.IRoutes.
