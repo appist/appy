@@ -154,6 +154,8 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 		cmd.NewRoutesCommand(config, logger, server),
 		cmd.NewSecretCommand(logger),
 		cmd.NewServeCommand(dbManager, logger, server),
+		cmd.NewSetupCommand(config, dbManager, logger, assets),
+		cmd.NewTeardownCommand(logger, assets),
 		cmd.NewSSLSetupCommand(logger, server),
 		cmd.NewSSLTeardownCommand(logger, server),
 	)
