@@ -707,9 +707,11 @@ func schemaDumpTpl(database, schema string) ([]byte, error) {
 
 	t, err := template.New("schemaDump").Parse(
 		`package {{.Database}}
+
 import (
 	"github.com/appist/appy"
 )
+
 func init() {
 	db := appy.Default().DbManager().Db("{{.Database}}")
 	if db != nil {
