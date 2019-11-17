@@ -129,6 +129,26 @@ func (s *SessionManagerSuite) TestSessionRedisStoreInvalidDb() {
 	s.Panics(func() { SessionManager(s.config)(ctx) })
 }
 
+func (s *SessionManagerSuite) TestNonExistentDefaultSession() {
+	ctx, _ := test.CreateHTTPContext(s.recorder)
+	ctx.Request = &http.Request{}
+	s.config.HTTPSessionProvider = "redis"
+	s.Nil(DefaultSession(ctx))
+}
+
+func (s *SessionManagerSuite) TestCustomSessionKey() {
+	ctx, _ := test.CreateHTTPContext(s.recorder)
+	ctx.Request = &http.Request{}
+	s.config.HTTPSessionProvider = "redis"
+	SessionManager(s.config)(ctx)
+
+	session := DefaultSession(ctx)
+	session.SetKeyPrefix("mysession:")
+	testSessionOps(s, session)
+
+	s.Contains(session.Key(), "mysession:")
+}
+
 func TestSessionManager(t *testing.T) {
 	test.RunSuite(t, new(SessionManagerSuite))
 }

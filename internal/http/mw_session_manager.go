@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/appist/appy/internal/http/sessionstore"
+	appysupport "github.com/appist/appy/internal/support"
 	ginsessions "github.com/gin-contrib/sessions"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/context"
 	gorsessions "github.com/gorilla/sessions"
-	appysupport "github.com/appist/appy/internal/support"
 )
 
 var (
@@ -254,7 +254,7 @@ func (s *Session) Session() *gorsessions.Session {
 
 // Key returns the session key.
 func (s *Session) Key() string {
-	return s.store.KeyPrefix() + s.session.ID
+	return s.KeyPrefix() + s.session.ID
 }
 
 // KeyPrefix returns the key prefix for the session, not available for CookieStore.
