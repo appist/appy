@@ -113,7 +113,7 @@ func NewBuildCommand(logger *appysupport.Logger, s *appyhttp.Server) *Command {
 				logger.Fatal(err)
 			}
 
-			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo", "-ldflags", "-w -extldflags '-static' -X github.com/appist/appy/internal/support.Build=release", "-o", binaryName, ".")
+			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo jsoniter", "-ldflags", "-w -extldflags '-static' -X github.com/appist/appy/internal/support.Build=release", "-o", binaryName, ".")
 			buildBinaryCmd.Stderr = os.Stderr
 			if err = buildBinaryCmd.Run(); err != nil {
 				logger.Fatal(err)
