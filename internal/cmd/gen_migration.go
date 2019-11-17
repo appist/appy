@@ -16,7 +16,7 @@ func NewGenMigrationCommand(config *appysupport.Config, dbManager *appyorm.DbMan
 	)
 
 	cmd := &Command{
-		Use:   "gen:migration <NAME>",
+		Use:   "gen:migration [name]",
 		Short: "Generate database migration file(default: primary, use --database to specify another 1) for the current environment",
 		Args: func(cmd *Command, args []string) error {
 			if len(args) < 1 || !appysupport.IsPascalCase(args[0]) {
