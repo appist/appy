@@ -87,8 +87,10 @@ func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
 
 	server := NewServer(config, s.logger, s.assets, nil)
 	s.NotNil(server.assets)
-	s.NotNil(server.config)
-	s.NotNil(server.http)
+	s.NotNil(server.Config())
+	s.NotNil(server.HTTP())
+	s.NotNil(server.HTTPS())
+	s.NotNil(server.Middleware())
 	s.NotNil(server.htmlRenderer)
 	s.NotNil(server.router)
 	s.Equal("localhost:3000", server.http.Addr)
@@ -111,8 +113,10 @@ func (s *ServerSuite) TestNewServerWithSSLEnabled() {
 	config.HTTPSSLEnabled = true
 	server := NewServer(config, s.logger, s.assets, nil)
 	s.NotNil(server.assets)
-	s.NotNil(server.config)
-	s.NotNil(server.http)
+	s.NotNil(server.Config())
+	s.NotNil(server.HTTP())
+	s.NotNil(server.HTTPS())
+	s.NotNil(server.Middleware())
 	s.NotNil(server.htmlRenderer)
 	s.NotNil(server.router)
 	s.Equal("localhost:3000", server.http.Addr)
@@ -349,6 +353,42 @@ func (s *ServerSuite) TestSetRoutes() {
 	})
 
 	s.Equal("/dummy", server.Routes()[0].Path)
+}
+
+func (s *ServerSuite) TestSetupGraphQL() {
+	os.Setenv("APPY_ENV", "development")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+	defer func() {
+		os.Unsetenv("APPY_ENV")
+		os.Unsetenv("APPY_MASTER_KEY")
+		os.Unsetenv("HTTP_CSRF_SECRET")
+		os.Unsetenv("HTTP_SESSION_SECRETS")
+	}()
+
+	config := appysupport.NewConfig(s.logger, nil)
+	config.GQLPlaygroundEnabled = true
+	config.GQLPlaygroundPath = "/graphiql"
+	server := NewServer(config, s.logger, nil, nil)
+	server.SetupGraphQL("/graphql", nil, nil)
+
+	request, _ := http.NewRequest("GET", "/graphiql", nil)
+	server.router.ServeHTTP(s.recorder, request)
+	s.Equal(200, s.recorder.Code)
+	s.Contains(s.recorder.Body.String(), "<title>GraphQL Playground</title>")
+
+	s.recorder = CreateTestResponseRecorder()
+	request, _ = http.NewRequest("POST", "/graphql", nil)
+	server.router.ServeHTTP(s.recorder, request)
+	s.Equal(403, s.recorder.Code)
+
+	s.recorder = CreateTestResponseRecorder()
+	request, _ = http.NewRequest("POST", "/graphql", nil)
+	request.Header.Add("content-type", "application/json")
+	request.Header.Add("x-api-only", "1")
+	server.router.ServeHTTP(s.recorder, request)
+	s.Equal(500, s.recorder.Code)
 }
 
 func TestServerSuite(t *testing.T) {
