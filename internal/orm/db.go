@@ -3,7 +3,6 @@ package orm
 import (
 	"bytes"
 	"fmt"
-	"text/template"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	appysupport "github.com/appist/appy/internal/support"
@@ -658,11 +658,14 @@ func migrationTpl(database string, tx bool) ([]byte, error) {
 
 	t, err := template.New("migration").Parse(
 		`package {{.Database}}
+
 import (
 	"github.com/appist/appy"
 )
+
 func init() {
 	db := appy.Default().DbManager().Db("{{.Database}}")
+
 	if db != nil {
 		db.RegisterMigration{{if .Tx}}Tx{{end}}(
 			// Up migration

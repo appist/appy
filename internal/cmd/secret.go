@@ -26,6 +26,6 @@ func NewSecretCommand(logger *appysupport.Logger) *Command {
 		},
 	}
 
-	cmd.Flags().IntVar(&length, "length", 64, "The byte length to generate, use 16 if you're generating for config encryption.")
+	cmd.Flags().IntVar(&length, "length", 64, "The byte length to generate, use 16 if you're generating for config encryption")
 	return cmd
 }

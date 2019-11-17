@@ -141,6 +141,7 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 		cmd.NewConfigEncryptCommand(config, logger),
 		cmd.NewDbCreateCommand(config, dbManager, logger),
 		cmd.NewDbDropCommand(config, dbManager, logger),
+		cmd.NewGenMigrationCommand(config, dbManager, logger),
 		cmd.NewDbMigrateCommand(config, dbManager, logger),
 		cmd.NewDbMigrateStatusCommand(config, dbManager, logger),
 		cmd.NewDbRollbackCommand(config, dbManager, logger),
