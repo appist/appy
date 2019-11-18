@@ -8,6 +8,7 @@ import (
 	"github.com/appist/appy/internal/cmd"
 	appycmd "github.com/appist/appy/internal/cmd"
 	appyhttp "github.com/appist/appy/internal/http"
+	appymailer "github.com/appist/appy/internal/mailer"
 	appyorm "github.com/appist/appy/internal/orm"
 	appysupport "github.com/appist/appy/internal/support"
 )
@@ -19,6 +20,7 @@ type (
 		config    *Config
 		dbManager *DbManager
 		logger    *Logger
+		mailer    *Mailer
 		server    *Server
 	}
 
@@ -40,6 +42,9 @@ type (
 
 	// Logger provides the logging functionality.
 	Logger = appysupport.Logger
+
+	// Mailer provides the email sending via SMTP protocol.
+	Mailer = appymailer.Mailer
 
 	// Context contains the HTTP request information.
 	Context = appyhttp.Context
@@ -96,12 +101,69 @@ type (
 var (
 	app *App
 
+	// AESDecrypt decrypts a cipher text into a plain text using the key with AES.
+	AESDecrypt = appysupport.AESDecrypt
+
+	// AESEncrypt encrypts a plaintext into a cipher text using the key with AES.
+	AESEncrypt = appysupport.AESEncrypt
+
+	// ArrayContains checks if a value is in a slice of the same type.
+	ArrayContains = appysupport.ArrayContains
+
+	// CaptureOutput captures stdout and stderr.
+	CaptureOutput = appysupport.CaptureOutput
+
+	// DeepClone deeply clones from 1 interface to another.
+	DeepClone = appysupport.DeepClone
+
+	// IsCamelCase checks if a string is camelCase.
+	IsCamelCase = appysupport.IsCamelCase
+
+	// IsChainCase checks if a string is a chain-case.
+	IsChainCase = appysupport.IsChainCase
+
+	// IsFlatCase checks if a string is a flatcase.
+	IsFlatCase = appysupport.IsFlatCase
+
+	// IsPascalCase checks if a string is a PascalCase.
+	IsPascalCase = appysupport.IsPascalCase
+
+	// IsSnakeCase checks if a string is a snake_case.
+	IsSnakeCase = appysupport.IsSnakeCase
+
+	// IsDebugBuild indicates the current build is debug build which is meant for local development.
+	IsDebugBuild = appysupport.IsDebugBuild
+
+	// IsReleaseBuild indicates the current build is release build which is meant for production deployment.
+	IsReleaseBuild = appysupport.IsReleaseBuild
+
+	// IsConfigErrored is used to check if config contains any error during initialization.
+	IsConfigErrored = appysupport.IsConfigErrored
+
+	// IsProtectedEnv is used to protect the app from being destroyed by a command accidentally.
+	IsProtectedEnv = appysupport.IsProtectedEnv
+
 	// ParseEnv parses the environment variables into the config.
 	ParseEnv = appysupport.ParseEnv
 
 	// T translates a message based on the given key. Furthermore, we can pass in template data with `Count` in it to
 	// support singular/plural cases.
 	T = appyhttp.T
+
+	// ToCamelCase converts a string to camelCase style.
+	ToCamelCase = appysupport.ToCamelCase
+
+	// ToChainCase converts a string to chain-case style.
+	ToChainCase = appysupport.ToChainCase
+
+	// ToFlatCase converts a string to flatcase style.
+	ToFlatCase = appysupport.ToFlatCase
+
+	// ToPascalCase converts a string to PascalCase style.
+	ToPascalCase = appysupport.ToPascalCase
+
+	// ToSnakeCase converts a string to snake_case style.
+	ToSnakeCase = appysupport.ToSnakeCase
 )
 
 func init() {
@@ -128,6 +190,7 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 	dbManager := appyorm.NewDbManager(logger)
 	server := appyhttp.NewServer(config, logger, assets, viewHelper)
 	server.InitSSR()
+	mailer := appymailer.NewMailer(config, logger, server)
 
 	if appysupport.IsDebugBuild() {
 		rootCmd.AddCommand(
@@ -166,6 +229,7 @@ func Init(assets http.FileSystem, viewHelper template.FuncMap) {
 		config:    config,
 		dbManager: dbManager,
 		logger:    logger,
+		mailer:    mailer,
 		server:    server,
 	}
 }
@@ -188,6 +252,11 @@ func (a App) DbManager() *appyorm.DbManager {
 // Logger returns the app's Logger instance.
 func (a App) Logger() *appysupport.Logger {
 	return a.logger
+}
+
+// Mailer returns the app's Mailer instance.
+func (a App) Mailer() *appymailer.Mailer {
+	return a.mailer
 }
 
 // Server returns the app's Server instance.

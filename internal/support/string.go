@@ -100,6 +100,20 @@ func ToFlatCase(s string) string {
 	return strings.Join(fields, "")
 }
 
+// ToPascalCase converts a string to PascalCase style.
+func ToPascalCase(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	fields := splitToLowerFields(s)
+	for i, f := range fields {
+		fields[i] = toUpperFirstRune(f)
+	}
+
+	return strings.Join(fields, "")
+}
+
 // ToSnakeCase converts a string to snake_case style.
 func ToSnakeCase(str string) string {
 	if len(str) == 0 {

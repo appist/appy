@@ -193,6 +193,27 @@ func (s *StringSuite) TestToFlatCase() {
 	}
 }
 
+func (s *StringSuite) TestToPascalCase() {
+	tt := [][]string{
+		{"foo_bar", "FooBar"},
+		{"foo-bar", "FooBar"},
+		{"foo-bar_baz", "FooBarBaz"},
+		{"foo--bar__baz", "FooBarBaz"},
+		{"fooBar", "FooBar"},
+		{"FooBar", "FooBar"},
+		{"foo bar", "FooBar"},
+		{"   foo   bar   ", "FooBar"},
+		{"fooBar111", "FooBar111"},
+		{"111FooBar", "111FooBar"},
+		{"foo-111-Bar", "Foo111Bar"},
+		{"", ""},
+	}
+
+	for _, t := range tt {
+		s.Equal(t[1], ToPascalCase(t[0]))
+	}
+}
+
 func (s *StringSuite) TestToSnakeCase() {
 	tt := [][]string{
 		{"foo_bar", "foo_bar"},
