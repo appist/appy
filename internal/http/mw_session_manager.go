@@ -275,6 +275,10 @@ func (s *Session) Set(key interface{}, val interface{}) {
 
 // Values returns all values in the session.
 func (s *Session) Values() map[interface{}]interface{} {
+	if s.Session() == nil {
+		return nil
+	}
+
 	return s.Session().Values
 }
 

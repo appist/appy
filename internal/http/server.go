@@ -56,7 +56,7 @@ type (
 )
 
 var (
-	reservedViewDirs = []string{"layouts", "shared"}
+	reservedViewDirs = []string{"layouts", "includes"}
 	_staticExtRegex  = regexp.MustCompile(`\.(bmp|css|csv|eot|exif|gif|html|ico|ini|jpg|jpeg|js|json|mp4|otf|pdf|png|svg|webp|woff|woff2|tiff|ttf|toml|txt|xml|xlsx|yml|yaml)$`)
 )
 
@@ -181,6 +181,11 @@ func (s Server) Hosts() ([]string, error) {
 // Config returns the server's configuration.
 func (s Server) Config() *appysupport.Config {
 	return s.config
+}
+
+// HTMLRenderer returns the server's HTML renderer.
+func (s Server) HTMLRenderer() multitemplate.Renderer {
+	return s.htmlRenderer
 }
 
 // HTTP returns the HTTP server instance.
@@ -590,7 +595,7 @@ func getCommonTemplates(assets http.FileSystem, path string) ([]string, error) {
 	}
 
 	for _, fi := range fis {
-		if fi.IsDir() == true {
+		if fi.IsDir() || !regexp.MustCompile(`\.html$`).Match([]byte(fi.Name())) {
 			continue
 		}
 
