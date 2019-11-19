@@ -517,7 +517,8 @@ func (s *Server) initSSRView() error {
 		fis, _ = file.Readdir(-1)
 	}
 
-	commonTpls := []string{}
+	commonHTMLTpls := []string{}
+	commonTextTpls := []string{}
 	for _, fi := range fis {
 		// We should only see directories in `pkg/views`.
 		if fi.IsDir() == false {
@@ -525,12 +526,13 @@ func (s *Server) initSSRView() error {
 		}
 
 		if appysupport.ArrayContains(reservedViewDirs, fi.Name()) == true {
-			tpls, err := getCommonTemplates(s.assets, viewDir+"/"+fi.Name())
+			htmlTpls, textTpls, err := getCommonTemplates(s.assets, viewDir+"/"+fi.Name())
 			if err != nil {
 				return err
 			}
 
-			commonTpls = append(commonTpls, tpls...)
+			commonHTMLTpls = append(commonHTMLTpls, htmlTpls...)
+			commonTextTpls = append(commonTextTpls, textTpls...)
 		}
 	}
 
@@ -564,8 +566,15 @@ func (s *Server) initSSRView() error {
 				return err
 			}
 
-			commonTplsCopy := make([]string, len(commonTpls))
-			copy(commonTplsCopy, commonTpls)
+			var commonTplsCopy []string
+			if regexp.MustCompile(`\.html$`).Match([]byte(targetFn)) {
+				commonTplsCopy = make([]string, len(commonHTMLTpls))
+				copy(commonTplsCopy, commonHTMLTpls)
+			} else if regexp.MustCompile(`\.txt$`).Match([]byte(targetFn)) {
+				commonTplsCopy = make([]string, len(commonTextTpls))
+				copy(commonTplsCopy, commonTextTpls)
+			}
+
 			viewContent := append(commonTplsCopy, data)
 			s.htmlRenderer.AddFromStringsFuncs(viewName, s.viewHelper, viewContent...)
 		}
@@ -574,13 +583,14 @@ func (s *Server) initSSRView() error {
 	return nil
 }
 
-func getCommonTemplates(assets http.FileSystem, path string) ([]string, error) {
+func getCommonTemplates(assets http.FileSystem, path string) ([]string, []string, error) {
 	var (
 		fis []os.FileInfo
 		err error
 	)
 
-	tpls := []string{}
+	htmlTpls := []string{}
+	textTpls := []string{}
 	if appysupport.IsDebugBuild() {
 		fis, _ = ioutil.ReadDir(path)
 	} else {
@@ -588,26 +598,30 @@ func getCommonTemplates(assets http.FileSystem, path string) ([]string, error) {
 		path = "/" + path
 
 		if file, err = assets.Open(path); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		fis, _ = file.Readdir(-1)
 	}
 
 	for _, fi := range fis {
-		if fi.IsDir() || !regexp.MustCompile(`\.html$`).Match([]byte(fi.Name())) {
+		if fi.IsDir() {
 			continue
 		}
 
 		data, err := getTemplateContent(assets, path+"/"+fi.Name())
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		tpls = append(tpls, data)
+		if regexp.MustCompile(`\.html$`).Match([]byte(fi.Name())) {
+			htmlTpls = append(htmlTpls, data)
+		} else if regexp.MustCompile(`\.txt$`).Match([]byte(fi.Name())) {
+			textTpls = append(textTpls, data)
+		}
 	}
 
-	return tpls, nil
+	return htmlTpls, textTpls, nil
 }
 
 func getTemplateContent(assets http.FileSystem, path string) (string, error) {

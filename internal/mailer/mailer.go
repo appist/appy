@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	// Mailer allows sending email via SMTP protocol.
+	// Mailer provides the capability to send email via SMTP protocol.
 	Mailer struct {
 		htmlRenderer multitemplate.Renderer
 	}
@@ -31,9 +31,4 @@ func (m Mailer) HTML(name string, data interface{}) ([]byte, error) {
 	}
 
 	return recorder.Body.Bytes(), nil
-}
-
-// Text returns the mailer text content.
-func (m Mailer) Text(name string, data interface{}) ([]byte, error) {
-	return nil, nil
 }

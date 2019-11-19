@@ -180,6 +180,8 @@ func init() {
 //
 // - logger: provides logger
 //
+// - mailer: provides the capability to send email via SMTP protocol.
+//
 // - server: provides the capability to serve HTTP requests
 //
 // - dbManager: manages the databases along with their pool connections
