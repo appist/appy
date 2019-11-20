@@ -46,6 +46,9 @@ type (
 	// Mailer provides the email sending via SMTP protocol.
 	Mailer = appymailer.Mailer
 
+	// Mail defines the email headers/body/attachments.
+	Mail = appymailer.Mail
+
 	// Context contains the HTTP request information.
 	Context = appyhttp.Context
 

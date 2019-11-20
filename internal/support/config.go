@@ -88,6 +88,13 @@ type (
 		HTTPIENoOpen                bool              `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
 		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:""`
 
+		// Mailer related configuration.
+		MailerAddr              string `env:"MAILER_ADDR" envDefault:""`
+		MailerPlainAuthIdentity string `env:"MAILER_PLAIN_AUTH_IDENTITY" envDefault:""`
+		MailerPlainAuthUsername string `env:"MAILER_PLAIN_AUTH_USERNAME" envDefault:""`
+		MailerPlainAuthPassword string `env:"MAILER_PLAIN_AUTH_PASSWORD" envDefault:""`
+		MailerPlainAuthHost     string `env:"MAILER_PLAIN_AUTH_HOST" envDefault:""`
+
 		Path      string
 		errors    []error
 		masterKey []byte
