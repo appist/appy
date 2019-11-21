@@ -279,8 +279,8 @@ func (a App) Run() error {
 	return a.Cmd().Execute()
 }
 
-// SetPlugins initializes the plugins.
-func (a *App) SetPlugins(cb func(*App)) {
+// SetupPlugins initializes the plugins.
+func (a *App) SetupPlugins(cb func(*App)) {
 	cb(a)
 }
 

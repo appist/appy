@@ -342,6 +342,11 @@ func gqlPlaygroundTpl(path string, ctx *Context) []byte {
 `)
 }
 
+// Router returns the server router instance.
+func (s Server) Router() *Router {
+	return s.router
+}
+
 // SetupRoutes configures routes for the server.
 func (s Server) SetupRoutes(cb func(router *Router)) {
 	cb(s.router)

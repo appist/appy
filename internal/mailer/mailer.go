@@ -2,6 +2,7 @@ package mailer
 
 import (
 	"crypto/tls"
+	"net/http"
 	"net/http/httptest"
 	"net/smtp"
 	"net/textproto"
@@ -10,16 +11,16 @@ import (
 
 	appyhttp "github.com/appist/appy/internal/http"
 	appysupport "github.com/appist/appy/internal/support"
-	"github.com/gin-contrib/multitemplate"
 	"github.com/jordan-wright/email"
 )
 
 type (
 	// Mailer provides the capability to parse/render email template and send it out via SMTP protocol.
 	Mailer struct {
-		addr         string
-		plainAuth    smtp.Auth
-		htmlRenderer multitemplate.Renderer
+		addr      string
+		plainAuth smtp.Auth
+		previews  []Mail
+		server    *appyhttp.Server
 	}
 
 	// Mail defines the email headers/body/attachments.
@@ -41,7 +42,7 @@ type (
 
 // NewMailer initializes Mailer instance.
 func NewMailer(c *appysupport.Config, l *appysupport.Logger, s *appyhttp.Server) *Mailer {
-	return &Mailer{
+	mailer := &Mailer{
 		addr: c.MailerAddr,
 		plainAuth: smtp.PlainAuth(
 			c.MailerPlainAuthIdentity,
@@ -49,8 +50,27 @@ func NewMailer(c *appysupport.Config, l *appysupport.Logger, s *appyhttp.Server)
 			c.MailerPlainAuthPassword,
 			c.MailerPlainAuthHost,
 		),
-		htmlRenderer: s.HTMLRenderer(),
+		previews: []Mail{},
+		server:   s,
 	}
+
+	if appysupport.IsDebugBuild() {
+		s.HTMLRenderer().AddFromString("mailer/preview", previewTpl())
+
+		s.Router().GET(s.Config().MailerPreviewPath, func(ctx *appyhttp.Context) {
+			ctx.HTML(http.StatusOK, "mailer/preview", appyhttp.H{
+				"previews": mailer.previews,
+				"title":    "Mailer Preview",
+			})
+		})
+	}
+
+	return mailer
+}
+
+// Preview sets up the preview for the mail HTML/text template.
+func (m *Mailer) Preview(mail Mail) {
+	m.previews = append(m.previews, mail)
 }
 
 // Send delivers the email via SMTP protocol without TLS.
@@ -84,7 +104,7 @@ func (m Mailer) Content(ext, name string, data interface{}) ([]byte, error) {
 	}
 
 	recorder := httptest.NewRecorder()
-	renderer := m.htmlRenderer.Instance(name+"."+ext, data)
+	renderer := m.server.HTMLRenderer().Instance(name+"."+ext, data)
 	if err := renderer.Render(recorder); err != nil {
 		return nil, err
 	}
@@ -129,6 +149,7 @@ func (m Mailer) composeEmail(mail Mail) (*email.Email, error) {
 
 	if mail.Attachments != nil {
 		for _, attachment := range mail.Attachments {
+			// TODO: Add external/internal file handling.
 			email.AttachFile(attachment)
 		}
 	}

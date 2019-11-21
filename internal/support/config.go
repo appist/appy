@@ -94,6 +94,7 @@ type (
 		MailerPlainAuthUsername string `env:"MAILER_PLAIN_AUTH_USERNAME" envDefault:""`
 		MailerPlainAuthPassword string `env:"MAILER_PLAIN_AUTH_PASSWORD" envDefault:""`
 		MailerPlainAuthHost     string `env:"MAILER_PLAIN_AUTH_HOST" envDefault:""`
+		MailerPreviewPath       string `env:"MAILER_PREVIEW_PATH" envDefault:"/appy/mailers"`
 
 		Path      string
 		errors    []error
