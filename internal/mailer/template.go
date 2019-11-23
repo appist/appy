@@ -85,18 +85,43 @@ func tplLower() string {
 			</main>
 			<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 			<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
-			<script src="//cdn.rawgit.com/visionmedia/page.js/master/page.js"></script>
 			<script>
-				var baseURL = '{{.previewPath}}/preview';
+				var previewURL = '{{.bbaseURL}}/preview';
 
 				$("#menu-toggle").click(function(e) {
 					e.preventDefault()
 					$("#wrapper").toggleClass("toggled")
 				})
 
-				document.addEventListener('DOMContentLoaded', function() {
+				function setCurrPreview(targetName, targetExt) {
+					var name = targetName || queryParam('name'), ext = targetExt || queryParam('ext') || 'html'
 
-				})
+					if (name) {
+						location.search = '?name=' + name + '&ext=' + ext
+					}
+				}
+
+				function onPreviewNameClicked(e) {
+					e.preventDefault()
+					setCurrPreview(e.target.dataset.name)
+				}
+
+				function onPreviewExtClicked(e, ext) {
+					e.preventDefault()
+					setCurrPreview(null, ext)
+				}
+
+				function queryParam(name) {
+					var result = null, tmp = [];
+					location.search
+							.substr(1)
+							.split("&")
+							.forEach(function (item) {
+								tmp = item.split("=")
+								if (tmp[0] === name) result = decodeURIComponent(tmp[1])
+							})
+					return result
+				}
 			</script>
 		</body>
 	</html>
@@ -106,11 +131,15 @@ func tplLower() string {
 func previewTpl() string {
 	return tplUpper() + `
 	<div class="d-flex" id="wrapper">
-    	<div class="bg-light border-right" id="sidebar">
-			<div class="sidebar-heading">{{.title}}</div>
+    	<div class="bg-white border-right" id="sidebar">
+			<div class="sidebar-heading bg-light">{{.title}}</div>
 			<div class="list-group list-group-flush">
 				{{range $idx, $preview := .previews}}
-					<a href="#{{$preview.Template}}" class="list-group-item list-group-item-action bg-light">{{$preview.Template}}</a>
+					<a
+						href="#"
+						class="list-group-item list-group-item-action{{if eq $.name $preview.Template}} list-group-item-dark{{end}}"
+						onclick="onPreviewNameClicked(event)"
+						data-name="{{$preview.Template}}">{{$preview.Template}}</a>
 				{{end}}
 			</div>
     	</div>
@@ -120,20 +149,25 @@ func previewTpl() string {
 				<button class="btn" id="menu-toggle">
 					<span class="navbar-toggler-icon"></span>
 				</button>
+
 				<div id="type-toggle">
 					<div class="btn-group btn-group-toggle ml-auto mt-lg-0" data-toggle="buttons">
-						<label class="btn btn-primary">
-							<input type="radio" name="options" id="html" autocomplete="off"> HTML
+						<label class="btn btn-primary{{if eq .ext "html"}} active{{end}}" onclick="onPreviewExtClicked(event, 'html')">
+							<input type="radio" name="options" autocomplete="off"> HTML
 						</label>
-						<label class="btn btn-primary">
-							<input type="radio" name="options" id="text" autocomplete="off"> Text
+						<label class="btn btn-primary{{if eq .ext "txt"}} active{{end}}" onclick="onPreviewExtClicked(event, 'txt')">
+							<input type="radio" name="options" autocomplete="off"> Text
 						</label>
 					</div>
 				</div>
 			</nav>
 
 			<div class="container-fluid">
-				<iframe src="{{.previewPath}}/preview?name=mailers%2fverify_account&ext=html" frameBorder="0"></iframe>
+				{{if .name}}
+					<iframe src="{{.baseURL}}/preview?name={{.name}}&ext={{.ext}}" frameBorder="0"></iframe>
+				{{else}}
+					Oops! Have you forgotten to setup the preview?
+				{{end}}
 			</div>
 		</div>
   	</div>

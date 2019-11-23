@@ -57,15 +57,26 @@ func NewMailer(c *appysupport.Config, l *appysupport.Logger, s *appyhttp.Server)
 	if appysupport.IsDebugBuild() {
 		s.HTMLRenderer().AddFromString("mailer/preview", previewTpl())
 
-		s.Router().GET(s.Config().MailerPreviewPath, func(ctx *appyhttp.Context) {
+		s.Router().GET(s.Config().MailerPreviewBaseURL, func(ctx *appyhttp.Context) {
+			name := ctx.DefaultQuery("name", "")
+
+			if name == "" && len(mailer.previews) > 0 {
+				for _, preview := range mailer.previews {
+					name = preview.Template
+					break
+				}
+			}
+
 			ctx.HTML(http.StatusOK, "mailer/preview", appyhttp.H{
-				"previewPath": s.Config().MailerPreviewPath,
-				"previews":    mailer.previews,
-				"title":       "Mailer Preview",
+				"baseURL":  s.Config().MailerPreviewBaseURL,
+				"previews": mailer.previews,
+				"title":    "Mailer Preview",
+				"name":     name,
+				"ext":      ctx.DefaultQuery("ext", "html"),
 			})
 		})
 
-		s.Router().GET(s.Config().MailerPreviewPath+"/preview", func(ctx *appyhttp.Context) {
+		s.Router().GET(s.Config().MailerPreviewBaseURL+"/preview", func(ctx *appyhttp.Context) {
 			contentType := "text/html"
 			name := ctx.Query("name")
 			preview, exists := mailer.previews[name]
