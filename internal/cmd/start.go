@@ -249,7 +249,7 @@ func watch(logger *appysupport.Logger, s *appyhttp.Server, watchPaths []string, 
 
 	w.SetMaxEvents(2)
 
-	r := regexp.MustCompile(`.(development|env|go|gql|graphql|ini|json|html|production|test|toml|yml)$`)
+	r := regexp.MustCompile(`.(development|env|go|gql|graphql|ini|json|html|production|test|toml|txt|yml)$`)
 	w.AddFilterHook(watcher.RegexFilterHook(r, false))
 
 	go func() {

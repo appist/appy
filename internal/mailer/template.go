@@ -45,7 +45,15 @@ func tplUpper() string {
 				}
 
 				#content {
+					display: flex;
+					flex-direction: column;
 					min-width: 100vw;
+				}
+
+				#content > .container-fluid {
+					display: flex;
+					flex: 1;
+					padding: 0;
 				}
 
 				#wrapper.toggled #sidebar {
@@ -77,11 +85,18 @@ func tplLower() string {
 			</main>
 			<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 			<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+			<script src="//cdn.rawgit.com/visionmedia/page.js/master/page.js"></script>
 			<script>
+				var baseURL = '{{.previewPath}}/preview';
+
 				$("#menu-toggle").click(function(e) {
-					e.preventDefault();
-					$("#wrapper").toggleClass("toggled");
-				});
+					e.preventDefault()
+					$("#wrapper").toggleClass("toggled")
+				})
+
+				document.addEventListener('DOMContentLoaded', function() {
+
+				})
 			</script>
 		</body>
 	</html>
@@ -118,7 +133,7 @@ func previewTpl() string {
 			</nav>
 
 			<div class="container-fluid">
-				<iframe src="/abc" frameBorder="0"></iframe>
+				<iframe src="{{.previewPath}}/preview?name=mailers%2fverify_account&ext=html" frameBorder="0"></iframe>
 			</div>
 		</div>
   	</div>

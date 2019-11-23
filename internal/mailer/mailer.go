@@ -19,7 +19,7 @@ type (
 	Mailer struct {
 		addr      string
 		plainAuth smtp.Auth
-		previews  []Mail
+		previews  map[string]Mail
 		server    *appyhttp.Server
 	}
 
@@ -50,7 +50,7 @@ func NewMailer(c *appysupport.Config, l *appysupport.Logger, s *appyhttp.Server)
 			c.MailerPlainAuthPassword,
 			c.MailerPlainAuthHost,
 		),
-		previews: []Mail{},
+		previews: map[string]Mail{},
 		server:   s,
 	}
 
@@ -59,9 +59,38 @@ func NewMailer(c *appysupport.Config, l *appysupport.Logger, s *appyhttp.Server)
 
 		s.Router().GET(s.Config().MailerPreviewPath, func(ctx *appyhttp.Context) {
 			ctx.HTML(http.StatusOK, "mailer/preview", appyhttp.H{
-				"previews": mailer.previews,
-				"title":    "Mailer Preview",
+				"previewPath": s.Config().MailerPreviewPath,
+				"previews":    mailer.previews,
+				"title":       "Mailer Preview",
 			})
+		})
+
+		s.Router().GET(s.Config().MailerPreviewPath+"/preview", func(ctx *appyhttp.Context) {
+			contentType := "text/html"
+			name := ctx.Query("name")
+			preview, exists := mailer.previews[name]
+			if !exists {
+				ctx.AbortWithStatus(http.StatusNotFound)
+				return
+			}
+
+			data, err := mailer.Content("html", name, preview.TemplateData)
+			if err != nil {
+				ctx.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
+
+			if ctx.Query("ext") == "txt" {
+				contentType = "text/plain"
+				data, err = mailer.Content("txt", name, preview.TemplateData)
+				if err != nil {
+					ctx.AbortWithError(http.StatusInternalServerError, err)
+					return
+				}
+			}
+
+			ctx.Writer.Header().Del(http.CanonicalHeaderKey("x-frame-options"))
+			ctx.Data(http.StatusOK, contentType, data)
 		})
 	}
 
@@ -70,7 +99,7 @@ func NewMailer(c *appysupport.Config, l *appysupport.Logger, s *appyhttp.Server)
 
 // Preview sets up the preview for the mail HTML/text template.
 func (m *Mailer) Preview(mail Mail) {
-	m.previews = append(m.previews, mail)
+	m.previews[mail.Template] = mail
 }
 
 // Send delivers the email via SMTP protocol without TLS.
@@ -95,16 +124,20 @@ func (m Mailer) SendWithTLS(mail Mail, tls *tls.Config) error {
 
 // Content returns the content for the named email template.
 func (m Mailer) Content(ext, name string, data interface{}) ([]byte, error) {
-	if data == nil {
-		data = appyhttp.H{}
+	var dataCopy interface{}
+	appysupport.DeepClone(dataCopy, data)
+
+	if dataCopy == nil {
+		dataCopy = appyhttp.H{}
 	}
 
-	if _, ok := data.(appyhttp.H)["layout"]; !ok {
-		data.(appyhttp.H)["layout"] = "mailer_default." + ext
+	if _, ok := dataCopy.(appyhttp.H)["layout"]; !ok {
+		dataCopy.(appyhttp.H)["layout"] = "mailer_default." + ext
 	}
 
 	recorder := httptest.NewRecorder()
-	renderer := m.server.HTMLRenderer().Instance(name+"."+ext, data)
+	renderer := m.server.HTMLRenderer().Instance(name+"."+ext, dataCopy)
+
 	if err := renderer.Render(recorder); err != nil {
 		return nil, err
 	}

@@ -542,46 +542,79 @@ func (s *Server) initSSRView() error {
 	}
 
 	for _, fi := range fis {
-		if fi.IsDir() == false || appysupport.ArrayContains(reservedViewDirs, fi.Name()) == true {
+		if !fi.IsDir() || appysupport.ArrayContains(reservedViewDirs, fi.Name()) {
 			continue
 		}
 
-		var fileInfos []os.FileInfo
+		var mailers, views []os.FileInfo
 		targetDir := viewDir + "/" + fi.Name()
 		if appysupport.IsDebugBuild() {
-			fileInfos, _ = ioutil.ReadDir(targetDir)
+			views, _ = ioutil.ReadDir(targetDir)
 		} else {
 			var file http.File
 			if file, err = s.assets.Open(targetDir); err != nil {
 				return err
 			}
 
-			fileInfos, _ = file.Readdir(-1)
+			views, _ = file.Readdir(-1)
 		}
 
-		for _, fileInfo := range fileInfos {
-			if fileInfo.IsDir() == true {
-				continue
-			}
+		for _, view := range views {
+			if fi.Name() == "mailers" {
+				if !view.IsDir() {
+					continue
+				}
 
-			viewName := fi.Name() + "/" + fileInfo.Name()
-			targetFn := targetDir + "/" + fileInfo.Name()
-			data, err := getTemplateContent(s.assets, targetFn)
-			if err != nil {
-				return err
-			}
+				targetDir = targetDir + "/" + view.Name()
+				if appysupport.IsDebugBuild() {
+					mailers, _ = ioutil.ReadDir(targetDir)
+				} else {
+					var file http.File
+					if file, err = s.assets.Open(targetDir); err != nil {
+						return err
+					}
 
-			var commonTplsCopy []string
-			if regexp.MustCompile(`\.html$`).Match([]byte(targetFn)) {
+					mailers, _ = file.Readdir(-1)
+				}
+
+				for _, mailer := range mailers {
+					mailerName := fi.Name() + "/" + view.Name() + "/" + mailer.Name()
+					mailerFn := targetDir + "/" + mailer.Name()
+					data, err := getTemplateContent(s.assets, mailerFn)
+					if err != nil {
+						return err
+					}
+
+					var commonTplsCopy []string
+					if regexp.MustCompile(`\.html$`).Match([]byte(mailerFn)) {
+						commonTplsCopy = make([]string, len(commonHTMLTpls))
+						copy(commonTplsCopy, commonHTMLTpls)
+					} else if regexp.MustCompile(`\.txt$`).Match([]byte(mailerFn)) {
+						commonTplsCopy = make([]string, len(commonTextTpls))
+						copy(commonTplsCopy, commonTextTpls)
+					}
+
+					viewContent := append(commonTplsCopy, data)
+					s.htmlRenderer.AddFromStringsFuncs(mailerName, s.viewHelper, viewContent...)
+				}
+			} else {
+				if view.IsDir() {
+					continue
+				}
+
+				viewName := fi.Name() + "/" + view.Name()
+				viewFn := targetDir + "/" + view.Name()
+				data, err := getTemplateContent(s.assets, viewFn)
+				if err != nil {
+					return err
+				}
+
+				var commonTplsCopy []string
 				commonTplsCopy = make([]string, len(commonHTMLTpls))
 				copy(commonTplsCopy, commonHTMLTpls)
-			} else if regexp.MustCompile(`\.txt$`).Match([]byte(targetFn)) {
-				commonTplsCopy = make([]string, len(commonTextTpls))
-				copy(commonTplsCopy, commonTextTpls)
+				viewContent := append(commonTplsCopy, data)
+				s.htmlRenderer.AddFromStringsFuncs(viewName, s.viewHelper, viewContent...)
 			}
-
-			viewContent := append(commonTplsCopy, data)
-			s.htmlRenderer.AddFromStringsFuncs(viewName, s.viewHelper, viewContent...)
 		}
 	}
 

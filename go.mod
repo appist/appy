@@ -1,6 +1,6 @@
 module github.com/appist/appy
 
-go 1.13.1
+go 1.13.4
 
 require (
 	github.com/99designs/gqlgen v0.10.1
