@@ -50,40 +50,24 @@ func I18nLocale(ctx *Context) string {
 	return locale.(string)
 }
 
-// T translates a message based on the given key. Furthermore, we can pass in template data with `Count` in it to
-// support singular/plural cases.
-func T(ctx *Context, key string, args ...map[string]interface{}) string {
+// T translates a message based on the given key which count is used to pluralise the translation if needed.
+func T(ctx *Context, key string, count int, data map[string]interface{}) string {
 	localizer := I18nLocalizer(ctx)
 
-	if len(args) < 1 {
-		msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: key})
-
-		if err != nil {
-			return ""
-		}
-
-		return msg
-	}
-
-	count := -1
-	if _, ok := args[0]["Count"]; ok {
-		count = args[0]["Count"].(int)
-	}
-
-	countKey := key
 	if count != -1 {
 		switch count {
 		case 0:
-			countKey = key + ".Zero"
+			key = key + ".Zero"
 		case 1:
-			countKey = key + ".One"
+			key = key + ".One"
 		default:
-			countKey = key + ".Other"
+			key = key + ".Other"
 		}
+
+		data["Count"] = count
 	}
 
-	msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: countKey, TemplateData: args[0]})
-
+	msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: key, TemplateData: data})
 	if err != nil {
 		return ""
 	}
