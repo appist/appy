@@ -73,6 +73,7 @@ func NewMailer(c *appysupport.Config, l *appysupport.Logger, s *appyhttp.Server)
 				"title":    "Mailer Preview",
 				"name":     name,
 				"ext":      ctx.DefaultQuery("ext", "html"),
+				"mail":     mailer.previews[name],
 			})
 		})
 

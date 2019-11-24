@@ -37,22 +37,36 @@ func tplUpper() string {
 					width: 15rem;
 				}
 
-				#type-toggle {
+				#ext-toggle {
 					display: flex !important;
 					flex-basis: auto;
 					flex-grow: 1;
 					align-items: center;
 				}
 
+				#ext-toggle > .btn-group {
+					width: 12rem;
+				}
+
 				#content {
 					display: flex;
 					flex-direction: column;
 					min-width: 100vw;
+					background-color: #F2F4F6;
 				}
 
 				#content > .container-fluid {
 					display: flex;
 					flex: 1;
+					flex-direction: column;
+					padding: 0;
+				}
+
+				#iframe-card {
+					flex: 1;
+				}
+
+				#iframe-card > .card-body {
 					padding: 0;
 				}
 
@@ -86,11 +100,17 @@ func tplLower() string {
 			<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 			<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
 			<script>
-				var previewURL = '{{.bbaseURL}}/preview';
+				var previewURL = '{{.baseURL}}/preview'
 
 				$("#menu-toggle").click(function(e) {
 					e.preventDefault()
 					$("#wrapper").toggleClass("toggled")
+				})
+
+				document.addEventListener('DOMContentLoaded', function() {
+					var name = queryParam('name') || '{{.name}}',  ext = queryParam('ext') || '{{.ext}}'
+
+					history.replaceState('', '', '?name=' + name + '&ext=' + ext)
 				})
 
 				function setCurrPreview(targetName, targetExt) {
@@ -149,22 +169,76 @@ func previewTpl() string {
 				<button class="btn" id="menu-toggle">
 					<span class="navbar-toggler-icon"></span>
 				</button>
-
-				<div id="type-toggle">
-					<div class="btn-group btn-group-toggle ml-auto mt-lg-0" data-toggle="buttons">
-						<label class="btn btn-primary{{if eq .ext "html"}} active{{end}}" onclick="onPreviewExtClicked(event, 'html')">
-							<input type="radio" name="options" autocomplete="off"> HTML
-						</label>
-						<label class="btn btn-primary{{if eq .ext "txt"}} active{{end}}" onclick="onPreviewExtClicked(event, 'txt')">
-							<input type="radio" name="options" autocomplete="off"> Text
-						</label>
-					</div>
-				</div>
 			</nav>
 
-			<div class="container-fluid">
+			<div class="container-fluid p-3">
 				{{if .name}}
-					<iframe src="{{.baseURL}}/preview?name={{.name}}&ext={{.ext}}" frameBorder="0"></iframe>
+					<div class="card">
+						<div class="card-body row">
+							<div class="col-auto">
+								<table class="table table-borderless table-sm">
+									<tbody>
+										<tr>
+											<th class="pr-4" scope="row">Subject</th>
+											<td>{{.mail.Subject}}</td>
+										</tr>
+
+										<tr>
+											<th class="pr-4" scope="row">From</th>
+											<td>{{.mail.From}}</td>
+										</tr>
+
+										<tr>
+											<th class="pr-4" scope="row">To</th>
+											<td>
+												{{range $idx, $val := .mail.To}}{{if $idx}}, {{end}}{{$val}}{{end}}
+											</td>
+										</tr>
+
+										<tr>
+											<th class="pr-4" scope="row">Reply To</th>
+											<td>
+												{{range $idx, $val := .mail.ReplyTo}}{{if $idx}}, {{end}}{{$val}}{{end}}
+											</td>
+										</tr>
+
+										<tr>
+											<th class="pr-4" scope="row">Cc</th>
+											<td>
+												{{range $idx, $val := .mail.Cc}}{{if $idx}}, {{end}}{{$val}}{{end}}
+											</td>
+										</tr>
+
+										<tr>
+											<th class="pr-4" scope="row">Bcc</th>
+											<td>
+												{{range $idx, $val := .mail.Bcc}}{{if $idx}}, {{end}}{{$val}}{{end}}
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+
+							<div class="col">
+								<div id="ext-toggle">
+									<div class="btn-group btn-group-toggle ml-auto mt-lg-0" data-toggle="buttons">
+										<button class="btn btn-primary{{if eq .ext "html"}} active{{end}}" onclick="onPreviewExtClicked(event, 'html')">
+											<input type="radio" name="options" autocomplete="off"> HTML
+										</button>
+										<button class="btn btn-primary{{if eq .ext "txt"}} active{{end}}" onclick="onPreviewExtClicked(event, 'txt')">
+											<input type="radio" name="options" autocomplete="off"> Text
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div id="iframe-card" class="card mt-3">
+						<div class="card-body">
+							<iframe src="{{.baseURL}}/preview?name={{.name}}&ext={{.ext}}" frameBorder="0"></iframe>
+						</div>
+					</div>
 				{{else}}
 					Oops! Have you forgotten to setup the preview?
 				{{end}}
