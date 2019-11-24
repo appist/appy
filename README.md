@@ -34,7 +34,7 @@ An opinionated productive web framework that helps scaling business easier.
 
 ## Credits
 
-Most of the logic details in `middleware` are from:
+Some of the middleware logic in `internal/http/mw_*.go` are from:
 
 - https://github.com/gin-contrib
 - https://github.com/gorilla
