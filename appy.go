@@ -55,7 +55,7 @@ type (
 	// ContextKey is the HTTP context key with appy namespace.
 	ContextKey = appyhttp.ContextKey
 
-	// H is a type alias to map[string]string.
+	// H is a type alias to map[string]interface{}.
 	H = appyhttp.H
 
 	// Middleware is the middleware list attached to the server.
