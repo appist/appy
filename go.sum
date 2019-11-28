@@ -59,6 +59,8 @@ github.com/go-chi/chi v3.3.2+incompatible/go.mod h1:eB3wogJHnLi3x/kFX2A+IbTBlXxm
 github.com/go-pg/pg/v9 v9.0.0-beta.14/go.mod h1:T2Sr6bpTCOr2lUqOUMiXLMJqZHSUBKk1LdgSqjwhZfA=
 github.com/go-pg/pg/v9 v9.0.1 h1:euvT6+PFzq2coNOsE39B3RF4WvUzQYCQ6J4yS8BTdnY=
 github.com/go-pg/pg/v9 v9.0.1/go.mod h1:Tm/Q3Vt6gdQOH6TTN1H/xLlIXc+Qrka7TZ6uREtu/eA=
+github.com/go-pg/pg/v9 v9.0.3 h1:dhOAOLlTJJpqeAfRpjZYTV6zf7dmUOnjCkZqjOBYmu0=
+github.com/go-pg/pg/v9 v9.0.3/go.mod h1:Tm/Q3Vt6gdQOH6TTN1H/xLlIXc+Qrka7TZ6uREtu/eA=
 github.com/go-pg/urlstruct v0.1.0/go.mod h1:2Nag+BIny6G/KYCkdt++ZnqU/VinzimGapKfs4kwlN0=
 github.com/go-pg/urlstruct v0.2.6 h1:TReWM/GETx98RSfxO1mOOVic8tJCeJC5SgdeDpIy0FY=
 github.com/go-pg/urlstruct v0.2.6/go.mod h1:dxENwVISWSOX+k87hDt0ueEJadD+gZWv3tHzwfmZPu8=
