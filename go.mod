@@ -3,7 +3,7 @@ module github.com/appist/appy
 go 1.13.4
 
 require (
-	github.com/99designs/gqlgen v0.10.1
+	github.com/99designs/gqlgen v0.10.2
 	github.com/BurntSushi/toml v0.3.1
 	github.com/bndr/gotabulate v1.1.2
 	github.com/caarlos0/env v3.5.0+incompatible
