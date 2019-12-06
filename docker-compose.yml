@@ -1,0 +1,63 @@
+version: "3.7"
+
+services:
+  mysql-master:
+    image: "bitnami/mysql:8.0"
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_REPLICATION_MODE=master
+      - MYSQL_REPLICATION_USER=mysql-slave
+      - MYSQL_USER=mysql
+      - MYSQL_DATABASE=appy
+      - MYSQL_ROOT_PASSWORD=whatever
+      - ALLOW_EMPTY_PASSWORD=yes
+
+  mysql-slave:
+    image: "bitnami/mysql:8.0"
+    ports:
+      - "3307:3306"
+    depends_on:
+      - mysql-master
+    environment:
+      - MYSQL_REPLICATION_MODE=slave
+      - MYSQL_REPLICATION_USER=mysql-slave
+      - MYSQL_USER=mysql
+      - MYSQL_DATABASE=appy
+      - MYSQL_MASTER_HOST=mysql-master
+      - MYSQL_MASTER_PORT_NUMBER=3306
+      - MYSQL_MASTER_ROOT_PASSWORD=whatever
+      - ALLOW_EMPTY_PASSWORD=yes
+
+  pg-master:
+    image: "bitnami/postgresql:11"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=pg-slave
+      - POSTGRESQL_REPLICATION_PASSWORD=whatever
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=whatever
+      - POSTGRESQL_DATABASE=appy
+
+  pg-slave:
+    image: "bitnami/postgresql:11"
+    ports:
+      - "5433:5432"
+    depends_on:
+      - pg-master
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=pg-slave
+      - POSTGRESQL_REPLICATION_PASSWORD=whatever
+      - POSTGRESQL_MASTER_HOST=pg-master
+      - POSTGRESQL_PASSWORD=whatever
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+
+  redis:
+    image: "bitnami/redis:5.0.5"
+    ports:
+      - "6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
