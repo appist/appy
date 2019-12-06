@@ -12,6 +12,20 @@ An opinionated productive web framework that helps scaling business easier.
 
 Coming soon.
 
+## Credits
+
+This project is heavily inspired by:
+
+- https://github.com/rails/rails
+- https://github.com/laravel/laravel
+- https://github.com/spf13/cobra
+- https://github.com/gin-gonic/gin
+- https://github.com/go-chi/chi
+- https://github.com/gobuffalo
+- https://github.com/go-pg/pg
+- https://github.com/uber-go/zap
+- https://github.com/stretchr/testify
+
 ## Contribution
 
 Please make sure to read the [Contributing Guide](https://github.com/appist/appy/blob/master/.github/CONTRIBUTING.md) before making a pull request.
