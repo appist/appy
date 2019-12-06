@@ -12,6 +12,40 @@ An opinionated productive web framework that helps scaling business easier.
 
 Coming soon.
 
+## Prerequisites
+
+- [Go >= 1.13](https://golang.org/dl/)
+- [NodeJS >= 13](https://nodejs.org/en/download/)
+
+## Quick Start
+
+1. Create the project folder with go modules initialised.
+
+```sh
+$ mkdir PROJECT_NAME && cd $_
+$ go mod init PROJECT_NAME
+```
+
+2. Create `main.go` with the content below:
+
+```go
+package main
+
+import (
+  "github.com/appist/appy"
+)
+
+func main() {
+  appy.Bootstrap()
+}
+```
+
+3. Initialize the appy's project layout.
+
+```sh
+$ go run .
+```
+
 ## Credits
 
 This project is heavily inspired by:
