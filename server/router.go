@@ -1,6 +1,6 @@
 package server
 
 type (
-	// Router
+	// Router maintains the routing logic.
 	Router struct{}
 )
