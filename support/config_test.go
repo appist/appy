@@ -103,8 +103,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"MailerPreviewBaseURL":            "/appy/mailers",
 	}
 
-	logger := NewLogger()
-	config := NewConfig(s.assetsMngr, logger)
+	config := NewConfig(s.assetsMngr, s.logger)
 	cv := reflect.ValueOf(*config)
 	for key, defaultVal := range tt {
 		fv := cv.FieldByName(key)
