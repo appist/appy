@@ -25,7 +25,8 @@ func (s *ParserSuite) TestParseEnvWithSupportedTypes() {
 	}
 
 	c := &testConfig{}
-	ParseEnv(c)
+	err := ParseEnv(c)
+	s.Nil(err)
 	s.Equal(map[string]string{"user1": "pass1", "user2": "pass2"}, c.Admins)
 	s.Equal([]string{"0.0.0.0", "1.1.1.1"}, c.Hosts)
 	s.Equal([]byte("hello"), c.Secret)
@@ -47,7 +48,8 @@ func (s *ParserSuite) TestParseEnvWithInvalidFormat() {
 	}
 
 	c := &testConfig{}
-	ParseEnv(c)
+	err := ParseEnv(c)
+	s.Nil(err)
 	s.Equal(map[string]string{}, c.Users)
 }
 

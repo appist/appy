@@ -13,7 +13,7 @@ type (
 	}
 )
 
-func (c *capturer) capture(f func()) string {
+func (c *capturer) capture(f func()) (string, error) {
 	r, w, _ := os.Pipe()
 
 	if c.stdout {
@@ -36,13 +36,16 @@ func (c *capturer) capture(f func()) string {
 	w.Close()
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, err := io.Copy(&buf, r)
+	if err != nil {
+		return "", err
+	}
 
-	return buf.String()
+	return buf.String(), nil
 }
 
 // CaptureOutput captures stdout and stderr.
-func CaptureOutput(f func()) string {
+func CaptureOutput(f func()) (string, error) {
 	capturer := &capturer{stdout: true, stderr: true}
 	return capturer.capture(f)
 }

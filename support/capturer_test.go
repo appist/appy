@@ -19,12 +19,13 @@ func (s *CapturerSuite) TearDownTest() {
 }
 
 func (s *CapturerSuite) TestCaptureOutput() {
-	output := CaptureOutput(func() {
+	output, err := CaptureOutput(func() {
 		fmt.Fprint(os.Stdout, "foo")
 		fmt.Fprint(os.Stderr, "bar")
 	})
 
 	s.Equal("foobar", output)
+	s.Nil(err)
 }
 
 func TestCapturerSuite(t *testing.T) {

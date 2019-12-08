@@ -30,12 +30,14 @@ func (s *CloneSuite) TestDeepClone() {
 
 	user := User{Email: "john_doe@gmail.com", Name: "John Doe"}
 	employee := Employee{}
-	DeepClone(&employee, &user)
+	err := DeepClone(&employee, &user)
+	s.Nil(err)
 	s.Equal("john_doe@gmail.com", employee.Email)
 	s.Equal("John Doe", employee.Name)
 
 	employees := []Employee{}
-	DeepClone(&employees, &user)
+	err = DeepClone(&employees, &user)
+	s.Nil(err)
 	s.Equal(1, len(employees))
 	s.Equal("john_doe@gmail.com", employees[0].Email)
 	s.Equal("John Doe", employees[0].Name)
@@ -45,7 +47,8 @@ func (s *CloneSuite) TestDeepClone() {
 		{Email: "john_doe2@gmail.com", Name: "John Doe 2"},
 	}
 	employees = []Employee{}
-	DeepClone(&employees, &users)
+	err = DeepClone(&employees, &users)
+	s.Nil(err)
 	s.Equal(2, len(employees))
 	s.Equal("john_doe1@gmail.com", employees[0].Email)
 	s.Equal("John Doe 1", employees[0].Name)

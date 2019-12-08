@@ -185,11 +185,7 @@ func (c Config) decryptConfig(assetsMngr *AssetsMngr, masterKey []byte) []error 
 
 // IsProtectedEnv is used to protect the app from being destroyed by a command accidentally.
 func IsProtectedEnv(config *Config) bool {
-	if config.AppyEnv == "production" {
-		return true
-	}
-
-	return false
+	return config.AppyEnv == "production"
 }
 
 func parseMasterKey(assetsMngr *AssetsMngr) ([]byte, error) {
