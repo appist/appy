@@ -14,11 +14,7 @@ func AESDecrypt(ciphertext []byte, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
+	gcm, _ := cipher.NewGCM(block)
 	nonceSize := gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
 		return nil, err
@@ -40,11 +36,7 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
+	gcm, _ := cipher.NewGCM(block)
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err

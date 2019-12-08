@@ -9,11 +9,7 @@ import (
 
 // IsCamelCase checks if a string is camelCase.
 func IsCamelCase(s string) bool {
-	if isFirstRuneDigit(s) {
-		return false
-	}
-
-	return isMadeByAlphanumeric(s) && isFirstRuneLower(s)
+	return !isFirstRuneDigit(s) && isMadeByAlphanumeric(s) && isFirstRuneLower(s)
 }
 
 // IsChainCase checks if a string is a chain-case.
@@ -25,6 +21,7 @@ func IsChainCase(s string) bool {
 				return false
 			}
 		}
+
 		return true
 	}
 
@@ -33,11 +30,7 @@ func IsChainCase(s string) bool {
 
 // IsFlatCase checks if a string is a flatcase.
 func IsFlatCase(s string) bool {
-	if isFirstRuneDigit(s) {
-		return false
-	}
-
-	return isMadeByLowerAndDigit(s)
+	return !isFirstRuneDigit(s) && isMadeByLowerAndDigit(s)
 }
 
 // IsPascalCase checks if a string is a PascalCase.

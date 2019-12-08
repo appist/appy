@@ -22,13 +22,13 @@ var (
 	Build = DebugBuild
 
 	// ErrNoMasterKey indicates the master key is not provided.
-	ErrNoMasterKey = errors.New("master key is not provided")
+	ErrNoMasterKey = errors.New("master key is missing")
+
+	// ErrNoStaticAssets indicates the static assets are missing.
+	ErrNoStaticAssets = errors.New("static assets are missing")
 
 	// ErrReadMasterKeyFile indicates there is a problem reading master key file.
-	ErrReadMasterKeyFile = errors.New("failed to read master key file")
-
-	// ErrNoConfigInAssets indicates the config is missing in the assets.
-	ErrNoConfigInAssets = errors.New("missing config in the assets")
+	ErrReadMasterKeyFile = errors.New("failed to read master key file in config path")
 )
 
 // IsDebugBuild indicates the current build is debug build which is meant for local development.

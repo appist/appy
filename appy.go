@@ -2,6 +2,7 @@ package appy
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -14,9 +15,10 @@ import (
 type (
 	// App is the framework core that drives the application.
 	App struct {
-		command *cmd.Command
-		logger  *support.Logger
-		server  *server.Server
+		assetsMngr *support.AssetsMngr
+		command    *cmd.Command
+		logger     *support.Logger
+		server     *server.Server
 	}
 )
 
@@ -27,15 +29,17 @@ func init() {
 }
 
 // NewApp initializes an app instance.
-func NewApp() *App {
+func NewApp(static http.FileSystem) *App {
 	command := cmd.NewCommand()
 	logger := support.NewLogger()
+	assetsMngr := support.NewAssetsMngr(nil, "", static)
 	server := server.NewServer()
 
 	return &App{
-		command: command,
-		logger:  logger,
-		server:  server,
+		assetsMngr: assetsMngr,
+		command:    command,
+		logger:     logger,
+		server:     server,
 	}
 }
 
