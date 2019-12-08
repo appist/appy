@@ -19,7 +19,7 @@ Coming soon.
 
 ## Quick Start
 
-1. Create the project folder with go modules initialised.
+1. Create the project folder with go module.
 
 ```sh
 $ mkdir PROJECT_NAME && cd $_
