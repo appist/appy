@@ -117,15 +117,6 @@ func ToSnakeCase(str string) string {
 	return strings.Join(fields, "_")
 }
 
-func getRuneAt(s string, i int) rune {
-	if len(s) == 0 {
-		return 0
-	}
-
-	rs := []rune(s)
-	return rs[0]
-}
-
 func isAlphanumeric(s string) bool {
 	if len(s) == 0 {
 		return false
@@ -161,7 +152,7 @@ func isFirstRuneLower(s string) bool {
 		return false
 	}
 
-	return unicode.IsLower(getRuneAt(s, 0))
+	return unicode.IsLower(runeAt(s, 0))
 }
 
 func isMadeByAlphanumeric(s string) bool {

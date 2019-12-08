@@ -235,6 +235,30 @@ func (s *StringSuite) TestToSnakeCase() {
 	}
 }
 
+func (s *StringSuite) TestIsFirstRuneLower() {
+	str := ""
+	s.Equal(false, isFirstRuneLower(str))
+
+	str = "test"
+	s.Equal(true, isFirstRuneLower(str))
+}
+
+func (s *StringSuite) TestIsFirstRuneUpper() {
+	str := ""
+	s.Equal(false, isFirstRuneUpper(str))
+
+	str = "Test"
+	s.Equal(true, isFirstRuneUpper(str))
+}
+
+func (s *StringSuite) TestRuneAt() {
+	str := ""
+	s.Equal(int32(0), runeAt(str, 0))
+
+	str = "Test"
+	s.Equal(int32(84), runeAt(str, 0))
+}
+
 func TestStringSuite(t *testing.T) {
 	test.RunSuite(t, new(StringSuite))
 }
