@@ -46,6 +46,12 @@ func main() {
 $ go run .
 ```
 
+4. Before starting the app development, it is strongly recommended to go through the below:
+
+- [The Twelve-Factor App](https://12factor.net/)
+- [Effective Go](https://golang.org/doc/effective_go.html)
+- [Uber's Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md)
+
 ## Credits
 
 This project is heavily inspired by:
