@@ -19,14 +19,14 @@ Coming soon.
 
 ## Quick Start
 
-1. Create the project folder with go module.
+### Step 1: Create the project folder with go module
 
 ```sh
 $ mkdir PROJECT_NAME && cd $_
 $ go mod init PROJECT_NAME
 ```
 
-2. Create `main.go` with the content below:
+### Step 2: Create `main.go` with the content below
 
 ```go
 package main
@@ -40,34 +40,30 @@ func main() {
 }
 ```
 
-3. Initialize the appy's project layout.
+### Step 3: Initialize the appy's project layout
 
 ```sh
 $ go run .
 ```
 
-4. Before starting the app development, it is strongly recommended to go through the below:
+### Step 4: Strongly recommended to read before starting
 
-    - [The Twelve-Factor App](https://12factor.net/)
-    - [Effective Go](https://golang.org/doc/effective_go.html)
-    - [Uber's Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md)
-    - [10 Things You Probably Don't Know About Go](https://talks.golang.org/2012/10things.slide)
-    - [Go Map Isn't Concurrent Safe](https://golangbyexample.com/go-maps-concurrency/)
+- [The Twelve-Factor App](https://12factor.net/)
+- [Effective Go](https://golang.org/doc/effective_go.html)
+- [Uber's Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md)
+- [10 Things You Probably Don't Know About Go](https://talks.golang.org/2012/10things.slide)
+- [Go Map Isn't Concurrent Safe](https://golangbyexample.com/go-maps-concurrency/)
 
 ## Credits
 
 This project is heavily inspired by:
 
-- https://github.com/rails/rails
-- https://github.com/laravel/laravel
-- https://github.com/spf13/cobra
-- https://github.com/julienschmidt/httprouter
-- https://github.com/gin-gonic/gin
-- https://github.com/go-chi/chi
-- https://github.com/gobuffalo
-- https://github.com/go-pg/pg
-- https://github.com/uber-go/zap
-- https://github.com/stretchr/testify
+- [rails](https://github.com/rails/rails)
+- [cobra](https://github.com/spf13/cobra)
+- [httprouter](https://github.com/julienschmidt/httprouter)
+- [gin](https://github.com/gin-gonic/gin)
+- [zap](https://github.com/uber-go/zap)
+- [testify](https://github.com/stretchr/testify)
 
 ## Contribution
 
