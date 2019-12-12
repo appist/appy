@@ -19,14 +19,14 @@ Coming soon.
 
 ## Quick Start
 
-### Step 1: Create the project folder with go module
+#### Step 1: Create the project folder with go module
 
 ```sh
 $ mkdir PROJECT_NAME && cd $_
 $ go mod init PROJECT_NAME
 ```
 
-### Step 2: Create `main.go` with the content below
+#### Step 2: Create `main.go` with the content below
 
 ```go
 package main
@@ -40,13 +40,13 @@ func main() {
 }
 ```
 
-### Step 3: Initialize the appy's project layout
+#### Step 3: Initialize the appy's project layout
 
 ```sh
 $ go run .
 ```
 
-### Step 4: Strongly recommended to read before starting
+#### Step 4: Strongly recommended to read before starting
 
 - [The Twelve-Factor App](https://12factor.net/)
 - [Effective Go](https://golang.org/doc/effective_go.html)
