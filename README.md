@@ -46,7 +46,7 @@ func main() {
 $ go run .
 ```
 
-#### Step 4: Strongly recommended to read before starting
+## Be A Better Engineer
 
 - [The Twelve-Factor App](https://12factor.net/)
 - [Effective Go](https://golang.org/doc/effective_go.html)
