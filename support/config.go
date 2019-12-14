@@ -143,6 +143,11 @@ func (c Config) Errors() []error {
 	return c.errors
 }
 
+// Path returns the config path.
+func (c Config) Path() string {
+	return c.path
+}
+
 func (c Config) decryptConfig(assetsMngr *AssetsMngr, masterKey []byte) []error {
 	reader, err := assetsMngr.Open(c.path)
 	if err != nil {
