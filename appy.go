@@ -8,7 +8,7 @@ import (
 	"runtime"
 
 	"github.com/appist/appy/cmd"
-	"github.com/appist/appy/server"
+	ah "github.com/appist/appy/http"
 	"github.com/appist/appy/support"
 )
 
@@ -17,8 +17,9 @@ type (
 	App struct {
 		assetsMngr *support.AssetsMngr
 		command    *cmd.Command
+		config     *support.Config
 		logger     *support.Logger
-		server     *server.Server
+		server     *ah.Server
 	}
 )
 
@@ -33,14 +34,36 @@ func NewApp(static http.FileSystem) *App {
 	command := cmd.NewCommand()
 	logger := support.NewLogger()
 	assetsMngr := support.NewAssetsMngr(nil, "", static)
-	server := server.NewServer()
+	config := support.NewConfig(assetsMngr, logger)
+	server := ah.NewServer(assetsMngr, config, logger)
 
 	return &App{
 		assetsMngr: assetsMngr,
 		command:    command,
+		config:     config,
 		logger:     logger,
 		server:     server,
 	}
+}
+
+// Cmd returns the cmd instance.
+func (a App) Cmd() *cmd.Command {
+	return a.command
+}
+
+// Config returns the config instance.
+func (a App) Config() *support.Config {
+	return a.config
+}
+
+// Logger returns the logger instance.
+func (a App) Logger() *support.Logger {
+	return a.logger
+}
+
+// Server returns the server instance.
+func (a App) Server() *ah.Server {
+	return a.server
 }
 
 // Run starts running the app instance.
