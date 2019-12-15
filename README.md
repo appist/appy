@@ -48,11 +48,12 @@ $ go run .
 
 ## Be A Better Engineer
 
-- [The Twelve-Factor App](https://12factor.net/)
+- [The Twelve-Factor App](https://12factor.net)
 - [Effective Go](https://golang.org/doc/effective_go.html)
 - [Uber's Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md)
 - [10 Things You Probably Don't Know About Go](https://talks.golang.org/2012/10things.slide)
-- [Go Map Isn't Concurrent Safe](https://golangbyexample.com/go-maps-concurrency/)
+- [Go Map Isn't Concurrent Safe](https://golangbyexample.com/go-maps-concurrency)
+- [Pointer or Value Receiver?](https://flaviocopes.com/golang-methods-receivers)
 
 ## Credits
 

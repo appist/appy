@@ -37,6 +37,19 @@ func NewApp(static http.FileSystem) *App {
 	config := support.NewConfig(assetsMngr, logger)
 	server := ah.NewServer(assetsMngr, config, logger)
 
+	// Setup default middleware
+	// r.Use(CSRF(c, l))
+	// r.Use(RequestID())
+	// r.Use(RequestLogger(c, l))
+	// r.Use(RealIP())
+	// r.Use(ResponseHeaderFilter())
+	// r.Use(SessionManager(c))
+	// r.Use(HealthCheck(config.HTTPHealthCheckURL))
+	// r.Use(Prerender(c, l))
+	// r.Use(gzip.Gzip(gzip.DefaultCompression))
+	server.Use(ah.Secure(config))
+	// r.Use(Recovery(l))
+
 	return &App{
 		assetsMngr: assetsMngr,
 		command:    command,

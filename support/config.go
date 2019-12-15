@@ -74,17 +74,17 @@ type (
 		HTTPCSRFSecret              []byte            `env:"HTTP_CSRF_SECRET,required" envDefault:""`
 		HTTPSSLRedirect             bool              `env:"HTTP_SSL_REDIRECT" envDefault:"false"`
 		HTTPSSLTemporaryRedirect    bool              `env:"HTTP_SSL_TEMPORARY_REDIRECT" envDefault:"false"`
-		HTTPSSLHost                 string            `env:"HTTP_SSL_HOST" envDefault:"localhost:3443"`
+		HTTPSSLHost                 string            `env:"HTTP_SSL_HOST" envDefault:""`
 		HTTPSTSSeconds              int64             `env:"HTTP_STS_SECONDS" envDefault:"0"`
 		HTTPSTSIncludeSubdomains    bool              `env:"HTTP_STS_INCLUDE_SUBDOMAINS" envDefault:"false"`
-		HTTPFrameDeny               bool              `env:"HTTP_FRAME_DENY" envDefault:"true"`
+		HTTPFrameDeny               bool              `env:"HTTP_FRAME_DENY" envDefault:"false"`
 		HTTPCustomFrameOptionsValue string            `env:"HTTP_CUSTOM_FRAME_OPTIONS_VALUE" envDefault:""`
 		HTTPContentTypeNosniff      bool              `env:"HTTP_CONTENT_TYPE_NOSNIFF" envDefault:"false"`
 		HTTPBrowserXSSFilter        bool              `env:"HTTP_BROWSER_XSS_FILTER" envDefault:"false"`
 		HTTPContentSecurityPolicy   string            `env:"HTTP_CONTENT_SECURITY_POLICY" envDefault:""`
 		HTTPReferrerPolicy          string            `env:"HTTP_REFERRER_POLICY" envDefault:""`
 		HTTPIENoOpen                bool              `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
-		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:""`
+		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:"X-Forwarded-Proto:https"`
 
 		// Mailer related configuration.
 		MailerSMTPAddr              string `env:"MAILER_SMTP_ADDR" envDefault:""`
