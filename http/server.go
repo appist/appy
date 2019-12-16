@@ -61,6 +61,7 @@ func NewServer(assetsMngr *support.AssetsMngr, config *support.Config, logger *s
 	return &Server{
 		assetsMngr: assetsMngr,
 		config:     config,
+		grpc:       grpc.NewServer(),
 		http:       httpServer,
 		https:      httpsServer,
 		logger:     logger,
@@ -96,11 +97,7 @@ func (s *Server) Hosts() ([]string, error) {
 		hosts = append(hosts, s.config.HTTPHost)
 	}
 
-	addresses, err := net.InterfaceAddrs()
-	if err != nil {
-		return nil, err
-	}
-
+	addresses, _ := net.InterfaceAddrs()
 	for _, address := range addresses {
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			host := ipnet.IP.To4()

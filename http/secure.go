@@ -136,7 +136,6 @@ func (p *securePolicy) loadConfig(config secureConfig) {
 
 	// XSS Protection header.
 	if config.BrowserXSSFilter {
-		fmt.Println("keke")
 		p.addHeader("X-XSS-Protection", "1; mode=block")
 	}
 

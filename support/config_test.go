@@ -179,6 +179,7 @@ func (s *ConfigSuite) TestNewConfigWithSettingRequiredConfig() {
 	config := NewConfig(s.assetsMngr, s.logger)
 	s.Equal([]byte("481e5d98a31585148b8b1dfb6a3c0465"), config.MasterKey())
 	s.Nil(config.Errors())
+	s.Equal("testdata/pkg/config/.env.development", config.Path())
 }
 
 func (s *ConfigSuite) TestNewConfigWithEnvVariableOverride() {
