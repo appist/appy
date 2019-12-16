@@ -134,7 +134,7 @@ func (s *Server) Info() []string {
 	hosts, _ := s.Hosts()
 	host := fmt.Sprintf("http://%s:%s", hosts[0], s.config.HTTPPort)
 
-	if s.config.HTTPSSLEnabled == true {
+	if s.config.HTTPSSLEnabled {
 		host += fmt.Sprintf(", https://%s:%s", hosts[0], s.config.HTTPSSLPort)
 	}
 
