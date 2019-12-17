@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	go.uber.org/zap v1.13.0
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
-	google.golang.org/grpc v1.25.1
+	google.golang.org/grpc v1.26.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 )
