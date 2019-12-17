@@ -38,17 +38,17 @@ func NewApp(static http.FileSystem) *App {
 	server := ah.NewServer(assetsMngr, config, logger)
 
 	// Setup default middleware
-	// r.Use(CSRF(c, l))
-	// r.Use(RequestID())
-	// r.Use(RequestLogger(c, l))
-	// r.Use(RealIP())
-	// r.Use(ResponseHeaderFilter())
-	// r.Use(SessionManager(c))
-	// r.Use(HealthCheck(config.HTTPHealthCheckURL))
-	// r.Use(Prerender(c, l))
-	// r.Use(gzip.Gzip(gzip.DefaultCompression))
+	// server.Use(CSRF(c, l))
+	// server.Use(RequestID())
+	// server.Use(RequestLogger(c, l))
+	server.Use(ah.RealIP())
+	// server.Use(ResponseHeaderFilter())
+	// server.Use(SessionManager(c))
+	// server.Use(HealthCheck(config.HTTPHealthCheckURL))
+	// server.Use(Prerender(c, l))
+	// server.Use(gzip.Gzip(gzip.DefaultCompression))
 	server.Use(ah.Secure(config))
-	// r.Use(Recovery(l))
+	// server.Use(Recovery(l))
 
 	return &App{
 		assetsMngr: assetsMngr,
