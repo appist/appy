@@ -14,8 +14,8 @@ type (
 )
 
 // NewTestContext returns a fresh router w/ context for testing purposes.
-func NewTestContext(w http.ResponseWriter) (c *Context, r *Router) {
-	ctx, router := gin.CreateTestContext(w)
+func NewTestContext(w http.ResponseWriter) (*Context, *Router) {
+	c, router := gin.CreateTestContext(w)
 
-	return &Context{ctx}, &Router{router}
+	return &Context{c}, &Router{router}
 }

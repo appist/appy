@@ -21,23 +21,23 @@ func (s *RealIPSuite) TearDownTest() {
 }
 
 func (s *RealIPSuite) TestRemoteAddressNotNilIfXForwardedForIsSet() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	ctx.Request.Header.Set("X-Forwarded-For", "localhost")
-	RealIP()(ctx)
-	s.Equal("localhost", ctx.Request.RemoteAddr)
+	c.Request.Header.Set("X-Forwarded-For", "localhost")
+	RealIP()(c)
+	s.Equal("localhost", c.Request.RemoteAddr)
 }
 
 func (s *RealIPSuite) TestRemoteAddressNotNilIfXRealIPIsSet() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	ctx.Request.Header.Set("X-Real-IP", "localhost")
-	RealIP()(ctx)
-	s.Equal("localhost", ctx.Request.RemoteAddr)
+	c.Request.Header.Set("X-Real-IP", "localhost")
+	RealIP()(c)
+	s.Equal("localhost", c.Request.RemoteAddr)
 }
 
 func TestRealIP(t *testing.T) {

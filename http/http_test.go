@@ -21,19 +21,19 @@ func (s *HTTPSuite) TearDownTest() {
 func (s *HTTPSuite) TestIsAPIOnly() {
 	recorder := httptest.NewRecorder()
 
-	ctx, _ := NewTestContext(recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	ctx.Request.Header.Add("X-API-Only", "1")
-	s.Equal(true, IsAPIOnly(ctx))
+	c.Request.Header.Add("X-API-Only", "1")
+	s.Equal(true, IsAPIOnly(c))
 
-	ctx, _ = NewTestContext(recorder)
-	ctx.Request = &http.Request{
+	c, _ = NewTestContext(recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	ctx.Request.Header.Add("X-API-Only", "0")
-	s.Equal(false, IsAPIOnly(ctx))
+	c.Request.Header.Add("X-API-Only", "0")
+	s.Equal(false, IsAPIOnly(c))
 }
 
 func TestHTTPSuite(t *testing.T) {
