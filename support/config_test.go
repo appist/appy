@@ -44,6 +44,8 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"GQLUploadMaxSize":                int64(100000000),
 		"GQLWebsocketKeepAliveDuration":   30 * time.Second,
 		"HTTPDebugEnabled":                false,
+		"HTTPGzipCompressLevel":           -1,
+		"HTTPGzipExcludedExts":            []string{},
 		"HTTPLogFilterParameters":         []string{"password"},
 		"HTTPHealthCheckURL":              "/health_check",
 		"HTTPHost":                        "localhost",

@@ -46,9 +46,9 @@ func NewApp(static http.FileSystem) *App {
 	// server.Use(SessionManager(c))
 	server.Use(ah.HealthCheck(config.HTTPHealthCheckURL))
 	server.Use(ah.Prerender(config, logger))
-	// server.Use(ah.Gzip(gzip.DefaultCompression))
+	server.Use(ah.Gzip(config))
 	server.Use(ah.Secure(config))
-	// server.Use(Recovery(l))
+	// server.Use(ah.Recovery(logger))
 
 	return &App{
 		assetsMngr: assetsMngr,

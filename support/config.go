@@ -27,6 +27,9 @@ type (
 
 		// Server related configuration.
 		HTTPDebugEnabled        bool          `env:"HTTP_DEBUG_ENABLED" envDefault:"false"`
+		HTTPGzipCompressLevel   int           `env:"HTTP_GZIP_COMPRESS_LEVEL" envDefault:"-1"`
+		HTTPGzipExcludedExts    []string      `env:"HTTP_GZIP_EXCLUDED_EXTS" envDefault:""`
+		HTTPGzipExcludedPaths   []string      `env:"HTTP_GZIP_EXCLUDED_PATHS" envDefault:""`
 		HTTPLogFilterParameters []string      `env:"HTTP_LOG_FILTER_PARAMETERS" envDefault:"password"`
 		HTTPHealthCheckURL      string        `env:"HTTP_HEALTH_CHECK_URL" envDefault:"/health_check"`
 		HTTPHost                string        `env:"HTTP_HOST" envDefault:"localhost"`
