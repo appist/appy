@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 
 	uuid "github.com/satori/go.uuid"
@@ -18,7 +17,7 @@ func RequestID() HandlerFunc {
 		requestID := ctx.GetHeader(xRequestID)
 		if requestID == "" {
 			uuidV4 := uuid.NewV4()
-			requestID = fmt.Sprintf("%s", uuidV4)
+			requestID = uuidV4.String()
 		}
 
 		ctx.Set(requestIDCtxKey.String(), requestID)
