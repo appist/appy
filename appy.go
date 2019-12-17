@@ -45,8 +45,8 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.ResponseHeaderFilter())
 	// server.Use(SessionManager(c))
 	server.Use(ah.HealthCheck(config.HTTPHealthCheckURL))
-	// server.Use(Prerender(c, l))
-	// server.Use(gzip.Gzip(gzip.DefaultCompression))
+	server.Use(ah.Prerender(config, logger))
+	// server.Use(ah.Gzip(gzip.DefaultCompression))
 	server.Use(ah.Secure(config))
 	// server.Use(Recovery(l))
 
