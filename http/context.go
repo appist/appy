@@ -15,10 +15,7 @@ type (
 
 // NewTestContext returns a fresh router w/ context for testing purposes.
 func NewTestContext(w http.ResponseWriter) (c *Context, r *Router) {
-	r = newRouter()
-	c = &Context{
-		&gin.Context{},
-	}
+	ctx, router := gin.CreateTestContext(w)
 
-	return c, r
+	return &Context{ctx}, &Router{router}
 }

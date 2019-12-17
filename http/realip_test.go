@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,7 +22,6 @@ func (s *RealIPSuite) TearDownTest() {
 
 func (s *RealIPSuite) TestRemoteAddressNotNilIfXForwardedForIsSet() {
 	ctx, _ := NewTestContext(s.recorder)
-	fmt.Println(ctx)
 	ctx.Request = &http.Request{
 		Header: map[string][]string{},
 	}

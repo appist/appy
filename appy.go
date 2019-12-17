@@ -39,12 +39,12 @@ func NewApp(static http.FileSystem) *App {
 
 	// Setup default middleware
 	// server.Use(CSRF(c, l))
-	// server.Use(RequestID())
-	// server.Use(RequestLogger(c, l))
+	server.Use(ah.RequestID())
+	server.Use(ah.RequestLogger(config, logger))
 	server.Use(ah.RealIP())
-	// server.Use(ResponseHeaderFilter())
+	server.Use(ah.ResponseHeaderFilter())
 	// server.Use(SessionManager(c))
-	// server.Use(HealthCheck(config.HTTPHealthCheckURL))
+	server.Use(ah.HealthCheck(config.HTTPHealthCheckURL))
 	// server.Use(Prerender(c, l))
 	// server.Use(gzip.Gzip(gzip.DefaultCompression))
 	server.Use(ah.Secure(config))
