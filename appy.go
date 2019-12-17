@@ -38,7 +38,7 @@ func NewApp(static http.FileSystem) *App {
 	server := ah.NewServer(assetsMngr, config, logger)
 
 	// Setup default middleware
-	// server.Use(CSRF(c, l))
+	server.Use(ah.CSRF(config, logger))
 	server.Use(ah.RequestID())
 	server.Use(ah.RequestLogger(config, logger))
 	server.Use(ah.RealIP())
