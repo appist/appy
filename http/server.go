@@ -34,7 +34,7 @@ func init() {
 
 // NewServer initializes Server instance.
 func NewServer(assetsMngr *support.AssetsMngr, config *support.Config, logger *support.Logger) *Server {
-	router := newRouter(config, logger)
+	router := newRouter()
 
 	httpServer := &http.Server{
 		Addr:              config.HTTPHost + ":" + config.HTTPPort,

@@ -1,6 +1,10 @@
 package http
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 type (
 	// Context contains the request information and is meant to be passed through the entire HTTP request.
@@ -9,7 +13,12 @@ type (
 	}
 )
 
-var (
-	// CreateHTTPContext returns a fresh router w/ context for testing purposes.
-	CreateHTTPContext = gin.CreateTestContext
-)
+// NewTestContext returns a fresh router w/ context for testing purposes.
+func NewTestContext(w http.ResponseWriter) (c *Context, r *Router) {
+	r = newRouter()
+	c = &Context{
+		&gin.Context{},
+	}
+
+	return c, r
+}

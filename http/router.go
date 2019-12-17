@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 
-	"github.com/appist/appy/support"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,7 +37,7 @@ type (
 	// Routes defines the array of Route.
 	Routes []Route
 
-	// Routerer defines all router handle interface.
+	// Routerer defines all router handler interface.
 	Routerer interface {
 		Use(...HandlerFunc) Routerer
 
@@ -58,7 +57,7 @@ type (
 	}
 )
 
-func newRouter(config *support.Config, logger *support.Logger) *Router {
+func newRouter() *Router {
 	r := &Router{
 		gin.New(),
 	}
