@@ -13,14 +13,14 @@ var (
 
 // RequestID is a middleware that injects a request ID into the context of each request.
 func RequestID() HandlerFunc {
-	return func(ctx *Context) {
-		requestID := ctx.GetHeader(xRequestID)
+	return func(c *Context) {
+		requestID := c.GetHeader(xRequestID)
 		if requestID == "" {
 			uuidV4 := uuid.NewV4()
 			requestID = uuidV4.String()
 		}
 
-		ctx.Set(requestIDCtxKey.String(), requestID)
-		ctx.Next()
+		c.Set(requestIDCtxKey.String(), requestID)
+		c.Next()
 	}
 }

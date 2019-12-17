@@ -4,29 +4,21 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"testing"
 
-	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
 )
 
 type HealthCheckSuite struct {
 	test.Suite
-	logger   *support.Logger
 	recorder *httptest.ResponseRecorder
 }
 
 func (s *HealthCheckSuite) SetupTest() {
-	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
-	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
-	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-	s.logger = support.NewLogger()
 	s.recorder = httptest.NewRecorder()
 }
 
 func (s *HealthCheckSuite) TearDownTest() {
-	os.Clearenv()
 }
 
 func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathMatches() {

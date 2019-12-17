@@ -16,8 +16,8 @@ func (c ContextKey) String() string {
 }
 
 // IsAPIOnly checks if a request is API only based on `X-API-Only` request header.
-func IsAPIOnly(ctx *Context) bool {
-	if ctx.Request.Header.Get(apiOnlyHeader) == "true" || ctx.Request.Header.Get(apiOnlyHeader) == "1" {
+func IsAPIOnly(c *Context) bool {
+	if c.Request.Header.Get(apiOnlyHeader) == "true" || c.Request.Header.Get(apiOnlyHeader) == "1" {
 		return true
 	}
 

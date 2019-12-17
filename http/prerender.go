@@ -60,8 +60,8 @@ func Prerender(config *support.Config, logger *support.Logger) HandlerFunc {
 		port = config.HTTPSSLPort
 	}
 
-	return func(ctx *Context) {
-		request := ctx.Request
+	return func(c *Context) {
+		request := c.Request
 		userAgent := request.Header.Get(userAgentHeader)
 
 		if !_staticExtRegex.MatchString(request.URL.Path) && isSEOBot(userAgent) {
@@ -71,17 +71,17 @@ func Prerender(config *support.Config, logger *support.Logger) HandlerFunc {
 			data, err := crawl(url)
 			if err != nil {
 				logger.Error(err)
-				ctx.AbortWithError(http.StatusInternalServerError, err)
+				c.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
 
-			ctx.Writer.Header().Add(xPrerender, "1")
-			ctx.Data(http.StatusOK, "text/html; charset=utf-8", data)
-			ctx.Abort()
+			c.Writer.Header().Add(xPrerender, "1")
+			c.Data(http.StatusOK, "text/html; charset=utf-8", data)
+			c.Abort()
 			return
 		}
 
-		ctx.Next()
+		c.Next()
 	}
 }
 

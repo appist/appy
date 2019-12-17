@@ -11,19 +11,19 @@ import (
 // RequestLogger is a middleware that logs the start and end of each request, along with some useful data about what
 // was requested, what the response status was, and how long it took to return.
 func RequestLogger(config *support.Config, logger *support.Logger) HandlerFunc {
-	return func(ctx *Context) {
-		requestID, _ := ctx.Get(requestIDCtxKey.String())
+	return func(c *Context) {
+		requestID, _ := c.Get(requestIDCtxKey.String())
 		start := time.Now()
-		ctx.Next()
+		c.Next()
 
-		r := ctx.Request
+		r := c.Request
 		scheme := "http"
 		if r.TLS != nil {
 			scheme = "https"
 		}
 
 		logger.Infof("[HTTP] %s %s '%s://%s%s %s' from %s - %d %dB in %s", requestID, r.Method, scheme, r.Host, filterParams(r, config),
-			r.Proto, r.RemoteAddr, ctx.Writer.Status(), ctx.Writer.Size(), time.Since(start))
+			r.Proto, r.RemoteAddr, c.Writer.Status(), c.Writer.Size(), time.Since(start))
 	}
 }
 

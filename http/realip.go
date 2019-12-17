@@ -13,12 +13,12 @@ var (
 // RealIP is a middleware that sets a http.Request's RemoteAddr to the results of parsing either the X-Forwarded-For
 // header or the X-Real-IP header (in that order).
 func RealIP() HandlerFunc {
-	return func(ctx *Context) {
-		if rip := realIP(ctx.Request); rip != "" {
-			ctx.Request.RemoteAddr = rip
+	return func(c *Context) {
+		if rip := realIP(c.Request); rip != "" {
+			c.Request.RemoteAddr = rip
 		}
 
-		ctx.Next()
+		c.Next()
 	}
 }
 

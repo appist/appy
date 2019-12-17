@@ -5,17 +5,16 @@ import (
 	"strings"
 )
 
-// HealthCheck is middleware to setup a path like `/health_check` that load balancers or uptime testing external
-// services can make a request before hitting any routes.
+// HealthCheck sets up a route to inform the request if the service is healthy.
 func HealthCheck(endpoint string) HandlerFunc {
-	return func(ctx *Context) {
-		r := ctx.Request
+	return func(c *Context) {
+		r := c.Request
 		if r.Method == "GET" && strings.EqualFold(r.URL.Path, endpoint) {
-			ctx.String(http.StatusOK, "")
-			ctx.Abort()
+			c.String(http.StatusOK, "")
+			c.Abort()
 			return
 		}
 
-		ctx.Next()
+		c.Next()
 	}
 }
