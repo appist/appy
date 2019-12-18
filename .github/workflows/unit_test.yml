@@ -72,14 +72,6 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - uses: actions/checkout@master
-      - run: which headless_shell
-      - run: which headless-shell
-      - run: which chromium
-      - run: which chromium-browser
-      - run: which google-chrome
-      - run: which google-chrome-stable
-      - run: which google-chrome-beta
-      - run: which google-chrome-unstable
       - run: go mod download
       - run: |
           export PATH=$PATH:$(go env GOPATH)/bin
