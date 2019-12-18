@@ -1,7 +1,6 @@
 package http
 
 import (
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -52,12 +51,6 @@ func (s *SessionMngrSuite) SetupTest() {
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
-
-	// A workaround for Github Action
-	_, err := net.Dial("tcp", "0.0.0.0:6379")
-	if err != nil {
-		os.Setenv("HTTP_SESSION_REDIS_ADDR", "localhost:32770")
-	}
 
 	s.logger = support.NewLogger()
 	s.assetsMngr = support.NewAssetsMngr(nil, "", http.Dir("../support/testdata"))
