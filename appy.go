@@ -43,7 +43,7 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.RequestLogger(config, logger))
 	server.Use(ah.RealIP())
 	server.Use(ah.ResponseHeaderFilter())
-	// server.Use(SessionManager(c))
+	server.Use(ah.SessionMngr(config))
 	server.Use(ah.HealthCheck(config.HTTPHealthCheckURL))
 	server.Use(ah.Prerender(config, logger))
 	server.Use(ah.Gzip(config))
