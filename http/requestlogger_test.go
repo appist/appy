@@ -36,8 +36,8 @@ func (s *RequestLoggerSuite) TearDownTest() {
 
 func (s *RequestLoggerSuite) TestRequestLogger() {
 	recorder := httptest.NewRecorder()
-	ctx, _ := NewTestContext(recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(recorder)
+	c.Request = &http.Request{
 		Host:       "localhost",
 		Method:     "GET",
 		Proto:      "HTTP/2.0",
@@ -45,7 +45,7 @@ func (s *RequestLoggerSuite) TestRequestLogger() {
 		TLS:        &tls.ConnectionState{},
 		URL:        &url.URL{},
 	}
-	RequestLogger(s.config, s.logger)(ctx)
+	RequestLogger(s.config, s.logger)(c)
 
 	host := "http://localhost"
 	query := "username=user&password=secret"

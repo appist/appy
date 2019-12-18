@@ -7,12 +7,15 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20191114225735-6626966fbae4
 	github.com/chromedp/chromedp v0.5.2
 	github.com/fatih/camelcase v1.0.0
+	github.com/gin-contrib/multitemplate v0.0.0-20191128031210-95dee0dedf35
+	github.com/gin-contrib/sessions v0.0.1
 	github.com/gin-gonic/gin v1.5.0
+	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
+	github.com/gorilla/sessions v1.2.0
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/joho/godotenv v1.3.0
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0

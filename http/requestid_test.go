@@ -20,12 +20,12 @@ func (s *RequestIDSuite) TearDownTest() {
 
 func (s *RequestIDSuite) TestRequestID() {
 	recorder := httptest.NewRecorder()
-	ctx, _ := NewTestContext(recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	RequestID()(ctx)
-	requestID, _ := ctx.Get("requestID")
+	RequestID()(c)
+	requestID, _ := c.Get("requestID")
 	s.NotEqual("", requestID)
 }
 

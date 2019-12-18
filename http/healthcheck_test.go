@@ -22,32 +22,32 @@ func (s *HealthCheckSuite) TearDownTest() {
 }
 
 func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathMatches() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "GET",
 		URL: &url.URL{
 			Path: "/ping",
 		},
 	}
-	HealthCheck("/ping")(ctx)
+	HealthCheck("/ping")(c)
 
-	s.Equal("text/plain; charset=utf-8", ctx.Writer.Header().Get("Content-Type"))
-	s.Equal(200, ctx.Writer.Status())
+	s.Equal("text/plain; charset=utf-8", c.Writer.Header().Get("Content-Type"))
+	s.Equal(http.StatusOK, c.Writer.Status())
 }
 
 func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathDoesNotMatch() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 		URL: &url.URL{
 			Path: "/ping",
 		},
 	}
-	HealthCheck("/health_check")(ctx)
+	HealthCheck("/health_check")(c)
 
-	s.NotEqual("text/plain; charset=utf-8", ctx.Writer.Header().Get("Content-Type"))
+	s.NotEqual("text/plain; charset=utf-8", c.Writer.Header().Get("Content-Type"))
 }
 
 func TestHealthCheck(t *testing.T) {

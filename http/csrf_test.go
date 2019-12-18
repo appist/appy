@@ -50,248 +50,248 @@ func (s *CSRFSuite) TearDownTest() {
 }
 
 func (s *CSRFSuite) TestSkipCheckContextKey() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	csrfHandler(ctx, s.config, s.logger)
-	_, exists := ctx.Get(csrfSkipCheckCtxKey.String())
+	csrfHandler(c, s.config, s.logger)
+	_, exists := c.Get(csrfSkipCheckCtxKey.String())
 	s.Equal(false, exists)
 
-	ctx, _ = NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ = NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	ctx.Request.Header.Set("x-api-only", "1")
-	csrfHandler(ctx, s.config, s.logger)
-	_, exists = ctx.Get(csrfSkipCheckCtxKey.String())
+	c.Request.Header.Set("x-api-only", "1")
+	csrfHandler(c, s.config, s.logger)
+	_, exists = c.Get(csrfSkipCheckCtxKey.String())
 	s.Equal(true, exists)
 }
 
 func (s *CSRFSuite) TestTokenAndFieldNameContextKey() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "GET",
 	}
-	csrfHandler(ctx, s.config, s.logger)
+	csrfHandler(c, s.config, s.logger)
 
-	_, exists := ctx.Get(csrfTokenCtxKey.String())
+	_, exists := c.Get(csrfTokenCtxKey.String())
 	s.Equal(true, exists)
 
-	_, exists = ctx.Get(csrfFieldNameCtxKey.String())
+	_, exists = c.Get(csrfFieldNameCtxKey.String())
 	s.Equal(true, exists)
-	s.Equal("Cookie", ctx.Writer.Header().Get("Vary"))
+	s.Equal("Cookie", c.Writer.Header().Get("Vary"))
 }
 
 func (s *CSRFSuite) TestRender403IfGenerateTokenError() {
 	oldGRB := generateRandomBytes
 	generateRandomBytes = func(n int) ([]byte, error) { return nil, errors.New("no token") }
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	csrfHandler(ctx, s.config, s.logger)
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, ctx.Writer.Status())
-	s.Equal(errors.New("no token"), ctx.Errors.Last().Err)
+	s.Equal(http.StatusForbidden, c.Writer.Status())
+	s.Equal(errors.New("no token"), c.Errors.Last().Err)
 	generateRandomBytes = oldGRB
 }
 
 func (s *CSRFSuite) TestRender403IfNoTokenGenerated() {
 	oldGRB := generateRandomBytes
 	generateRandomBytes = func(n int) ([]byte, error) { return nil, nil }
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 	}
-	csrfHandler(ctx, s.config, s.logger)
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, ctx.Writer.Status())
-	s.Equal(errCsrfNoToken, ctx.Errors.Last().Err)
+	s.Equal(http.StatusForbidden, c.Writer.Status())
+	s.Equal(errCsrfNoToken, c.Errors.Last().Err)
 	generateRandomBytes = oldGRB
 }
 
 func (s *CSRFSuite) TestRender403IfSecretKeyMissing() {
 	csrfSecureCookie = securecookie.New(nil, nil)
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	csrfHandler(ctx, s.config, s.logger)
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, ctx.Writer.Status())
-	s.Equal("securecookie: hash key is not set", ctx.Errors.Last().Err.Error())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
+	s.Equal("securecookie: hash key is not set", c.Errors.Last().Err.Error())
 }
 
 func (s *CSRFSuite) TestRender403IfNoRefererOverHTTPSConn() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 		TLS:    &tls.ConnectionState{},
 	}
-	csrfHandler(ctx, s.config, s.logger)
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, ctx.Writer.Status())
-	s.Equal(errCsrfNoReferer, ctx.Errors.Last().Err)
+	s.Equal(http.StatusForbidden, c.Writer.Status())
+	s.Equal(errCsrfNoReferer, c.Errors.Last().Err)
 }
 
 func (s *CSRFSuite) TestRender403IfMismatchRefererOverHTTPSConn() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 		TLS:    &tls.ConnectionState{},
 	}
-	ctx.Request.Header.Set("Referer", "http://localhost")
-	csrfHandler(ctx, s.config, s.logger)
+	c.Request.Header.Set("Referer", "http://localhost")
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, ctx.Writer.Status())
-	s.Equal(errCsrfBadReferer, ctx.Errors.Last().Err)
+	s.Equal(http.StatusForbidden, c.Writer.Status())
+	s.Equal(errCsrfBadReferer, c.Errors.Last().Err)
 }
 
 func (s *CSRFSuite) TestRender403IfNoCSRFTokenInCookie() {
 	realToken, _ := generateRandomBytes(csrfTokenLength)
 	authenticityToken := getCSRFMaskedToken(realToken)
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 	}
-	ctx.Request.Header.Set(s.config.HTTPCSRFRequestHeader, authenticityToken)
-	csrfHandler(ctx, s.config, s.logger)
+	c.Request.Header.Set(s.config.HTTPCSRFRequestHeader, authenticityToken)
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, ctx.Writer.Status())
-	s.Equal(errCsrfBadToken, ctx.Errors.Last().Err)
+	s.Equal(http.StatusForbidden, c.Writer.Status())
+	s.Equal(errCsrfBadToken, c.Errors.Last().Err)
 }
 
 func (s *CSRFSuite) TestRender403IfTokenIsInvalid() {
 	realToken, _ := generateRandomBytes(csrfTokenLength)
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 	}
-	ctx.Request.Header.Set(s.config.HTTPCSRFRequestHeader, "test")
-	ctx.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: string(realToken)})
-	csrfHandler(ctx, s.config, s.logger)
+	c.Request.Header.Set(s.config.HTTPCSRFRequestHeader, "test")
+	c.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: string(realToken)})
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, ctx.Writer.Status())
-	s.Equal(errCsrfBadToken, ctx.Errors.Last().Err)
+	s.Equal(http.StatusForbidden, c.Writer.Status())
+	s.Equal(errCsrfBadToken, c.Errors.Last().Err)
 }
 
 func (s *CSRFSuite) TestTokenIsNotDecodable() {
 	realToken, _ := generateRandomBytes(csrfTokenLength)
 	encRealToken, _ := csrfSecureCookie.Encode(s.config.HTTPCSRFCookieName, realToken)
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 	}
-	ctx.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: encRealToken})
-	ctx.Request.Header.Set(s.config.HTTPCSRFRequestHeader, "XXXXXaGVsbG8=")
-	csrfHandler(ctx, s.config, s.logger)
+	c.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: encRealToken})
+	c.Request.Header.Set(s.config.HTTPCSRFRequestHeader, "XXXXXaGVsbG8=")
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, ctx.Writer.Status())
-	s.Equal(errCsrfBadToken, ctx.Errors.Last().Err)
+	s.Equal(http.StatusForbidden, c.Writer.Status())
+	s.Equal(errCsrfBadToken, c.Errors.Last().Err)
 }
 
 func (s *CSRFSuite) TestTokenIsValidInHeader() {
 	realToken, _ := generateRandomBytes(csrfTokenLength)
 	encRealToken, _ := csrfSecureCookie.Encode(s.config.HTTPCSRFCookieName, realToken)
 	authenticityToken := getCSRFMaskedToken(realToken)
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 	}
-	ctx.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: encRealToken})
-	ctx.Request.Header.Set(s.config.HTTPCSRFRequestHeader, authenticityToken)
-	csrfHandler(ctx, s.config, s.logger)
+	c.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: encRealToken})
+	c.Request.Header.Set(s.config.HTTPCSRFRequestHeader, authenticityToken)
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(200, ctx.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 }
 
 func (s *CSRFSuite) TestTokenIsValidInPostFormValue() {
 	realToken, _ := generateRandomBytes(csrfTokenLength)
 	encRealToken, _ := csrfSecureCookie.Encode(s.config.HTTPCSRFCookieName, realToken)
 	authenticityToken := getCSRFMaskedToken(realToken)
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header:   map[string][]string{},
 		Method:   "POST",
 		PostForm: url.Values{},
 	}
-	ctx.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: encRealToken})
-	ctx.Request.PostForm.Add(csrfTemplateFieldName(ctx), authenticityToken)
-	csrfHandler(ctx, s.config, s.logger)
+	c.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: encRealToken})
+	c.Request.PostForm.Add(csrfTemplateFieldName(c), authenticityToken)
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(200, ctx.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 }
 
 func (s *CSRFSuite) TestTokenIsValidInMultipartForm() {
 	realToken, _ := generateRandomBytes(csrfTokenLength)
 	encRealToken, _ := csrfSecureCookie.Encode(s.config.HTTPCSRFCookieName, realToken)
 	authenticityToken := getCSRFMaskedToken(realToken)
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Method: "POST",
 		MultipartForm: &multipart.Form{
 			Value: map[string][]string{},
 		},
 	}
-	ctx.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: encRealToken})
-	ctx.Request.MultipartForm.Value[csrfTemplateFieldName(ctx)] = []string{authenticityToken}
-	csrfHandler(ctx, s.config, s.logger)
+	c.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: encRealToken})
+	c.Request.MultipartForm.Value[csrfTemplateFieldName(c)] = []string{authenticityToken}
+	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(200, ctx.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 }
 
 func (s *CSRFSuite) TestCSRFSkipCheck() {
-	ctx, _ := NewTestContext(s.recorder)
-	_, exists := ctx.Get(csrfSkipCheckCtxKey.String())
+	c, _ := NewTestContext(s.recorder)
+	_, exists := c.Get(csrfSkipCheckCtxKey.String())
 	s.Equal(false, exists)
 
-	ctx, _ = NewTestContext(s.recorder)
-	CSRFSkipCheck()(ctx)
-	_, exists = ctx.Get(csrfSkipCheckCtxKey.String())
+	c, _ = NewTestContext(s.recorder)
+	CSRFSkipCheck()(c)
+	_, exists = c.Get(csrfSkipCheckCtxKey.String())
 	s.Equal(true, exists)
 }
 
 func (s *CSRFSuite) TestCSRFTemplateField() {
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Set(csrfTokenCtxKey.String(), "test")
-	s.Equal(`<input type="hidden" name="authenticity_token" value="test">`, CSRFTemplateField(ctx))
+	c, _ := NewTestContext(s.recorder)
+	c.Set(csrfTokenCtxKey.String(), "test")
+	s.Equal(`<input type="hidden" name="authenticity_token" value="test">`, CSRFTemplateField(c))
 
-	ctx, _ = NewTestContext(s.recorder)
-	ctx.Set(csrfTokenCtxKey.String(), "")
-	s.Equal(`<input type="hidden" name="authenticity_token" value="">`, CSRFTemplateField(ctx))
+	c, _ = NewTestContext(s.recorder)
+	c.Set(csrfTokenCtxKey.String(), "")
+	s.Equal(`<input type="hidden" name="authenticity_token" value="">`, CSRFTemplateField(c))
 
-	ctx, _ = NewTestContext(s.recorder)
-	ctx.Set(csrfFieldNameCtxKey.String(), "my_authenticity_token")
-	ctx.Set(csrfTokenCtxKey.String(), "test")
-	s.Equal(`<input type="hidden" name="my_authenticity_token" value="test">`, CSRFTemplateField(ctx))
+	c, _ = NewTestContext(s.recorder)
+	c.Set(csrfFieldNameCtxKey.String(), "my_authenticity_token")
+	c.Set(csrfTokenCtxKey.String(), "test")
+	s.Equal(`<input type="hidden" name="my_authenticity_token" value="test">`, CSRFTemplateField(c))
 }
 
 func (s *CSRFSuite) TestCSRFToken() {
-	ctx, _ := NewTestContext(s.recorder)
-	s.Equal("", CSRFToken(ctx))
+	c, _ := NewTestContext(s.recorder)
+	s.Equal("", CSRFToken(c))
 
-	ctx, _ = NewTestContext(s.recorder)
-	ctx.Set(csrfTokenCtxKey.String(), "test")
-	s.Equal("test", CSRFToken(ctx))
+	c, _ = NewTestContext(s.recorder)
+	c.Set(csrfTokenCtxKey.String(), "test")
+	s.Equal("test", CSRFToken(c))
 }
 
 func (s *CSRFSuite) TestCSRFMiddleware() {
 	s.config.HTTPCSRFSecret = []byte("481e5d98a31585148b8b1dfb6a3c0465")
-	ctx, _ := NewTestContext(s.recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(s.recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	CSRF(s.config, s.logger)(ctx)
+	CSRF(s.config, s.logger)(c)
 	s.NotNil(csrfSecureCookie)
 }
 

@@ -20,22 +20,22 @@ func (s *ResponseHeaderFilterSuite) TearDownTest() {
 
 func (s *ResponseHeaderFilterSuite) TestResponseHeaderFilter() {
 	recorder := httptest.NewRecorder()
-	ctx, _ := NewTestContext(recorder)
-	ctx.Request = &http.Request{
+	c, _ := NewTestContext(recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	ctx.Writer.Header().Add("Set-Cookie", "test")
-	ResponseHeaderFilter()(ctx)
-	s.Equal("test", ctx.Writer.Header().Get("Set-Cookie"))
+	c.Writer.Header().Add("Set-Cookie", "test")
+	ResponseHeaderFilter()(c)
+	s.Equal("test", c.Writer.Header().Get("Set-Cookie"))
 
-	ctx, _ = NewTestContext(recorder)
-	ctx.Request = &http.Request{
+	c, _ = NewTestContext(recorder)
+	c.Request = &http.Request{
 		Header: map[string][]string{},
 	}
-	ctx.Request.Header.Add("X-API-Only", "true")
-	ctx.Writer.Header().Add("Set-Cookie", "test")
-	ResponseHeaderFilter()(ctx)
-	s.Equal("", ctx.Writer.Header().Get("Set-Cookie"))
+	c.Request.Header.Add("X-API-Only", "true")
+	c.Writer.Header().Add("Set-Cookie", "test")
+	ResponseHeaderFilter()(c)
+	s.Equal("", c.Writer.Header().Get("Set-Cookie"))
 }
 
 func TestResponseHeaderFilter(t *testing.T) {
