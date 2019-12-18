@@ -8,7 +8,9 @@ jobs:
       matrix:
         go: [1.13.x]
         platform: [ubuntu-latest]
+
     runs-on: ${{ matrix.platform }}
+
     services:
       mysql-master:
         image: "bitnami/mysql:8.0"
@@ -64,6 +66,7 @@ jobs:
         image: "redis"
         ports:
           - 6379/tcp
+
     steps:
       - uses: actions/setup-go@master
         with:
