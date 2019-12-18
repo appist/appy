@@ -1,6 +1,7 @@
 # Misc.
 .cache
 .envrc
+.idea
 *.out
 .DS_Store
 Thumbs.db
