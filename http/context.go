@@ -19,3 +19,7 @@ func NewTestContext(w http.ResponseWriter) (*Context, *Router) {
 
 	return &Context{c}, &Router{router}
 }
+
+func (c *Context) ginHTML(code int, name string, obj interface{}) {
+	c.HTML(code, name, obj)
+}

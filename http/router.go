@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 )
 
@@ -68,6 +69,13 @@ func newRouter() *Router {
 	r.RedirectFixedPath = true
 	r.UnescapePathValues = true
 	r.UseRawPath = false
+
+	// Initialize the error templates.
+	renderer := multitemplate.NewRenderer()
+	renderer.AddFromString("error/404", errorTpl404())
+	renderer.AddFromString("error/500", errorTpl500())
+	renderer.AddFromString("default/welcome", welcomeTpl())
+	r.HTMLRender = renderer
 
 	return r
 }
