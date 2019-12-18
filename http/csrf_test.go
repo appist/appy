@@ -93,7 +93,7 @@ func (s *CSRFSuite) TestRender403IfGenerateTokenError() {
 	}
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, c.Writer.Status())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
 	s.Equal(errors.New("no token"), c.Errors.Last().Err)
 	generateRandomBytes = oldGRB
 }
@@ -108,7 +108,7 @@ func (s *CSRFSuite) TestRender403IfNoTokenGenerated() {
 	}
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, c.Writer.Status())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
 	s.Equal(errCsrfNoToken, c.Errors.Last().Err)
 	generateRandomBytes = oldGRB
 }
@@ -121,7 +121,7 @@ func (s *CSRFSuite) TestRender403IfSecretKeyMissing() {
 	}
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, c.Writer.Status())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
 	s.Equal("securecookie: hash key is not set", c.Errors.Last().Err.Error())
 }
 
@@ -134,7 +134,7 @@ func (s *CSRFSuite) TestRender403IfNoRefererOverHTTPSConn() {
 	}
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, c.Writer.Status())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
 	s.Equal(errCsrfNoReferer, c.Errors.Last().Err)
 }
 
@@ -148,7 +148,7 @@ func (s *CSRFSuite) TestRender403IfMismatchRefererOverHTTPSConn() {
 	c.Request.Header.Set("Referer", "http://localhost")
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, c.Writer.Status())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
 	s.Equal(errCsrfBadReferer, c.Errors.Last().Err)
 }
 
@@ -163,7 +163,7 @@ func (s *CSRFSuite) TestRender403IfNoCSRFTokenInCookie() {
 	c.Request.Header.Set(s.config.HTTPCSRFRequestHeader, authenticityToken)
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, c.Writer.Status())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
 	s.Equal(errCsrfBadToken, c.Errors.Last().Err)
 }
 
@@ -178,7 +178,7 @@ func (s *CSRFSuite) TestRender403IfTokenIsInvalid() {
 	c.Request.AddCookie(&http.Cookie{Name: s.config.HTTPCSRFCookieName, Value: string(realToken)})
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, c.Writer.Status())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
 	s.Equal(errCsrfBadToken, c.Errors.Last().Err)
 }
 
@@ -194,7 +194,7 @@ func (s *CSRFSuite) TestTokenIsNotDecodable() {
 	c.Request.Header.Set(s.config.HTTPCSRFRequestHeader, "XXXXXaGVsbG8=")
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(403, c.Writer.Status())
+	s.Equal(http.StatusForbidden, c.Writer.Status())
 	s.Equal(errCsrfBadToken, c.Errors.Last().Err)
 }
 
@@ -211,7 +211,7 @@ func (s *CSRFSuite) TestTokenIsValidInHeader() {
 	c.Request.Header.Set(s.config.HTTPCSRFRequestHeader, authenticityToken)
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(200, c.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 }
 
 func (s *CSRFSuite) TestTokenIsValidInPostFormValue() {
@@ -228,7 +228,7 @@ func (s *CSRFSuite) TestTokenIsValidInPostFormValue() {
 	c.Request.PostForm.Add(csrfTemplateFieldName(c), authenticityToken)
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(200, c.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 }
 
 func (s *CSRFSuite) TestTokenIsValidInMultipartForm() {
@@ -247,7 +247,7 @@ func (s *CSRFSuite) TestTokenIsValidInMultipartForm() {
 	c.Request.MultipartForm.Value[csrfTemplateFieldName(c)] = []string{authenticityToken}
 	csrfHandler(c, s.config, s.logger)
 
-	s.Equal(200, c.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 }
 
 func (s *CSRFSuite) TestCSRFSkipCheck() {

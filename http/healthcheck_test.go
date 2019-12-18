@@ -33,7 +33,7 @@ func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathMatches() {
 	HealthCheck("/ping")(c)
 
 	s.Equal("text/plain; charset=utf-8", c.Writer.Header().Get("Content-Type"))
-	s.Equal(200, c.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 }
 
 func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathDoesNotMatch() {

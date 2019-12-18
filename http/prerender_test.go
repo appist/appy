@@ -52,7 +52,7 @@ func (s *PrerenderSuite) TestRequestWithNonSEOBot() {
 	}
 	Prerender(s.config, s.logger)(c)
 
-	s.Equal(200, c.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("", c.Writer.Header().Get(xPrerender))
 }
 
@@ -69,7 +69,7 @@ func (s *PrerenderSuite) TestRequestHTTPHostWithSEOBot() {
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
 	Prerender(s.config, s.logger)(c)
 
-	s.Equal(200, c.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
 }
 
@@ -88,7 +88,7 @@ func (s *PrerenderSuite) TestRequestHTTPSHostWithSEOBot() {
 	s.config.HTTPSSLEnabled = true
 	Prerender(s.config, s.logger)(c)
 
-	s.Equal(200, c.Writer.Status())
+	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
 }
 

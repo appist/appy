@@ -214,7 +214,7 @@ func (p *securePolicy) checkAllowHosts(c *Context) bool {
 		}
 	}
 
-	c.AbortWithStatus(403)
+	c.AbortWithStatus(http.StatusForbidden)
 	return false
 }
 

@@ -213,7 +213,7 @@ func (s *GzipSuite) TestGzipDecompress() {
 			s.FailNow(err.Error())
 		}
 
-		c.Data(200, "text/plain", data)
+		c.Data(http.StatusOK, "text/plain", data)
 	})
 	w := server.TestHTTPRequest("POST", "/", H{"Content-Encoding": "gzip"}, buf)
 
