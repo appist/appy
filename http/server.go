@@ -18,13 +18,13 @@ import (
 type (
 	// Server serves the HTTP requests.
 	Server struct {
-		assetsMngr *support.AssetsMngr
-		config     *support.Config
-		grpc       *grpc.Server
-		http       *http.Server
-		https      *http.Server
-		logger     *support.Logger
-		router     *Router
+		assets *support.Assets
+		config *support.Config
+		grpc   *grpc.Server
+		http   *http.Server
+		https  *http.Server
+		logger *support.Logger
+		router *Router
 	}
 )
 
@@ -33,7 +33,7 @@ func init() {
 }
 
 // NewServer initializes Server instance.
-func NewServer(assetsMngr *support.AssetsMngr, config *support.Config, logger *support.Logger) *Server {
+func NewServer(assets *support.Assets, config *support.Config, logger *support.Logger) *Server {
 	router := newRouter()
 
 	httpServer := &http.Server{
@@ -59,13 +59,13 @@ func NewServer(assetsMngr *support.AssetsMngr, config *support.Config, logger *s
 	httpsServer.ErrorLog = zap.NewStdLog(logger.Desugar())
 
 	return &Server{
-		assetsMngr: assetsMngr,
-		config:     config,
-		grpc:       grpc.NewServer(),
-		http:       httpServer,
-		https:      httpsServer,
-		logger:     logger,
-		router:     router,
+		assets: assets,
+		config: config,
+		grpc:   grpc.NewServer(),
+		http:   httpServer,
+		https:  httpsServer,
+		logger: logger,
+		router: router,
 	}
 }
 
