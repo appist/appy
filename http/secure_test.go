@@ -164,7 +164,7 @@ func (s *SecureSuite) TestProxySSLWithHeaderOption() {
 		c.String(http.StatusOK, "bar")
 	})
 
-	w := s.server.TestHTTPRequest("GET", "http://www.example.com/foo", H{"X-Arbitrary-Header": "arbitrary-value"}, nil)
+	w := s.server.TestHTTPRequest("GET", "http://www.example.com/foo", support.H{"X-Arbitrary-Header": "arbitrary-value"}, nil)
 	s.Equal(http.StatusOK, w.Code)
 }
 
@@ -176,7 +176,7 @@ func (s *SecureSuite) TestProxySSLWithWrongHeaderValue() {
 		c.String(http.StatusOK, "bar")
 	})
 
-	w := s.server.TestHTTPRequest("GET", "http://www.example.com/foo", H{"X-Arbitrary-Header": "wrong-value"}, nil)
+	w := s.server.TestHTTPRequest("GET", "http://www.example.com/foo", support.H{"X-Arbitrary-Header": "wrong-value"}, nil)
 	s.Equal(http.StatusMovedPermanently, w.Code)
 }
 

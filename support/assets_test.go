@@ -21,7 +21,7 @@ func (s *AssetsSuite) TestNewAssetsDefaultValue() {
 	assets := NewAssets(nil, "", nil)
 	s.Equal(map[string]string{
 		"docker": ".docker",
-		"config": "pkg/config",
+		"config": "configs",
 		"locale": "pkg/locales",
 		"view":   "pkg/views",
 		"web":    "web",
@@ -32,11 +32,11 @@ func (s *AssetsSuite) TestNewAssetsDefaultValue() {
 
 func (s *AssetsSuite) TestNewAssetsOpenWithDebugBuild() {
 	assets := NewAssets(nil, "", nil)
-	reader, err := assets.Open("pkg/config/.env.missing")
+	reader, err := assets.Open("configs/.env.missing")
 	s.Nil(reader)
-	s.EqualError(err, "open pkg/config/.env.missing: no such file or directory")
+	s.EqualError(err, "open configs/.env.missing: no such file or directory")
 
-	reader, err = assets.Open("testdata/pkg/config/.env.development")
+	reader, err = assets.Open("testdata/configs/.env.development")
 	s.NotNil(reader)
 	s.Nil(err)
 }
@@ -46,11 +46,11 @@ func (s *AssetsSuite) TestNewAssetsOpenWithReleaseBuild() {
 	defer func() { Build = DebugBuild }()
 
 	assets := NewAssets(nil, "", http.Dir("testdata"))
-	reader, err := assets.Open("pkg/config/.env.missing")
+	reader, err := assets.Open("configs/.env.missing")
 	s.Nil(reader)
-	s.EqualError(err, "open testdata/pkg/config/.env.missing: no such file or directory")
+	s.EqualError(err, "open testdata/configs/.env.missing: no such file or directory")
 
-	reader, err = assets.Open("pkg/config/.env.development")
+	reader, err = assets.Open("configs/.env.development")
 	s.NotNil(reader)
 	s.Nil(err)
 }
@@ -60,7 +60,7 @@ func (s *AssetsSuite) TestNewAssetsOpenWithReleaseBuildAndMissingStatic() {
 	defer func() { Build = DebugBuild }()
 
 	assets := NewAssets(nil, "", nil)
-	reader, err := assets.Open("pkg/config/.env.missing")
+	reader, err := assets.Open("configs/.env.missing")
 	s.Nil(reader)
 	s.EqualError(err, ErrNoStaticAssets.Error())
 }

@@ -2,6 +2,11 @@ package support
 
 import "errors"
 
+type (
+	// H is a shortcut for map[string]interface{}.
+	H map[string]interface{}
+)
+
 const (
 	// DebugBuild tends to be slow as it includes debug lvl logging which is more verbose.
 	DebugBuild = "debug"

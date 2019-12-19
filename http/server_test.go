@@ -30,7 +30,7 @@ func (s *ServerSuite) SetupTest() {
 
 	layout := map[string]string{
 		"docker": "../support/testdata/.docker",
-		"config": "../support/testdata/pkg/config",
+		"config": "../support/testdata/configs",
 		"locale": "../support/testdata/pkg/locales",
 		"view":   "../support/testdata/pkg/views",
 		"web":    "../support/testdata/web",
@@ -84,19 +84,19 @@ func (s *ServerSuite) TestIsSSLCertsExisted() {
 func (s *ServerSuite) TestInfo() {
 	server := NewServer(s.assets, s.config, s.logger)
 	output := server.Info()
-	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/pkg/config/.env.development", runtime.Version()))
+	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/configs/.env.development", runtime.Version()))
 	s.Contains(output, "* Listening on http://localhost:3000")
 
 	s.config.HTTPSSLEnabled = true
 	server = NewServer(s.assets, s.config, s.logger)
 	output = server.Info()
-	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/pkg/config/.env.development", runtime.Version()))
+	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/configs/.env.development", runtime.Version()))
 	s.Contains(output, "* Listening on http://localhost:3000, https://localhost:3443")
 
 	s.config.HTTPHost = "0.0.0.0"
 	server = NewServer(s.assets, s.config, s.logger)
 	output = server.Info()
-	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/pkg/config/.env.development", runtime.Version()))
+	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/configs/.env.development", runtime.Version()))
 	s.Contains(output, "* Listening on http://0.0.0.0:3000, https://0.0.0.0:3443")
 }
 

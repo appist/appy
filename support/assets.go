@@ -2,6 +2,7 @@ package support
 
 import (
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -20,7 +21,7 @@ func NewAssets(layout map[string]string, ssrRelease string, static http.FileSyst
 	if layout == nil {
 		layout = map[string]string{
 			"docker": ".docker",
-			"config": "pkg/config",
+			"config": "configs",
 			"locale": "pkg/locales",
 			"view":   "pkg/views",
 			"web":    "web",
@@ -68,4 +69,53 @@ func (m Assets) Open(path string) (io.Reader, error) {
 	}
 
 	return reader, nil
+}
+
+// ReadDir reads the directory named by dirname and returns a list of file/directory entries.
+func (m Assets) ReadDir(dirname string) ([]os.FileInfo, error) {
+	var (
+		fis []os.FileInfo
+		err error
+	)
+
+	if IsDebugBuild() {
+		fis, err = ioutil.ReadDir(dirname)
+	} else {
+		dirname = m.releasePath(dirname)
+		reader, err := m.static.Open(dirname)
+
+		if err != nil {
+			return nil, err
+		}
+
+		fis, err = reader.Readdir(-1)
+	}
+
+	return fis, err
+}
+
+// ReadFile reads the file named by filename and returns the contents.
+func (m Assets) ReadFile(filename string) ([]byte, error) {
+	var (
+		data []byte
+		err  error
+	)
+
+	if IsDebugBuild() {
+		data, err = ioutil.ReadFile(filename)
+	} else {
+		filename = m.releasePath(filename)
+		file, err := m.static.Open(filename)
+		if err != nil {
+			return nil, err
+		}
+
+		data, err = ioutil.ReadAll(file)
+	}
+
+	return data, err
+}
+
+func (m Assets) releasePath(path string) string {
+	return "/" + m.ssrRelease + "/" + path
 }

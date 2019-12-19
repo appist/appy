@@ -15,7 +15,7 @@ coverage
 *.sw?
 
 # Master key files
-pkg/config/*.key
+configs/*.key
 
 # Log files
 npm-debug.log*

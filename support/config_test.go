@@ -18,7 +18,7 @@ type ConfigSuite struct {
 func (s *ConfigSuite) SetupTest() {
 	layout := map[string]string{
 		"docker": "testdata/.docker",
-		"config": "testdata/pkg/config",
+		"config": "testdata/configs",
 		"locale": "testdata/pkg/locales",
 		"view":   "testdata/pkg/views",
 		"web":    "testdata/web",
@@ -97,6 +97,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"HTTPReferrerPolicy":              "",
 		"HTTPIENoOpen":                    false,
 		"HTTPSSLProxyHeaders":             map[string]string{"X-Forwarded-Proto": "https"},
+		"I18nDefaultLocale":               "en",
 		"MailerSMTPAddr":                  "",
 		"MailerSMTPPlainAuthIdentity":     "",
 		"MailerSMTPPlainAuthUsername":     "",
@@ -181,7 +182,7 @@ func (s *ConfigSuite) TestNewConfigWithSettingRequiredConfig() {
 	config := NewConfig(s.assets, s.logger)
 	s.Equal([]byte("481e5d98a31585148b8b1dfb6a3c0465"), config.MasterKey())
 	s.Nil(config.Errors())
-	s.Equal("testdata/pkg/config/.env.development", config.Path())
+	s.Equal("testdata/configs/.env.development", config.Path())
 }
 
 func (s *ConfigSuite) TestNewConfigWithEnvVariableOverride() {
@@ -235,7 +236,7 @@ func (s *ConfigSuite) TestNewConfigWithUndecryptableConfig() {
 	}()
 
 	config := NewConfig(s.assets, s.logger)
-	s.Contains(config.Errors()[0].Error(), "unable to decrypt 'HTTP_PORT' value in 'testdata/pkg/config/.env.undecryptable'")
+	s.Contains(config.Errors()[0].Error(), "unable to decrypt 'HTTP_PORT' value in 'testdata/configs/.env.undecryptable'")
 }
 
 func (s *ConfigSuite) TestNewConfigWithUnparsableConfig() {
@@ -260,13 +261,13 @@ func (s *ConfigSuite) TestNewConfigWithInvalidAssetsPath() {
 
 	layout := map[string]string{
 		"docker": ".docker",
-		"config": "pkg/config",
+		"config": "configs",
 		"locale": "pkg/locales",
 		"view":   "pkg/views",
 		"web":    "web",
 	}
 	config := NewConfig(NewAssets(layout, "", nil), s.logger)
-	s.Contains(config.Errors()[0].Error(), "open pkg/config/.env.development: no such file or directory")
+	s.Contains(config.Errors()[0].Error(), "open configs/.env.development: no such file or directory")
 }
 
 func (s *ConfigSuite) TestIsProtectedEnv() {

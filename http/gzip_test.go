@@ -82,7 +82,7 @@ func (s *GzipSuite) TestGzip() {
 		c.Header("Content-Length", strconv.Itoa(len(testResponse)))
 		c.String(http.StatusOK, testResponse)
 	})
-	w := server.TestHTTPRequest("GET", "/", H{"Accept-Encoding": "gzip"}, nil)
+	w := server.TestHTTPRequest("GET", "/", support.H{"Accept-Encoding": "gzip"}, nil)
 
 	s.Equal(http.StatusOK, w.Code)
 	s.Equal("gzip", w.Header().Get("Content-Encoding"))
@@ -147,7 +147,7 @@ func (s *GzipSuite) TestUpgradeConnection() {
 	server.GET("/index.html", func(c *Context) {
 		c.String(http.StatusOK, "this is a HTML!")
 	})
-	w := server.TestHTTPRequest("GET", "/index.html", H{"Content-Type": "text/event-stream"}, nil)
+	w := server.TestHTTPRequest("GET", "/index.html", support.H{"Content-Type": "text/event-stream"}, nil)
 
 	s.Equal(http.StatusOK, w.Code)
 	s.Equal("", w.Header().Get("Content-Encoding"))
@@ -163,7 +163,7 @@ func (s *GzipSuite) TestExcludedExts() {
 	server.GET("/index.html", func(c *Context) {
 		c.String(http.StatusOK, "this is a HTML!")
 	})
-	w := server.TestHTTPRequest("GET", "/index.html", H{"Accept-Encoding": "gzip"}, nil)
+	w := server.TestHTTPRequest("GET", "/index.html", support.H{"Accept-Encoding": "gzip"}, nil)
 
 	s.Equal(http.StatusOK, w.Code)
 	s.Equal("", w.Header().Get("Content-Encoding"))
@@ -179,7 +179,7 @@ func (s *GzipSuite) TestExcludedPaths() {
 	server.GET("/api/books", func(c *Context) {
 		c.String(http.StatusOK, "this is a book!")
 	})
-	w := server.TestHTTPRequest("GET", "/api/books", H{"Accept-Encoding": "gzip"}, nil)
+	w := server.TestHTTPRequest("GET", "/api/books", support.H{"Accept-Encoding": "gzip"}, nil)
 
 	s.Equal(http.StatusOK, w.Code)
 	s.Equal("", w.Header().Get("Content-Encoding"))
@@ -215,7 +215,7 @@ func (s *GzipSuite) TestGzipDecompress() {
 
 		c.Data(http.StatusOK, "text/plain", data)
 	})
-	w := server.TestHTTPRequest("POST", "/", H{"Content-Encoding": "gzip"}, buf)
+	w := server.TestHTTPRequest("POST", "/", support.H{"Content-Encoding": "gzip"}, buf)
 
 	s.Equal(http.StatusOK, w.Code)
 	s.Equal("", w.Header().Get("Content-Encoding"))
@@ -230,7 +230,7 @@ func (s *GzipSuite) TestGzipDecompressWithEmptyBody() {
 	server.POST("/", func(c *Context) {
 		c.String(http.StatusOK, "ok")
 	})
-	w := server.TestHTTPRequest("POST", "/", H{"Content-Encoding": "gzip"}, nil)
+	w := server.TestHTTPRequest("POST", "/", support.H{"Content-Encoding": "gzip"}, nil)
 
 	s.Equal(http.StatusOK, w.Code)
 	s.Equal("", w.Header().Get("Content-Encoding"))
@@ -245,7 +245,7 @@ func (s *GzipSuite) TestGzipDecompressWithIncorrectData() {
 	server.POST("/", func(c *Context) {
 		c.String(http.StatusOK, "ok")
 	})
-	w := server.TestHTTPRequest("POST", "/", H{"Content-Encoding": "gzip"}, bytes.NewReader([]byte(testResponse)))
+	w := server.TestHTTPRequest("POST", "/", support.H{"Content-Encoding": "gzip"}, bytes.NewReader([]byte(testResponse)))
 
 	s.Equal(http.StatusBadRequest, w.Code)
 }

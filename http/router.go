@@ -8,9 +8,6 @@ import (
 )
 
 type (
-	// H is a shortcut for map[string]interface{}.
-	H map[string]interface{}
-
 	// HandlerFunc defines the handler used by middleware as return value.
 	HandlerFunc func(*Context)
 

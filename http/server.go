@@ -158,7 +158,7 @@ func (s *Server) Routes() []Route {
 }
 
 // TestHTTPRequest provides a simple way to fire HTTP request to the server.
-func (s *Server) TestHTTPRequest(method, path string, header H, body io.Reader) *httptest.ResponseRecorder {
+func (s *Server) TestHTTPRequest(method, path string, header support.H, body io.Reader) *httptest.ResponseRecorder {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(method, path, body)
 

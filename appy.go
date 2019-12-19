@@ -15,11 +15,12 @@ import (
 type (
 	// App is the framework core that drives the application.
 	App struct {
-		assetsMngr *support.AssetsMngr
-		command    *cmd.Command
-		config     *support.Config
-		logger     *support.Logger
-		server     *ah.Server
+		assets  *support.Assets
+		command *cmd.Command
+		config  *support.Config
+		i18n    *support.I18n
+		logger  *support.Logger
+		server  *ah.Server
 	}
 )
 
@@ -33,9 +34,10 @@ func init() {
 func NewApp(static http.FileSystem) *App {
 	command := cmd.NewCommand()
 	logger := support.NewLogger()
-	assetsMngr := support.NewAssetsMngr(nil, "", static)
-	config := support.NewConfig(assetsMngr, logger)
-	server := ah.NewServer(assetsMngr, config, logger)
+	assets := support.NewAssets(nil, "", static)
+	config := support.NewConfig(assets, logger)
+	i18n := support.NewI18n(assets, config)
+	server := ah.NewServer(assets, config, logger)
 
 	// Setup default middleware
 	server.Use(ah.CSRF(config, logger))
@@ -43,6 +45,7 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.RequestLogger(config, logger))
 	server.Use(ah.RealIP())
 	server.Use(ah.ResponseHeaderFilter())
+	server.Use(ah.I18n(i18n))
 	server.Use(ah.SessionMngr(config))
 	server.Use(ah.HealthCheck(config.HTTPHealthCheckURL))
 	server.Use(ah.Prerender(config, logger))
@@ -51,11 +54,12 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.Recovery(logger))
 
 	return &App{
-		assetsMngr: assetsMngr,
-		command:    command,
-		config:     config,
-		logger:     logger,
-		server:     server,
+		assets:  assets,
+		command: command,
+		config:  config,
+		i18n:    i18n,
+		logger:  logger,
+		server:  server,
 	}
 }
 
@@ -67,6 +71,11 @@ func (a App) Cmd() *cmd.Command {
 // Config returns the config instance.
 func (a App) Config() *support.Config {
 	return a.config
+}
+
+// I18n returns the I18n instance.
+func (a App) I18n() *support.I18n {
+	return a.i18n
 }
 
 // Logger returns the logger instance.

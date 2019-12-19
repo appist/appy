@@ -16,9 +16,6 @@ type (
 	Config struct {
 		AppyEnv string `env:"APPY_ENV" envDefault:"development"`
 
-		// I18n related configuration.
-		I18nDefaultLocale string `env:"I18N_DEFAULT_LOCALE" envDefault:"en"`
-
 		// GraphQL related configuration.
 		GQLPlaygroundEnabled          bool          `env:"GQL_PLAYGROUND_ENABLED" envDefault:"false"`
 		GQLPlaygroundPath             string        `env:"GQL_PLAYGROUND_PATH" envDefault:"/docs/graphql"`
@@ -91,6 +88,9 @@ type (
 		HTTPReferrerPolicy          string            `env:"HTTP_REFERRER_POLICY" envDefault:""`
 		HTTPIENoOpen                bool              `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
 		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:"X-Forwarded-Proto:https"`
+
+		// I18n related configuration.
+		I18nDefaultLocale string `env:"I18N_DEFAULT_LOCALE" envDefault:"en"`
 
 		// Mailer related configuration.
 		MailerSMTPAddr              string `env:"MAILER_SMTP_ADDR" envDefault:""`

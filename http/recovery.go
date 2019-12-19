@@ -70,7 +70,7 @@ func recoveryErrorHandler(c *Context, logger *support.Logger, err interface{}) {
 		qsParams = "None"
 	}
 
-	c.ginHTML(http.StatusInternalServerError, "error/500", H{
+	c.ginHTML(http.StatusInternalServerError, "error/500", support.H{
 		"errors":      tplErrors,
 		"headers":     template.HTML(headers),
 		"qsParams":    template.HTML(qsParams),
