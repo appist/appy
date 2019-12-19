@@ -16,6 +16,9 @@ type (
 	Config struct {
 		AppyEnv string `env:"APPY_ENV" envDefault:"development"`
 
+		// I18n related configuration.
+		I18nDefaultLocale string `env:"I18N_DEFAULT_LOCALE" envDefault:"en"`
+
 		// GraphQL related configuration.
 		GQLPlaygroundEnabled          bool          `env:"GQL_PLAYGROUND_ENABLED" envDefault:"false"`
 		GQLPlaygroundPath             string        `env:"GQL_PLAYGROUND_PATH" envDefault:"/docs/graphql"`
@@ -104,21 +107,21 @@ type (
 )
 
 // NewConfig initializes Config instance.
-func NewConfig(assetsMngr *AssetsMngr, logger *Logger) *Config {
+func NewConfig(assets *Assets, logger *Logger) *Config {
 	var (
 		errs []error
 	)
 
-	masterKey, err := parseMasterKey(assetsMngr)
+	masterKey, err := parseMasterKey(assets)
 	if err != nil {
 		errs = append(errs, err)
 	}
 
 	config := &Config{}
 	if masterKey != nil {
-		config.path = assetsMngr.Layout()["config"] + "/.env." + os.Getenv("APPY_ENV")
+		config.path = assets.Layout()["config"] + "/.env." + os.Getenv("APPY_ENV")
 		config.masterKey = masterKey
-		decryptErrs := config.decryptConfig(assetsMngr, masterKey)
+		decryptErrs := config.decryptConfig(assets, masterKey)
 		if len(decryptErrs) > 0 {
 			errs = append(errs, decryptErrs...)
 		}
@@ -151,8 +154,8 @@ func (c Config) Path() string {
 	return c.path
 }
 
-func (c Config) decryptConfig(assetsMngr *AssetsMngr, masterKey []byte) []error {
-	reader, err := assetsMngr.Open(c.path)
+func (c Config) decryptConfig(assets *Assets, masterKey []byte) []error {
+	reader, err := assets.Open(c.path)
 	if err != nil {
 		return []error{err}
 	}
@@ -196,7 +199,7 @@ func IsProtectedEnv(config *Config) bool {
 	return config.AppyEnv == "production"
 }
 
-func parseMasterKey(assetsMngr *AssetsMngr) ([]byte, error) {
+func parseMasterKey(assets *Assets) ([]byte, error) {
 	var (
 		err error
 		key []byte
@@ -212,7 +215,7 @@ func parseMasterKey(assetsMngr *AssetsMngr) ([]byte, error) {
 	}
 
 	if len(key) == 0 && IsDebugBuild() {
-		key, err = ioutil.ReadFile(assetsMngr.Layout()["config"] + "/" + env + ".key")
+		key, err = ioutil.ReadFile(assets.Layout()["config"] + "/" + env + ".key")
 		if err != nil {
 			return nil, ErrReadMasterKeyFile
 		}

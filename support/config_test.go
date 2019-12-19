@@ -11,8 +11,8 @@ import (
 
 type ConfigSuite struct {
 	test.Suite
-	assetsMngr *AssetsMngr
-	logger     *Logger
+	assets *Assets
+	logger *Logger
 }
 
 func (s *ConfigSuite) SetupTest() {
@@ -23,7 +23,7 @@ func (s *ConfigSuite) SetupTest() {
 		"view":   "testdata/pkg/views",
 		"web":    "testdata/web",
 	}
-	s.assetsMngr = NewAssetsMngr(layout, "", nil)
+	s.assets = NewAssets(layout, "", nil)
 	s.logger, _, _ = NewFakeLogger()
 }
 
@@ -105,7 +105,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 		"MailerPreviewBaseURL":            "/appy/mailers",
 	}
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	cv := reflect.ValueOf(*config)
 	for key, defaultVal := range tt {
 		fv := cv.FieldByName(key)
@@ -161,7 +161,7 @@ func (s *ConfigSuite) TestNewConfigWithoutSettingRequiredConfig() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	s.NotNil(config.Errors())
 	s.EqualError(config.Errors()[0], `required environment variable "HTTP_SESSION_SECRETS" is not set. required environment variable "HTTP_CSRF_SECRET" is not set`)
 }
@@ -178,7 +178,7 @@ func (s *ConfigSuite) TestNewConfigWithSettingRequiredConfig() {
 		os.Unsetenv("HTTP_SESSION_SECRETS")
 	}()
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	s.Equal([]byte("481e5d98a31585148b8b1dfb6a3c0465"), config.MasterKey())
 	s.Nil(config.Errors())
 	s.Equal("testdata/pkg/config/.env.development", config.Path())
@@ -194,7 +194,7 @@ func (s *ConfigSuite) TestNewConfigWithEnvVariableOverride() {
 		os.Unsetenv("HTTP_PORT")
 	}()
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	s.Equal(config.HTTPPort, "5000")
 }
 
@@ -208,7 +208,7 @@ func (s *ConfigSuite) TestNewConfigWithMissingMasterKey() {
 		os.Unsetenv("HTTP_SESSION_SECRETS")
 	}()
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	s.EqualError(config.Errors()[0], ErrReadMasterKeyFile.Error())
 }
 
@@ -222,7 +222,7 @@ func (s *ConfigSuite) TestNewConfigWithUnparsableEnvVariable() {
 		os.Unsetenv("HTTP_DEBUG_ENABLED")
 	}()
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	s.Contains(config.Errors()[0].Error(), `strconv.ParseBool: parsing "nil": invalid syntax.`)
 }
 
@@ -234,7 +234,7 @@ func (s *ConfigSuite) TestNewConfigWithUndecryptableConfig() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	s.Contains(config.Errors()[0].Error(), "unable to decrypt 'HTTP_PORT' value in 'testdata/pkg/config/.env.undecryptable'")
 }
 
@@ -246,7 +246,7 @@ func (s *ConfigSuite) TestNewConfigWithUnparsableConfig() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	s.Contains(config.Errors()[0].Error(), "Can't separate key from value")
 }
 
@@ -265,7 +265,7 @@ func (s *ConfigSuite) TestNewConfigWithInvalidAssetsPath() {
 		"view":   "pkg/views",
 		"web":    "web",
 	}
-	config := NewConfig(NewAssetsMngr(layout, "", nil), s.logger)
+	config := NewConfig(NewAssets(layout, "", nil), s.logger)
 	s.Contains(config.Errors()[0].Error(), "open pkg/config/.env.development: no such file or directory")
 }
 
@@ -280,30 +280,30 @@ func (s *ConfigSuite) TestIsProtectedEnv() {
 		os.Unsetenv("HTTP_SESSION_SECRETS")
 	}()
 
-	config := NewConfig(s.assetsMngr, s.logger)
+	config := NewConfig(s.assets, s.logger)
 	s.Equal(false, IsProtectedEnv(config))
 
 	os.Setenv("APPY_ENV", "production")
-	config = NewConfig(s.assetsMngr, s.logger)
+	config = NewConfig(s.assets, s.logger)
 	s.Equal(true, IsProtectedEnv(config))
 }
 
 func (s *ConfigSuite) TestMasterKeyWithMissingKeyFile() {
-	_, err := parseMasterKey(s.assetsMngr)
+	_, err := parseMasterKey(s.assets)
 	s.EqualError(err, ErrReadMasterKeyFile.Error())
 }
 
 func (s *ConfigSuite) TestMasterKeyWithMissingAppyMasterKey() {
 	Build = ReleaseBuild
 	defer func() { Build = DebugBuild }()
-	_, err := parseMasterKey(s.assetsMngr)
+	_, err := parseMasterKey(s.assets)
 	s.EqualError(err, ErrNoMasterKey.Error())
 }
 
 func (s *ConfigSuite) TestMasterKeyWithZeroLength() {
 	Build = ReleaseBuild
 	defer func() { Build = DebugBuild }()
-	_, err := parseMasterKey(s.assetsMngr)
+	_, err := parseMasterKey(s.assets)
 	s.EqualError(err, ErrNoMasterKey.Error())
 }
 

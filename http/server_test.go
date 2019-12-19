@@ -15,11 +15,11 @@ import (
 
 type ServerSuite struct {
 	test.Suite
-	assetsMngr *support.AssetsMngr
-	config     *support.Config
-	logger     *support.Logger
-	buffer     *bytes.Buffer
-	writer     *bufio.Writer
+	assets *support.Assets
+	config *support.Config
+	logger *support.Logger
+	buffer *bytes.Buffer
+	writer *bufio.Writer
 }
 
 func (s *ServerSuite) SetupTest() {
@@ -35,9 +35,9 @@ func (s *ServerSuite) SetupTest() {
 		"view":   "../support/testdata/pkg/views",
 		"web":    "../support/testdata/web",
 	}
-	s.assetsMngr = support.NewAssetsMngr(layout, "", nil)
+	s.assets = support.NewAssets(layout, "", nil)
 	s.logger, s.buffer, s.writer = support.NewFakeLogger()
-	s.config = support.NewConfig(s.assetsMngr, s.logger)
+	s.config = support.NewConfig(s.assets, s.logger)
 }
 
 func (s *ServerSuite) TearDownTest() {
@@ -49,7 +49,7 @@ func (s *ServerSuite) TearDownTest() {
 
 func (s *ServerSuite) TestNewServerWithSSLEnabled() {
 	s.config.HTTPSSLEnabled = true
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	s.NotNil(server.Config())
 	s.NotNil(server.GRPC())
 	s.NotNil(server.HTTP())
@@ -61,7 +61,7 @@ func (s *ServerSuite) TestNewServerWithSSLEnabled() {
 }
 
 func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	s.NotNil(server.Config())
 	s.NotNil(server.GRPC())
 	s.NotNil(server.HTTP())
@@ -73,35 +73,35 @@ func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
 }
 
 func (s *ServerSuite) TestIsSSLCertsExisted() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	s.Equal(false, server.IsSSLCertExisted())
 
 	s.config.HTTPSSLCertPath = "testdata/ssl"
-	server = NewServer(s.assetsMngr, s.config, s.logger)
+	server = NewServer(s.assets, s.config, s.logger)
 	s.Equal(true, server.IsSSLCertExisted())
 }
 
 func (s *ServerSuite) TestInfo() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	output := server.Info()
 	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/pkg/config/.env.development", runtime.Version()))
 	s.Contains(output, "* Listening on http://localhost:3000")
 
 	s.config.HTTPSSLEnabled = true
-	server = NewServer(s.assetsMngr, s.config, s.logger)
+	server = NewServer(s.assets, s.config, s.logger)
 	output = server.Info()
 	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/pkg/config/.env.development", runtime.Version()))
 	s.Contains(output, "* Listening on http://localhost:3000, https://localhost:3443")
 
 	s.config.HTTPHost = "0.0.0.0"
-	server = NewServer(s.assetsMngr, s.config, s.logger)
+	server = NewServer(s.assets, s.config, s.logger)
 	output = server.Info()
 	s.Contains(output, fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: ../support/testdata/pkg/config/.env.development", runtime.Version()))
 	s.Contains(output, "* Listening on http://0.0.0.0:3000, https://0.0.0.0:3443")
 }
 
 func (s *ServerSuite) TestRouting() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	s.Equal(server.BasePath(), "/")
 
 	server.Any("/foo", func(c *Context) { c.String(http.StatusOK, "bar") })

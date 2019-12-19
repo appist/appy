@@ -13,10 +13,10 @@ import (
 
 type SessionMngrSuite struct {
 	test.Suite
-	assetsMngr *support.AssetsMngr
-	config     *support.Config
-	logger     *support.Logger
-	recorder   *httptest.ResponseRecorder
+	assets   *support.Assets
+	config   *support.Config
+	logger   *support.Logger
+	recorder *httptest.ResponseRecorder
 }
 
 func testSessionOps(s *SessionMngrSuite, session Sessioner) {
@@ -53,8 +53,8 @@ func (s *SessionMngrSuite) SetupTest() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	s.logger = support.NewLogger()
-	s.assetsMngr = support.NewAssetsMngr(nil, "", http.Dir("../support/testdata"))
-	s.config = support.NewConfig(s.assetsMngr, s.logger)
+	s.assets = support.NewAssets(nil, "", http.Dir("../support/testdata"))
+	s.config = support.NewConfig(s.assets, s.logger)
 	s.recorder = httptest.NewRecorder()
 }
 

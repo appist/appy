@@ -18,7 +18,7 @@ import (
 type (
 	GzipSuite struct {
 		test.Suite
-		assetsMngr                        *support.AssetsMngr
+		assets                            *support.Assets
 		config                            *support.Config
 		logger                            *support.Logger
 		recorder                          *httptest.ResponseRecorder
@@ -64,8 +64,8 @@ func (s *GzipSuite) SetupTest() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	s.logger, _, _ = support.NewFakeLogger()
-	s.assetsMngr = support.NewAssetsMngr(nil, "", http.Dir("../support/testdata"))
-	s.config = support.NewConfig(s.assetsMngr, s.logger)
+	s.assets = support.NewAssets(nil, "", http.Dir("../support/testdata"))
+	s.config = support.NewConfig(s.assets, s.logger)
 }
 
 func (s *GzipSuite) TearDownTest() {
@@ -76,7 +76,7 @@ func (s *GzipSuite) TearDownTest() {
 }
 
 func (s *GzipSuite) TestGzip() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(Gzip(s.config))
 	server.GET("/", func(c *Context) {
 		c.Header("Content-Length", strconv.Itoa(len(testResponse)))
@@ -104,7 +104,7 @@ func (s *GzipSuite) TestGzipWithReverseProxy() {
 	req.Header.Add("Accept-Encoding", "gzip")
 	w := newCloseNotifyingRecorder()
 
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(Gzip(s.config))
 	server.GET("/reverse", func(c *Context) {
 		c.Header("Content-Length", strconv.Itoa(len(testResponse)))
@@ -128,7 +128,7 @@ func (s *GzipSuite) TestGzipWithReverseProxy() {
 }
 
 func (s *GzipSuite) TestNoGzip() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.GET("/", func(c *Context) {
 		c.Header("Content-Length", strconv.Itoa(len(testResponse)))
 		c.String(http.StatusOK, testResponse)
@@ -142,7 +142,7 @@ func (s *GzipSuite) TestNoGzip() {
 }
 
 func (s *GzipSuite) TestUpgradeConnection() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(Gzip(s.config))
 	server.GET("/index.html", func(c *Context) {
 		c.String(http.StatusOK, "this is a HTML!")
@@ -158,7 +158,7 @@ func (s *GzipSuite) TestUpgradeConnection() {
 
 func (s *GzipSuite) TestExcludedExts() {
 	s.config.HTTPGzipExcludedExts = []string{".html"}
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(Gzip(s.config))
 	server.GET("/index.html", func(c *Context) {
 		c.String(http.StatusOK, "this is a HTML!")
@@ -174,7 +174,7 @@ func (s *GzipSuite) TestExcludedExts() {
 
 func (s *GzipSuite) TestExcludedPaths() {
 	s.config.HTTPGzipExcludedPaths = []string{"/api"}
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(Gzip(s.config))
 	server.GET("/api/books", func(c *Context) {
 		c.String(http.StatusOK, "this is a book!")
@@ -197,7 +197,7 @@ func (s *GzipSuite) TestGzipDecompress() {
 	}
 	gz.Close()
 
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(Gzip(s.config))
 	server.POST("/", func(c *Context) {
 		if v := c.Request.Header.Get("Content-Encoding"); v != "" {
@@ -225,7 +225,7 @@ func (s *GzipSuite) TestGzipDecompress() {
 }
 
 func (s *GzipSuite) TestGzipDecompressWithEmptyBody() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(Gzip(s.config))
 	server.POST("/", func(c *Context) {
 		c.String(http.StatusOK, "ok")
@@ -240,7 +240,7 @@ func (s *GzipSuite) TestGzipDecompressWithEmptyBody() {
 }
 
 func (s *GzipSuite) TestGzipDecompressWithIncorrectData() {
-	server := NewServer(s.assetsMngr, s.config, s.logger)
+	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(Gzip(s.config))
 	server.POST("/", func(c *Context) {
 		c.String(http.StatusOK, "ok")

@@ -13,12 +13,12 @@ import (
 
 type SecureSuite struct {
 	test.Suite
-	assetsMngr *support.AssetsMngr
-	config     *support.Config
-	logger     *support.Logger
-	buffer     *bytes.Buffer
-	writer     *bufio.Writer
-	server     *Server
+	assets *support.Assets
+	config *support.Config
+	logger *support.Logger
+	buffer *bytes.Buffer
+	writer *bufio.Writer
+	server *Server
 }
 
 func (s *SecureSuite) SetupTest() {
@@ -27,8 +27,8 @@ func (s *SecureSuite) SetupTest() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	s.logger, s.buffer, s.writer = support.NewFakeLogger()
-	s.assetsMngr = support.NewAssetsMngr(nil, "", http.Dir("../support/testdata"))
-	s.config = support.NewConfig(s.assetsMngr, s.logger)
+	s.assets = support.NewAssets(nil, "", http.Dir("../support/testdata"))
+	s.config = support.NewConfig(s.assets, s.logger)
 	s.server = NewServer(nil, s.config, s.logger)
 }
 

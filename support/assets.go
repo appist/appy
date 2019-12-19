@@ -7,16 +7,16 @@ import (
 )
 
 type (
-	// AssetsMngr manages all the assets for both CSR/SSR based on the current build type, i.e. debug or release.
-	AssetsMngr struct {
+	// Assets manages all the assets for both CSR/SSR based on the current build type, i.e. debug or release.
+	Assets struct {
 		layout     map[string]string
 		ssrRelease string
 		static     http.FileSystem
 	}
 )
 
-// NewAssetsMngr initializes the assets manager instance.
-func NewAssetsMngr(layout map[string]string, ssrRelease string, static http.FileSystem) *AssetsMngr {
+// NewAssets initializes the assets instance.
+func NewAssets(layout map[string]string, ssrRelease string, static http.FileSystem) *Assets {
 	if layout == nil {
 		layout = map[string]string{
 			"docker": ".docker",
@@ -31,7 +31,7 @@ func NewAssetsMngr(layout map[string]string, ssrRelease string, static http.File
 		ssrRelease = ".ssr"
 	}
 
-	return &AssetsMngr{
+	return &Assets{
 		layout:     layout,
 		ssrRelease: ssrRelease,
 		static:     static,
@@ -39,13 +39,13 @@ func NewAssetsMngr(layout map[string]string, ssrRelease string, static http.File
 }
 
 // Layout returns the appy's project layout.
-func (m AssetsMngr) Layout() map[string]string {
+func (m Assets) Layout() map[string]string {
 	return m.layout
 }
 
 // Open opens the named file for reading. If the current build type is debug, reads from the filesystem. Otherwise, it
 // reads from the embedded static assets which is a virtual file system.
-func (m AssetsMngr) Open(path string) (io.Reader, error) {
+func (m Assets) Open(path string) (io.Reader, error) {
 	var (
 		reader io.Reader
 		err    error

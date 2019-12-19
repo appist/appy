@@ -19,12 +19,12 @@ import (
 
 type CSRFSuite struct {
 	test.Suite
-	assetsMngr *support.AssetsMngr
-	config     *support.Config
-	logger     *support.Logger
-	buffer     *bytes.Buffer
-	writer     *bufio.Writer
-	recorder   *httptest.ResponseRecorder
+	assets   *support.Assets
+	config   *support.Config
+	logger   *support.Logger
+	buffer   *bytes.Buffer
+	writer   *bufio.Writer
+	recorder *httptest.ResponseRecorder
 }
 
 func (s *CSRFSuite) SetupTest() {
@@ -34,8 +34,8 @@ func (s *CSRFSuite) SetupTest() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	s.logger, s.buffer, s.writer = support.NewFakeLogger()
-	s.assetsMngr = support.NewAssetsMngr(nil, "", http.Dir("../support/testdata"))
-	s.config = support.NewConfig(s.assetsMngr, s.logger)
+	s.assets = support.NewAssets(nil, "", http.Dir("../support/testdata"))
+	s.config = support.NewConfig(s.assets, s.logger)
 	s.recorder = httptest.NewRecorder()
 	csrfSecureCookie = securecookie.New([]byte("481e5d98a31585148b8b1dfb6a3c0465"), nil)
 	csrfSecureCookie.SetSerializer(securecookie.JSONEncoder{})
