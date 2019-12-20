@@ -40,6 +40,18 @@ func (c *Context) SetLocale(locale string) {
 
 // T translates a message based on the given key.
 func (c *Context) T(key string, args ...interface{}) string {
+	var locale string
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case string:
+			locale = v
+		}
+	}
+
+	if locale == "" {
+		args = append(args, c.Locale())
+	}
+
 	return c.i18n.T(key, args...)
 }
 

@@ -36,7 +36,7 @@ func NewApp(static http.FileSystem) *App {
 	logger := support.NewLogger()
 	assets := support.NewAssets(nil, "", static)
 	config := support.NewConfig(assets, logger)
-	i18n := support.NewI18n(assets, config)
+	i18n := support.NewI18n(assets, config, logger)
 	server := ah.NewServer(assets, config, logger)
 
 	// Setup default middleware

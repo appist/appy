@@ -12,11 +12,12 @@ type (
 	I18n struct {
 		bundle *i18n.Bundle
 		config *Config
+		logger *Logger
 	}
 )
 
 // NewI18n initializes the I18n instance.
-func NewI18n(assets *Assets, config *Config) *I18n {
+func NewI18n(assets *Assets, config *Config, logger *Logger) *I18n {
 	locale := language.MustParse(config.I18nDefaultLocale)
 	bundle := i18n.NewBundle(locale)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
@@ -41,6 +42,7 @@ func NewI18n(assets *Assets, config *Config) *I18n {
 	return &I18n{
 		bundle: bundle,
 		config: config,
+		logger: logger,
 	}
 }
 
@@ -92,6 +94,7 @@ func (i *I18n) T(key string, args ...interface{}) string {
 	localizer := i18n.NewLocalizer(i.bundle, locale)
 	msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: key, TemplateData: data})
 	if err != nil {
+		i.logger.Warn(err)
 		return ""
 	}
 
