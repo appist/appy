@@ -44,7 +44,7 @@ func (s *ContextSuite) TearDownTest() {
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
-func (s *ContextSuite) TestBasic() {
+func (s *ContextSuite) TestI18n() {
 	c, _ := NewTestContext(httptest.NewRecorder())
 	c.i18n = s.i18n
 	s.Equal([]string{"en", "zh-CN", "zh-TW"}, c.i18n.Locales())
