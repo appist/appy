@@ -43,7 +43,7 @@ func (s *RecoverySuite) TearDownTest() {
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
-func (s *RecoverySuite) TestPanicRenders500() {
+func (s *RecoverySuite) TestPanicRenders500WithDebug() {
 	s.server.Use(SessionMngr(s.config))
 	s.server.Use(Recovery(s.logger))
 	s.server.GET("/test", func(c *Context) {
@@ -61,6 +61,29 @@ func (s *RecoverySuite) TestPanicRenders500() {
 	s.Contains(s.recorder.Body.String(), "username: dummy")
 	s.Contains(s.recorder.Body.String(), "X-Testing: 1")
 	s.Contains(s.recorder.Body.String(), "age: 10")
+}
+
+func (s *RecoverySuite) TestPanicRenders500WithRelease() {
+	support.Build = support.ReleaseBuild
+	defer func() {
+		support.Build = support.DebugBuild
+	}()
+
+	s.server = NewServer(s.assets, s.config, s.logger)
+	s.server.Use(SessionMngr(s.config))
+	s.server.Use(Recovery(s.logger))
+	s.server.GET("/test", func(c *Context) {
+		session := DefaultSession(c)
+		session.Set("username", "dummy")
+		panic(errors.New("error"))
+	})
+
+	req, _ := http.NewRequest("GET", "/test?age=10", nil)
+	req.Header.Set("X-Testing", "1")
+	s.server.router.ServeHTTP(s.recorder, req)
+
+	s.Equal(http.StatusInternalServerError, s.recorder.Code)
+	s.Contains(s.recorder.Body.String(), `<p class="card-text">If you are the administrator of this website, then please read this web application's log file and/or the web server's log file to find out what went wrong.</p>`)
 }
 
 func (s *RecoverySuite) TestBrokenPipeErrorHandling() {
