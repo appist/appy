@@ -65,6 +65,35 @@ func (s *AssetsSuite) TestNewAssetsOpenWithReleaseBuildAndMissingStatic() {
 	s.EqualError(err, ErrNoStaticAssets.Error())
 }
 
+func (s *AssetsSuite) TestNewAssetsReadDirWithReleaseBuild() {
+	Build = ReleaseBuild
+	defer func() { Build = DebugBuild }()
+
+	assets := NewAssets(nil, "", http.Dir("testdata"))
+	_, err := assets.ReadDir("./foo")
+	s.NotNil(err)
+
+	fis, err := assets.ReadDir("./pkg/locales")
+	s.Nil(err)
+	s.Equal("en.yml", fis[0].Name())
+}
+
+func (s *AssetsSuite) TestNewAssetsReadFileWithReleaseBuild() {
+	Build = ReleaseBuild
+	defer func() { Build = DebugBuild }()
+
+	assets := NewAssets(nil, "", http.Dir("testdata"))
+	_, err := assets.ReadFile("./foo")
+	s.NotNil(err)
+
+	_, err = assets.ReadFile("./pkg/locales/zh-TW.yml")
+	s.NotNil(err)
+
+	data, err := assets.ReadFile("./pkg/locales/en.yml")
+	s.Nil(err)
+	s.Equal("title: Test\n", string(data))
+}
+
 func TestAssetsSuite(t *testing.T) {
 	test.RunSuite(t, new(AssetsSuite))
 }
