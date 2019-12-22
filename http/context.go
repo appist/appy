@@ -33,6 +33,16 @@ func (c *Context) Locale() string {
 	return locale.(string)
 }
 
+// Session returns the session in the request context.
+func (c *Context) Session() Sessioner {
+	s, exists := c.Get(sessionManagerCtxKey.String())
+	if !exists {
+		return nil
+	}
+
+	return s.(Sessioner)
+}
+
 // SetLocale sets the request context's locale.
 func (c *Context) SetLocale(locale string) {
 	c.Set(i18nLocaleCtxKey.String(), locale)

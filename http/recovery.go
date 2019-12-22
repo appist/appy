@@ -31,7 +31,7 @@ func Recovery(logger *support.Logger) HandlerFunc {
 }
 
 func recoveryErrorHandler(c *Context, logger *support.Logger, err interface{}) {
-	session := DefaultSession(c)
+	session := c.Session()
 	sessionVars := ""
 	if session != nil && session.Values() != nil {
 		for key, val := range session.Values() {

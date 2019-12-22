@@ -286,13 +286,3 @@ func (s *Session) Values() map[interface{}]interface{} {
 func (s *Session) Written() bool {
 	return s.written
 }
-
-// DefaultSession returns the session in the request context.
-func DefaultSession(c *Context) Sessioner {
-	s, exists := c.Get(sessionManagerCtxKey.String())
-	if !exists {
-		return nil
-	}
-
-	return s.(Sessioner)
-}

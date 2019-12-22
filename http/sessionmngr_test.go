@@ -78,7 +78,7 @@ func (s *SessionMngrSuite) TestSessionCookieStore() {
 	s.config.HTTPSessionProvider = "cookie"
 	SessionMngr(s.config)(c)
 
-	session := DefaultSession(c)
+	session := c.Session()
 	session.Options(ginsessions.Options{
 		MaxAge: 368400,
 	})
@@ -93,7 +93,7 @@ func (s *SessionMngrSuite) TestSessionRedisStore() {
 	s.config.HTTPSessionProvider = "redis"
 	SessionMngr(s.config)(c)
 
-	session := DefaultSession(c)
+	session := c.Session()
 	testSessionOps(s, session)
 }
 
@@ -121,11 +121,11 @@ func (s *SessionMngrSuite) TestSessionRedisStoreInvalidDb() {
 	s.Panics(func() { SessionMngr(s.config)(ctx) })
 }
 
-func (s *SessionMngrSuite) TestNonExistentDefaultSession() {
+func (s *SessionMngrSuite) TestNonExistentSession() {
 	c, _ := NewTestContext(s.recorder)
 	c.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
-	s.Nil(DefaultSession(c))
+	s.Nil(c.Session())
 }
 
 func (s *SessionMngrSuite) TestCustomSessionKey() {
@@ -134,7 +134,7 @@ func (s *SessionMngrSuite) TestCustomSessionKey() {
 	s.config.HTTPSessionProvider = "redis"
 	SessionMngr(s.config)(c)
 
-	session := DefaultSession(c)
+	session := c.Session()
 	session.SetKeyPrefix("mysession:")
 	testSessionOps(s, session)
 

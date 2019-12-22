@@ -47,7 +47,7 @@ func (s *RecoverySuite) TestPanicRenders500WithDebug() {
 	s.server.Use(SessionMngr(s.config))
 	s.server.Use(Recovery(s.logger))
 	s.server.GET("/test", func(c *Context) {
-		session := DefaultSession(c)
+		session := c.Session()
 		session.Set("username", "dummy")
 		panic(errors.New("error"))
 	})
@@ -73,7 +73,7 @@ func (s *RecoverySuite) TestPanicRenders500WithRelease() {
 	s.server.Use(SessionMngr(s.config))
 	s.server.Use(Recovery(s.logger))
 	s.server.GET("/test", func(c *Context) {
-		session := DefaultSession(c)
+		session := c.Session()
 		session.Set("username", "dummy")
 		panic(errors.New("error"))
 	})
