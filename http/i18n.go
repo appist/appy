@@ -9,6 +9,7 @@ import (
 
 var (
 	acceptLanguage   = http.CanonicalHeaderKey("accept-language")
+	i18nCtxKey       = ContextKey("i18n")
 	i18nLocaleCtxKey = ContextKey("i18nLocale")
 )
 
@@ -21,7 +22,7 @@ func I18n(i18n *support.I18n) HandlerFunc {
 			c.Set(i18nLocaleCtxKey.String(), languages[0])
 		}
 
-		c.i18n = i18n
+		c.Set(i18nCtxKey.String(), i18n)
 		c.Next()
 	}
 }

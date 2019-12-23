@@ -194,6 +194,19 @@ func (c Config) decryptConfig(assets *Assets, masterKey []byte) []error {
 	return errs
 }
 
+// IsConfigErrored is used to check if config contains any error during initialization.
+func IsConfigErrored(config *Config, logger *Logger) bool {
+	if config != nil && config.errors != nil {
+		for _, err := range config.errors {
+			logger.Info(err.Error())
+		}
+
+		return true
+	}
+
+	return false
+}
+
 // IsProtectedEnv is used to protect the app from being destroyed by a command accidentally.
 func IsProtectedEnv(config *Config) bool {
 	return config.AppyEnv == "production"

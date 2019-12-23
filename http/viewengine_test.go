@@ -10,15 +10,15 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type I18nSuite struct {
+type ViewEngineSuite struct {
 	test.Suite
-	assets *support.Assets
-	config *support.Config
-	i18n   *support.I18n
-	logger *support.Logger
+	assets     *support.Assets
+	config     *support.Config
+	logger     *support.Logger
+	viewEngine *support.ViewEngine
 }
 
-func (s *I18nSuite) SetupTest() {
+func (s *ViewEngineSuite) SetupTest() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
@@ -34,30 +34,22 @@ func (s *I18nSuite) SetupTest() {
 	}
 	s.assets = support.NewAssets(layout, "", http.Dir("../support/testdata"))
 	s.config = support.NewConfig(s.assets, s.logger)
-	s.i18n = support.NewI18n(s.assets, s.config, s.logger)
+	s.viewEngine = support.NewViewEngine(s.assets)
 }
 
-func (s *I18nSuite) TearDownTest() {
+func (s *ViewEngineSuite) TearDownTest() {
 	os.Unsetenv("APPY_ENV")
 	os.Unsetenv("APPY_MASTER_KEY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
-func (s *I18nSuite) TestI18n() {
+func (s *ViewEngineSuite) TestExistence() {
 	c, _ := NewTestContext(httptest.NewRecorder())
-	c.Request = &http.Request{
-		Header: http.Header{
-			acceptLanguage: []string{"en-US"},
-		},
-	}
-	I18n(s.i18n)(c)
-	s.NotNil(c.Get(i18nCtxKey.String()))
-
-	val, _ := c.Get(i18nLocaleCtxKey.String())
-	s.Equal("en-US", val)
+	ViewEngine(s.viewEngine)(c)
+	s.NotNil(c.Get(viewEngineCtxKey.String()))
 }
 
-func TestI18nSuite(t *testing.T) {
-	test.RunSuite(t, new(I18nSuite))
+func TestViewEngineSuite(t *testing.T) {
+	test.RunSuite(t, new(ViewEngineSuite))
 }

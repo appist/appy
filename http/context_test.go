@@ -12,10 +12,11 @@ import (
 
 type ContextSuite struct {
 	test.Suite
-	assets *support.Assets
-	config *support.Config
-	i18n   *support.I18n
-	logger *support.Logger
+	assets     *support.Assets
+	config     *support.Config
+	i18n       *support.I18n
+	logger     *support.Logger
+	viewEngine *support.ViewEngine
 }
 
 func (s *ContextSuite) SetupTest() {
@@ -35,6 +36,7 @@ func (s *ContextSuite) SetupTest() {
 	s.assets = support.NewAssets(layout, "", http.Dir("../support/testdata"))
 	s.config = support.NewConfig(s.assets, s.logger)
 	s.i18n = support.NewI18n(s.assets, s.config, s.logger)
+	s.viewEngine = support.NewViewEngine(s.assets)
 }
 
 func (s *ContextSuite) TearDownTest() {
@@ -46,8 +48,8 @@ func (s *ContextSuite) TearDownTest() {
 
 func (s *ContextSuite) TestI18n() {
 	c, _ := NewTestContext(httptest.NewRecorder())
-	c.i18n = s.i18n
-	s.Equal([]string{"en", "zh-CN", "zh-TW"}, c.i18n.Locales())
+	c.Set(i18nCtxKey.String(), s.i18n)
+	s.Equal([]string{"en", "zh-CN", "zh-TW"}, c.Locales())
 
 	s.Equal("en", c.Locale())
 	s.Equal("Test", c.T("title.test"))
@@ -66,6 +68,61 @@ func (s *ContextSuite) TestI18n() {
 	s.Equal("嗨, tester! 您有0則訊息。", c.T("body.message", 0, support.H{"Name": "tester"}, "zh-TW"))
 	s.Equal("嗨, tester! 您有1則訊息。", c.T("body.message", 1, support.H{"Name": "tester"}, "zh-TW"))
 	s.Equal("嗨, tester! 您有2則訊息。", c.T("body.message", 2, support.H{"Name": "tester"}, "zh-TW"))
+}
+
+func (s *ContextSuite) TestRenderHTMLMissingTemplate() {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+
+	server := NewServer(s.assets, s.config, s.logger)
+	server.Use(I18n(s.i18n))
+	server.Use(ViewEngine(s.viewEngine))
+	server.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "dummy/index.html", support.H{})
+	})
+	server.ServeHTTP(w, req)
+
+	s.Equal(http.StatusInternalServerError, w.Code)
+}
+
+func (s *ContextSuite) TestViewEngineWithDebugBuild() {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+
+	server := NewServer(s.assets, s.config, s.logger)
+	server.Use(I18n(s.i18n))
+	server.Use(ViewEngine(s.viewEngine))
+	server.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "home/index.html", support.H{})
+	})
+	server.ServeHTTP(w, req)
+
+	s.Equal(http.StatusOK, w.Code)
+	s.Contains(w.Body.String(), "This content will be yielded in the layout above.")
+}
+
+func (s *ContextSuite) TestViewEngineWithReleaseBuild() {
+	support.Build = support.ReleaseBuild
+	defer func() {
+		support.Build = support.DebugBuild
+	}()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+
+	s.assets = support.NewAssets(nil, "", http.Dir("../support/testdata"))
+	s.viewEngine = support.NewViewEngine(s.assets)
+
+	server := NewServer(s.assets, s.config, s.logger)
+	server.Use(I18n(s.i18n))
+	server.Use(ViewEngine(s.viewEngine))
+	server.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "home/index.html", support.H{})
+	})
+	server.ServeHTTP(w, req)
+
+	s.Equal(http.StatusOK, w.Code)
+	s.Contains(w.Body.String(), "This content will be yielded in the layout above.")
 }
 
 func TestContextSuite(t *testing.T) {

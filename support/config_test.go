@@ -270,6 +270,33 @@ func (s *ConfigSuite) TestNewConfigWithInvalidAssetsPath() {
 	s.Contains(config.Errors()[0].Error(), "open configs/.env.development: no such file or directory")
 }
 
+func (s *ConfigSuite) TestIsConfigErrored() {
+	os.Setenv("APPY_ENV", "development")
+
+	config := NewConfig(NewAssets(nil, "", nil), s.logger)
+	s.Equal(true, IsConfigErrored(config, s.logger))
+
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+	defer func() {
+		os.Unsetenv("APPY_ENV")
+		os.Unsetenv("APPY_MASTER_KEY")
+		os.Unsetenv("HTTP_CSRF_SECRET")
+		os.Unsetenv("HTTP_SESSION_SECRETS")
+	}()
+
+	layout := map[string]string{
+		"docker": "testdata/.docker",
+		"config": "testdata/configs",
+		"locale": "testdata/pkg/locales",
+		"view":   "testdata/pkg/views",
+		"web":    "testdata/web",
+	}
+	config = NewConfig(NewAssets(layout, "", nil), s.logger)
+	s.Equal(false, IsConfigErrored(config, s.logger))
+}
+
 func (s *ConfigSuite) TestIsProtectedEnv() {
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")

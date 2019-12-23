@@ -13,6 +13,7 @@ type (
 		layout     map[string]string
 		ssrRelease string
 		static     http.FileSystem
+		viewLoader *ViewLoader
 	}
 )
 
@@ -32,11 +33,14 @@ func NewAssets(layout map[string]string, ssrRelease string, static http.FileSyst
 		ssrRelease = ".ssr"
 	}
 
-	return &Assets{
+	assets := &Assets{
 		layout:     layout,
 		ssrRelease: ssrRelease,
 		static:     static,
 	}
+	assets.viewLoader = NewViewLoader(assets)
+
+	return assets
 }
 
 // Layout returns the appy's project layout.
@@ -54,6 +58,7 @@ func (m Assets) Open(path string) (io.Reader, error) {
 
 	if IsDebugBuild() {
 		reader, err = os.Open(path)
+
 		if err != nil {
 			return nil, err
 		}
@@ -63,6 +68,7 @@ func (m Assets) Open(path string) (io.Reader, error) {
 		}
 
 		reader, err = m.static.Open(path)
+
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +87,7 @@ func (m Assets) ReadDir(dirname string) ([]os.FileInfo, error) {
 	if IsDebugBuild() {
 		fis, err = ioutil.ReadDir(dirname)
 	} else {
-		dirname = m.releasePath(dirname)
+		dirname = m.normalizedPath(dirname)
 		reader, err := m.static.Open(dirname)
 
 		if err != nil {
@@ -101,11 +107,13 @@ func (m Assets) ReadFile(filename string) ([]byte, error) {
 		err  error
 	)
 
+	filename = m.normalizedPath(filename)
+
 	if IsDebugBuild() {
 		data, err = ioutil.ReadFile(filename)
 	} else {
-		filename = m.releasePath(filename)
 		file, err := m.static.Open(filename)
+
 		if err != nil {
 			return nil, err
 		}
@@ -116,6 +124,10 @@ func (m Assets) ReadFile(filename string) ([]byte, error) {
 	return data, err
 }
 
-func (m Assets) releasePath(path string) string {
+func (m Assets) normalizedPath(path string) string {
+	if IsDebugBuild() {
+		return path
+	}
+
 	return "/" + m.ssrRelease + "/" + path
 }

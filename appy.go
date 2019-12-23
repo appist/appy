@@ -22,6 +22,8 @@ type (
 		logger  *support.Logger
 		server  *ah.Server
 	}
+
+	Context = ah.Context
 )
 
 func init() {
@@ -37,21 +39,26 @@ func NewApp(static http.FileSystem) *App {
 	assets := support.NewAssets(nil, "", static)
 	config := support.NewConfig(assets, logger)
 	i18n := support.NewI18n(assets, config, logger)
+	viewEngine := support.NewViewEngine(assets)
 	server := ah.NewServer(assets, config, logger)
 
-	// Setup default middleware
+	// Setup the default middleware.
 	server.Use(ah.CSRF(config, logger))
 	server.Use(ah.RequestID())
 	server.Use(ah.RequestLogger(config, logger))
 	server.Use(ah.RealIP())
 	server.Use(ah.ResponseHeaderFilter())
 	server.Use(ah.I18n(i18n))
+	server.Use(ah.ViewEngine(viewEngine))
 	server.Use(ah.SessionMngr(config))
 	server.Use(ah.HealthCheck(config.HTTPHealthCheckURL))
 	server.Use(ah.Prerender(config, logger))
 	server.Use(ah.Gzip(config))
 	server.Use(ah.Secure(config))
 	server.Use(ah.Recovery(logger))
+
+	// Setup the default commands.
+	command.AddCommand(cmd.NewServeCommand(logger, server))
 
 	return &App{
 		assets:  assets,
