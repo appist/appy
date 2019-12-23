@@ -23,6 +23,7 @@ type (
 		server  *ah.Server
 	}
 
+	// Context contains the request information and is meant to be passed through the entire HTTP request.
 	Context = ah.Context
 )
 
