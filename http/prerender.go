@@ -55,7 +55,7 @@ func Prerender(config *support.Config, logger *support.Logger) HandlerFunc {
 	host := config.HTTPHost
 	port := config.HTTPPort
 
-	if config.HTTPSSLEnabled == true {
+	if config.HTTPSSLEnabled {
 		scheme = "https"
 		port = config.HTTPSSLPort
 	}

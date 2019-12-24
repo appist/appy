@@ -50,12 +50,12 @@ func CSRF(config *support.Config, logger *support.Logger) HandlerFunc {
 }
 
 func csrfHandler(c *Context, config *support.Config, logger *support.Logger) {
-	if IsAPIOnly(c) == true {
+	if IsAPIOnly(c) {
 		c.Set(csrfSkipCheckCtxKey.String(), true)
 	}
 
 	skipCheck, exists := c.Get(csrfSkipCheckCtxKey.String())
-	if exists == true && skipCheck == true {
+	if exists && skipCheck.(bool) {
 		c.Next()
 		return
 	}
@@ -143,7 +143,7 @@ func CSRFTemplateField(c *Context) string {
 // CSRFToken returns the CSRF token for the request.
 func CSRFToken(c *Context) string {
 	val, exists := c.Get(csrfTokenCtxKey.String())
-	if exists == true {
+	if exists {
 		if token, ok := val.(string); ok {
 			return token
 		}

@@ -10,13 +10,6 @@ import (
 	"github.com/appist/appy/support"
 )
 
-var (
-	recoveryDunno     = []byte("???")
-	recoveryCenterDot = []byte("·")
-	recoveryDot       = []byte(".")
-	recoverySlash     = []byte("/")
-)
-
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 func Recovery(logger *support.Logger) HandlerFunc {
 	return func(c *Context) {

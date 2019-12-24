@@ -36,14 +36,14 @@ func filterParams(r *http.Request, config *support.Config) string {
 		needsFilter := false
 
 		for _, filter := range config.HTTPLogFilterParameters {
-			if strings.Contains(key, filter) == true {
+			if strings.Contains(key, filter) {
 				needsFilter = true
 				break
 			}
 		}
 
 		newValue := value[0]
-		if needsFilter == true {
+		if needsFilter {
 			newValue = "[FILTERED]"
 		}
 

@@ -4,7 +4,7 @@ package http
 // `X-API-Only: 1` is received.
 func ResponseHeaderFilter() HandlerFunc {
 	return func(c *Context) {
-		if IsAPIOnly(c) == true {
+		if IsAPIOnly(c) {
 			c.Writer.Header().Del("Set-Cookie")
 		}
 

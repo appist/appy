@@ -18,14 +18,10 @@ import (
 type (
 	GzipSuite struct {
 		test.Suite
-		assets                            *support.Assets
-		config                            *support.Config
-		logger                            *support.Logger
-		recorder                          *httptest.ResponseRecorder
-		testResponse, testReverseResponse string
+		assets *support.Assets
+		config *support.Config
+		logger *support.Logger
 	}
-
-	rServer struct{}
 
 	closeNotifyingRecorder struct {
 		*httptest.ResponseRecorder
@@ -37,10 +33,6 @@ var (
 	testResponse        = "Gzip Test Response "
 	testReverseResponse = "Gzip Test Reverse Response "
 )
-
-func (s *rServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(rw, testReverseResponse)
-}
 
 func newCloseNotifyingRecorder() *closeNotifyingRecorder {
 	return &closeNotifyingRecorder{

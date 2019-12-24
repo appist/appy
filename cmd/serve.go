@@ -21,7 +21,7 @@ func NewServeCommand(logger *support.Logger, server *ah.Server) *Command {
 				os.Exit(-1)
 			}
 
-			if server.Config().HTTPSSLEnabled == true && !server.IsSSLCertExisted() {
+			if server.Config().HTTPSSLEnabled && !server.IsSSLCertExisted() {
 				logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
 			}
 
@@ -46,7 +46,7 @@ func serve(logger *support.Logger, server *ah.Server) {
 			logger.Fatal(err)
 		}
 
-		if server.Config().HTTPSSLEnabled == true {
+		if server.Config().HTTPSSLEnabled {
 			if err := server.HTTPS().Shutdown(ctx); err != nil {
 				logger.Fatal(err)
 			}
@@ -60,7 +60,7 @@ func serve(logger *support.Logger, server *ah.Server) {
 	}
 
 	go func() {
-		if server.Config().HTTPSSLEnabled == true {
+		if server.Config().HTTPSSLEnabled {
 			err := server.HTTPS().ListenAndServeTLS(server.Config().HTTPSSLCertPath+"/cert.pem", server.Config().HTTPSSLCertPath+"/key.pem")
 			if err != http.ErrServerClosed {
 				logger.Fatal(err)
