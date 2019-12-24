@@ -79,49 +79,35 @@ func (m Assets) Open(path string) (io.Reader, error) {
 
 // ReadDir reads the directory named by dirname and returns a list of file/directory entries.
 func (m Assets) ReadDir(dirname string) ([]os.FileInfo, error) {
-	var (
-		fis []os.FileInfo
-		err error
-	)
-
 	if IsDebugBuild() {
-		fis, err = ioutil.ReadDir(dirname)
-	} else {
-		dirname = m.normalizedPath(dirname)
-		reader, err := m.static.Open(dirname)
-
-		if err != nil {
-			return nil, err
-		}
-
-		fis, err = reader.Readdir(-1)
+		return ioutil.ReadDir(dirname)
 	}
 
-	return fis, err
+	dirname = m.normalizedPath(dirname)
+	reader, err := m.static.Open(dirname)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return reader.Readdir(-1)
 }
 
 // ReadFile reads the file named by filename and returns the contents.
 func (m Assets) ReadFile(filename string) ([]byte, error) {
-	var (
-		data []byte
-		err  error
-	)
-
 	filename = m.normalizedPath(filename)
 
 	if IsDebugBuild() {
-		data, err = ioutil.ReadFile(filename)
-	} else {
-		file, err := m.static.Open(filename)
-
-		if err != nil {
-			return nil, err
-		}
-
-		data, err = ioutil.ReadAll(file)
+		return ioutil.ReadFile(filename)
 	}
 
-	return data, err
+	file, err := m.static.Open(filename)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(file)
 }
 
 func (m Assets) normalizedPath(path string) string {
