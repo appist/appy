@@ -184,7 +184,7 @@ module.exports = function(pkg) {
         ? "js/[name].[contenthash:8].js"
         : "js/[name].js",
       filename: isProduction ? "js/[name].[contenthash:8].js" : "js/[name].js",
-      path: path.resolve("assets"),
+      path: path.resolve("dist"),
       publicPath: "/"
     },
     plugins: [
@@ -247,7 +247,7 @@ module.exports = function(pkg) {
       new CopyWebpackPlugin([
         {
           from: path.resolve(publicDir),
-          to: path.resolve("assets"),
+          to: path.resolve("dist"),
           toType: "dir",
           ignore: [
             ".DS_Store",
@@ -278,7 +278,7 @@ module.exports = function(pkg) {
           }
         }),
         inject: true,
-        logo: path.resolve(`${srcDir}/assets/images/logo.png`),
+        logo: path.resolve(`${srcDir}/dist/images/logo.png`),
         prefix: "pwa/"
       }),
       new WorkboxWebpackPlugin.GenerateSW({
