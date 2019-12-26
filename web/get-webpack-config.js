@@ -185,7 +185,7 @@ module.exports = function(pkg) {
         : "js/[name].js",
       filename: isProduction ? "js/[name].[contenthash:8].js" : "js/[name].js",
       path: path.resolve("assets"),
-      publicPath: ""
+      publicPath: "/"
     },
     plugins: [
       new CleanWebpackPlugin(),
