@@ -44,13 +44,13 @@ func NewAssets(layout map[string]string, ssrRelease string, static http.FileSyst
 }
 
 // Layout returns the appy's project layout.
-func (m Assets) Layout() map[string]string {
-	return m.layout
+func (a Assets) Layout() map[string]string {
+	return a.layout
 }
 
 // Open opens the named file for reading. If the current build type is debug, reads from the filesystem. Otherwise, it
 // reads from the embedded static assets which is a virtual file system.
-func (m Assets) Open(path string) (io.Reader, error) {
+func (a Assets) Open(path string) (io.Reader, error) {
 	var (
 		reader io.Reader
 		err    error
@@ -63,11 +63,11 @@ func (m Assets) Open(path string) (io.Reader, error) {
 			return nil, err
 		}
 	} else {
-		if m.static == nil {
+		if a.static == nil {
 			return nil, ErrNoStaticAssets
 		}
 
-		reader, err = m.static.Open(path)
+		reader, err = a.static.Open(path)
 
 		if err != nil {
 			return nil, err
@@ -78,13 +78,13 @@ func (m Assets) Open(path string) (io.Reader, error) {
 }
 
 // ReadDir reads the directory named by dirname and returns a list of file/directory entries.
-func (m Assets) ReadDir(dirname string) ([]os.FileInfo, error) {
+func (a Assets) ReadDir(dirname string) ([]os.FileInfo, error) {
 	if IsDebugBuild() {
 		return ioutil.ReadDir(dirname)
 	}
 
-	dirname = m.normalizedPath(dirname)
-	reader, err := m.static.Open(dirname)
+	dirname = a.normalizedPath(dirname)
+	reader, err := a.static.Open(dirname)
 
 	if err != nil {
 		return nil, err
@@ -94,14 +94,14 @@ func (m Assets) ReadDir(dirname string) ([]os.FileInfo, error) {
 }
 
 // ReadFile reads the file named by filename and returns the contents.
-func (m Assets) ReadFile(filename string) ([]byte, error) {
-	filename = m.normalizedPath(filename)
+func (a Assets) ReadFile(filename string) ([]byte, error) {
+	filename = a.normalizedPath(filename)
 
 	if IsDebugBuild() {
 		return ioutil.ReadFile(filename)
 	}
 
-	file, err := m.static.Open(filename)
+	file, err := a.static.Open(filename)
 
 	if err != nil {
 		return nil, err
@@ -110,10 +110,15 @@ func (m Assets) ReadFile(filename string) ([]byte, error) {
 	return ioutil.ReadAll(file)
 }
 
-func (m Assets) normalizedPath(path string) string {
+// SSRRelease returns the SSR release path.
+func (a Assets) SSRRelease() string {
+	return a.ssrRelease
+}
+
+func (a Assets) normalizedPath(path string) string {
 	if IsDebugBuild() {
 		return path
 	}
 
-	return "/" + m.ssrRelease + "/" + path
+	return "/" + a.ssrRelease + "/" + path
 }

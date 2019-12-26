@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/appist/appy/support"
 	"github.com/gin-gonic/gin"
@@ -18,18 +19,48 @@ import (
 type (
 	// Server serves the HTTP requests.
 	Server struct {
-		assets *support.Assets
-		config *support.Config
-		grpc   *grpc.Server
-		http   *http.Server
-		https  *http.Server
-		logger *support.Logger
-		router *Router
+		assets       *support.Assets
+		config       *support.Config
+		grpc         *grpc.Server
+		http         *http.Server
+		https        *http.Server
+		logger       *support.Logger
+		router       *Router
+		spaResources []*spaResource
+	}
+
+	spaResource struct {
+		assets     http.FileSystem
+		fileServer http.Handler
+		prefix     string
+	}
+
+	// ResponseRecorder is an implementation of http.ResponseWriter that records its mutations for later inspection in tests.
+	ResponseRecorder struct {
+		*httptest.ResponseRecorder
+		closeChannel chan bool
 	}
 )
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
+}
+
+// NewResponseRecorder returns an initialized ResponseRecorder for testing purpose.
+func NewResponseRecorder() *ResponseRecorder {
+	return &ResponseRecorder{
+		httptest.NewRecorder(),
+		make(chan bool, 1),
+	}
+}
+
+// CloseNotify implements http.CloseNotifier.
+func (r *ResponseRecorder) CloseNotify() <-chan bool {
+	return r.closeChannel
+}
+
+func (r *ResponseRecorder) closeClient() {
+	r.closeChannel <- true
 }
 
 // NewServer initializes Server instance.
@@ -157,9 +188,36 @@ func (s *Server) Routes() []Route {
 	return routes
 }
 
+func (s *Server) spaResource(path string) *spaResource {
+	var (
+		resource, rootResource *spaResource
+	)
+
+	for _, res := range s.spaResources {
+		if res.prefix == "/" {
+			rootResource = res
+		}
+
+		if res.prefix != "/" && strings.HasPrefix(path, res.prefix) {
+			resource = res
+		}
+	}
+
+	if resource == nil {
+		resource = rootResource
+	}
+
+	return resource
+}
+
+// ServeSPA serves the SPA at the specified prefix path.
+func (s *Server) ServeSPA(prefix string, assets http.FileSystem) {
+	s.router.Use(SPA(s, prefix, assets))
+}
+
 // TestHTTPRequest provides a simple way to fire HTTP request to the server.
-func (s *Server) TestHTTPRequest(method, path string, header support.H, body io.Reader) *httptest.ResponseRecorder {
-	w := httptest.NewRecorder()
+func (s *Server) TestHTTPRequest(method, path string, header support.H, body io.Reader) *ResponseRecorder {
+	w := NewResponseRecorder()
 	req, _ := http.NewRequest(method, path, body)
 
 	for key, val := range header {

@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 
+	"github.com/appist/appy/support"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 )
@@ -74,6 +75,13 @@ func newRouter() *Router {
 	renderer.AddFromString("default/welcome", welcomeTpl())
 	r.HTMLRender = renderer
 
+	// TODO: allow custom 404 and 500 page with translations.
+	r.NoRoute(CSRFSkipCheck(), func(c *Context) {
+		c.ginHTML(http.StatusNotFound, "error/404", support.H{
+			"title": "404 Page Not Found",
+		})
+	})
+
 	return r
 }
 
@@ -104,6 +112,11 @@ func (r *Router) Group(path string, handlers ...HandlerFunc) *RouteGroup {
 // Handle registers a new request handle with the method, given path and middleware.
 func (r *Router) Handle(method, path string, handlers ...HandlerFunc) {
 	r.Engine.Handle(method, path, wrapHandlers(handlers...)...)
+}
+
+// NoRoute adds handlers for NoRoute which returns a 404 code by default.
+func (r *Router) NoRoute(handlers ...HandlerFunc) {
+	r.Engine.NoRoute(wrapHandlers(handlers...)...)
 }
 
 // Any registers a route that matches all the HTTP methods, i.e. GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE,

@@ -104,6 +104,10 @@ func (s *ServerSuite) TestRouting() {
 	server := NewServer(s.assets, s.config, s.logger)
 	s.Equal(server.BasePath(), "/")
 
+	w := server.TestHTTPRequest("GET", "/foobar", nil, nil)
+	s.Equal(http.StatusNotFound, w.Code)
+	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
+
 	server.Any("/foo", func(c *Context) { c.String(http.StatusOK, "bar") })
 	methods := []string{"CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "PUT", "POST", "TRACE"}
 
@@ -163,6 +167,87 @@ func (s *ServerSuite) TestRouting() {
 
 	routes := server.Routes()
 	s.Equal(35, len(routes))
+}
+
+func (s *ServerSuite) TestCSRWithDebugBuild() {
+	os.Setenv("APPY_ENV", "development")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "b13f61fe0411522f25f3d60a7588ffeecbcde8146f193fa3406eee81ad67b5ec5ad5619a9a4aa5975a20ad1f911489ec74d096e584251cb728d4b0b5")
+	os.Setenv("HTTP_SESSION_SECRETS", "b13f61fe0411522f25f3d60a7588ffeecbcde8146f193fa3406eee81ad67b5ec5ad5619a9a4aa5975a20ad1f911489ec74d096e584251cb728d4b0b5")
+	defer func() {
+		os.Unsetenv("APPY_ENV")
+		os.Unsetenv("APPY_MASTER_KEY")
+		os.Unsetenv("HTTP_CSRF_SECRET")
+		os.Unsetenv("HTTP_SESSION_SECRETS")
+	}()
+
+	server := NewServer(s.assets, s.config, s.logger)
+	server.ServeSPA("/", nil)
+	w := server.TestHTTPRequest("GET", "/", nil, nil)
+
+	// Since reverse proxy is working in test and the webpack-dev-server not running, it should throw 502.
+	s.Equal(502, w.Code)
+
+	s.config.HTTPSSLEnabled = true
+	server = NewServer(s.assets, s.config, s.logger)
+	server.ServeSPA("/", nil)
+	w = server.TestHTTPRequest("GET", "/", nil, nil)
+
+	// Since reverse proxy is working in test and the webpack-dev-server not running, it should throw 502.
+	s.Equal(502, w.Code)
+}
+
+func (s *ServerSuite) TestCSRWithReleaseBuild() {
+	support.Build = support.ReleaseBuild
+	os.Setenv("APPY_ENV", "development")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "b13f61fe0411522f25f3d60a7588ffeecbcde8146f193fa3406eee81ad67b5ec5ad5619a9a4aa5975a20ad1f911489ec74d096e584251cb728d4b0b5")
+	os.Setenv("HTTP_SESSION_SECRETS", "b13f61fe0411522f25f3d60a7588ffeecbcde8146f193fa3406eee81ad67b5ec5ad5619a9a4aa5975a20ad1f911489ec74d096e584251cb728d4b0b5")
+	defer func() {
+		support.Build = support.DebugBuild
+		os.Unsetenv("APPY_ENV")
+		os.Unsetenv("APPY_MASTER_KEY")
+		os.Unsetenv("HTTP_CSRF_SECRET")
+		os.Unsetenv("HTTP_SESSION_SECRETS")
+	}()
+
+	server := NewServer(s.assets, s.config, s.logger)
+	server.ServeSPA("/", http.Dir("./testdata/csr"))
+	w := server.TestHTTPRequest("GET", "/", nil, nil)
+
+	s.Equal(200, w.Code)
+	s.Contains(w.Body.String(), `<div id="app">we build apps</div>`)
+
+	server = NewServer(s.assets, s.config, s.logger)
+	server.GET("/ssr", func(c *Context) {
+		c.String(http.StatusOK, "foobar")
+	})
+	server.ServeSPA("/", http.Dir("./testdata/csr"))
+	server.ServeSPA("/ssr", http.Dir("./testdata/csr"))
+	server.ServeSPA("/tools", http.Dir("./testdata/csr/tools"))
+
+	w = server.TestHTTPRequest("GET", "/foo", nil, nil)
+	s.Equal(404, w.Code)
+	s.Contains(w.Body.String(), "404 page not found")
+
+	w = server.TestHTTPRequest("GET", "/tools", nil, nil)
+	s.Equal(200, w.Code)
+	s.Contains(w.Body.String(), `<div id="app">we build another SPA</div>`)
+
+	w = server.TestHTTPRequest("GET", "/ssr", nil, nil)
+	s.Equal(200, w.Code)
+	s.Contains(w.Body.String(), "foobar")
+
+	w = server.TestHTTPRequest("GET", "/.ssr", nil, nil)
+	s.Equal(404, w.Code)
+	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
+
+	server = NewServer(s.assets, s.config, s.logger)
+	server.ServeSPA("/", nil)
+
+	w = server.TestHTTPRequest("GET", "/", nil, nil)
+	s.Equal(404, w.Code)
+	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
 }
 
 func TestServerSuite(t *testing.T) {

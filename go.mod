@@ -3,6 +3,7 @@ module github.com/appist/appy
 go 1.13.4
 
 require (
+	github.com/99designs/gqlgen v0.10.2
 	github.com/BurntSushi/toml v0.3.1
 	github.com/CloudyKit/fastprinter v0.0.0-20170127035650-74b38d55f37a // indirect
 	github.com/CloudyKit/jet v2.1.2+incompatible
@@ -20,6 +21,7 @@ require (
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/joho/godotenv v1.3.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
+	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0

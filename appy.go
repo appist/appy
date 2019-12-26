@@ -57,8 +57,13 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.Gzip(config))
 	server.Use(ah.Secure(config))
 	server.Use(ah.Recovery(logger))
+	server.ServeSPA("/", static)
 
 	// Setup the default commands.
+	if support.IsDebugBuild() {
+		command.AddCommand(cmd.NewStartCommand(logger, server))
+	}
+
 	command.AddCommand(cmd.NewServeCommand(logger, server))
 
 	return &App{

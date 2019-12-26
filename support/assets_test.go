@@ -32,6 +32,8 @@ func (s *AssetsSuite) TestNewAssetsDefaultValue() {
 
 func (s *AssetsSuite) TestNewAssetsOpenWithDebugBuild() {
 	assets := NewAssets(nil, "", nil)
+	s.Equal(".ssr", assets.SSRRelease())
+
 	reader, err := assets.Open("configs/.env.missing")
 	s.Nil(reader)
 	s.EqualError(err, "open configs/.env.missing: no such file or directory")
