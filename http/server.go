@@ -215,6 +215,16 @@ func (s *Server) ServeSPA(prefix string, assets http.FileSystem) {
 	s.router.Use(SPA(s, prefix, assets))
 }
 
+// ServeNoRoute handles custom 404 not found error.
+func (s *Server) ServeNoRoute() {
+	// TODO: allow custom 404 page with translations.
+	s.router.NoRoute(CSRFSkipCheck(), func(c *Context) {
+		c.ginHTML(http.StatusNotFound, "error/404", support.H{
+			"title": "404 Page Not Found",
+		})
+	})
+}
+
 // TestHTTPRequest provides a simple way to fire HTTP request to the server.
 func (s *Server) TestHTTPRequest(method, path string, header support.H, body io.Reader) *ResponseRecorder {
 	w := NewResponseRecorder()
@@ -297,4 +307,14 @@ func (s *Server) Use(handlers ...HandlerFunc) {
 // Middleware returns the global middleware list.
 func (s *Server) Middleware() gin.HandlersChain {
 	return s.router.Handlers
+}
+
+func (s *Server) isSSRPath(path string) bool {
+	for _, route := range s.Routes() {
+		if strings.Contains(path, route.Path) {
+			return true
+		}
+	}
+
+	return false
 }

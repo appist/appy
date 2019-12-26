@@ -102,6 +102,7 @@ func (s *ServerSuite) TestInfo() {
 
 func (s *ServerSuite) TestRouting() {
 	server := NewServer(s.assets, s.config, s.logger)
+	server.ServeNoRoute()
 	s.Equal(server.BasePath(), "/")
 
 	w := server.TestHTTPRequest("GET", "/foobar", nil, nil)
@@ -225,6 +226,7 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 	server.ServeSPA("/", http.Dir("./testdata/csr"))
 	server.ServeSPA("/ssr", http.Dir("./testdata/csr"))
 	server.ServeSPA("/tools", http.Dir("./testdata/csr/tools"))
+	server.ServeNoRoute()
 
 	w = server.TestHTTPRequest("GET", "/foo", nil, nil)
 	s.Equal(404, w.Code)
@@ -244,6 +246,7 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 
 	server = NewServer(s.assets, s.config, s.logger)
 	server.ServeSPA("/", nil)
+	server.ServeNoRoute()
 
 	w = server.TestHTTPRequest("GET", "/", nil, nil)
 	s.Equal(404, w.Code)

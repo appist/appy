@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 
-	"github.com/appist/appy/support"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 )
@@ -74,13 +73,6 @@ func newRouter() *Router {
 	renderer.AddFromString("error/500", errorTpl500())
 	renderer.AddFromString("default/welcome", welcomeTpl())
 	r.HTMLRender = renderer
-
-	// TODO: allow custom 404 and 500 page with translations.
-	r.NoRoute(CSRFSkipCheck(), func(c *Context) {
-		c.ginHTML(http.StatusNotFound, "error/404", support.H{
-			"title": "404 Page Not Found",
-		})
-	})
 
 	return r
 }

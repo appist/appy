@@ -57,7 +57,6 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.Gzip(config))
 	server.Use(ah.Secure(config))
 	server.Use(ah.Recovery(logger))
-	server.ServeSPA("/", static)
 
 	// Setup the default commands.
 	if support.IsDebugBuild() {
@@ -103,6 +102,9 @@ func (a App) Server() *ah.Server {
 
 // Run starts running the app instance.
 func (a App) Run() error {
+	a.server.ServeSPA("/", a.assets.Static())
+	a.server.ServeNoRoute()
+
 	return a.command.Execute()
 }
 

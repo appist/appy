@@ -115,6 +115,11 @@ func (a Assets) SSRRelease() string {
 	return a.ssrRelease
 }
 
+// Static returns the application static assets.
+func (a Assets) Static() http.FileSystem {
+	return a.static
+}
+
 func (a Assets) normalizedPath(path string) string {
 	if IsDebugBuild() {
 		return path
