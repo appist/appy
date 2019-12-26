@@ -278,7 +278,7 @@ module.exports = function(pkg) {
           }
         }),
         inject: true,
-        logo: path.resolve(`${srcDir}/dist/images/logo.png`),
+        logo: path.resolve(`${srcDir}/assets/images/logo.png`),
         prefix: "pwa/"
       }),
       new WorkboxWebpackPlugin.GenerateSW({
