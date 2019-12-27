@@ -10,22 +10,22 @@ An opinionated productive web framework that helps scaling business easier.
 ## Features
 
 - Highly performant server built on top of [gin](https://github.com/gin-gonic/gin) with the built-in middleware:
-  - CSRF - protect cookies against [Cross-Site Request Forgery](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF))
-  - RequestID - generate UUID v4 for every HTTP request
-  - RequestLogger - log HTTP request details (can mask sensitive query parameter)
-  - RealIP - retrieve the real client IP
-  - ResponseHeaderFilter - remove `Set-Cookie` header for mobile clients that only use APIs
-  - I18n - attach I18n to the request context for rendering
-  - ViewEngine - attach [Jet](https://github.com/CloudyKit/jet) template engine to the request context for rendering
-  - SessionMngr - manage the request session in cookie/redis
-  - HealthCheck - add a configurable health check endpoint
-  - Prerender - renders the request using Chromium for SPA's SEO
-  - Gzip - compress the response content
-  - Secure - enforce various OWASP protection
-  - Recovery - recover the request from panic
+  - `CSRF` protect cookies against [Cross-Site Request Forgery](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF))
+  - `RequestID` generate UUID v4 for every HTTP request
+  - `RequestLogger` log HTTP request details (can mask sensitive query parameter)
+  - `RealIP` retrieve the real client IP
+  - `ResponseHeaderFilter` remove `Set-Cookie` header for mobile clients that only use APIs
+  - `I18n` attach I18n to the request context for rendering
+  - `ViewEngine` attach [Jet](https://github.com/CloudyKit/jet) template engine to the request context for rendering
+  - `SessionMngr` manage the request session in cookie/redis
+  - `HealthCheck` add a configurable health check endpoint
+  - `Prerender` renders the request using Chromium for SPA's SEO
+  - `Gzip` compress the response content
+  - `Secure` enforce various OWASP protection
+  - `Recovery` recover the request from panic
 - Highly powerful CLI builder built on top of [cobra](https://github.com/spf13/cobra) with the built-in commands:
-  - serve - run the HTTP/HTTPS web server without webpack-dev-server
-  - start - run the HTTP/HTTPS web server with webpack-dev-server in development watch mode (debug build only)
+  - `serve` run the HTTP/HTTPS web server without webpack-dev-server
+  - `start` run the HTTP/HTTPS web server with webpack-dev-server in development watch mode (debug build only)
 - Support [12factor](https://12factor.net/) with each environment variable being encrypted for clearer PR review.
 - Support automated recompile upon changes in `assets/cmd/configs/pkg/internal` folders.
 - Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/)/[GRPC](https://grpc.io/) protobuf schema changes.
