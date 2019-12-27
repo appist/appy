@@ -21,6 +21,10 @@ func NewViewLoader(assets *Assets) *ViewLoader {
 
 // Open opens the underlying reader with template content.
 func (v *ViewLoader) Open(filename string) (io.ReadCloser, error) {
+	if IsReleaseBuild() {
+		filename = v.assets.ssrRelease + "/" + filename
+	}
+
 	reader, err := v.assets.Open(filename)
 
 	return ioutil.NopCloser(reader), err

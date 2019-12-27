@@ -66,7 +66,7 @@ func Prerender(config *support.Config, logger *support.Logger) HandlerFunc {
 
 		if !_staticExtRegex.MatchString(request.URL.Path) && isSEOBot(userAgent) {
 			url := fmt.Sprintf("%s://%s:%s%s", scheme, host, port, request.URL)
-			logger.Infof("[HTTP - PRERENDER] SEO bot \"%s\" crawling \"%s\"...", userAgent, url)
+			logger.Infof("[HTTP][PRERENDER] SEO bot \"%s\" crawling \"%s\"...", userAgent, url)
 
 			data, err := crawl(url)
 			if err != nil {

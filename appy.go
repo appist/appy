@@ -60,6 +60,7 @@ func NewApp(static http.FileSystem) *App {
 
 	// Setup the default commands.
 	if support.IsDebugBuild() {
+		command.AddCommand(cmd.NewBuildCommand(assets, logger, server))
 		command.AddCommand(cmd.NewStartCommand(logger, server))
 	}
 
