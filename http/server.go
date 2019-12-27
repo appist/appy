@@ -25,6 +25,7 @@ type (
 		http         *http.Server
 		https        *http.Server
 		logger       *support.Logger
+		middleware   []HandlerFunc
 		router       *Router
 		spaResources []*spaResource
 	}
@@ -90,13 +91,14 @@ func NewServer(assets *support.Assets, config *support.Config, logger *support.L
 	httpsServer.ErrorLog = zap.NewStdLog(logger.Desugar())
 
 	return &Server{
-		assets: assets,
-		config: config,
-		grpc:   grpc.NewServer(),
-		http:   httpServer,
-		https:  httpsServer,
-		logger: logger,
-		router: router,
+		assets:     assets,
+		config:     config,
+		grpc:       grpc.NewServer(),
+		http:       httpServer,
+		https:      httpsServer,
+		logger:     logger,
+		middleware: []HandlerFunc{},
+		router:     router,
 	}
 }
 
@@ -301,12 +303,13 @@ func (s *Server) PUT(path string, handlers ...HandlerFunc) {
 
 // Use attaches a global middleware to the router.
 func (s *Server) Use(handlers ...HandlerFunc) {
+	s.middleware = append(s.middleware, handlers...)
 	s.router.Use(handlers...)
 }
 
 // Middleware returns the global middleware list.
-func (s *Server) Middleware() gin.HandlersChain {
-	return s.router.Handlers
+func (s *Server) Middleware() []HandlerFunc {
+	return s.middleware
 }
 
 func (s *Server) isSSRPath(path string) bool {

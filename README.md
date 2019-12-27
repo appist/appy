@@ -24,21 +24,27 @@ An opinionated productive web framework that helps scaling business easier.
   - `Secure` enforce various OWASP protection
   - `Recovery` recover the request from panic
 - Highly powerful CLI builder built on top of [cobra](https://github.com/spf13/cobra) with the built-in commands:
+  - `config:dec` encrypt a config value using the key in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`
+  - `config:enc` decrypt a config value using the key in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`
+  - `middleware` list all the global middleware
+  - `routes` list all the server-side routes
   - `serve` run the HTTP/HTTPS web server without `webpack-dev-server`
+  - `ssl:setup` generate and install the locally trusted SSL certs using `mkcert`
+  - `ssl:teardown` uninstall the locally trusted SSL certs using `mkcert`
   - `start` run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (debug build only)
-- Support [12factor](https://12factor.net/) with each environment variable being encrypted for clearer PR review.
-- Support automated recompile upon changes in `assets/cmd/configs/pkg/internal` folders.
-- Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/)/[GRPC](https://grpc.io/) protobuf schema changes.
-- Support mailer for email sending via SMTP with preview for debugging.
-- Support I18n for content localization.
-- Support [SvelteJS](https://svelte.dev/) PWA integration with zero webpack configuration.
-- Support automated request proxy to `webpack-dev-server` for development.
-- Support standalone binary generating that embeds configs/locales/views/static assets.
-- [WIP] Support multiple databases with ORM.
-- [WIP] Support worker for background job processing with admin dashboard.
-- [WIP] Support feature toggle with admin dashboard using Redis.
-- [WIP] Support authentication with database/oauth2/2FA.
-- [WIP] Support authorization with admin dashboard using [Casbin](https://casbin.org/).
+- Support [12factor](https://12factor.net/) with each environment variable being encrypted for clearer PR review
+- Support automated recompile upon changes in `assets/cmd/configs/pkg/internal` folders
+- Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/)/[GRPC](https://grpc.io/) protobuf schema changes
+- Support mailer for email sending via SMTP with preview for debugging
+- Support I18n for content localization
+- Support [SvelteJS](https://svelte.dev/) PWA integration with zero webpack configuration
+- Support automated request proxy to `webpack-dev-server` for development
+- Support standalone binary generating that embeds configs/locales/views/static assets
+- [WIP] Support multiple databases with ORM
+- [WIP] Support worker for background job processing with admin dashboard
+- [WIP] Support feature toggle with admin dashboard using Redis
+- [WIP] Support authentication with database/oauth2/2FA
+- [WIP] Support authorization with admin dashboard using [Casbin](https://casbin.org/)
 
 
 ## Prerequisites

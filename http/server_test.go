@@ -228,6 +228,10 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 	server.ServeSPA("/tools", http.Dir("./testdata/csr/tools"))
 	server.ServeNoRoute()
 
+	w = server.TestHTTPRequest("GET", "/ssr/foo", nil, nil)
+	s.Equal(404, w.Code)
+	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
+
 	w = server.TestHTTPRequest("GET", "/foo", nil, nil)
 	s.Equal(404, w.Code)
 	s.Contains(w.Body.String(), "404 page not found")
