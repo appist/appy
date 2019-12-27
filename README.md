@@ -24,8 +24,8 @@ An opinionated productive web framework that helps scaling business easier.
   - `Secure` enforce various OWASP protection
   - `Recovery` recover the request from panic
 - Highly powerful CLI builder built on top of [cobra](https://github.com/spf13/cobra) with the built-in commands:
-  - `serve` run the HTTP/HTTPS web server without webpack-dev-server
-  - `start` run the HTTP/HTTPS web server with webpack-dev-server in development watch mode (debug build only)
+  - `serve` run the HTTP/HTTPS web server without `webpack-dev-server`
+  - `start` run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (debug build only)
 - Support [12factor](https://12factor.net/) with each environment variable being encrypted for clearer PR review.
 - Support automated recompile upon changes in `assets/cmd/configs/pkg/internal` folders.
 - Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/)/[GRPC](https://grpc.io/) protobuf schema changes.
@@ -39,6 +39,7 @@ An opinionated productive web framework that helps scaling business easier.
 - [WIP] Support feature toggle with admin dashboard using Redis.
 - [WIP] Support authentication with database/oauth2/2FA.
 - [WIP] Support authorization with admin dashboard using [Casbin](https://casbin.org/).
+
 
 ## Prerequisites
 
