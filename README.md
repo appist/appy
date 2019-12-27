@@ -46,7 +46,6 @@ An opinionated productive web framework that helps scaling business easier.
 - [WIP] Support authentication with database/oauth2/2FA
 - [WIP] Support authorization with admin dashboard using [Casbin](https://casbin.org/)
 
-
 ## Prerequisites
 
 - [Go >= 1.13](https://golang.org/dl/)

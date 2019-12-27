@@ -11,11 +11,11 @@ import (
 	"github.com/appist/appy/support"
 )
 
-// NewServeCommand run the HTTP/HTTPS web server without webpack-dev-server.
+// NewServeCommand run the HTTP/HTTPS web server without `webpack-dev-server`.
 func NewServeCommand(logger *support.Logger, server *ah.Server) *Command {
 	return &Command{
 		Use:   "serve",
-		Short: "Run the HTTP/HTTPS web server without webpack-dev-server",
+		Short: "Run the HTTP/HTTPS web server without `webpack-dev-server`",
 		Run: func(cmd *Command, args []string) {
 			if support.IsConfigErrored(server.Config(), logger) {
 				os.Exit(-1)
@@ -54,6 +54,8 @@ func serve(logger *support.Logger, server *ah.Server) {
 
 		close(httpDone)
 	}()
+
+	// TODO: Add database connection establishing
 
 	for _, info := range server.Info() {
 		logger.Info(info)
