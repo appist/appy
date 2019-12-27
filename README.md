@@ -26,6 +26,9 @@ An opinionated productive web framework that helps scaling business easier.
 - Highly powerful CLI builder built on top of [cobra](https://github.com/spf13/cobra) with the built-in commands:
   - `config:dec` encrypt a config value using the key in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`
   - `config:enc` decrypt a config value using the key in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`
+  - `dc:down` stop and remove containers, networks, images, and volumes that are defined in `.docker/docker-compose.yml`
+  - `dc:restart` restart services that are defined in `.docker/docker-compose.yml`
+  - `dc:up` create and start containers that are defined in `.docker/docker-compose.yml`
   - `middleware` list all the global middleware
   - `routes` list all the server-side routes
   - `serve` run the HTTP/HTTPS web server without `webpack-dev-server`
@@ -39,7 +42,7 @@ An opinionated productive web framework that helps scaling business easier.
 - Support I18n for content localization
 - Support [SvelteJS](https://svelte.dev/) PWA integration with zero webpack configuration
 - Support automated request proxy to `webpack-dev-server` for development
-- Support standalone binary generating that embeds configs/locales/views/static assets
+- Support standalone binary generating that embeds assets/configs/locales/views
 - [WIP] Support multiple databases with ORM
 - [WIP] Support worker for background job processing with admin dashboard
 - [WIP] Support feature toggle with admin dashboard using Redis

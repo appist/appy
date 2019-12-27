@@ -65,6 +65,9 @@ func NewApp(static http.FileSystem) *App {
 
 	command.AddCommand(cmd.NewConfigDecryptCommand(config, logger))
 	command.AddCommand(cmd.NewConfigEncryptCommand(config, logger))
+	command.AddCommand(cmd.NewDcDownCommand(assets, logger))
+	command.AddCommand(cmd.NewDcRestartCommand(assets, logger))
+	command.AddCommand(cmd.NewDcUpCommand(assets, logger))
 	command.AddCommand(cmd.NewMiddlewareCommand(config, logger, server))
 	command.AddCommand(cmd.NewRoutesCommand(config, logger, server))
 	command.AddCommand(cmd.NewSecretCommand(logger))
