@@ -1,32 +1,60 @@
 # appy
 
 [![Build Status](https://github.com/appist/appy/workflows/Unit%20Test/badge.svg)](https://github.com/appist/appy/actions?workflow=Unit+Test)
-[![GolangCI](https://golangci.com/badges/github.com/appist/appy.svg)](https://golangci.com/r/github.com/appist/appy)
-[![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg)](http://godoc.org/github.com/appist/appy)
 [![Go Report Card](https://goreportcard.com/badge/github.com/appist/appy)](https://goreportcard.com/report/github.com/appist/appy)
 [![Coverage Status](https://img.shields.io/codecov/c/gh/appist/appy.svg?logo=codecov)](https://codecov.io/gh/appist/appy)
+[![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg)](http://godoc.org/github.com/appist/appy)
 
 An opinionated productive web framework that helps scaling business easier.
 
 ## Features
 
-Coming soon.
+- Highly performant server built on top of [gin](https://github.com/gin-gonic/gin) with the built-in middleware:
+  - CSRF - protect cookies against [Cross-Site Request Forgery](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF))
+  - RequestID - generate UUID v4 for every HTTP request
+  - RequestLogger - log HTTP request details (can mask sensitive query parameter)
+  - RealIP - retrieve the real client IP
+  - ResponseHeaderFilter - remove `Set-Cookie` header for mobile clients that only use APIs
+  - I18n - attach I18n to the request context for rendering
+  - ViewEngine - attach [Jet](https://github.com/CloudyKit/jet) template engine to the request context for rendering
+  - SessionMngr - manage the request session in cookie/redis
+  - HealthCheck - add a configurable health check endpoint
+  - Prerender - renders the request using Chromium for SPA's SEO
+  - Gzip - compress the response content
+  - Secure - enforce various OWASP protection
+  - Recovery - recover the request from panic
+- Highly powerful CLI builder built on top of [cobra](https://github.com/spf13/cobra) with the built-in commands:
+  - serve - run the HTTP/HTTPS web server without webpack-dev-server
+  - start - run the HTTP/HTTPS web server with webpack-dev-server in development watch mode (debug build only)
+- Support [12factor](https://12factor.net/) with each environment variable being encrypted for clearer PR review.
+- Support automated recompile upon changes in `assets/cmd/configs/pkg/internal` folders.
+- Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/)/[GRPC](https://grpc.io/) protobuf schema changes.
+- Support mailer for email sending via SMTP with preview for debugging.
+- Support I18n for content localization.
+- Support [SvelteJS](https://svelte.dev/) PWA integration with zero webpack configuration.
+- Support automated request proxy to `webpack-dev-server` for development.
+- Support standalone binary generating that embeds configs/locales/views/static assets.
+- [WIP] Support multiple databases with ORM.
+- [WIP] Support worker for background job processing with admin dashboard.
+- [WIP] Support feature toggle with admin dashboard using Redis.
+- [WIP] Support authentication with database/oauth2/2FA.
+- [WIP] Support authorization with admin dashboard using [Casbin](https://casbin.org/).
 
 ## Prerequisites
 
 - [Go >= 1.13](https://golang.org/dl/)
-- [NodeJS >= 13](https://nodejs.org/en/download/)
+- [NodeJS >=10 <=12](https://nodejs.org/en/download/)
 
 ## Quick Start
 
-#### Step 1: Create the project folder with go module
+### Step 1: Create the project folder with go module
 
 ```sh
 $ mkdir PROJECT_NAME && cd $_
 $ go mod init PROJECT_NAME
 ```
 
-#### Step 2: Create `main.go` with the content below
+### Step 2: Create `main.go` with the content below
 
 ```go
 package main
@@ -40,13 +68,13 @@ func main() {
 }
 ```
 
-#### Step 3: Initialize the appy's project layout
+### Step 3: Initialize the appy's project layout
 
 ```sh
 $ go run .
 ```
 
-## Be A Better Engineer
+## Best Practices
 
 - [The Twelve-Factor App](https://12factor.net)
 - [Effective Go](https://golang.org/doc/effective_go.html)
