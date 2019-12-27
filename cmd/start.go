@@ -22,7 +22,6 @@ import (
 )
 
 var (
-	gqlgenConfig        *gqlgenCfg.Config
 	apiServeCmd         *exec.Cmd
 	webServeCmd         *exec.Cmd
 	webServeCmdReady    chan os.Signal
@@ -84,7 +83,7 @@ func NewStartCommand(logger *support.Logger, server *ah.Server) *Command {
 }
 
 func watchHandler(e watcher.Event, logger *support.Logger) {
-	if isGenerating == true {
+	if isGenerating {
 		return
 	}
 

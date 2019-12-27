@@ -30,8 +30,7 @@ type (
 )
 
 var (
-	testResponse        = "Gzip Test Response "
-	testReverseResponse = "Gzip Test Reverse Response "
+	testResponse = "Gzip Test Response "
 )
 
 func newCloseNotifyingRecorder() *closeNotifyingRecorder {
