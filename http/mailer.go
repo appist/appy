@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 
 	am "github.com/appist/appy/mailer"
@@ -76,7 +75,6 @@ func setupPreview(i18n *support.I18n, mailer *am.Mailer, server *Server) {
 			content = email.HTML
 		case "txt":
 			contentType = "text/plain"
-			fmt.Println(preview.Template)
 			email, err := mailer.ComposeEmail(preview)
 
 			if err != nil {
