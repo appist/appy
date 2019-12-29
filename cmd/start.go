@@ -29,11 +29,11 @@ var (
 	watcherPollInterval time.Duration = 1
 )
 
-// NewStartCommand run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (debug build only).
+// NewStartCommand run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (only available in debug build).
 func NewStartCommand(logger *support.Logger, server *ah.Server) *Command {
 	return &Command{
 		Use:   "start",
-		Short: "Run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (debug build only)",
+		Short: "Run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (only available in debug build)",
 		Run: func(cmd *Command, args []string) {
 			if support.IsConfigErrored(server.Config(), logger) {
 				os.Exit(-1)

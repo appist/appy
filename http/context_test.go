@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	am "github.com/appist/appy/mailer"
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
 )
@@ -16,6 +17,7 @@ type ContextSuite struct {
 	config     *support.Config
 	i18n       *support.I18n
 	logger     *support.Logger
+	mailer     *am.Mailer
 	viewEngine *support.ViewEngine
 }
 
@@ -37,6 +39,7 @@ func (s *ContextSuite) SetupTest() {
 	s.config = support.NewConfig(s.assets, s.logger)
 	s.i18n = support.NewI18n(s.assets, s.config, s.logger)
 	s.viewEngine = support.NewViewEngine(s.assets)
+	s.mailer = am.NewMailer(s.config, s.i18n, s.viewEngine)
 }
 
 func (s *ContextSuite) TearDownTest() {
@@ -70,6 +73,39 @@ func (s *ContextSuite) TestI18n() {
 	s.Equal("嗨, tester! 您有2則訊息。", c.T("body.message", 2, support.H{"Name": "tester"}, "zh-TW"))
 }
 
+func (s *ContextSuite) TestRenderHTML() {
+	server := NewServer(s.assets, s.config, s.logger)
+	server.Use(I18n(s.i18n))
+	server.Use(ViewEngine(s.viewEngine))
+	server.GET("/", func(c *Context) {
+		c.HTML(http.StatusOK, "mailers/user/welcome.html", support.H{})
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+	server.ServeHTTP(w, req)
+
+	s.Equal(http.StatusOK, w.Code)
+	s.Contains(w.Body.String(), "I&#39;m a mailer html version.")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/", nil)
+	req.Header.Add("Accept-Language", "zh-TW")
+	server.ServeHTTP(w, req)
+
+	s.Equal(http.StatusOK, w.Code)
+	s.Contains(w.Body.String(), "我是寄信者網頁版。")
+
+	server.GET("/error", func(c *Context) {
+		c.HTML(http.StatusOK, "mailers/user/error.html", support.H{})
+	})
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/error", nil)
+	server.ServeHTTP(w, req)
+
+	s.Equal(http.StatusInternalServerError, w.Code)
+}
+
 func (s *ContextSuite) TestRenderHTMLMissingTemplate() {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -83,6 +119,44 @@ func (s *ContextSuite) TestRenderHTMLMissingTemplate() {
 	server.ServeHTTP(w, req)
 
 	s.Equal(http.StatusInternalServerError, w.Code)
+}
+
+func (s *ContextSuite) TestSendMail() {
+	c, _ := NewTestContext(httptest.NewRecorder())
+	c.Set(i18nCtxKey.String(), s.i18n)
+	c.Set(mailerCtxKey.String(), s.mailer)
+
+	err := c.SendEmail(am.Email{
+		From:     "foo@appist.io",
+		To:       []string{"bar@appist.io"},
+		ReplyTo:  []string{},
+		Bcc:      []string{},
+		Cc:       []string{},
+		Sender:   "foo@appist.io",
+		Subject:  "Welcome",
+		Template: "mailers/user/welcome",
+	})
+
+	s.EqualError(err, "dial tcp: missing address")
+}
+
+func (s *ContextSuite) TestSendMailWithTLS() {
+	c, _ := NewTestContext(httptest.NewRecorder())
+	c.Set(i18nCtxKey.String(), s.i18n)
+	c.Set(mailerCtxKey.String(), s.mailer)
+
+	err := c.SendEmailWithTLS(am.Email{
+		From:     "foo@appist.io",
+		To:       []string{"bar@appist.io"},
+		ReplyTo:  []string{},
+		Bcc:      []string{},
+		Cc:       []string{},
+		Sender:   "foo@appist.io",
+		Subject:  "Welcome",
+		Template: "mailers/user/welcome",
+	})
+
+	s.EqualError(err, "dial tcp: missing address")
 }
 
 func (s *ContextSuite) TestViewEngineWithDebugBuild() {

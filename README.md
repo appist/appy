@@ -24,6 +24,7 @@ An opinionated productive web framework that helps scaling business easier.
   - `Secure` enforce various OWASP protection
   - `Recovery` recover the request from panic
 - Highly powerful CLI builder built on top of [cobra](https://github.com/spf13/cobra) with the built-in commands:
+  - `build` compile the static assets into go files and build the release mode binary (only available in debug build)
   - `config:dec` encrypt a config value using the key in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`
   - `config:enc` decrypt a config value using the key in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`
   - `dc:down` stop and remove containers, networks, images, and volumes that are defined in `.docker/docker-compose.yml`
@@ -34,7 +35,7 @@ An opinionated productive web framework that helps scaling business easier.
   - `serve` run the HTTP/HTTPS web server without `webpack-dev-server`
   - `ssl:setup` generate and install the locally trusted SSL certs using `mkcert`
   - `ssl:teardown` uninstall the locally trusted SSL certs using `mkcert`
-  - `start` run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (debug build only)
+  - `start` run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (only available in debug build)
 - Support [12factor](https://12factor.net/) with each environment variable being encrypted for clearer PR review
 - Support automated recompile upon changes in `assets/cmd/configs/pkg/internal` folders
 - Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/)/[GRPC](https://grpc.io/) protobuf schema changes

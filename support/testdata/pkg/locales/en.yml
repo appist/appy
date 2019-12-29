@@ -6,3 +6,10 @@ body:
     Zero: Hi, {{.Name}}! You have {{.Count}} message.
     One: Hi, {{.Name}}! You have {{.Count}} message.
     Other: Hi, {{.Name}}! You have {{.Count}} messages.
+
+mailers:
+  user:
+    welcome:
+      greet:
+        html: I'm a mailer html version.
+        txt: I'm a mailer txt version.

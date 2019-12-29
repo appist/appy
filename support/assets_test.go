@@ -48,6 +48,8 @@ func (s *AssetsSuite) TestNewAssetsOpenWithReleaseBuild() {
 	defer func() { Build = DebugBuild }()
 
 	assets := NewAssets(nil, "", http.Dir("testdata"))
+	s.NotNil(assets.Static())
+
 	reader, err := assets.Open("configs/.env.missing")
 	s.Nil(reader)
 	s.EqualError(err, "open testdata/configs/.env.missing: no such file or directory")

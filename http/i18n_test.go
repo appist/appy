@@ -52,10 +52,11 @@ func (s *I18nSuite) TestI18n() {
 		},
 	}
 	I18n(s.i18n)(c)
-	s.NotNil(c.Get(i18nCtxKey.String()))
+	i18n, _ := c.Get(i18nCtxKey.String())
+	s.NotNil(i18n)
 
-	val, _ := c.Get(i18nLocaleCtxKey.String())
-	s.Equal("en-US", val)
+	locale, _ := c.Get(i18nLocaleCtxKey.String())
+	s.Equal("en-US", locale)
 }
 
 func TestI18nSuite(t *testing.T) {

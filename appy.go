@@ -9,6 +9,7 @@ import (
 
 	"github.com/appist/appy/cmd"
 	ah "github.com/appist/appy/http"
+	"github.com/appist/appy/mailer"
 	"github.com/appist/appy/support"
 )
 
@@ -20,6 +21,7 @@ type (
 		config  *support.Config
 		i18n    *support.I18n
 		logger  *support.Logger
+		mailer  *mailer.Mailer
 		server  *ah.Server
 	}
 
@@ -42,6 +44,7 @@ func NewApp(static http.FileSystem) *App {
 	i18n := support.NewI18n(assets, config, logger)
 	viewEngine := support.NewViewEngine(assets)
 	server := ah.NewServer(assets, config, logger)
+	mailer := mailer.NewMailer(config, i18n, viewEngine)
 
 	// Setup the default middleware.
 	server.Use(ah.CSRF(config, logger))
@@ -49,13 +52,14 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.RequestLogger(config, logger))
 	server.Use(ah.RealIP())
 	server.Use(ah.ResponseHeaderFilter())
-	server.Use(ah.I18n(i18n))
-	server.Use(ah.ViewEngine(viewEngine))
-	server.Use(ah.SessionMngr(config))
 	server.Use(ah.HealthCheck(config.HTTPHealthCheckURL))
 	server.Use(ah.Prerender(config, logger))
 	server.Use(ah.Gzip(config))
 	server.Use(ah.Secure(config))
+	server.Use(ah.I18n(i18n))
+	server.Use(ah.ViewEngine(viewEngine))
+	server.Use(ah.Mailer(i18n, mailer, server))
+	server.Use(ah.SessionMngr(config))
 	server.Use(ah.Recovery(logger))
 
 	// Setup the default commands.
@@ -82,6 +86,7 @@ func NewApp(static http.FileSystem) *App {
 		config:  config,
 		i18n:    i18n,
 		logger:  logger,
+		mailer:  mailer,
 		server:  server,
 	}
 }
@@ -104,6 +109,11 @@ func (a App) I18n() *support.I18n {
 // Logger returns the logger instance.
 func (a App) Logger() *support.Logger {
 	return a.logger
+}
+
+// Mailer returns the mailer instance.
+func (a App) Mailer() *mailer.Mailer {
+	return a.mailer
 }
 
 // Server returns the server instance.

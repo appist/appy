@@ -66,6 +66,7 @@ func (s *ServerSuite) TestNewServerWithoutSSLEnabled() {
 	s.NotNil(server.GRPC())
 	s.NotNil(server.HTTP())
 	s.NotNil(server.HTTPS())
+	s.NotNil(server.HTMLRenderer())
 	s.NotNil(server.router)
 	s.Equal(0, len(server.Middleware()))
 	s.Equal("localhost:3000", server.HTTP().Addr)
@@ -187,7 +188,7 @@ func (s *ServerSuite) TestCSRWithDebugBuild() {
 	w := server.TestHTTPRequest("GET", "/", nil, nil)
 
 	// Since reverse proxy is working in test and the webpack-dev-server not running, it should throw 502.
-	s.Equal(502, w.Code)
+	s.Equal(http.StatusBadGateway, w.Code)
 
 	s.config.HTTPSSLEnabled = true
 	server = NewServer(s.assets, s.config, s.logger)
@@ -195,7 +196,7 @@ func (s *ServerSuite) TestCSRWithDebugBuild() {
 	w = server.TestHTTPRequest("GET", "/", nil, nil)
 
 	// Since reverse proxy is working in test and the webpack-dev-server not running, it should throw 502.
-	s.Equal(502, w.Code)
+	s.Equal(http.StatusBadGateway, w.Code)
 }
 
 func (s *ServerSuite) TestCSRWithReleaseBuild() {
@@ -216,8 +217,14 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 	server.ServeSPA("/", http.Dir("./testdata/csr"))
 	w := server.TestHTTPRequest("GET", "/", nil, nil)
 
-	s.Equal(200, w.Code)
+	s.Equal(http.StatusOK, w.Code)
 	s.Contains(w.Body.String(), `<div id="app">we build apps</div>`)
+
+	server = NewServer(s.assets, s.config, s.logger)
+	server.ServeSPA("/", nil)
+	w = server.TestHTTPRequest("GET", "/", nil, nil)
+
+	s.Equal(http.StatusNotFound, w.Code)
 
 	server = NewServer(s.assets, s.config, s.logger)
 	server.GET("/ssr", func(c *Context) {
@@ -229,23 +236,23 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 	server.ServeNoRoute()
 
 	w = server.TestHTTPRequest("GET", "/ssr/foo", nil, nil)
-	s.Equal(404, w.Code)
+	s.Equal(http.StatusNotFound, w.Code)
 	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
 
 	w = server.TestHTTPRequest("GET", "/foo", nil, nil)
-	s.Equal(404, w.Code)
+	s.Equal(http.StatusNotFound, w.Code)
 	s.Contains(w.Body.String(), "404 page not found")
 
 	w = server.TestHTTPRequest("GET", "/tools", nil, nil)
-	s.Equal(200, w.Code)
+	s.Equal(http.StatusOK, w.Code)
 	s.Contains(w.Body.String(), `<div id="app">we build another SPA</div>`)
 
 	w = server.TestHTTPRequest("GET", "/ssr", nil, nil)
-	s.Equal(200, w.Code)
+	s.Equal(http.StatusOK, w.Code)
 	s.Contains(w.Body.String(), "foobar")
 
 	w = server.TestHTTPRequest("GET", "/.ssr", nil, nil)
-	s.Equal(404, w.Code)
+	s.Equal(http.StatusNotFound, w.Code)
 	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
 
 	server = NewServer(s.assets, s.config, s.logger)
@@ -253,7 +260,7 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 	server.ServeNoRoute()
 
 	w = server.TestHTTPRequest("GET", "/", nil, nil)
-	s.Equal(404, w.Code)
+	s.Equal(http.StatusNotFound, w.Code)
 	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
 }
 

@@ -21,11 +21,11 @@ var (
 	mainAssets = "pkg/app/assets.go"
 )
 
-// NewBuildCommand compile the static assets into go files and build the release mode binary (debug build only)
+// NewBuildCommand compile the static assets into go files and build the release mode binary (only available in debug build).
 func NewBuildCommand(assets *support.Assets, logger *support.Logger, server *ah.Server) *Command {
 	return &Command{
 		Use:   "build",
-		Short: "Compile the static assets into go files and build the release mode binary (debug build only)",
+		Short: "Compile the static assets into go files and build the release mode binary (only available in debug build)",
 		Run: func(cmd *Command, args []string) {
 			wd, err := os.Getwd()
 			if err != nil {

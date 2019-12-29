@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/appist/appy/support"
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -122,6 +123,11 @@ func (s *Server) HTTPS() *http.Server {
 	return s.https
 }
 
+// HTMLRenderer returns the HTML renderer instance.
+func (s *Server) HTMLRenderer() multitemplate.Renderer {
+	return s.router.HTMLRender.(multitemplate.Renderer)
+}
+
 // Hosts returns the server hosts list.
 func (s *Server) Hosts() ([]string, error) {
 	var hosts = []string{}
@@ -221,7 +227,7 @@ func (s *Server) ServeSPA(prefix string, assets http.FileSystem) {
 func (s *Server) ServeNoRoute() {
 	// TODO: allow custom 404 page with translations.
 	s.router.NoRoute(CSRFSkipCheck(), func(c *Context) {
-		c.ginHTML(http.StatusNotFound, "error/404", support.H{
+		c.DefaultHTML(http.StatusNotFound, "error/404", support.H{
 			"title": "404 Page Not Found",
 		})
 	})

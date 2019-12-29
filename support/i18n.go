@@ -18,8 +18,12 @@ type (
 
 // NewI18n initializes the I18n instance.
 func NewI18n(assets *Assets, config *Config, logger *Logger) *I18n {
-	locale := language.MustParse(config.I18nDefaultLocale)
-	bundle := i18n.NewBundle(locale)
+	languageTag := language.MustParse("en")
+	if config != nil && config.I18nDefaultLocale != "" {
+		languageTag = language.MustParse(config.I18nDefaultLocale)
+	}
+
+	bundle := i18n.NewBundle(languageTag)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 	bundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
 	bundle.RegisterUnmarshalFunc("yml", yaml.Unmarshal)

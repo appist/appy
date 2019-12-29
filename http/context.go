@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/CloudyKit/jet"
+	"github.com/appist/appy/mailer"
 	"github.com/appist/appy/support"
 	"github.com/gin-gonic/gin"
 )
@@ -25,8 +26,13 @@ func NewTestContext(w http.ResponseWriter) (*Context, *Router) {
 
 // HTML renders the HTTP template with the HTTP code and the "text/html" Content-Type header.
 func (c *Context) HTML(code int, name string, obj interface{}) {
-	viewEngine, _ := c.Get(viewEngineCtxKey.String())
-	t, err := viewEngine.(*support.ViewEngine).GetTemplate(name)
+	ve, _ := c.Get(viewEngineCtxKey.String())
+	viewEngine := ve.(*support.ViewEngine)
+	viewEngine.AddGlobal("t", func(key string, args ...interface{}) string {
+		return c.T(key, args...)
+	})
+
+	t, err := viewEngine.GetTemplate(name)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -34,7 +40,7 @@ func (c *Context) HTML(code int, name string, obj interface{}) {
 
 	var w bytes.Buffer
 	vars := make(jet.VarMap)
-	if err = t.Execute(&w, vars, obj); err != nil {
+	if err := t.Execute(&w, vars, obj); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -58,6 +64,28 @@ func (c *Context) Locales() []string {
 	i18n, _ := c.Get(i18nCtxKey.String())
 
 	return i18n.(*support.I18n).Locales()
+}
+
+// SendEmail sends out the email via SMTP immediately.
+func (c *Context) SendEmail(email mailer.Email) error {
+	m, _ := c.Get(mailerCtxKey.String())
+
+	if email.Locale == "" {
+		email.Locale = c.Locale()
+	}
+
+	return m.(*mailer.Mailer).Send(email)
+}
+
+// SendEmailWithTLS sends out the email via secure SMTP immediately.
+func (c *Context) SendEmailWithTLS(email mailer.Email) error {
+	m, _ := c.Get(mailerCtxKey.String())
+
+	if email.Locale == "" {
+		email.Locale = c.Locale()
+	}
+
+	return m.(*mailer.Mailer).SendWithTLS(email)
 }
 
 // Session returns the session in the request context.
@@ -93,6 +121,8 @@ func (c *Context) T(key string, args ...interface{}) string {
 	return i18n.(*support.I18n).T(key, args...)
 }
 
-func (c *Context) ginHTML(code int, name string, obj interface{}) {
+// DefaultHTML uses the gin's default HTML method which doesn't use Jet template engine and is only meant for internal
+// use.
+func (c *Context) DefaultHTML(code int, name string, obj interface{}) {
 	c.Context.HTML(code, name, obj)
 }

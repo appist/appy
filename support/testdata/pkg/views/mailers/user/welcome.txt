@@ -1,0 +1,3 @@
+{{extends "../../layouts/mailer.txt"}} {{block body()}}
+{{t("mailers.user.welcome.greet.txt")}}
+{{end}}
