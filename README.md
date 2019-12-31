@@ -15,13 +15,14 @@ An opinionated productive web framework that helps scaling business easier.
   - `RequestLogger` log HTTP request details (can mask sensitive query parameter)
   - `RealIP` retrieve the real client IP
   - `ResponseHeaderFilter` remove `Set-Cookie` header for mobile clients that only use APIs
-  - `I18n` attach I18n to the request context for rendering
-  - `ViewEngine` attach [Jet](https://github.com/CloudyKit/jet) template engine to the request context for rendering
-  - `SessionMngr` manage the request session in cookie/redis
   - `HealthCheck` add a configurable health check endpoint
   - `Prerender` renders the request using Chromium for SPA's SEO
   - `Gzip` compress the response content
   - `Secure` enforce various OWASP protection
+  - `I18n` attach I18n to the request context for rendering
+  - `ViewEngine` attach [Jet](https://github.com/CloudyKit/jet) template engine to the request context for rendering
+  - `Mailer` attach Mailer to the request context for email sending
+  - `SessionMngr` manage the request session in cookie/redis
   - `Recovery` recover the request from panic
 - Highly powerful CLI builder built on top of [cobra](https://github.com/spf13/cobra) with the built-in commands:
   - `build` compile the static assets into go files and build the release mode binary (only available in debug build)
