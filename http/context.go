@@ -45,7 +45,7 @@ func (c *Context) HTML(code int, name string, obj interface{}) {
 		return
 	}
 
-	c.Data(code, "text/html", w.Bytes())
+	c.Data(code, "text/html; charset=utf-8", w.Bytes())
 }
 
 // Locale returns the request context's locale.
