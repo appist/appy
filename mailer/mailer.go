@@ -136,6 +136,15 @@ func (m *Mailer) ComposeEmail(mail Email) (*email.Email, error) {
 		ReadReceipt: mail.ReadReceipt,
 	}
 
+	if mail.Locale == "" {
+		mail.Locale = m.config.I18nDefaultLocale
+	}
+
+	subject := m.i18n.T(mail.Subject, mail.Locale)
+	if subject != "" {
+		email.Subject = subject
+	}
+
 	if mail.Headers == nil {
 		email.Headers = textproto.MIMEHeader{}
 	}
@@ -154,8 +163,11 @@ func (m *Mailer) ComposeEmail(mail Email) (*email.Email, error) {
 
 	if mail.Attachments != nil {
 		for _, attachment := range mail.Attachments {
-			// TODO: Add external/internal file handling.
-			email.AttachFile(attachment)
+			_, err := email.AttachFile(attachment)
+
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

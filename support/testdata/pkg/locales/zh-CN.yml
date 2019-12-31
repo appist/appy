@@ -10,6 +10,7 @@ body:
 mailers:
   user:
     welcome:
+      subject: 欢迎
       greet:
         html: 我是寄信者网页版。
         txt: 我是寄信者文字版。

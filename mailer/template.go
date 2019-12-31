@@ -88,16 +88,19 @@ func tplLower() string {
 			<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
 			<script>
 				var previewURL = '{{.baseURL}}/preview'
+
 				$("#menu-toggle").click(function(e) {
 					e.preventDefault()
 					$("#wrapper").toggleClass("toggled")
 				})
+
 				document.addEventListener('DOMContentLoaded', function() {
 					var name = queryParam('name') || '{{.name}}',
 							ext = queryParam('ext') || '{{.ext}}',
 							locale = queryParam('locale') || '{{.locale}}'
 					history.replaceState('', '', '?name=' + name + '&ext=' + ext + '&locale=' + locale)
 				})
+
 				function setCurrPreview(targetName, targetExt, targetLocale) {
 					var name = targetName || queryParam('name'),
 							ext = targetExt || queryParam('ext') || 'html',
@@ -106,18 +109,22 @@ func tplLower() string {
 						location.search = '?name=' + name + '&ext=' + ext + '&locale=' + locale
 					}
 				}
+
 				function onPreviewNameClicked(e) {
 					e.preventDefault()
 					setCurrPreview(e.target.dataset.name)
 				}
+
 				function onPreviewExtClicked(e, ext) {
 					e.preventDefault()
 					setCurrPreview(null, ext)
 				}
+
 				function onPreviewLocaleChanged(e) {
 					e.preventDefault()
 					setCurrPreview(null, null, e.target.value)
 				}
+
 				function queryParam(name) {
 					var result = null, tmp = [];
 					location.search
@@ -127,6 +134,7 @@ func tplLower() string {
 								tmp = item.split("=")
 								if (tmp[0] === name) result = decodeURIComponent(tmp[1])
 							})
+
 					return result
 				}
 			</script>

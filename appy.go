@@ -27,6 +27,18 @@ type (
 
 	// Context contains the request information and is meant to be passed through the entire HTTP request.
 	Context = ah.Context
+
+	// Email defines the email headers/body/attachments.
+	Email = mailer.Email
+
+	// Mailer provides the capability to parse/render email template and send it out via SMTP protocol.
+	Mailer = mailer.Mailer
+
+	// H is a shortcut for map[string]interface{}.
+	H = support.H
+
+	// Server serves the HTTP requests.
+	Server = ah.Server
 )
 
 func init() {
@@ -112,12 +124,12 @@ func (a App) Logger() *support.Logger {
 }
 
 // Mailer returns the mailer instance.
-func (a App) Mailer() *mailer.Mailer {
+func (a App) Mailer() *Mailer {
 	return a.mailer
 }
 
 // Server returns the server instance.
-func (a App) Server() *ah.Server {
+func (a App) Server() *Server {
 	return a.server
 }
 

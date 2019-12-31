@@ -36,15 +36,24 @@ func setupPreview(i18n *support.I18n, mailer *am.Mailer, server *Server) {
 			}
 		}
 
+		locale := c.DefaultQuery("locale", server.Config().I18nDefaultLocale)
+		preview := mailer.Previews()[name]
+		preview.Locale = locale
+
+		subject := i18n.T(preview.Subject, preview.Locale)
+		if subject != "" {
+			preview.Subject = subject
+		}
+
 		c.DefaultHTML(http.StatusOK, "mailer/preview", support.H{
 			"baseURL":  server.Config().MailerPreviewBaseURL,
 			"previews": mailer.Previews(),
 			"title":    "Mailer Preview",
 			"name":     name,
 			"ext":      c.DefaultQuery("ext", "html"),
-			"locale":   c.DefaultQuery("locale", server.Config().I18nDefaultLocale),
+			"locale":   locale,
 			"locales":  i18n.Locales(),
-			"mail":     mailer.Previews()[name],
+			"mail":     preview,
 		})
 	})
 

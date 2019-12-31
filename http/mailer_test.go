@@ -70,7 +70,7 @@ func (s *MailerSuite) TestMailerWithDebugBuild() {
 		Bcc:      []string{},
 		Cc:       []string{},
 		Sender:   "foo",
-		Subject:  "Welcome",
+		Subject:  "mailers.user.welcome.subject",
 		Template: "mailers/user/welcome",
 	})
 

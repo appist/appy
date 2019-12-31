@@ -10,6 +10,7 @@ body:
 mailers:
   user:
     welcome:
+      subject: Welcome
       greet:
         html: I'm a mailer html version.
         txt: I'm a mailer txt version.
