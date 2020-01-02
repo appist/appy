@@ -3,7 +3,7 @@ module github.com/appist/appy
 go 1.13.4
 
 require (
-	github.com/99designs/gqlgen v0.10.2
+	github.com/99designs/gqlgen v0.10.3-0.20191128123652-f869f5a85385
 	github.com/BurntSushi/toml v0.3.1
 	github.com/CloudyKit/fastprinter v0.0.0-20170127035650-74b38d55f37a // indirect
 	github.com/CloudyKit/jet v2.1.2+incompatible
@@ -17,12 +17,16 @@ require (
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.5.0
 	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.0
+	github.com/gorilla/websocket v1.2.0
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/joho/godotenv v1.3.0
 	github.com/jordan-wright/email v0.0.0-20190819015918-041e0cec78b0
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
 	github.com/otiai10/copy v1.0.2
 	github.com/radovskyb/watcher v1.0.7
@@ -30,6 +34,7 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
+	github.com/vektah/gqlparser v1.2.0
 	go.uber.org/zap v1.13.0
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
 	golang.org/x/text v0.3.2

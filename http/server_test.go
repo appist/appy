@@ -264,6 +264,38 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
 }
 
+func (s *ServerSuite) TestSetupGraphQL() {
+	os.Setenv("APPY_ENV", "development")
+	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+	defer func() {
+		os.Unsetenv("APPY_ENV")
+		os.Unsetenv("APPY_MASTER_KEY")
+		os.Unsetenv("HTTP_CSRF_SECRET")
+		os.Unsetenv("HTTP_SESSION_SECRETS")
+	}()
+
+	s.config.GQLPlaygroundEnabled = true
+	s.config.GQLPlaygroundPath = "/graphiql"
+	server := NewServer(s.assets, s.config, s.logger)
+	server.Use(CSRF(s.config, s.logger))
+	server.SetupGraphQL("/graphql", nil, nil)
+
+	w := server.TestHTTPRequest("GET", "/graphiql", nil, nil)
+	s.Equal(200, w.Code)
+	s.Contains(w.Body.String(), "<title>GraphQL Playground</title>")
+
+	w = server.TestHTTPRequest("POST", "/graphql", nil, nil)
+	s.Equal(403, w.Code)
+
+	w = server.TestHTTPRequest("POST", "/graphql", support.H{
+		"content-type": "application/json",
+		"x-api-only":   "1",
+	}, nil)
+	s.Equal(422, w.Code)
+}
+
 func TestServerSuite(t *testing.T) {
 	test.RunSuite(t, new(ServerSuite))
 }

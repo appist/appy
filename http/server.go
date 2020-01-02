@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -10,9 +11,17 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
+	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/apollotracing"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	gqlLRU "github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/appist/appy/support"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"github.com/vektah/gqlparser/gqlerror"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -106,6 +115,107 @@ func NewServer(assets *support.Assets, config *support.Config, logger *support.L
 // Config returns the server's configuration.
 func (s *Server) Config() *support.Config {
 	return s.config
+}
+
+// SetupGraphQL sets up the GraphQL stack.
+func (s *Server) SetupGraphQL(path string, es graphql.ExecutableSchema, exts []graphql.HandlerExtension) {
+	gqlServer := gqlHandler.New(es)
+	gqlServer.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: s.Config().GQLWebsocketKeepAliveDuration,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	})
+	gqlServer.AddTransport(transport.Options{})
+	gqlServer.AddTransport(transport.GET{})
+	gqlServer.AddTransport(transport.POST{})
+	gqlServer.AddTransport(transport.MultipartForm{
+		MaxMemory:     s.Config().GQLMultipartMaxMemory,
+		MaxUploadSize: s.Config().GQLMultipartMaxUploadSize,
+	})
+
+	gqlServer.SetQueryCache(gqlLRU.New(s.Config().GQLQueryCacheSize))
+	gqlServer.SetErrorPresenter(func(c context.Context, err error) *gqlerror.Error {
+		// Refer to https://gqlgen.com/reference/errors/#the-error-presenter for custom error handling.
+		return graphql.DefaultErrorPresenter(c, err)
+	})
+	gqlServer.SetRecoverFunc(func(c context.Context, err interface{}) error {
+		// TODO: Implement error alert.
+		return err.(error)
+	})
+
+	gqlServer.Use(extension.Introspection{})
+	gqlServer.Use(extension.AutomaticPersistedQuery{
+		Cache: gqlLRU.New(s.Config().GQLAPQCacheSize),
+	})
+	gqlServer.Use(extension.FixedComplexityLimit(s.Config().GQLComplexityLimit))
+	gqlServer.Use(apollotracing.Tracer{})
+
+	for _, ext := range exts {
+		gqlServer.Use(ext)
+	}
+
+	s.router.Any(path, func(c *Context) {
+		gqlServer.ServeHTTP(c.Writer, c.Request)
+	})
+
+	if s.config.GQLPlaygroundEnabled && s.config.GQLPlaygroundPath != "" {
+		s.router.GET(s.config.GQLPlaygroundPath, CSRFSkipCheck(), func(c *Context) {
+			c.Data(http.StatusOK, "text/html", gqlPlaygroundTpl(path, c))
+		})
+	}
+}
+
+func gqlPlaygroundTpl(path string, c *Context) []byte {
+	return []byte(`
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8/>
+	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+	<title>GraphQL Playground</title>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/graphql-playground-react/build/static/css/index.css" />
+	<link rel="shortcut icon" href="//cdn.jsdelivr.net/npm/graphql-playground-react/build/favicon.png" />
+	<script src="//cdn.jsdelivr.net/npm/graphql-playground-react/build/static/js/middleware.js"></script>
+</head>
+<body>
+	<div id="root">
+	<style>
+		body { background-color: rgb(23, 42, 58); font-family: Open Sans, sans-serif; height: 90vh; }
+		#root { height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; }
+		.loading { font-size: 32px; font-weight: 200; color: rgba(255, 255, 255, .6); margin-left: 20px; }
+		img { width: 78px; height: 78px; }
+		.title { font-weight: 400; }
+	</style>
+	<img src='//cdn.jsdelivr.net/npm/graphql-playground-react/build/logo.png' alt=''>
+	<div class="loading"> Loading
+		<span class="title">GraphQL Playground</span>
+	</div>
+	</div>
+	<script>
+		function getCookie(name) {
+			var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+			return v ? v[2] : null;
+		}
+		window.addEventListener('load', function (event) {
+			GraphQLPlayground.init(document.getElementById('root'), {
+				endpoint: '` + path + `',
+				subscriptionEndpoint: '` + path + `',
+				headers: {
+					'X-CSRF-Token': unescape(getCookie("` + csrfTemplateFieldName(c) + `"))
+				},
+				settings: {
+					'request.credentials': 'include',
+					'schema.polling.interval': 5000
+				}
+			})
+		})
+	</script>
+</body>
+</html>
+`)
 }
 
 // GRPC returns the GRPC server instance.

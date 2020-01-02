@@ -19,11 +19,12 @@ type (
 		// GraphQL related configuration.
 		GQLPlaygroundEnabled          bool          `env:"GQL_PLAYGROUND_ENABLED" envDefault:"false"`
 		GQLPlaygroundPath             string        `env:"GQL_PLAYGROUND_PATH" envDefault:"/docs/graphql"`
-		GQLCacheSize                  int           `env:"GQL_CACHE_SIZE" envDefault:"1000"`
-		GQLComplexityLimit            int           `env:"GQL_COMPLEXITY_LIMIT" envDefault:"200"`
-		GQLUploadMaxMemory            int64         `env:"GQL_UPLOAD_MAX_MEMORY" envDefault:"100000000"`
-		GQLUploadMaxSize              int64         `env:"GQL_UPLOAD_MAX_SIZE" envDefault:"100000000"`
-		GQLWebsocketKeepAliveDuration time.Duration `env:"GQL_WEBSOCKET_KEEP_ALIVE_DURATION" envDefault:"30s"`
+		GQLAPQCacheSize               int           `env:"GQL_APQ_CACHE_SIZE" envDefault:"100"`
+		GQLQueryCacheSize             int           `env:"GQL_QUERY_CACHE_SIZE" envDefault:"1000"`
+		GQLComplexityLimit            int           `env:"GQL_COMPLEXITY_LIMIT" envDefault:"100"`
+		GQLMultipartMaxMemory         int64         `env:"GQL_MULTIPART_MAX_MEMORY" envDefault:"0"`
+		GQLMultipartMaxUploadSize     int64         `env:"GQL_MULTIPART_MAX_UPLOAD_SIZE" envDefault:"0"`
+		GQLWebsocketKeepAliveDuration time.Duration `env:"GQL_WEBSOCKET_KEEP_ALIVE_DURATION" envDefault:"10s"`
 
 		// Server related configuration.
 		HTTPDebugEnabled        bool          `env:"HTTP_DEBUG_ENABLED" envDefault:"false"`
