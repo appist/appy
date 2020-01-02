@@ -19,7 +19,7 @@ func SPA(server *Server, prefix string, assets http.FileSystem) HandlerFunc {
 
 	return func(c *Context) {
 		req := c.Request
-		if server.isSSRPath(req.URL.Path) || strings.HasPrefix(req.URL.Path, "/"+server.assets.SSRRelease()) {
+		if server.isSSRPath(req.URL.Path) || strings.HasPrefix(req.URL.Path, "/"+server.assets.SSRRelease()) || strings.HasPrefix(req.URL.Path, "/"+server.assets.Layout()["config"]) {
 			c.Next()
 			return
 		}

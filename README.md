@@ -10,7 +10,7 @@ An opinionated productive web framework that helps scaling business easier.
 ## Features
 
 - Highly performant server built on top of [gin](https://github.com/gin-gonic/gin) with the built-in middleware:
-  - `CSRF` protect cookies against [Cross-Site Request Forgery](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF))
+  - `CSRF` protect cookies against [Cross-Site Request Forgery](<https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)>)
   - `RequestID` generate UUID v4 for every HTTP request
   - `RequestLogger` log HTTP request details (can mask sensitive query parameter)
   - `RealIP` retrieve the real client IP
@@ -42,9 +42,9 @@ An opinionated productive web framework that helps scaling business easier.
 - Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/)/[GRPC](https://grpc.io/) protobuf schema changes
 - Support mailer for email sending via SMTP with preview for debugging
 - Support I18n for content localization
-- Support [SvelteJS](https://svelte.dev/) PWA integration with zero webpack configuration
+- Support [SvelteJS](https://svelte.dev/) PWA integration with production-ready webpack configuration
 - Support automated request proxy to `webpack-dev-server` for development
-- Support standalone binary generating that embeds assets/configs/locales/views
+- Support standalone binary generating that embeds `assets/configs/locales/views`
 - [WIP] Support multiple databases with ORM
 - [WIP] Support worker for background job processing with admin dashboard
 - [WIP] Support feature toggle with admin dashboard using Redis

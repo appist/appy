@@ -48,7 +48,7 @@ func NewBuildCommand(assets *support.Assets, logger *support.Logger, server *ah.
 				logger.Info("Building the web app...")
 				buildWebCmd := exec.Command("npm", "run", "build")
 				buildWebCmd.Env = os.Environ()
-				buildWebCmd.Env = append(buildWebCmd.Env, "APPY_SSR_PATHS="+strings.Join(ssrPaths, ","))
+				buildWebCmd.Env = append(buildWebCmd.Env, "APPY_SSR_ROUTES="+strings.Join(ssrPaths, ","))
 				buildWebCmd.Dir = wd
 				buildWebCmd.Stdout = os.Stdout
 				buildWebCmd.Stderr = os.Stderr

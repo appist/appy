@@ -161,10 +161,10 @@ func runWebServeCmd(logger *support.Logger, server *ah.Server) {
 		}
 	}
 
-	webServeCmd = exec.Command("npm", "run", "start")
+	webServeCmd = exec.Command("npm", "start")
 	webServeCmd.Dir = wd
 	webServeCmd.Env = os.Environ()
-	webServeCmd.Env = append(webServeCmd.Env, "APPY_SSR_PATHS="+strings.Join(ssrPaths, ","))
+	webServeCmd.Env = append(webServeCmd.Env, "APPY_SSR_ROUTES="+strings.Join(ssrPaths, ","))
 	webServeCmd.Env = append(webServeCmd.Env, "HTTP_HOST="+server.Config().HTTPHost)
 	webServeCmd.Env = append(webServeCmd.Env, "HTTP_PORT="+server.Config().HTTPPort)
 	webServeCmd.Env = append(webServeCmd.Env, "HTTP_SSL_PORT="+server.Config().HTTPSSLPort)
@@ -195,7 +195,7 @@ func runWebServeCmd(logger *support.Logger, server *ah.Server) {
 				continue
 			}
 
-			if strings.Contains(outText, "｢wdm｣") || strings.HasPrefix(outText, "> ") || (isWDSCompiling && strings.Contains(outText, "｢wds｣")) || strings.HasPrefix(outText, "error") {
+			if strings.Contains(outText, "｢wdm｣") || strings.HasPrefix(outText, "> ") || (isWDSCompiling && strings.Contains(outText, "｢wds｣")) {
 				continue
 			}
 
