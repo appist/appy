@@ -9,9 +9,17 @@ var (
 )
 
 // ViewEngine attaches the jet view engine to the context.
-func ViewEngine(viewEngine *support.ViewEngine) HandlerFunc {
+func ViewEngine(assets *support.Assets, viewFuncs map[string]interface{}) HandlerFunc {
 	return func(c *Context) {
-		c.Set(viewEngineCtxKey.String(), viewEngine)
+		ve := support.NewViewEngine(assets)
+
+		if viewFuncs != nil {
+			for name, vf := range viewFuncs {
+				ve.AddGlobal(name, vf)
+			}
+		}
+
+		c.Set(viewEngineCtxKey.String(), ve)
 		c.Next()
 	}
 }

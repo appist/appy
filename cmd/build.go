@@ -79,9 +79,14 @@ func NewBuildCommand(assets *support.Assets, logger *support.Logger, server *ah.
 				logger.Fatal(err)
 			}
 
-			keyFiles, _ := filepath.Glob(releasePathSSR + "/" + assets.Layout()["config"] + "/*.key")
+			keyFiles, _ := filepath.Glob(releasePath + "/" + assets.Layout()["config"] + "/*.key")
 			for _, keyFile := range keyFiles {
 				os.Remove(keyFile)
+			}
+
+			gitIgnoreFiles, _ := filepath.Glob(releasePath + "/**/.gitkeep")
+			for _, gitIgnoreFile := range gitIgnoreFiles {
+				os.Remove(gitIgnoreFile)
 			}
 
 			logger.Infof("Copying server-side assets into '%s' folder... DONE", releasePath)

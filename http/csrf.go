@@ -29,10 +29,7 @@ var (
 	errCsrfBadToken     = errors.New("the CSRF token is invalid")
 	generateRandomBytes = func(n int) ([]byte, error) {
 		b := make([]byte, n)
-		_, err := rand.Read(b)
-		if err != nil {
-			return nil, err
-		}
+		_, _ = rand.Read(b)
 
 		return b, nil
 	}

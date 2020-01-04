@@ -1,6 +1,7 @@
 package http
 
 import (
+	"html/template"
 	"net/http"
 
 	am "github.com/appist/appy/mailer"
@@ -45,15 +46,21 @@ func setupPreview(i18n *support.I18n, mailer *am.Mailer, server *Server) {
 			preview.Subject = subject
 		}
 
+		liveReloadTpl := ""
+		if support.IsDebugBuild() {
+			liveReloadTpl = c.LiveReloadTpl()
+		}
+
 		c.DefaultHTML(http.StatusOK, "mailer/preview", support.H{
-			"baseURL":  server.Config().MailerPreviewBaseURL,
-			"previews": mailer.Previews(),
-			"title":    "Mailer Preview",
-			"name":     name,
-			"ext":      c.DefaultQuery("ext", "html"),
-			"locale":   locale,
-			"locales":  i18n.Locales(),
-			"mail":     preview,
+			"baseURL":       server.Config().MailerPreviewBaseURL,
+			"previews":      mailer.Previews(),
+			"title":         "Mailer Preview",
+			"name":          name,
+			"ext":           c.DefaultQuery("ext", "html"),
+			"locale":        locale,
+			"locales":       i18n.Locales(),
+			"mail":          preview,
+			"liveReloadTpl": template.HTML(liveReloadTpl),
 		})
 	})
 

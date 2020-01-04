@@ -46,7 +46,7 @@ func (s *ViewEngineSuite) TearDownTest() {
 
 func (s *ViewEngineSuite) TestExistence() {
 	c, _ := NewTestContext(httptest.NewRecorder())
-	ViewEngine(s.viewEngine)(c)
+	ViewEngine(s.assets, nil)(c)
 	s.NotNil(c.Get(viewEngineCtxKey.String()))
 }
 
