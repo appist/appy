@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -18,15 +19,18 @@ import (
 	gqlgenCfg "github.com/99designs/gqlgen/codegen/config"
 	ah "github.com/appist/appy/http"
 	"github.com/appist/appy/support"
+	"github.com/gorilla/websocket"
 	"github.com/radovskyb/watcher"
+	"go.uber.org/zap"
 )
 
 var (
-	apiServeCmd         *exec.Cmd
-	webServeCmd         *exec.Cmd
-	webServeCmdReady    chan os.Signal
-	isGenerating                      = false
-	watcherPollInterval time.Duration = 1
+	apiServeCmd                         *exec.Cmd
+	webServeCmd                         *exec.Cmd
+	webServeCmdReady                    chan os.Signal
+	isGenerating                                      = false
+	watcherPollInterval                 time.Duration = 1
+	liveReloadWSConn, liveReloadWSSConn *websocket.Conn
 )
 
 // NewStartCommand run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (only available in debug build).
@@ -73,6 +77,10 @@ func NewStartCommand(logger *support.Logger, server *ah.Server) *Command {
 			go func() {
 				<-webServeCmdReady
 				runAPIServeCmd(logger)
+			}()
+
+			go func() {
+				runLiveReloadServer(logger, server)
 			}()
 
 			watch(logger, watchPaths, func(e watcher.Event) {
@@ -140,6 +148,19 @@ func runAPIServeCmd(logger *support.Logger) {
 	apiServeCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	apiServeCmd.Stdout = os.Stdout
 	apiServeCmd.Stderr = os.Stderr
+
+	go func() {
+		time.Sleep(4000 * time.Millisecond)
+
+		if liveReloadWSConn != nil {
+			liveReloadWSConn.WriteMessage(websocket.TextMessage, []byte("reload"))
+		}
+
+		if liveReloadWSSConn != nil {
+			liveReloadWSSConn.WriteMessage(websocket.TextMessage, []byte("reload"))
+		}
+	}()
+
 	logger.Info("* Compiling...")
 	apiServeCmd.Run()
 }
@@ -246,6 +267,84 @@ func runWebServeCmd(logger *support.Logger, server *ah.Server) {
 	}(webServeCmdErr)
 
 	webServeCmd.Run()
+}
+
+func runLiveReloadServer(logger *support.Logger, server *ah.Server) {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+
+	wsHandler := http.NewServeMux()
+	wsHandler.HandleFunc(ah.LiveReloadPath, func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		liveReloadWSConn, err = upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			killWebServeCmd()
+			killAPIServeCmd()
+			logger.Fatal(err)
+		}
+
+		for {
+			_, _, err := liveReloadWSConn.ReadMessage()
+			if err != nil {
+				return
+			}
+		}
+	})
+
+	ws := &http.Server{
+		Addr:    server.Config().HTTPHost + ":" + ah.LiveReloadWSPort,
+		Handler: wsHandler,
+	}
+	ws.ErrorLog = zap.NewStdLog(logger.Desugar())
+
+	wssHandler := http.NewServeMux()
+	wssHandler.HandleFunc(ah.LiveReloadPath, func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		liveReloadWSSConn, err = upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			killWebServeCmd()
+			killAPIServeCmd()
+			logger.Fatal(err)
+		}
+
+		for {
+			_, _, err := liveReloadWSSConn.ReadMessage()
+			if err != nil {
+				return
+			}
+		}
+	})
+
+	wss := &http.Server{
+		Addr:    server.Config().HTTPHost + ":" + ah.LiveReloadWSSPort,
+		Handler: wssHandler,
+	}
+	wss.ErrorLog = zap.NewStdLog(logger.Desugar())
+
+	go func() {
+		if server.Config().HTTPSSLEnabled {
+			err := wss.ListenAndServeTLS(server.Config().HTTPSSLCertPath+"/cert.pem", server.Config().HTTPSSLCertPath+"/key.pem")
+			if err != http.ErrServerClosed {
+				killWebServeCmd()
+				killAPIServeCmd()
+				logger.Fatal(err)
+			}
+		}
+	}()
+
+	err := ws.ListenAndServe()
+	if err != http.ErrServerClosed {
+		killWebServeCmd()
+		killAPIServeCmd()
+		logger.Fatal(err)
+	}
 }
 
 func watch(logger *support.Logger, watchPaths []string, callback func(e watcher.Event)) {

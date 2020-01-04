@@ -138,6 +138,7 @@ func tplLower() string {
 					return result
 				}
 			</script>
+			{{.liveReloadTpl}}
 		</body>
 	</html>
 `

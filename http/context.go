@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"net/http"
+	"strings"
 
 	"github.com/CloudyKit/jet"
 	"github.com/appist/appy/mailer"
@@ -15,6 +16,12 @@ type (
 	Context struct {
 		*gin.Context
 	}
+)
+
+const (
+	LiveReloadWSPort  = "12450"
+	LiveReloadWSSPort = "12451"
+	LiveReloadPath    = "/reload"
 )
 
 // NewTestContext returns a fresh router w/ context for testing purposes.
@@ -45,7 +52,13 @@ func (c *Context) HTML(code int, name string, obj interface{}) {
 		return
 	}
 
-	c.Data(code, "text/html; charset=utf-8", w.Bytes())
+	if support.IsReleaseBuild() {
+		c.Data(code, "text/html; charset=utf-8", w.Bytes())
+		return
+	}
+
+	html := strings.ReplaceAll(w.String(), "</body>", c.LiveReloadTpl()+"</body>")
+	c.Data(code, "text/html; charset=utf-8", []byte(html))
 }
 
 // Locale returns the request context's locale.
@@ -125,4 +138,22 @@ func (c *Context) T(key string, args ...interface{}) string {
 // use.
 func (c *Context) DefaultHTML(code int, name string, obj interface{}) {
 	c.Context.HTML(code, name, obj)
+}
+
+// LiveReloadTpl returns the live reload template that auto refresh the browser after the server is re-compiled.
+func (c *Context) LiveReloadTpl() string {
+	protocol := "ws"
+	port := LiveReloadWSPort
+
+	if c.Request.TLS != nil {
+		protocol = "wss"
+		port = LiveReloadWSSPort
+	}
+
+	splits := strings.Split(c.Request.Host, ":")
+	url := protocol + `://` + splits[0] + ":" + port + LiveReloadPath
+
+	return `<script>function b(a){var c=new WebSocket(a);c.onclose=function(){setTimeout(function(){b(a)},2E3)};` +
+		`c.onmessage=function(){location.reload()}}try{if(window.WebSocket)try{b("` + url + `")}catch(a){console.error(a)}` +
+		`else console.log("Your browser does not support WebSocket.")}catch(a){console.error(a)};</script>`
 }
