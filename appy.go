@@ -48,14 +48,14 @@ func init() {
 }
 
 // NewApp initializes an app instance.
-func NewApp(static http.FileSystem) *App {
+func NewApp(static http.FileSystem, viewFuncs map[string]interface{}) *App {
 	command := cmd.NewCommand()
 	logger := support.NewLogger()
 	assets := support.NewAssets(nil, "", static)
 	config := support.NewConfig(assets, logger)
 	i18n := support.NewI18n(assets, config, logger)
 	server := ah.NewServer(assets, config, logger)
-	mailer := mailer.NewMailer(assets, config, i18n)
+	mailer := mailer.NewMailer(assets, config, i18n, viewFuncs)
 
 	// Setup the default middleware.
 	server.Use(ah.CSRF(config, logger))
@@ -68,7 +68,7 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.Gzip(config))
 	server.Use(ah.Secure(config))
 	server.Use(ah.I18n(i18n))
-	server.Use(ah.ViewEngine(assets))
+	server.Use(ah.ViewEngine(assets, viewFuncs))
 	server.Use(ah.Mailer(i18n, mailer, server))
 	server.Use(ah.SessionMngr(config))
 	server.Use(ah.Recovery(logger))

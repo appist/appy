@@ -40,7 +40,7 @@ func (s *ContextSuite) SetupTest() {
 	s.config = support.NewConfig(s.assets, s.logger)
 	s.i18n = support.NewI18n(s.assets, s.config, s.logger)
 	s.viewEngine = support.NewViewEngine(s.assets)
-	s.mailer = am.NewMailer(s.assets, s.config, s.i18n)
+	s.mailer = am.NewMailer(s.assets, s.config, s.i18n, nil)
 }
 
 func (s *ContextSuite) TearDownTest() {
@@ -77,7 +77,7 @@ func (s *ContextSuite) TestI18n() {
 func (s *ContextSuite) TestRenderHTML() {
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.assets))
+	server.Use(ViewEngine(s.assets, nil))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "mailers/user/welcome.html", support.H{})
 	})
@@ -113,7 +113,7 @@ func (s *ContextSuite) TestRenderHTMLMissingTemplate() {
 
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.assets))
+	server.Use(ViewEngine(s.assets, nil))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "dummy/index.html", support.H{})
 	})
@@ -166,14 +166,18 @@ func (s *ContextSuite) TestViewEngineWithDebugBuild() {
 
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.assets))
+	server.Use(ViewEngine(s.assets, map[string]interface{}{
+		"add": func(a, b int) int {
+			return a + b
+		},
+	}))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "home/index.html", support.H{})
 	})
 	server.ServeHTTP(w, req)
 
 	s.Equal(http.StatusOK, w.Code)
-	s.Contains(w.Body.String(), "This content will be yielded in the layout above.")
+	s.Contains(w.Body.String(), "This content will be yielded in the layout above. 3")
 	s.Contains(w.Body.String(), `b("ws://:`+LiveReloadWSPort+LiveReloadPath+`")`)
 
 	w = httptest.NewRecorder()
@@ -182,7 +186,7 @@ func (s *ContextSuite) TestViewEngineWithDebugBuild() {
 	server.ServeHTTP(w, req)
 
 	s.Equal(http.StatusOK, w.Code)
-	s.Contains(w.Body.String(), "This content will be yielded in the layout above.")
+	s.Contains(w.Body.String(), "This content will be yielded in the layout above. 3")
 	s.Contains(w.Body.String(), `b("wss://:`+LiveReloadWSSPort+LiveReloadPath+`")`)
 }
 
@@ -200,7 +204,7 @@ func (s *ContextSuite) TestViewEngineWithReleaseBuild() {
 
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.assets))
+	server.Use(ViewEngine(s.assets, nil))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "home/index.html", support.H{})
 	})

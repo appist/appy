@@ -41,7 +41,7 @@ func (s *MailerSuite) SetupTest() {
 	s.i18n = support.NewI18n(s.assets, s.config, s.logger)
 	s.viewEngine = support.NewViewEngine(s.assets)
 	s.server = NewServer(s.assets, s.config, s.logger)
-	s.mailer = am.NewMailer(s.assets, s.config, s.i18n)
+	s.mailer = am.NewMailer(s.assets, s.config, s.i18n, nil)
 }
 
 func (s *MailerSuite) TearDownTest() {
