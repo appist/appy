@@ -54,9 +54,8 @@ func NewApp(static http.FileSystem) *App {
 	assets := support.NewAssets(nil, "", static)
 	config := support.NewConfig(assets, logger)
 	i18n := support.NewI18n(assets, config, logger)
-	viewEngine := support.NewViewEngine(assets)
 	server := ah.NewServer(assets, config, logger)
-	mailer := mailer.NewMailer(config, i18n, viewEngine)
+	mailer := mailer.NewMailer(assets, config, i18n)
 
 	// Setup the default middleware.
 	server.Use(ah.CSRF(config, logger))
@@ -69,7 +68,7 @@ func NewApp(static http.FileSystem) *App {
 	server.Use(ah.Gzip(config))
 	server.Use(ah.Secure(config))
 	server.Use(ah.I18n(i18n))
-	server.Use(ah.ViewEngine(viewEngine))
+	server.Use(ah.ViewEngine(assets))
 	server.Use(ah.Mailer(i18n, mailer, server))
 	server.Use(ah.SessionMngr(config))
 	server.Use(ah.Recovery(logger))

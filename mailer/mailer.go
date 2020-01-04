@@ -41,7 +41,7 @@ type (
 )
 
 // NewMailer initializes Mailer instance.
-func NewMailer(config *support.Config, i18n *support.I18n, viewEngine *support.ViewEngine) *Mailer {
+func NewMailer(assets *support.Assets, config *support.Config, i18n *support.I18n) *Mailer {
 	mailer := &Mailer{
 		addr:   config.MailerSMTPAddr,
 		config: config,
@@ -53,7 +53,7 @@ func NewMailer(config *support.Config, i18n *support.I18n, viewEngine *support.V
 			config.MailerSMTPPlainAuthHost,
 		),
 		previews:   map[string]Email{},
-		viewEngine: viewEngine,
+		viewEngine: support.NewViewEngine(assets),
 	}
 
 	return mailer

@@ -40,7 +40,7 @@ func (s *ContextSuite) SetupTest() {
 	s.config = support.NewConfig(s.assets, s.logger)
 	s.i18n = support.NewI18n(s.assets, s.config, s.logger)
 	s.viewEngine = support.NewViewEngine(s.assets)
-	s.mailer = am.NewMailer(s.config, s.i18n, s.viewEngine)
+	s.mailer = am.NewMailer(s.assets, s.config, s.i18n)
 }
 
 func (s *ContextSuite) TearDownTest() {
@@ -77,7 +77,7 @@ func (s *ContextSuite) TestI18n() {
 func (s *ContextSuite) TestRenderHTML() {
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.viewEngine))
+	server.Use(ViewEngine(s.assets))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "mailers/user/welcome.html", support.H{})
 	})
@@ -113,7 +113,7 @@ func (s *ContextSuite) TestRenderHTMLMissingTemplate() {
 
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.viewEngine))
+	server.Use(ViewEngine(s.assets))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "dummy/index.html", support.H{})
 	})
@@ -166,7 +166,7 @@ func (s *ContextSuite) TestViewEngineWithDebugBuild() {
 
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.viewEngine))
+	server.Use(ViewEngine(s.assets))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "home/index.html", support.H{})
 	})
@@ -200,7 +200,7 @@ func (s *ContextSuite) TestViewEngineWithReleaseBuild() {
 
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.viewEngine))
+	server.Use(ViewEngine(s.assets))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "home/index.html", support.H{})
 	})
