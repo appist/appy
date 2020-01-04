@@ -19,9 +19,14 @@ type (
 )
 
 const (
-	LiveReloadWSPort  = "12450"
+	// LiveReloadWSPort is the server-side live reload port over HTTP.
+	LiveReloadWSPort = "12450"
+
+	// LiveReloadWSSPort is the server-side live reload port over HTTPS.
 	LiveReloadWSSPort = "12451"
-	LiveReloadPath    = "/reload"
+
+	// LiveReloadPath is the server-side live reload path.
+	LiveReloadPath = "/reload"
 )
 
 // NewTestContext returns a fresh router w/ context for testing purposes.
