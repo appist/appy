@@ -39,7 +39,7 @@ An opinionated productive web framework that helps scaling business easier.
   - `start` run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (only available in debug build)
 - Support [12factor](https://12factor.net/) with each environment variable being encrypted for clearer PR review
 - Support automated recompile upon changes in `assets/cmd/configs/pkg/internal` folders
-- Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/)/[GRPC](https://grpc.io/) protobuf schema changes
+- Support automated code regenerate/recompile upon [GraphQL](https://graphql.org/learn/) schema changes
 - Support mailer for email sending via SMTP with preview for debugging
 - Support I18n for content localization
 - Support [SvelteJS](https://svelte.dev/) PWA integration with production-ready webpack configuration
