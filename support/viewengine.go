@@ -102,5 +102,5 @@ func (ve *ViewEngine) assetPath(path string) string {
 		ve.logger.Panic(os.ErrNotExist)
 	}
 
-	return manifest[path].(string)
+	return ve.config.AssetHost + manifest[path].(string)
 }

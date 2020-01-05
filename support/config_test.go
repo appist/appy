@@ -36,6 +36,7 @@ func (s *ConfigSuite) TestNewConfigDefaultValue() {
 
 	tt := map[string]interface{}{
 		"AppyEnv":                         "development",
+		"AssetHost":                       "",
 		"GQLPlaygroundEnabled":            false,
 		"GQLPlaygroundPath":               "/docs/graphql",
 		"GQLAPQCacheSize":                 100,

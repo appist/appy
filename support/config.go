@@ -14,7 +14,8 @@ import (
 type (
 	// Config defines the application settings.
 	Config struct {
-		AppyEnv string `env:"APPY_ENV" envDefault:"development"`
+		AppyEnv   string `env:"APPY_ENV" envDefault:"development"`
+		AssetHost string `env:"ASSET_HOST" envDefault:""`
 
 		// GraphQL related configuration.
 		GQLPlaygroundEnabled          bool          `env:"GQL_PLAYGROUND_ENABLED" envDefault:"false"`
