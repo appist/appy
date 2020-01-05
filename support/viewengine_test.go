@@ -85,11 +85,21 @@ func (s *ViewEngineSuite) TestAssetPathWithDebugBuild() {
 		s.Equal("/manifest.json", req.URL.String())
 		w.Write([]byte(`not a json`))
 	}))
-	defer server.Close()
 
 	s.viewEngine.httpClient = server.Client()
 	s.viewEngine.manifestHostname = server.URL
 	s.Panics(func() { s.viewEngine.assetPath("/images/a.png") })
+
+	s.config.HTTPSSLEnabled = true
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		s.Equal("/manifest.json", req.URL.String())
+		w.Write([]byte(`{"/images/a.png":"/images/a.contenthash.png"}`))
+	}))
+
+	s.viewEngine.httpClient = server.Client()
+	s.viewEngine.manifestHostname = server.URL
+	s.Equal("/images/a.contenthash.png", s.viewEngine.assetPath("/images/a.png"))
+	s.Panics(func() { s.viewEngine.assetPath("/images/404.png") })
 }
 
 func (s *ViewEngineSuite) TestAssetPathWithReleaseBuild() {

@@ -66,8 +66,14 @@ func (ve *ViewEngine) assetPath(path string) string {
 	manifestPath := "/manifest.json"
 
 	if IsDebugBuild() {
+		scheme := "http://"
 		port, _ := strconv.Atoi(ve.config.HTTPPort)
-		hostname := "http://" + ve.config.HTTPHost + ":" + strconv.Itoa(port+1)
+		if ve.config.HTTPSSLEnabled {
+			scheme = "https://"
+			port, _ = strconv.Atoi(ve.config.HTTPSSLPort)
+		}
+
+		hostname := scheme + ve.config.HTTPHost + ":" + strconv.Itoa(port+1)
 		if ve.manifestHostname != "" {
 			hostname = ve.manifestHostname
 		}
