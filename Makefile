@@ -17,6 +17,9 @@ install:
 	GO111MODULE=off go get -u golang.org/x/lint/golint
 	go mod tidy
 
+restart:
+	docker-compose -p appy restart
+
 test:
 	go test -covermode=atomic -coverprofile=coverage.out -race -failfast ./...
 
@@ -26,4 +29,4 @@ testcov:
 up:
 	docker-compose -p appy up -d
 
-.PHONY: bootstrap codecheck down install test testcov up
+.PHONY: bootstrap codecheck down install restart test testcov up

@@ -83,7 +83,7 @@ func (a Assets) ReadDir(dirname string) ([]os.FileInfo, error) {
 		return ioutil.ReadDir(dirname)
 	}
 
-	dirname = a.normalizedPath(dirname)
+	dirname = a.ssrPath(dirname)
 	reader, err := a.static.Open(dirname)
 
 	if err != nil {
@@ -94,8 +94,10 @@ func (a Assets) ReadDir(dirname string) ([]os.FileInfo, error) {
 }
 
 // ReadFile reads the file named by filename and returns the contents.
-func (a Assets) ReadFile(filename string) ([]byte, error) {
-	filename = a.normalizedPath(filename)
+func (a Assets) ReadFile(filename string, isSSR bool) ([]byte, error) {
+	if isSSR {
+		filename = a.ssrPath(filename)
+	}
 
 	if IsDebugBuild() {
 		return ioutil.ReadFile(filename)
@@ -120,7 +122,7 @@ func (a Assets) Static() http.FileSystem {
 	return a.static
 }
 
-func (a Assets) normalizedPath(path string) string {
+func (a Assets) ssrPath(path string) string {
 	if IsDebugBuild() {
 		return path
 	}

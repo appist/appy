@@ -37,7 +37,7 @@ func NewBuildCommand(assets *support.Assets, logger *support.Logger, server *ah.
 			releasePathSSR := releasePath + "/" + assets.SSRRelease()
 			os.RemoveAll(releasePath)
 
-			if _, err := os.Stat("./package.json"); !os.IsNotExist(err) {
+			if _, err := os.Stat(wd + "/package.json"); !os.IsNotExist(err) {
 				ssrPaths := []string{}
 				for _, route := range server.Routes() {
 					if route.Method == "GET" {

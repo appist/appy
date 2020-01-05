@@ -87,13 +87,13 @@ func (s *AssetsSuite) TestNewAssetsReadFileWithReleaseBuild() {
 	defer func() { Build = DebugBuild }()
 
 	assets := NewAssets(nil, "", http.Dir("testdata"))
-	_, err := assets.ReadFile("./foo")
+	_, err := assets.ReadFile("./foo", true)
 	s.NotNil(err)
 
-	_, err = assets.ReadFile("./pkg/locales/zh-TW.yml")
+	_, err = assets.ReadFile("./pkg/locales/zh-TW.yml", true)
 	s.NotNil(err)
 
-	data, err := assets.ReadFile("./pkg/locales/en.yml")
+	data, err := assets.ReadFile("./pkg/locales/en.yml", true)
 	s.Nil(err)
 	s.Equal("title: Test\n", string(data))
 }

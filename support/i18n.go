@@ -35,7 +35,7 @@ func NewI18n(assets *Assets, config *Config, logger *Logger) *I18n {
 
 	for _, fi := range fis {
 		filename := assets.Layout()["locale"] + "/" + fi.Name()
-		data, err := assets.ReadFile(filename)
+		data, err := assets.ReadFile(filename, true)
 
 		if err != nil {
 			panic(err)

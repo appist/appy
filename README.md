@@ -10,6 +10,7 @@ An opinionated productive web framework that helps scaling business easier.
 ## Features
 
 - Highly performant server built on top of [gin](https://github.com/gin-gonic/gin) with the built-in middleware:
+  - `Logger` attaches the logger to the request context.
   - `CSRF` protect cookies against [Cross-Site Request Forgery](<https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)>)
   - `RequestID` generate UUID v4 for every HTTP request
   - `RequestLogger` log HTTP request details (can mask sensitive query parameter)

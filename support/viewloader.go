@@ -33,7 +33,7 @@ func (v *ViewLoader) Open(filename string) (io.ReadCloser, error) {
 // Exists checks for template existence and returns full path.
 func (v *ViewLoader) Exists(filename string) (string, bool) {
 	filename = v.assets.Layout()["view"] + "/" + filename
-	_, err := v.assets.ReadFile(filename)
+	_, err := v.assets.ReadFile(filename, true)
 
 	if err != nil {
 		return "", false

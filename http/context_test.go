@@ -39,8 +39,8 @@ func (s *ContextSuite) SetupTest() {
 	s.assets = support.NewAssets(layout, "", http.Dir("../support/testdata"))
 	s.config = support.NewConfig(s.assets, s.logger)
 	s.i18n = support.NewI18n(s.assets, s.config, s.logger)
-	s.viewEngine = support.NewViewEngine(s.assets)
-	s.mailer = am.NewMailer(s.assets, s.config, s.i18n, nil)
+	s.viewEngine = support.NewViewEngine(s.assets, s.config, s.logger)
+	s.mailer = am.NewMailer(s.assets, s.config, s.i18n, s.logger, nil)
 }
 
 func (s *ContextSuite) TearDownTest() {
@@ -76,8 +76,9 @@ func (s *ContextSuite) TestI18n() {
 
 func (s *ContextSuite) TestRenderHTML() {
 	server := NewServer(s.assets, s.config, s.logger)
+	server.Use(Logger(s.logger))
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.assets, nil))
+	server.Use(ViewEngine(s.assets, s.config, s.logger, nil))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "mailers/user/welcome.html", support.H{})
 	})
@@ -112,8 +113,9 @@ func (s *ContextSuite) TestRenderHTMLMissingTemplate() {
 	req, _ := http.NewRequest("GET", "/", nil)
 
 	server := NewServer(s.assets, s.config, s.logger)
+	server.Use(Logger(s.logger))
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.assets, nil))
+	server.Use(ViewEngine(s.assets, s.config, s.logger, nil))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "dummy/index.html", support.H{})
 	})
@@ -166,7 +168,7 @@ func (s *ContextSuite) TestViewEngineWithDebugBuild() {
 
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.assets, map[string]interface{}{
+	server.Use(ViewEngine(s.assets, s.config, s.logger, map[string]interface{}{
 		"add": func(a, b int) int {
 			return a + b
 		},
@@ -200,11 +202,11 @@ func (s *ContextSuite) TestViewEngineWithReleaseBuild() {
 	req, _ := http.NewRequest("GET", "/", nil)
 
 	s.assets = support.NewAssets(nil, "", http.Dir("../support/testdata"))
-	s.viewEngine = support.NewViewEngine(s.assets)
+	s.viewEngine = support.NewViewEngine(s.assets, s.config, s.logger)
 
 	server := NewServer(s.assets, s.config, s.logger)
 	server.Use(I18n(s.i18n))
-	server.Use(ViewEngine(s.assets, nil))
+	server.Use(ViewEngine(s.assets, s.config, s.logger, nil))
 	server.GET("/", func(c *Context) {
 		c.HTML(http.StatusOK, "home/index.html", support.H{})
 	})

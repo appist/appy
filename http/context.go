@@ -46,6 +46,7 @@ func (c *Context) HTML(code int, name string, obj interface{}) {
 
 	t, err := viewEngine.GetTemplate(name)
 	if err != nil {
+		c.Logger().Error(err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -53,6 +54,7 @@ func (c *Context) HTML(code int, name string, obj interface{}) {
 	var w bytes.Buffer
 	vars := make(jet.VarMap)
 	if err := t.Execute(&w, vars, obj); err != nil {
+		c.Logger().Error(err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -82,6 +84,13 @@ func (c *Context) Locales() []string {
 	i18n, _ := c.Get(i18nCtxKey.String())
 
 	return i18n.(*support.I18n).Locales()
+}
+
+// Logger returns the request context's logger.
+func (c *Context) Logger() *support.Logger {
+	logger, _ := c.Get(loggerCtxKey.String())
+
+	return logger.(*support.Logger)
 }
 
 // SendEmail sends out the email via SMTP immediately.

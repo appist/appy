@@ -34,7 +34,7 @@ func (s *ViewEngineSuite) SetupTest() {
 	}
 	s.assets = support.NewAssets(layout, "", http.Dir("../support/testdata"))
 	s.config = support.NewConfig(s.assets, s.logger)
-	s.viewEngine = support.NewViewEngine(s.assets)
+	s.viewEngine = support.NewViewEngine(s.assets, s.config, s.logger)
 }
 
 func (s *ViewEngineSuite) TearDownTest() {
@@ -46,7 +46,7 @@ func (s *ViewEngineSuite) TearDownTest() {
 
 func (s *ViewEngineSuite) TestExistence() {
 	c, _ := NewTestContext(httptest.NewRecorder())
-	ViewEngine(s.assets, nil)(c)
+	ViewEngine(s.assets, s.config, s.logger, nil)(c)
 	s.NotNil(c.Get(viewEngineCtxKey.String()))
 }
 

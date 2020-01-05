@@ -55,9 +55,10 @@ func NewApp(static http.FileSystem, viewFuncs map[string]interface{}) *App {
 	config := support.NewConfig(assets, logger)
 	i18n := support.NewI18n(assets, config, logger)
 	server := ah.NewServer(assets, config, logger)
-	mailer := mailer.NewMailer(assets, config, i18n, viewFuncs)
+	mailer := mailer.NewMailer(assets, config, i18n, logger, viewFuncs)
 
 	// Setup the default middleware.
+	server.Use(ah.Logger(logger))
 	server.Use(ah.CSRF(config, logger))
 	server.Use(ah.RequestID())
 	server.Use(ah.RequestLogger(config, logger))
@@ -68,7 +69,7 @@ func NewApp(static http.FileSystem, viewFuncs map[string]interface{}) *App {
 	server.Use(ah.Gzip(config))
 	server.Use(ah.Secure(config))
 	server.Use(ah.I18n(i18n))
-	server.Use(ah.ViewEngine(assets, viewFuncs))
+	server.Use(ah.ViewEngine(assets, config, logger, viewFuncs))
 	server.Use(ah.Mailer(i18n, mailer, server))
 	server.Use(ah.SessionMngr(config))
 	server.Use(ah.Recovery(logger))
