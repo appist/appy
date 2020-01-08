@@ -1,10 +1,12 @@
 package appy
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
+	"os"
 	"reflect"
 	"strings"
 
@@ -57,6 +59,45 @@ func (s *Support) AESEncrypt(plaintext []byte, key []byte) ([]byte, error) {
 	_, _ = io.ReadFull(rand.Reader, nonce)
 
 	return gcm.Seal(nonce, nonce, plaintext, nil), nil
+}
+
+type capturer struct {
+	stdout bool
+	stderr bool
+}
+
+func (c *capturer) capture(f func()) string {
+	r, w, _ := os.Pipe()
+
+	if c.stdout {
+		stdout := os.Stdout
+		os.Stdout = w
+		defer func() {
+			os.Stdout = stdout
+		}()
+	}
+
+	if c.stderr {
+		stderr := os.Stderr
+		os.Stderr = w
+		defer func() {
+			os.Stderr = stderr
+		}()
+	}
+
+	f()
+	w.Close()
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+
+	return buf.String()
+}
+
+// CaptureOutput captures stdout and stderr.
+func CaptureOutput(f func()) string {
+	capturer := &capturer{stdout: true, stderr: true}
+	return capturer.capture(f)
 }
 
 // ParseEnv parses the environment variables into config struct.

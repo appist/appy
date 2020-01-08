@@ -1,6 +1,8 @@
 package appy_test
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/appist/appy"
@@ -35,6 +37,15 @@ func (s *SupportSuite) TestAESEncryptDecrypt() {
 
 	_, err = s.support.AESDecrypt([]byte("dummy"), []byte("key"))
 	s.EqualError(err, "crypto/aes: invalid key size 3")
+}
+
+func (s *SupportSuite) TestCaptureOutput() {
+	output := appy.CaptureOutput(func() {
+		fmt.Fprint(os.Stdout, "foo")
+		fmt.Fprint(os.Stderr, "bar")
+	})
+
+	s.Equal("foobar", output)
 }
 
 func (s *SupportSuite) TestParseEnv() {
