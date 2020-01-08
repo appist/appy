@@ -6,18 +6,18 @@ import (
 	"github.com/appist/appy"
 )
 
-type SupportSuite struct {
+type AppySuite struct {
 	appy.TestSuite
 }
 
-func (s *SupportSuite) TestIsDebugBuild() {
+func (s *AppySuite) TestIsDebugBuild() {
 	s.Equal(true, appy.IsDebugBuild())
 }
 
-func (s *SupportSuite) TestIsReleaseBuild() {
+func (s *AppySuite) TestIsReleaseBuild() {
 	s.Equal(false, appy.IsReleaseBuild())
 }
 
-func TestSupportSuite(t *testing.T) {
-	appy.RunTestSuite(t, new(SupportSuite))
+func TestAppySuite(t *testing.T) {
+	appy.RunTestSuite(t, new(AppySuite))
 }
