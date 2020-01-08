@@ -40,7 +40,7 @@ func (s *SupportSuite) TestAESEncryptDecrypt() {
 }
 
 func (s *SupportSuite) TestCaptureOutput() {
-	output := appy.CaptureOutput(func() {
+	output := s.support.CaptureOutput(func() {
 		fmt.Fprint(os.Stdout, "foo")
 		fmt.Fprint(os.Stderr, "bar")
 	})

@@ -18,6 +18,7 @@ type (
 	Supporter interface {
 		AESDecrypt(ciphertext []byte, key []byte) ([]byte, error)
 		AESEncrypt(plaintext []byte, key []byte) ([]byte, error)
+		CaptureOutput(f func()) string
 		ParseEnv(c interface{}) error
 	}
 
@@ -95,7 +96,7 @@ func (c *capturer) capture(f func()) string {
 }
 
 // CaptureOutput captures stdout and stderr.
-func CaptureOutput(f func()) string {
+func (s *Support) CaptureOutput(f func()) string {
 	capturer := &capturer{stdout: true, stderr: true}
 	return capturer.capture(f)
 }
