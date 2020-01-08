@@ -14,7 +14,6 @@ type LoggerSuite struct {
 func (s *LoggerSuite) TestNewLogger() {
 	logger := appy.NewLogger()
 	_, ok := reflect.TypeOf(logger).MethodByName("Desugar")
-
 	s.Equal(true, ok)
 }
 
@@ -22,7 +21,6 @@ func (s *LoggerSuite) TestNewFakeLogger() {
 	logger, buf, writer := appy.NewFakeLogger()
 	logger.Info("test")
 	writer.Flush()
-
 	s.NotNil(logger)
 	s.Contains(buf.String(), "\ttest")
 
@@ -34,7 +32,6 @@ func (s *LoggerSuite) TestNewFakeLogger() {
 	logger, buf, writer = appy.NewFakeLogger()
 	logger.Info("test")
 	writer.Flush()
-
 	s.NotNil(logger)
 	s.Contains(buf.String(), "info\ttest")
 }
