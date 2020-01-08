@@ -13,13 +13,13 @@ Messages must be matched by the following regex:
 Appears under "Features" header, `http` module as subheader:
 
 ```
-feat(http): add 'prerender' middleware
+feat(http): add `prerender` middleware
 ```
 
 Appears under "Bug Fixes" header, `http` module as subheader, with a link to issue #1:
 
 ```
-fix(http): fix 'prerender' middleware not returning the correct HTTP response header (#1)
+fix(http): fix `prerender` middleware not returning the correct HTTP response header (#1)
 ```
 
 Appears under "Performance Improvements" header, `http` module as subheader:
@@ -31,5 +31,5 @@ perf(http): improve HTTP request concurrency handling
 Appears under "Reverts" header:
 
 ```
-revert: feat(http): add 'prerender' middleware
+revert: feat(http): add `prerender` middleware
 ```
