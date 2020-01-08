@@ -11,8 +11,9 @@ type AppSuite struct {
 }
 
 func (s *AppSuite) TestNewApp() {
-	app := appy.NewApp()
+	app := appy.NewApp(nil)
 
+	s.NotNil(app.Asset())
 	s.NotNil(app.Logger())
 }
 
