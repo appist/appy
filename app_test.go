@@ -14,6 +14,7 @@ func (s *AppSuite) TestNewApp() {
 	app := appy.NewApp(nil)
 
 	s.NotNil(app.Asset())
+	s.NotNil(app.Config())
 	s.NotNil(app.Logger())
 }
 

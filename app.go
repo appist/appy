@@ -8,8 +8,10 @@ import (
 type (
 	// App is the framework core that drives the application.
 	App struct {
-		asset  *Asset
-		logger *Logger
+		asset   *Asset
+		config  *Config
+		logger  *Logger
+		support Supporter
 	}
 )
 
@@ -21,18 +23,27 @@ func init() {
 
 // NewApp initializes an app instance.
 func NewApp(embedded http.FileSystem) *App {
+	support := &Support{}
 	asset := NewAsset(embedded, nil)
 	logger := NewLogger()
+	config := NewConfig(asset, logger, support)
 
 	return &App{
-		asset:  asset,
-		logger: logger,
+		asset:   asset,
+		config:  config,
+		logger:  logger,
+		support: support,
 	}
 }
 
 // Asset returns the app instance's asset.
 func (a *App) Asset() *Asset {
 	return a.asset
+}
+
+// Config returns the app instance's config.
+func (a *App) Config() *Config {
+	return a.config
 }
 
 // Logger returns the app instance's logger.
