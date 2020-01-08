@@ -7,6 +7,7 @@ import (
 type (
 	// App is the framework core that drives the application.
 	App struct {
+		logger *Logger
 	}
 )
 
@@ -18,5 +19,14 @@ func init() {
 
 // NewApp initializes an app instance.
 func NewApp() *App {
-	return &App{}
+	logger := NewLogger()
+
+	return &App{
+		logger: logger,
+	}
+}
+
+// Logger returns the app instance's logger.
+func (a *App) Logger() *Logger {
+	return a.logger
 }
