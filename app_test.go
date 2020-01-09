@@ -24,6 +24,7 @@ func (s *AppSuite) TestNewApp() {
 	s.NotNil(app.Config())
 	s.NotNil(app.I18n())
 	s.NotNil(app.Logger())
+	s.NotNil(app.Server())
 	s.NotNil(app.ViewEngine())
 }
 
