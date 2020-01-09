@@ -48,19 +48,19 @@ func (s *ViewEngineSuite) TestNewViewEngine() {
 }
 
 func (s *ViewEngineSuite) TestSetGlobalFuncs() {
-	originalAssetPath, found := s.viewEngine.LookupGlobal("assetPath")
+	customAssetPath := func() string {
+		return "customAssetPath"
+	}
 
 	s.viewEngine.SetGlobalFuncs(map[string]interface{}{
 		"test": func() string {
 			return "test"
 		},
-		"assetPath": func() string {
-			return "customAssetPath"
-		},
+		"assetPath": customAssetPath,
 	})
 
 	assetPath, found := s.viewEngine.LookupGlobal("assetPath")
-	s.NotEqual(originalAssetPath, assetPath)
+	s.NotEqual(&customAssetPath, &assetPath)
 	s.Equal(true, found)
 
 	_, found = s.viewEngine.LookupGlobal("test")
