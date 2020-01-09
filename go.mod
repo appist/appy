@@ -4,6 +4,8 @@ go 1.13.4
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/CloudyKit/fastprinter v0.0.0-20170127035650-74b38d55f37a // indirect
+	github.com/CloudyKit/jet v2.1.2+incompatible
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/fatih/camelcase v1.0.0
 	github.com/joho/godotenv v1.3.0

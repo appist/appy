@@ -7,11 +7,12 @@ import (
 type (
 	// App is the framework core that drives the application.
 	App struct {
-		asset   *Asset
-		config  *Config
-		i18n    *I18n
-		logger  *Logger
-		support Supporter
+		asset      *Asset
+		config     *Config
+		i18n       *I18n
+		logger     *Logger
+		support    Supporter
+		viewEngine *ViewEngine
 	}
 )
 
@@ -27,13 +28,15 @@ func NewApp(asset *Asset) *App {
 	logger := NewLogger()
 	config := NewConfig(asset, logger, support)
 	i18n := NewI18n(asset, config, logger)
+	viewEngine := NewViewEngine(asset, config, logger)
 
 	return &App{
-		asset:   asset,
-		config:  config,
-		i18n:    i18n,
-		logger:  logger,
-		support: support,
+		asset:      asset,
+		config:     config,
+		i18n:       i18n,
+		logger:     logger,
+		support:    support,
+		viewEngine: viewEngine,
 	}
 }
 
@@ -55,4 +58,9 @@ func (a *App) I18n() *I18n {
 // Logger returns the app instance's logger.
 func (a *App) Logger() *Logger {
 	return a.logger
+}
+
+// ViewEngine returns the app instance's view engine.
+func (a *App) ViewEngine() *ViewEngine {
+	return a.viewEngine
 }
