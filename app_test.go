@@ -11,7 +11,14 @@ type AppSuite struct {
 }
 
 func (s *AppSuite) TestNewApp() {
-	app := appy.NewApp(nil)
+	asset := appy.NewAsset(nil, map[string]string{
+		"docker": "testdata/app/.docker",
+		"config": "testdata/app/configs",
+		"locale": "testdata/app/pkg/locales",
+		"view":   "testdata/app/pkg/views",
+		"web":    "testdata/app/web",
+	})
+	app := appy.NewApp(asset)
 
 	s.NotNil(app.Asset())
 	s.NotNil(app.Config())

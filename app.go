@@ -1,7 +1,6 @@
 package appy
 
 import (
-	"net/http"
 	"os"
 )
 
@@ -23,9 +22,8 @@ func init() {
 }
 
 // NewApp initializes an app instance.
-func NewApp(embedded http.FileSystem) *App {
+func NewApp(asset *Asset) *App {
 	support := &Support{}
-	asset := NewAsset(embedded, nil)
 	logger := NewLogger()
 	config := NewConfig(asset, logger, support)
 	i18n := NewI18n(asset, config, logger)
