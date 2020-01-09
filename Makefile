@@ -11,14 +11,14 @@ codecheck:
 	golint -set_exit_status ./...
 
 down:
-	docker-compose -p appy down --remove-orphans
+	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
 
 install:
 	go get -u golang.org/x/lint/golint
 	go mod tidy
 
 restart:
-	docker-compose -p appy restart
+	docker-compose -p appy -f .docker/docker-compose.yml restart
 
 test:
 	mkdir -p tmp
@@ -28,6 +28,6 @@ testcov:
 	go tool cover -html=tmp/coverage.out
 
 up:
-	docker-compose -p appy up -d
+	docker-compose -p appy -f .docker/docker-compose.yml up -d
 
 .PHONY: bootstrap codecheck down install restart test testcov up
