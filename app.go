@@ -11,6 +11,7 @@ type (
 		config     *Config
 		i18n       *I18n
 		logger     *Logger
+		server     *Server
 		support    Supporter
 		viewEngine *ViewEngine
 	}
@@ -29,12 +30,16 @@ func NewApp(asset *Asset) *App {
 	config := NewConfig(asset, logger, support)
 	i18n := NewI18n(asset, config, logger)
 	viewEngine := NewViewEngine(asset, config, logger)
+	server := NewServer(asset, config, logger, support)
+
+	server.Use(CSRF(config, logger, support))
 
 	return &App{
 		asset:      asset,
 		config:     config,
 		i18n:       i18n,
 		logger:     logger,
+		server:     server,
 		support:    support,
 		viewEngine: viewEngine,
 	}
@@ -58,6 +63,11 @@ func (a *App) I18n() *I18n {
 // Logger returns the app instance's logger.
 func (a *App) Logger() *Logger {
 	return a.logger
+}
+
+// Server returns the app instance's server.
+func (a *App) Server() *Server {
+	return a.server
 }
 
 // ViewEngine returns the app instance's view engine.

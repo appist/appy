@@ -167,6 +167,7 @@ func (c Config) decryptConfig(asset *Asset, masterKey []byte, support Supporter)
 
 	envMap, err := godotenv.Parse(reader)
 	if err != nil {
+		os.Clearenv()
 		return []error{err}
 	}
 
