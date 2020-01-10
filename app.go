@@ -24,7 +24,7 @@ func init() {
 }
 
 // NewApp initializes an app instance.
-func NewApp(asset *Asset) *App {
+func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	support := &Support{}
 	logger := NewLogger()
 	config := NewConfig(asset, logger, support)
@@ -34,6 +34,8 @@ func NewApp(asset *Asset) *App {
 
 	// Setup the default middleware.
 	server.Use(AttachLogger(logger))
+	server.Use(AttachI18n(i18n))
+	server.Use(AttachViewEngine(asset, config, logger, viewFuncs))
 	server.Use(RealIP())
 	server.Use(RequestID())
 	server.Use(RequestLogger(config, logger))

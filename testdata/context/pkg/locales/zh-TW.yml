@@ -1,0 +1,16 @@
+title:
+  test: 測試
+
+body:
+  message:
+    Zero: 嗨, {{.Name}}! 您有{{.Count}}則訊息。
+    One: 嗨, {{.Name}}! 您有{{.Count}}則訊息。
+    Other: 嗨, {{.Name}}! 您有{{.Count}}則訊息。
+
+mailers:
+  user:
+    welcome:
+      subject: 歡迎
+      greet:
+        html: 我是寄信者網頁版。
+        txt: 我是寄信者文字版。

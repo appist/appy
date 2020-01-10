@@ -18,7 +18,7 @@ func (s *AppSuite) TestNewApp() {
 		"view":   "testdata/app/pkg/views",
 		"web":    "testdata/app/web",
 	})
-	app := appy.NewApp(asset)
+	app := appy.NewApp(asset, nil)
 
 	s.NotNil(app.Asset())
 	s.NotNil(app.Config())
