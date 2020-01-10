@@ -41,6 +41,8 @@ func NewApp(asset *Asset) *App {
 	server.Use(HealthCheck(config.HTTPHealthCheckURL))
 	server.Use(CSRF(config, logger, support))
 	server.Use(APIOnlyResponse())
+	server.Use(SessionManager(config))
+	server.Use(Recovery(logger))
 
 	return &App{
 		asset:      asset,

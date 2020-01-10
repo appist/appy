@@ -82,6 +82,16 @@ func (c *Context) RequestID() string {
 	return reqID.(string)
 }
 
+// Session returns the session in the request context.
+func (c *Context) Session() Sessioner {
+	s, exists := c.Get(sessionManagerCtxKey.String())
+	if !exists {
+		return nil
+	}
+
+	return s.(Sessioner)
+}
+
 // DefaultHTML uses the gin's default HTML method which doesn't use Jet template engine and is only meant for internal
 // use.
 func (c *Context) defaultHTML(code int, name string, obj interface{}) {
