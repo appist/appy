@@ -15,6 +15,7 @@ require (
 	github.com/gorilla/websocket v1.4.1
 	github.com/joho/godotenv v1.3.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
+	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.2.1
 	go.uber.org/zap v1.13.0

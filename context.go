@@ -72,6 +72,16 @@ func (c *Context) Logger() *Logger {
 	return logger.(*Logger)
 }
 
+// RequestID returns the unique request ID.
+func (c *Context) RequestID() string {
+	reqID, exists := c.Get(requestIDCtxKey.String())
+	if !exists {
+		return ""
+	}
+
+	return reqID.(string)
+}
+
 // DefaultHTML uses the gin's default HTML method which doesn't use Jet template engine and is only meant for internal
 // use.
 func (c *Context) defaultHTML(code int, name string, obj interface{}) {
