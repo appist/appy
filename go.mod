@@ -20,5 +20,5 @@ require (
 	github.com/vektah/gqlparser v1.2.1
 	go.uber.org/zap v1.13.0
 	golang.org/x/text v0.3.2
-	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v2 v2.2.7
 )
