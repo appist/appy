@@ -62,6 +62,16 @@ func (c *Context) IsAPIOnly() bool {
 	return false
 }
 
+// Logger returns the request context's logger.
+func (c *Context) Logger() *Logger {
+	logger, exists := c.Get(loggerCtxKey.String())
+	if !exists {
+		return nil
+	}
+
+	return logger.(*Logger)
+}
+
 // DefaultHTML uses the gin's default HTML method which doesn't use Jet template engine and is only meant for internal
 // use.
 func (c *Context) defaultHTML(code int, name string, obj interface{}) {

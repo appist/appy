@@ -31,7 +31,7 @@ func NewApp(asset *Asset) *App {
 	i18n := NewI18n(asset, config, logger)
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
-
+	server.Use(AttachLogger(logger))
 	server.Use(CSRF(config, logger, support))
 
 	return &App{
