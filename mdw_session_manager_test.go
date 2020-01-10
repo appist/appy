@@ -139,6 +139,6 @@ func (s *SessionManagerSuite) TestCustomSessionKey() {
 	s.Contains(session.Key(), "mysession:")
 }
 
-func TestSessionManager(t *testing.T) {
+func TestSessionManagerSuite(t *testing.T) {
 	RunTestSuite(t, new(SessionManagerSuite))
 }

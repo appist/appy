@@ -295,6 +295,6 @@ func (s *CSRFSuite) TestCSRFMiddleware() {
 	s.NotNil(csrfSecureCookie)
 }
 
-func TestCSRF(t *testing.T) {
+func TestCSRFSuite(t *testing.T) {
 	RunTestSuite(t, new(CSRFSuite))
 }

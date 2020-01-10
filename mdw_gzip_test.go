@@ -240,6 +240,6 @@ func (s *GzipSuite) TestGzipDecompressWithIncorrectData() {
 	s.Equal(http.StatusBadRequest, w.Code)
 }
 
-func TestGzip(t *testing.T) {
+func TestGzipSuite(t *testing.T) {
 	RunTestSuite(t, new(GzipSuite))
 }

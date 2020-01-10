@@ -31,6 +31,6 @@ func (s *AttachLoggerSuite) TestAttachLogger() {
 	s.Contains("testing", s.buffer.String())
 }
 
-func TestAttachLogger(t *testing.T) {
+func TestAttachLoggerSuite(t *testing.T) {
 	RunTestSuite(t, new(AttachLoggerSuite))
 }

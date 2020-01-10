@@ -97,6 +97,6 @@ func (s *RecoverySuite) TestBrokenPipeErrorHandling() {
 	s.Contains(s.recorder.Body.String(), "broken pipe")
 }
 
-func TestRecovery(t *testing.T) {
+func TestRecoverySuite(t *testing.T) {
 	RunTestSuite(t, new(RecoverySuite))
 }

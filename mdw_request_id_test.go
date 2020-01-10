@@ -25,6 +25,6 @@ func (s *RequestIDSuite) TestRequestID() {
 	s.NotEmpty(c.RequestID())
 }
 
-func TestRequestID(t *testing.T) {
+func TestRequestIDSuite(t *testing.T) {
 	RunTestSuite(t, new(RequestIDSuite))
 }

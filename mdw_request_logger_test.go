@@ -63,6 +63,6 @@ func (s *RequestLoggerSuite) TestRequestLogger() {
 	s.Contains(s.buffer.String(), "[HTTP] 1234 GET 'https://localhost HTTP/2.0' from 127.0.0.1 - 200")
 }
 
-func TestRequestLogger(t *testing.T) {
+func TestRequestLoggerSuite(t *testing.T) {
 	RunTestSuite(t, new(RequestLoggerSuite))
 }

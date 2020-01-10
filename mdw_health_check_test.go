@@ -45,6 +45,6 @@ func (s *HealthCheckSuite) TestCorrectResponseIfRequestPathDoesNotMatch() {
 	s.NotEqual("text/plain; charset=utf-8", c.Writer.Header().Get("Content-Type"))
 }
 
-func TestHealthCheck(t *testing.T) {
+func TestHealthCheckSuite(t *testing.T) {
 	RunTestSuite(t, new(HealthCheckSuite))
 }

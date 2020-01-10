@@ -35,6 +35,6 @@ func (s *RealIPSuite) TestRemoteAddressNotNilIfXRealIPIsSet() {
 	s.Equal("localhost", c.Request.RemoteAddr)
 }
 
-func TestRealIP(t *testing.T) {
+func TestRealIPSuite(t *testing.T) {
 	RunTestSuite(t, new(RealIPSuite))
 }
