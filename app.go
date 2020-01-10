@@ -37,6 +37,7 @@ func NewApp(asset *Asset) *App {
 	server.Use(RealIP())
 	server.Use(RequestID())
 	server.Use(RequestLogger(config, logger))
+	server.Use(Gzip(config))
 	server.Use(HealthCheck(config.HTTPHealthCheckURL))
 	server.Use(CSRF(config, logger, support))
 	server.Use(APIOnlyResponse())
