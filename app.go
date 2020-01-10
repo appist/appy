@@ -31,6 +31,8 @@ func NewApp(asset *Asset) *App {
 	i18n := NewI18n(asset, config, logger)
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
+
+	// Setup the default middleware.
 	server.Use(AttachLogger(logger))
 	server.Use(RealIP())
 	server.Use(RequestID())
