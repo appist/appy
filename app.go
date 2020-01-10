@@ -32,6 +32,7 @@ func NewApp(asset *Asset) *App {
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
 	server.Use(AttachLogger(logger))
+	server.Use(RealIP())
 	server.Use(RequestID())
 	server.Use(RequestLogger(config, logger))
 	server.Use(CSRF(config, logger, support))
