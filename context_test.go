@@ -14,6 +14,7 @@ type ContextSuite struct {
 	config     *Config
 	i18n       *I18n
 	logger     *Logger
+	server     *Server
 	support    Supporter
 	viewEngine *ViewEngine
 }
@@ -36,6 +37,7 @@ func (s *ContextSuite) SetupTest() {
 	s.config = NewConfig(s.asset, s.logger, s.support)
 	s.i18n = NewI18n(s.asset, s.config, s.logger)
 	s.viewEngine = NewViewEngine(s.asset, s.config, s.logger)
+	s.server = NewServer(s.asset, s.config, s.logger, s.support)
 }
 
 func (s *ContextSuite) TearDownTest() {
@@ -67,6 +69,29 @@ func (s *ContextSuite) TestI18n() {
 	s.Equal("嗨, tester! 您有0則訊息。", c.T("body.message", 0, H{"Name": "tester"}, "zh-TW"))
 	s.Equal("嗨, tester! 您有1則訊息。", c.T("body.message", 1, H{"Name": "tester"}, "zh-TW"))
 	s.Equal("嗨, tester! 您有2則訊息。", c.T("body.message", 2, H{"Name": "tester"}, "zh-TW"))
+}
+
+func (s *ContextSuite) TestDeliverMail() {
+	s.config.AppyEnv = "test"
+	mailer := NewMailer(s.asset, s.config, s.i18n, s.logger, s.server, nil)
+	c, _ := NewTestContext(httptest.NewRecorder())
+	c.Set(i18nCtxKey.String(), s.i18n)
+	c.Set(mailerCtxKey.String(), mailer)
+
+	mail := Mail{
+		From:    "support@appist.io",
+		To:      []string{"jane@appist.io"},
+		ReplyTo: []string{"john@appist.io", "mary@appist.io"},
+		Cc:      []string{"elaine@appist.io", "kerry@appist.io"},
+		Bcc:     []string{"joel@appist.io", "daniel@appist.io"},
+	}
+	mail.Subject = "mailers.user.verifyAccount.subject"
+	mail.Template = "mailers/user/verify_account"
+	mail.TemplateData = H{
+		"username": "cayter",
+	}
+	c.DeliverMail(mail)
+	s.Equal(1, len(mailer.Deliveries()))
 }
 
 func (s *ContextSuite) TestHTML() {

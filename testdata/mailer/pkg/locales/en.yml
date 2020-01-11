@@ -1,0 +1,6 @@
+mailers:
+  user:
+    verifyAccount:
+      subject: Verify Your Account
+      welcome: Welcome
+      test: Test

@@ -56,6 +56,17 @@ func (c *Context) CSRFToken() string {
 	return ""
 }
 
+// DeliverMail sends out the email via SMTP immediately.
+func (c *Context) DeliverMail(mail Mail) error {
+	mailer, _ := c.Get(mailerCtxKey.String())
+
+	if mail.Locale == "" {
+		mail.Locale = c.Locale()
+	}
+
+	return mailer.(*Mailer).Deliver(mail)
+}
+
 // HTML renders the HTTP template with the HTTP code and the "text/html" Content-Type header.
 func (c *Context) HTML(code int, name string, obj interface{}) {
 	ve, _ := c.Get(viewEngineCtxKey.String())

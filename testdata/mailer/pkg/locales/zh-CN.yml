@@ -1,0 +1,6 @@
+mailers:
+  user:
+    verifyAccount:
+      subject: 验证您的账号
+      welcome: 欢迎
+      test: 测试

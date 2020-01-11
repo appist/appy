@@ -1,0 +1,6 @@
+{{extends "../../layouts/mailer.html"}} {{block body()}}
+<div>
+  {{t("mailers.user.verifyAccount.welcome")}} {{.missing}}!
+  {{t("mailers.user.verifyAccount.test", "zh-CN")}}
+</div>
+{{end}}

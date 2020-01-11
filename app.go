@@ -11,6 +11,7 @@ type (
 		config     *Config
 		i18n       *I18n
 		logger     *Logger
+		mailer     *Mailer
 		server     *Server
 		support    Supporter
 		viewEngine *ViewEngine
@@ -31,10 +32,12 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	i18n := NewI18n(asset, config, logger)
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
+	mailer := NewMailer(asset, config, i18n, logger, server, viewFuncs)
 
 	// Setup the default middleware.
 	server.Use(AttachLogger(logger))
 	server.Use(AttachI18n(i18n))
+	server.Use(AttachMailer(mailer))
 	server.Use(AttachViewEngine(asset, config, logger, viewFuncs))
 	server.Use(RealIP())
 	server.Use(RequestID())
@@ -53,6 +56,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 		config:     config,
 		i18n:       i18n,
 		logger:     logger,
+		mailer:     mailer,
 		server:     server,
 		support:    support,
 		viewEngine: viewEngine,
