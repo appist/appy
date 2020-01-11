@@ -41,7 +41,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	server.Use(RequestLogger(config, logger))
 	server.Use(Gzip(config))
 	server.Use(HealthCheck(config.HTTPHealthCheckURL))
-	server.Use(Prerender(config, logger, &Crawl{}))
+	server.Use(Prerender(config, logger))
 	server.Use(CSRF(config, logger, support))
 	server.Use(Secure(config))
 	server.Use(APIOnlyResponse())

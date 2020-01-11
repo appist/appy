@@ -12,13 +12,14 @@ import (
 )
 
 var (
+	crawlerCtxKey   = ContextKey("crawler")
 	staticExtRegex  = regexp.MustCompile(`\.(bmp|css|csv|eot|exif|gif|html|ico|ini|jpg|jpeg|js|json|mp4|otf|pdf|png|svg|webp|woff|woff2|tiff|ttf|toml|txt|xml|xlsx|yml|yaml)$`)
 	userAgentHeader = http.CanonicalHeaderKey("user-agent")
 	xPrerender      = http.CanonicalHeaderKey("x-prerender")
 )
 
 // Prerender dynamically renders client-side rendered SPA for SEO using Chrome.
-func Prerender(config *Config, logger *Logger, crawler Crawler) HandlerFunc {
+func Prerender(config *Config, logger *Logger) HandlerFunc {
 	scheme := "http"
 	host := config.HTTPHost
 	port := config.HTTPPort
@@ -36,7 +37,12 @@ func Prerender(config *Config, logger *Logger, crawler Crawler) HandlerFunc {
 			url := fmt.Sprintf("%s://%s:%s%s", scheme, host, port, request.URL)
 			logger.Infof("[HTTP][PRERENDER] SEO bot \"%s\" crawling \"%s\"...", userAgent, url)
 
-			data, err := crawler.Perform(url)
+			crawler, exists := c.Get(crawlerCtxKey.String())
+			if !exists {
+				crawler = &Crawl{}
+			}
+
+			data, err := crawler.(Crawler).Perform(url)
 			if err != nil {
 				logger.Error(err)
 				c.AbortWithError(http.StatusInternalServerError, err)

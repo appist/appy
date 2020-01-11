@@ -15,7 +15,6 @@ type PrerenderSuite struct {
 	TestSuite
 	asset    *Asset
 	config   *Config
-	crawler  Crawler
 	logger   *Logger
 	buffer   *bytes.Buffer
 	writer   *bufio.Writer
@@ -30,7 +29,6 @@ func (s *PrerenderSuite) SetupTest() {
 	s.logger, s.buffer, s.writer = NewFakeLogger()
 	s.asset = NewAsset(http.Dir("testdata"), nil)
 	s.config = NewConfig(s.asset, s.logger, &Support{})
-	s.crawler = &Crawl{}
 	s.recorder = httptest.NewRecorder()
 }
 
@@ -49,7 +47,8 @@ func (s *PrerenderSuite) TestRequestWithNonSEOBot() {
 			Path: "/",
 		},
 	}
-	Prerender(s.config, s.logger, s.crawler)(c)
+	c.Set(crawlerCtxKey.String(), &Crawl{})
+	Prerender(s.config, s.logger)(c)
 
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("", c.Writer.Header().Get(xPrerender))
@@ -66,13 +65,18 @@ func (s *PrerenderSuite) TestRequestHTTPHostWithSEOBot() {
 		},
 	}
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
-	Prerender(s.config, s.logger, &Crawl{})(c)
+	Prerender(s.config, s.logger)(c)
+	s.Equal(http.StatusOK, c.Writer.Status())
+	s.Equal("1", c.Writer.Header().Get(xPrerender))
 
+	c.Set(crawlerCtxKey.String(), &Crawl{})
+	Prerender(s.config, s.logger)(c)
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
 }
 
 func (s *PrerenderSuite) TestRequestHTTPSHostWithSEOBot() {
+	s.config.HTTPSSLEnabled = true
 	c, _ := NewTestContext(s.recorder)
 	c.Request = &http.Request{
 		Header: map[string][]string{},
@@ -83,17 +87,19 @@ func (s *PrerenderSuite) TestRequestHTTPSHostWithSEOBot() {
 		},
 	}
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
+	Prerender(s.config, s.logger)(c)
+	s.Equal(http.StatusOK, c.Writer.Status())
+	s.Equal("1", c.Writer.Header().Get(xPrerender))
 
-	s.config.HTTPSSLEnabled = true
-	Prerender(s.config, s.logger, s.crawler)(c)
-
+	c.Set(crawlerCtxKey.String(), &Crawl{})
+	Prerender(s.config, s.logger)(c)
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
 }
 
 type mockCrawl struct{}
 
-func (m *mockCrawl) Perform(url string) ([]byte, error) {
+func (m mockCrawl) Perform(url string) ([]byte, error) {
 	return nil, errors.New("crawl failed")
 }
 
@@ -108,7 +114,8 @@ func (s *PrerenderSuite) TestRequestFailedWithSEOBot() {
 		},
 	}
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
-	Prerender(s.config, s.logger, &mockCrawl{})(c)
+	c.Set(crawlerCtxKey.String(), &mockCrawl{})
+	Prerender(s.config, s.logger)(c)
 
 	s.Equal(500, c.Writer.Status())
 	s.Equal("", c.Writer.Header().Get(xPrerender))
