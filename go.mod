@@ -8,6 +8,8 @@ require (
 	github.com/CloudyKit/fastprinter v0.0.0-20170127035650-74b38d55f37a // indirect
 	github.com/CloudyKit/jet v2.1.2+incompatible
 	github.com/caarlos0/env v3.5.0+incompatible
+	github.com/chromedp/cdproto v0.0.0-20191114225735-6626966fbae4
+	github.com/chromedp/chromedp v0.5.2
 	github.com/fatih/camelcase v1.0.0
 	github.com/gin-contrib/multitemplate v0.0.0-20191128031210-95dee0dedf35
 	github.com/gin-contrib/sessions v0.0.3
