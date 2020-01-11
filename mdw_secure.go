@@ -38,14 +38,14 @@ type (
 		// Default is 0, which would NOT include the header.
 		STSSeconds int64
 
-		// If STSIncludeSubdomains is set to true, the `includeSubdomains` will be appended to the 
+		// If STSIncludeSubdomains is set to true, the `includeSubdomains` will be appended to the
 		// Strict-Transport-Security header. Default is false.
 		STSIncludeSubdomains bool
 
 		// If FrameDeny is set to true, adds the X-Frame-Options header with the value of `DENY`. Default is false.
 		FrameDeny bool
 
-		// CustomFrameOptionsValue allows the X-Frame-Options header value to be set with a custom value. This 
+		// CustomFrameOptionsValue allows the X-Frame-Options header value to be set with a custom value. This
 		// overrides the FrameDeny option.
 		CustomFrameOptionsValue string
 
@@ -56,11 +56,11 @@ type (
 		// If BrowserXssFilter is true, adds the X-XSS-Protection header with the value `1; mode=block`. Default is false.
 		BrowserXSSFilter bool
 
-		// ContentSecurityPolicy allows the Content-Security-Policy header value to be set with a custom value. 
+		// ContentSecurityPolicy allows the Content-Security-Policy header value to be set with a custom value.
 		// Default is "".
 		ContentSecurityPolicy string
 
-		// HTTP header "Referrer-Policy" governs which referrer information, sent in the Referrer header, should be 
+		// HTTP header "Referrer-Policy" governs which referrer information, sent in the Referrer header, should be
 		// included with requests made.
 		ReferrerPolicy string
 
@@ -71,7 +71,7 @@ type (
 		IENoOpen bool
 
 		// If the request is insecure, treat it as secure if any of the headers in this dict are set to their corresponding
-		// value. This is useful when your app is running behind a secure proxy that forwards requests to your app over 
+		// value. This is useful when your app is running behind a secure proxy that forwards requests to your app over
 		// http (such as on Heroku).
 		SSLProxyHeaders map[string]string
 	}
