@@ -58,6 +58,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newRoutesCommand(config, logger, server))
 	command.AddCommand(newSecretCommand(logger))
 	command.AddCommand(newSSLSetupCommand(logger, server))
+	command.AddCommand(newSSLTeardownCommand(logger, server))
 
 	return &App{
 		asset:      asset,
