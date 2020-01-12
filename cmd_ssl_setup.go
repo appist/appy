@@ -13,8 +13,7 @@ func newSSLSetupCommand(logger *Logger, server *Server) *Command {
 		Short: "Generate and install the locally trusted SSL certs using `mkcert`",
 		Run: func(cmd *Command, args []string) {
 			if len(server.Config().Errors()) > 0 {
-				logger.Error(server.Config().Errors()[0])
-				os.Exit(-1)
+				logger.Fatal(server.Config().Errors()[0])
 			}
 
 			_, err := exec.LookPath("mkcert")

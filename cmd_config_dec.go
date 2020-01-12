@@ -5,7 +5,6 @@ package appy
 import (
 	"encoding/hex"
 	"fmt"
-	"os"
 )
 
 func newConfigDecCommand(config *Config, logger *Logger, support Supporter) *Command {
@@ -15,8 +14,7 @@ func newConfigDecCommand(config *Config, logger *Logger, support Supporter) *Com
 		Args:  ExactArgs(1),
 		Run: func(cmd *Command, args []string) {
 			if len(config.Errors()) > 0 {
-				logger.Error(config.Errors()[0])
-				os.Exit(-1)
+				logger.Fatal(config.Errors()[0])
 			}
 
 			masterKey := config.MasterKey()
