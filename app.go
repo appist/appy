@@ -1,6 +1,7 @@
 package appy
 
 import (
+	"net/http"
 	"os"
 )
 
@@ -8,6 +9,7 @@ type (
 	// App is the framework core that drives the application.
 	App struct {
 		asset      *Asset
+		command    *Command
 		config     *Config
 		i18n       *I18n
 		logger     *Logger
@@ -25,14 +27,16 @@ func init() {
 }
 
 // NewApp initializes an app instance.
-func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
+func NewApp(embedded http.FileSystem, viewFuncs map[string]interface{}) *App {
 	support := &Support{}
 	logger := NewLogger()
+	asset := NewAsset(embedded, nil)
 	config := NewConfig(asset, logger, support)
 	i18n := NewI18n(asset, config, logger)
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
 	mailer := NewMailer(asset, config, i18n, logger, server, viewFuncs)
+	command := NewCommand(config)
 
 	// Setup the default middleware.
 	server.Use(AttachLogger(logger))
@@ -53,6 +57,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 
 	return &App{
 		asset:      asset,
+		command:    command,
 		config:     config,
 		i18n:       i18n,
 		logger:     logger,
@@ -66,6 +71,11 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 // Asset returns the app instance's asset.
 func (a *App) Asset() *Asset {
 	return a.asset
+}
+
+// Command returns the app instance's root command.
+func (a *App) Command() *Command {
+	return a.command
 }
 
 // Config returns the app instance's config.
@@ -83,12 +93,30 @@ func (a *App) Logger() *Logger {
 	return a.logger
 }
 
+// Mailer returns the app instance's mailer.
+func (a *App) Mailer() *Mailer {
+	return a.mailer
+}
+
 // Server returns the app instance's server.
 func (a *App) Server() *Server {
 	return a.server
 }
 
+// Support returns the app instance's support.
+func (a *App) Support() Supporter {
+	return a.support
+}
+
 // ViewEngine returns the app instance's view engine.
 func (a *App) ViewEngine() *ViewEngine {
 	return a.viewEngine
+}
+
+// Run starts running the app instance.
+func (a *App) Run() error {
+	a.server.ServeSPA("/", a.Asset().embedded)
+	a.server.ServeNoRoute()
+
+	return a.command.Execute()
 }

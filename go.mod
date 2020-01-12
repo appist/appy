@@ -23,6 +23,7 @@ require (
 	github.com/jordan-wright/email v0.0.0-20190819015918-041e0cec78b0
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
 	github.com/satori/go.uuid v1.2.0
+	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.2.1
 	go.uber.org/zap v1.13.0
