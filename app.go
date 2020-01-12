@@ -56,6 +56,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 
 	command := NewRootCommand()
 	command.AddCommand(newRoutesCommand(config, logger, server))
+	command.AddCommand(newSecretCommand(logger))
 
 	return &App{
 		asset:      asset,
