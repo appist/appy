@@ -3,7 +3,10 @@
 package appy
 
 import (
+	"bytes"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 
 	"github.com/spf13/cobra"
@@ -39,17 +42,78 @@ var (
 
 // NewRootCommand initializes Command instance.
 func NewRootCommand() *Command {
-	commandName := path.Base(os.Args[0])
-	if commandName == "main" {
-		wd, _ := os.Getwd()
-		commandName = path.Base(wd)
-	}
-
-	command := &Command{
-		Use:     commandName,
+	return &Command{
+		Use:     getCommandName(),
 		Short:   DESCRIPTION,
 		Version: VERSION,
 	}
+}
 
-	return command
+func getCommandName() string {
+	name := path.Base(os.Args[0])
+	if name == "main" {
+		wd, _ := os.Getwd()
+		name = path.Base(wd)
+	}
+
+	return name
+}
+
+func checkDocker() error {
+	binaries := []string{"docker", "docker-compose"}
+
+	for _, binary := range binaries {
+		_, err := exec.LookPath(binary)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func runDockerCompose(action string, asset *Asset) error {
+	var (
+		data []byte
+		err  error
+	)
+	dcPath := asset.Layout()["docker"] + "/docker-compose.yml"
+
+	if IsDebugBuild() {
+		data, err = ioutil.ReadFile(dcPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		file, err := asset.Open("/" + dcPath)
+		if err != nil {
+			return err
+		}
+
+		data, err = ioutil.ReadAll(file)
+		if err != nil {
+			return err
+		}
+	}
+
+	var cmd *exec.Cmd
+	clusterName := getCommandName()
+	switch action {
+	case "down":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", clusterName, action, "--remove-orphans")
+	case "up":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", clusterName, action, "-d")
+	case "restart":
+		cmd = exec.Command("docker-compose", "-f", "-", "-p", clusterName, action)
+	}
+
+	cmd.Stdin = bytes.NewBuffer(data)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
