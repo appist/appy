@@ -55,6 +55,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	server.Use(Recovery(logger))
 
 	command := NewRootCommand()
+	command.AddCommand(newConfigEncCommand(config, logger, support))
 	command.AddCommand(newMiddlewareCommand(config, logger, server))
 	command.AddCommand(newRoutesCommand(config, logger, server))
 	command.AddCommand(newSecretCommand(logger))
