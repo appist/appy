@@ -219,7 +219,11 @@ func (s *Server) SetupGraphQL(path string, es graphql.ExecutableSchema, exts []g
 		MaxUploadSize: s.Config().GQLMultipartMaxUploadSize,
 	})
 
-	gqlServer.SetQueryCache(gqlLRU.New(s.Config().GQLQueryCacheSize))
+	queryCacheSize := 1000
+	if s.Config().GQLQueryCacheSize > 0 {
+		queryCacheSize = s.Config().GQLQueryCacheSize
+	}
+	gqlServer.SetQueryCache(gqlLRU.New(queryCacheSize))
 	gqlServer.SetErrorPresenter(func(c context.Context, err error) *gqlerror.Error {
 		// Refer to https://gqlgen.com/reference/errors/#the-error-presenter for custom error handling.
 		return graphql.DefaultErrorPresenter(c, err)
@@ -230,8 +234,13 @@ func (s *Server) SetupGraphQL(path string, es graphql.ExecutableSchema, exts []g
 	})
 
 	gqlServer.Use(extension.Introspection{})
+
+	APQCacheSize := 100
+	if s.Config().GQLAPQCacheSize > 0 {
+		APQCacheSize = s.Config().GQLAPQCacheSize
+	}
 	gqlServer.Use(extension.AutomaticPersistedQuery{
-		Cache: gqlLRU.New(s.Config().GQLAPQCacheSize),
+		Cache: gqlLRU.New(APQCacheSize),
 	})
 	gqlServer.Use(extension.FixedComplexityLimit(s.Config().GQLComplexityLimit))
 	gqlServer.Use(apollotracing.Tracer{})
