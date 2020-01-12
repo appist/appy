@@ -115,5 +115,9 @@ func (c *Crawl) Perform(url string) ([]byte, error) {
 		}),
 	)
 
-	return []byte(data), err
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(data), nil
 }
