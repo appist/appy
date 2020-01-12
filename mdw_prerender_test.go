@@ -54,7 +54,7 @@ func (s *PrerenderSuite) TestRequestWithNonSEOBot() {
 	s.Equal("", c.Writer.Header().Get(xPrerender))
 }
 
-func (s *PrerenderSuite) TestRequestHTTPHostWithSEOBot() {
+func (s *PrerenderSuite) TestRequestWithSEOBot() {
 	c, _ := NewTestContext(s.recorder)
 	c.Request = &http.Request{
 		Header: map[string][]string{},
@@ -73,11 +73,9 @@ func (s *PrerenderSuite) TestRequestHTTPHostWithSEOBot() {
 	Prerender(s.config, s.logger)(c)
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
-}
 
-func (s *PrerenderSuite) TestRequestHTTPSHostWithSEOBot() {
 	s.config.HTTPSSLEnabled = true
-	c, _ := NewTestContext(s.recorder)
+	c, _ = NewTestContext(s.recorder)
 	c.Request = &http.Request{
 		Header: map[string][]string{},
 		Host:   "localhost",
