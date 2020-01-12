@@ -21,11 +21,15 @@ func (s *AppSuite) TestNewApp() {
 	app := appy.NewApp(asset, nil)
 
 	s.NotNil(app.Asset())
+	s.NotNil(app.Command())
 	s.NotNil(app.Config())
 	s.NotNil(app.I18n())
 	s.NotNil(app.Logger())
+	s.NotNil(app.Mailer())
 	s.NotNil(app.Server())
+	s.NotNil(app.Support())
 	s.NotNil(app.ViewEngine())
+	s.NoError(app.Run())
 }
 
 func TestAppSuite(t *testing.T) {

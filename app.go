@@ -1,7 +1,6 @@
 package appy
 
 import (
-	"net/http"
 	"os"
 )
 
@@ -27,10 +26,9 @@ func init() {
 }
 
 // NewApp initializes an app instance.
-func NewApp(embedded http.FileSystem, viewFuncs map[string]interface{}) *App {
+func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	support := &Support{}
 	logger := NewLogger()
-	asset := NewAsset(embedded, nil)
 	config := NewConfig(asset, logger, support)
 	i18n := NewI18n(asset, config, logger)
 	viewEngine := NewViewEngine(asset, config, logger)
