@@ -66,6 +66,10 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newSSLSetupCommand(logger, server))
 	command.AddCommand(newSSLTeardownCommand(logger, server))
 
+	if IsReleaseBuild() {
+		command.AddCommand(newServeCommand(logger, server))
+	}
+
 	return &App{
 		asset:      asset,
 		command:    command,
