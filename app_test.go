@@ -1,3 +1,5 @@
+//+build integration
+
 package appy_test
 
 import (

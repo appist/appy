@@ -22,7 +22,7 @@ restart:
 
 test:
 	mkdir -p tmp
-	go test -covermode=atomic -coverprofile=tmp/coverage.out -race -failfast ./...
+	go test -covermode=atomic -coverprofile=tmp/coverage.out -tags=test -race -failfast ./...
 
 testcov:
 	go tool cover -html=tmp/coverage.out

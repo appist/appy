@@ -1,3 +1,5 @@
+//+build !test
+
 package appy
 
 import (
@@ -34,7 +36,6 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
 	mailer := NewMailer(asset, config, i18n, logger, server, viewFuncs)
-	command := NewCommand(config)
 
 	// Setup the default middleware.
 	server.Use(AttachLogger(logger))
@@ -52,6 +53,9 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	server.Use(APIOnlyResponse())
 	server.Use(SessionManager(config))
 	server.Use(Recovery(logger))
+
+	command := NewRootCommand()
+	command.AddCommand(newRoutesCommand(config, logger, server))
 
 	return &App{
 		asset:      asset,

@@ -1,3 +1,5 @@
+//+build !test
+
 package appy
 
 import (
@@ -8,13 +10,10 @@ import (
 )
 
 // Command is used to build the command line interface.
-type Command struct {
-	*cobra.Command
-	config *Config
-}
+type Command = cobra.Command
 
-// NewCommand initializes Command instance.
-func NewCommand(config *Config) *Command {
+// NewRootCommand initializes Command instance.
+func NewRootCommand() *Command {
 	commandName := path.Base(os.Args[0])
 	if commandName == "main" {
 		wd, _ := os.Getwd()
@@ -22,12 +21,10 @@ func NewCommand(config *Config) *Command {
 	}
 
 	command := &Command{
-		&cobra.Command{},
-		config,
+		Use:     commandName,
+		Short:   DESCRIPTION,
+		Version: VERSION,
 	}
-	command.Use = commandName
-	command.Short = DESCRIPTION
-	command.Version = VERSION
 
 	return command
 }

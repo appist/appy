@@ -7,6 +7,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/CloudyKit/fastprinter v0.0.0-20170127035650-74b38d55f37a // indirect
 	github.com/CloudyKit/jet v2.1.2+incompatible
+	github.com/bndr/gotabulate v1.1.2
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/chromedp/cdproto v0.0.0-20191114225735-6626966fbae4
 	github.com/chromedp/chromedp v0.5.2
