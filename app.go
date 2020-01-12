@@ -63,11 +63,12 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newMiddlewareCommand(config, logger, server))
 	command.AddCommand(newRoutesCommand(config, logger, server))
 	command.AddCommand(newSecretCommand(logger))
+	command.AddCommand(newServeCommand(logger, server))
 	command.AddCommand(newSSLSetupCommand(logger, server))
 	command.AddCommand(newSSLTeardownCommand(logger, server))
 
-	if IsReleaseBuild() {
-		command.AddCommand(newServeCommand(logger, server))
+	if IsDebugBuild() {
+		command.AddCommand(newStartCommand(logger, server))
 	}
 
 	return &App{
