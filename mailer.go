@@ -54,10 +54,6 @@ func NewMailer(asset *Asset, config *Config, i18n *I18n, logger *Logger, server 
 		viewEngine: ve,
 	}
 
-	if IsDebugBuild() {
-		mailer.setupPreview()
-	}
-
 	return mailer
 }
 
@@ -403,7 +399,12 @@ func (m *Mailer) previewTplLower() string {
 `
 }
 
-func (m *Mailer) setupPreview() {
+// SetupPreview sets up the mailer preview for debug build.
+func (m *Mailer) SetupPreview() {
+	if IsReleaseBuild() {
+		return
+	}
+
 	m.server.HTMLRenderer().AddFromString("mailer/preview", m.previewTpl())
 
 	// Serve the preview listing page.

@@ -1,3 +1,6 @@
+benchmark:
+	go test -run=NONE -bench=Benchmark -tags=benchmark -failfast ./...
+
 bootstrap:
 	asdf plugin-add golang || true
 	asdf plugin-add nodejs || true
@@ -30,4 +33,4 @@ testcov:
 up:
 	docker-compose -p appy -f .docker/docker-compose.yml up -d
 
-.PHONY: bootstrap codecheck down install restart test testcov up
+.PHONY: benchmark bootstrap codecheck down install restart test testcov up

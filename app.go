@@ -131,6 +131,7 @@ func (a *App) ViewEngine() *ViewEngine {
 
 // Run starts running the app instance.
 func (a *App) Run() error {
+	a.mailer.SetupPreview()
 	a.server.ServeSPA("/", a.Asset().embedded)
 	a.server.ServeNoRoute()
 

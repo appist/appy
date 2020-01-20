@@ -49,6 +49,8 @@ func (s *MailerSuite) SetupTest() {
 
 func (s *MailerSuite) TestNewMailerWithDebugBuild() {
 	mailer := appy.NewMailer(s.asset, s.config, s.i18n, s.logger, s.server, nil)
+	mailer.SetupPreview()
+
 	mail := s.previewMail
 	mail.Subject = "mailers.user.verifyAccount.subject"
 	mail.Template = "mailers/user/verify_account"
