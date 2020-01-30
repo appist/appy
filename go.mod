@@ -11,6 +11,7 @@ require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/chromedp/cdproto v0.0.0-20200116234248-4da64dd111ac
 	github.com/chromedp/chromedp v0.5.3
+	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/camelcase v1.0.0
 	github.com/gin-contrib/multitemplate v0.0.0-20191128031210-95dee0dedf35
 	github.com/gin-contrib/sessions v0.0.3
@@ -23,8 +24,10 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/jordan-wright/email v0.0.0-20190819015918-041e0cec78b0
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
+	github.com/otiai10/copy v1.0.2
 	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0
+	github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.2.1
