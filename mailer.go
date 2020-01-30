@@ -418,12 +418,16 @@ func (m *Mailer) SetupPreview() {
 		}
 
 		locale := c.DefaultQuery("locale", m.config.I18nDefaultLocale)
-		preview := m.Previews()[name]
-		preview.Locale = locale
+		preview := Mail{}
 
-		subject := m.i18n.T(preview.Subject, preview.Locale)
-		if subject != "" {
-			preview.Subject = subject
+		if name != "" {
+			preview = m.Previews()[name]
+			preview.Locale = locale
+
+			subject := m.i18n.T(preview.Subject, preview.Locale)
+			if subject != "" {
+				preview.Subject = subject
+			}
 		}
 
 		liveReloadTpl := ""
