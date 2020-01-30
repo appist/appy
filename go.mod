@@ -23,7 +23,11 @@ require (
 	github.com/gorilla/websocket v1.4.1
 	github.com/joho/godotenv v1.3.0
 	github.com/jordan-wright/email v0.0.0-20190819015918-041e0cec78b0
+	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/mattn/go-runewidth v0.0.2 // indirect
+	github.com/mum4k/termdash v0.10.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
+	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/otiai10/copy v1.0.2
 	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0

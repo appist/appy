@@ -5,6 +5,7 @@ package appy
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -20,17 +21,25 @@ import (
 	"github.com/99designs/gqlgen/api"
 	gqlgenCfg "github.com/99designs/gqlgen/codegen/config"
 	"github.com/gorilla/websocket"
+	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/container"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/terminal/termbox"
+	"github.com/mum4k/termdash/terminal/terminalapi"
+	"github.com/mum4k/termdash/widgets/text"
 	"github.com/radovskyb/watcher"
 	"go.uber.org/zap"
 )
 
 var (
-	apiServeCmd                         *exec.Cmd
-	webServeCmd                         *exec.Cmd
-	webServeCmdReady                    chan os.Signal
-	isGenerating                                      = false
-	watcherPollInterval                 time.Duration = 1
-	liveReloadWSConn, liveReloadWSSConn *websocket.Conn
+	apiServeCmd, webServeCmd               *exec.Cmd
+	apiServeCmdReady, webServeCmdReady     chan bool
+	apiServeConsole, webServeConsole       *text.Text
+	apiServeConsoleBuf, webServeConsoleBuf string
+	terminalBox                            *termbox.Terminal
+	isGenerating                                         = false
+	watcherPollInterval                    time.Duration = 1
+	liveReloadWSConn, liveReloadWSSConn    *websocket.Conn
 )
 
 func newStartCommand(logger *Logger, server *Server) *Command {
@@ -58,8 +67,6 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 				wd + "/main.go",
 			}
 			quit := make(chan os.Signal, 1)
-			webServeCmdReady = make(chan os.Signal, 1)
-
 			signal.Notify(quit, os.Interrupt)
 			signal.Notify(quit, syscall.SIGTERM)
 
@@ -73,6 +80,7 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 				go runWebServeCmd(logger, server)
 			}
 
+			webServeCmdReady = make(chan bool, 1)
 			go func() {
 				<-webServeCmdReady
 				runAPIServeCmd(logger)
@@ -80,6 +88,94 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 
 			go func() {
 				runLiveReloadServer(logger, server)
+			}()
+
+			go func() {
+				var err error
+				terminalBox, err = termbox.New()
+				if err != nil {
+					quit <- os.Kill
+					logger.Fatal(err)
+				}
+				defer terminalBox.Close()
+
+				apiServeConsole, err = text.New(text.RollContent(), text.WrapAtRunes(), text.WrapAtWords())
+				if err != nil {
+					quit <- os.Kill
+					logger.Fatal(err)
+				}
+
+				webServeConsole, err = text.New(text.RollContent(), text.WrapAtRunes(), text.WrapAtWords())
+				if err != nil {
+					quit <- os.Kill
+					logger.Fatal(err)
+				}
+
+				ctx, cancel := context.WithCancel(context.Background())
+				ctn, err := container.New(
+					terminalBox,
+					container.SplitVertical(
+						container.Left(
+							container.Border(linestyle.Light),
+							container.BorderTitle(" Backend (golang server) "),
+							container.PlaceWidget(apiServeConsole),
+						),
+						container.Right(
+							container.Border(linestyle.Light),
+							container.BorderTitle(" Frontend (webpack-dev-server) "),
+							container.PlaceWidget(webServeConsole),
+						),
+					),
+				)
+				if err != nil {
+					quit <- os.Kill
+					logger.Fatal(err)
+				}
+
+				go func() {
+					ticker := time.NewTicker(500 * time.Millisecond)
+					defer ticker.Stop()
+
+					for {
+						select {
+						case <-ticker.C:
+							if apiServeConsoleBuf != "" {
+								apiServeBuf := apiServeConsoleBuf
+								apiServeConsoleBuf = ""
+								if err := apiServeConsole.Write(apiServeBuf); err != nil {
+									quit <- os.Kill
+									logger.Fatal(err)
+								}
+							}
+
+							if webServeConsoleBuf != "" {
+								webServeBuf := webServeConsoleBuf
+								webServeConsoleBuf = ""
+								if err := webServeConsole.Write(webServeBuf); err != nil {
+									quit <- os.Kill
+									logger.Fatal(err)
+								}
+							}
+						case <-ctx.Done():
+							return
+						}
+					}
+				}()
+
+				tQuit := func(k *terminalapi.Keyboard) {
+					if k.Key == -26 {
+						cancel()
+						time.Sleep(250 * time.Millisecond)
+						killAPIServeCmd()
+						killWebServeCmd()
+						os.Exit(0)
+					}
+				}
+
+				if err := termdash.Run(ctx, terminalBox, ctn, termdash.KeyboardSubscriber(tQuit)); err != nil {
+					quit <- os.Kill
+					logger.Fatal(err)
+				}
 			}()
 
 			watch(logger, watchPaths, func(e watcher.Event) {
@@ -96,11 +192,11 @@ func watchHandler(e watcher.Event, logger *Logger) {
 
 	isGenerating = true
 	if strings.Contains(e.Path, ".gql") || strings.Contains(e.Path, ".graphql") || strings.Contains(e.Path, "pkg/graphql/config.yml") {
-		logger.Info("* Generating GraphQL boilerplate code...")
+		apiServeConsole.Write("INFO * Generating GraphQL boilerplate code...\n")
 
 		err := generateGQL()
 		if err != nil {
-			logger.Info(err.Error())
+			apiServeConsole.Write("ERROR " + err.Error() + "\n")
 		}
 
 		isGenerating = false
@@ -143,13 +239,16 @@ func killAPIServeCmd() {
 func runAPIServeCmd(logger *Logger) {
 	killAPIServeCmd()
 	time.Sleep(500 * time.Millisecond)
+
 	apiServeCmd = exec.Command("go", "run", ".", "serve")
 	apiServeCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	apiServeCmd.Stdout = os.Stdout
-	apiServeCmd.Stderr = os.Stderr
+	apiServeCmdOut, _ := apiServeCmd.StdoutPipe()
+	apiServeCmdErr, _ := apiServeCmd.StderrPipe()
 
+	apiServeCmdReady = make(chan bool, 1)
 	go func() {
-		time.Sleep(4000 * time.Millisecond)
+		<-apiServeCmdReady
+		time.Sleep(500 * time.Millisecond)
 
 		if liveReloadWSConn != nil {
 			liveReloadWSConn.WriteMessage(websocket.TextMessage, []byte("reload"))
@@ -160,7 +259,53 @@ func runAPIServeCmd(logger *Logger) {
 		}
 	}()
 
-	logger.Info("* Compiling...")
+	go func(stdout io.ReadCloser) {
+		defer func() {
+			if r := recover(); r != nil {
+				killWebServeCmd()
+				killAPIServeCmd()
+				logger.Fatal(r)
+			}
+		}()
+
+		out := bufio.NewScanner(stdout)
+		for out.Scan() {
+			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
+			outText := strings.Trim(out.Text(), " ")
+			outText = regex.ReplaceAllString(outText, "")
+			outText = strings.ReplaceAll(outText, "\t", " ")
+			if strings.Contains(outText, "* Listening on") {
+				apiServeCmdReady <- true
+			}
+
+			apiServeConsoleBuf += outText + "\n"
+		}
+	}(apiServeCmdOut)
+
+	go func(stderr io.ReadCloser) {
+		defer func() {
+			if r := recover(); r != nil {
+				killWebServeCmd()
+				killAPIServeCmd()
+				logger.Fatal(r)
+			}
+		}()
+
+		err := bufio.NewScanner(stderr)
+		for err.Scan() {
+			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
+			errText := strings.Trim(err.Text(), " ")
+			errText = regex.ReplaceAllString(errText, "")
+			errText = strings.ReplaceAll(errText, "\t", " ")
+			if strings.Contains(errText, "* Listening on") {
+				apiServeCmdReady <- true
+			}
+
+			apiServeConsoleBuf += errText + "\n"
+		}
+	}(apiServeCmdErr)
+
+	apiServeConsole.Write("INFO * Compiling...\n")
 	apiServeCmd.Run()
 }
 
@@ -203,41 +348,17 @@ func runWebServeCmd(logger *Logger, server *Server) {
 			}
 		}()
 
-		timeRe := regexp.MustCompile(` [0-9]+ms`)
-		isFirstTime := true
-		isWDSCompiling := false
 		out := bufio.NewScanner(stdout)
-
 		for out.Scan() {
+			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
 			outText := strings.Trim(out.Text(), " ")
-
-			if outText == "" && (isWDSCompiling || isFirstTime) {
-				continue
+			outText = regex.ReplaceAllString(outText, "")
+			outText = strings.ReplaceAll(outText, "\t", " ")
+			if strings.Contains(outText, "Compiled successfully") {
+				webServeCmdReady <- true
 			}
 
-			if strings.Contains(outText, "｢wdm｣") || strings.HasPrefix(outText, "> ") || (isWDSCompiling && strings.Contains(outText, "｢wds｣")) {
-				continue
-			}
-
-			if strings.Contains(outText, "Compiling...") || strings.Contains(outText, "｢wds｣") {
-				isWDSCompiling = true
-				logger.Info("* [wds] Compiling...")
-			} else if strings.Contains(outText, "Compiled successfully in") {
-				isWDSCompiling = false
-				logger.Infof("* [wds] Compiled successfully in%s", timeRe.FindStringSubmatch(outText)[0])
-
-				if isFirstTime {
-					isFirstTime = false
-					close(webServeCmdReady)
-				}
-			} else if strings.HasPrefix(outText, "ERROR  Failed to compile") {
-				logger.Info("* [wds] Failed to compile.")
-				logger.Info("")
-			} else {
-				if len(outText) > 0 {
-					logger.Info(outText)
-				}
-			}
+			webServeConsoleBuf += outText + "\n"
 		}
 	}(webServeCmdOut)
 
@@ -251,17 +372,16 @@ func runWebServeCmd(logger *Logger, server *Server) {
 		}()
 
 		err := bufio.NewScanner(stderr)
-		fatalErr := ""
 		for err.Scan() {
-			fatalErr = fatalErr + strings.Trim(err.Text(), " ") + "\n\t"
-		}
+			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
+			errText := strings.Trim(err.Text(), " ")
+			errText = regex.ReplaceAllString(errText, "")
+			errText = strings.ReplaceAll(errText, "\t", " ")
+			if strings.Contains(errText, "Compiled successfully") {
+				webServeCmdReady <- true
+			}
 
-		killWebServeCmd()
-		killAPIServeCmd()
-		time.Sleep(1 * time.Second)
-
-		if fatalErr != "" {
-			logger.Fatal(fatalErr)
+			webServeConsoleBuf += errText + "\n"
 		}
 	}(webServeCmdErr)
 
