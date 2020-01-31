@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/appist/appy/sessionstore"
+	"github.com/appist/appy/internal/sessionstore"
 	ginsessions "github.com/gin-contrib/sessions"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/context"
