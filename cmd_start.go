@@ -22,6 +22,7 @@ import (
 	gqlgenCfg "github.com/99designs/gqlgen/codegen/config"
 	"github.com/gorilla/websocket"
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/termbox"
@@ -32,14 +33,14 @@ import (
 )
 
 var (
-	apiServeCmd, webServeCmd               *exec.Cmd
-	apiServeCmdReady, webServeCmdReady     chan bool
-	apiServeConsole, webServeConsole       *text.Text
-	apiServeConsoleBuf, webServeConsoleBuf string
-	terminalBox                            *termbox.Terminal
-	isGenerating                                         = false
-	watcherPollInterval                    time.Duration = 1
-	liveReloadWSConn, liveReloadWSSConn    *websocket.Conn
+	apiServeCmd, webServeCmd                                 *exec.Cmd
+	apiServeCmdReady                                         chan bool
+	apiServeConsole, webServeConsole, workerConsole          *text.Text
+	apiServeConsoleBuf, webServeConsoleBuf, workerConsoleBuf string
+	terminalBox                                              *termbox.Terminal
+	isGenerating                                                           = false
+	watcherPollInterval                                      time.Duration = 1
+	liveReloadWSConn, liveReloadWSSConn                      *websocket.Conn
 )
 
 func newStartCommand(logger *Logger, server *Server) *Command {
@@ -80,9 +81,7 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 				go runWebServeCmd(logger, server)
 			}
 
-			webServeCmdReady = make(chan bool, 1)
 			go func() {
-				<-webServeCmdReady
 				runAPIServeCmd(logger)
 			}()
 
@@ -111,29 +110,45 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 					logger.Fatal(err)
 				}
 
+				workerConsole, err = text.New(text.RollContent(), text.WrapAtRunes(), text.WrapAtWords())
+				if err != nil {
+					quit <- os.Kill
+					logger.Fatal(err)
+				}
+
 				ctx, cancel := context.WithCancel(context.Background())
 				ctn, err := container.New(
 					terminalBox,
 					container.SplitVertical(
 						container.Left(
-							container.Border(linestyle.Light),
-							container.BorderTitle(" Backend (golang server) "),
-							container.PlaceWidget(apiServeConsole),
+							container.SplitHorizontal(
+								container.Top(
+									container.Border(linestyle.Light),
+									container.BorderTitle(" Backend "),
+									container.PlaceWidget(apiServeConsole),
+								),
+								container.Bottom(
+									container.Border(linestyle.Light),
+									container.BorderTitle(" Frontend (webpack-dev-server) "),
+									container.PlaceWidget(webServeConsole),
+								),
+							),
 						),
 						container.Right(
 							container.Border(linestyle.Light),
-							container.BorderTitle(" Frontend (webpack-dev-server) "),
-							container.PlaceWidget(webServeConsole),
+							container.BorderTitle(" Worker "),
+							container.PlaceWidget(workerConsole),
 						),
 					),
 				)
+
 				if err != nil {
 					quit <- os.Kill
 					logger.Fatal(err)
 				}
 
 				go func() {
-					ticker := time.NewTicker(500 * time.Millisecond)
+					ticker := time.NewTicker(1 * time.Second)
 					defer ticker.Stop()
 
 					for {
@@ -152,6 +167,15 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 								webServeBuf := webServeConsoleBuf
 								webServeConsoleBuf = ""
 								if err := webServeConsole.Write(webServeBuf); err != nil {
+									quit <- os.Kill
+									logger.Fatal(err)
+								}
+							}
+
+							if workerConsoleBuf != "" {
+								workerServeBuf := workerConsoleBuf
+								workerConsoleBuf = ""
+								if err := workerConsole.Write(workerServeBuf); err != nil {
 									quit <- os.Kill
 									logger.Fatal(err)
 								}
@@ -196,7 +220,8 @@ func watchHandler(e watcher.Event, logger *Logger) {
 
 		err := generateGQL()
 		if err != nil {
-			apiServeConsole.Write("ERROR " + err.Error() + "\n")
+			apiServeConsole.Write("ERROR", text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
+			apiServeConsole.Write(" " + err.Error() + "\n")
 		}
 
 		isGenerating = false
@@ -354,10 +379,6 @@ func runWebServeCmd(logger *Logger, server *Server) {
 			outText := strings.Trim(out.Text(), " ")
 			outText = regex.ReplaceAllString(outText, "")
 			outText = strings.ReplaceAll(outText, "\t", " ")
-			if strings.Contains(outText, "Compiled successfully") {
-				webServeCmdReady <- true
-			}
-
 			webServeConsoleBuf += outText + "\n"
 		}
 	}(webServeCmdOut)
@@ -377,10 +398,6 @@ func runWebServeCmd(logger *Logger, server *Server) {
 			errText := strings.Trim(err.Text(), " ")
 			errText = regex.ReplaceAllString(errText, "")
 			errText = strings.ReplaceAll(errText, "\t", " ")
-			if strings.Contains(errText, "Compiled successfully") {
-				webServeCmdReady <- true
-			}
-
 			webServeConsoleBuf += errText + "\n"
 		}
 	}(webServeCmdErr)
