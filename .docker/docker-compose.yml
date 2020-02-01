@@ -1,34 +1,6 @@
 version: "3.7"
 
 services:
-  mysql-master:
-    image: bitnami/mysql:8.0
-    ports:
-      - "3306:3306"
-    environment:
-      - MYSQL_REPLICATION_MODE=master
-      - MYSQL_REPLICATION_USER=mysql-slave
-      - MYSQL_USER=mysql
-      - MYSQL_DATABASE=appy
-      - MYSQL_ROOT_PASSWORD=whatever
-      - ALLOW_EMPTY_PASSWORD=yes
-
-  mysql-slave:
-    image: bitnami/mysql:8.0
-    ports:
-      - "3307:3306"
-    depends_on:
-      - mysql-master
-    environment:
-      - MYSQL_REPLICATION_MODE=slave
-      - MYSQL_REPLICATION_USER=mysql-slave
-      - MYSQL_USER=mysql
-      - MYSQL_DATABASE=appy
-      - MYSQL_MASTER_HOST=mysql-master
-      - MYSQL_MASTER_PORT_NUMBER=3306
-      - MYSQL_MASTER_ROOT_PASSWORD=whatever
-      - ALLOW_EMPTY_PASSWORD=yes
-
   psql-master:
     image: bitnami/postgresql:11
     ports:
