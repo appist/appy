@@ -278,10 +278,15 @@ func (db *DB) Migrate() error {
 	}
 
 	tx, err := db.Begin()
-	defer tx.Close()
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		if err = tx.Close(); err != nil {
+			db.logger.Fatal(err)
+		}
+	}()
 
 	migratedVersions, err := db.migratedVersions(tx)
 	if err != nil {
@@ -337,10 +342,15 @@ func (db *DB) MigrateStatus() ([][]string, error) {
 	}
 
 	tx, err := db.Begin()
-	defer tx.Close()
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		if err = tx.Close(); err != nil {
+			db.logger.Fatal(err)
+		}
+	}()
 
 	var migrationStatus [][]string
 	migratedVersions, err := db.migratedVersions(tx)
@@ -398,10 +408,15 @@ func (db *DB) Rollback() error {
 	}
 
 	tx, err := db.Begin()
-	defer tx.Close()
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		if err = tx.Close(); err != nil {
+			db.logger.Fatal(err)
+		}
+	}()
 
 	migratedVersions, err := db.migratedVersions(tx)
 	if err != nil {
@@ -465,10 +480,15 @@ func (db *DB) SetSchema(schema string) {
 // Seed runs the seeding for the current environment.
 func (db *DB) Seed() error {
 	tx, err := db.Begin()
-	defer tx.Close()
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		if err = tx.Close(); err != nil {
+			db.logger.Fatal(err)
+		}
+	}()
 
 	if db.seed != nil {
 		err := db.seed(tx)
