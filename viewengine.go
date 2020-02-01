@@ -49,10 +49,8 @@ func (ve *ViewEngine) SetGlobalFuncs(viewFuncs map[string]interface{}) {
 		funcs[viewKey] = viewFunc
 	}
 
-	if funcs != nil {
-		for name, f := range funcs {
-			ve.AddGlobal(name, f)
-		}
+	for name, f := range funcs {
+		ve.AddGlobal(name, f)
 	}
 }
 
