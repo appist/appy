@@ -187,7 +187,12 @@ func (db *DB) DumpSchema(name string) error {
 	dumpCmd.Env = append(dumpCmd.Env, []string{"PGPASSWORD=" + db.config.Password}...)
 	dumpCmd.Stdout = &outBytes
 	dumpCmd.Stderr = os.Stderr
-	dumpCmd.Run()
+
+	err = dumpCmd.Run()
+	if err != nil {
+		return err
+	}
+
 	out = outBytes.String()
 	out = regexp.MustCompile(`(?i)--\n-- postgresql database dump.*\n--\n\n`).ReplaceAllString(out, "")
 	out = regexp.MustCompile(`(?i)--\ dumped.*\n(\n)?`).ReplaceAllString(out, "")
@@ -288,13 +293,13 @@ func (db *DB) Migrate() error {
 			if m.UpTx != nil {
 				err = m.UpTx(tx)
 				if err != nil {
-					tx.Rollback()
+					_ = tx.Rollback()
 					return err
 				}
 
 				err = db.addSchemaMigration(tx, m)
 				if err != nil {
-					tx.Rollback()
+					_ = tx.Rollback()
 					return err
 				}
 
@@ -411,13 +416,13 @@ func (db *DB) Rollback() error {
 				if m.DownTx != nil {
 					err = m.DownTx(tx)
 					if err != nil {
-						tx.Rollback()
+						_ = tx.Rollback()
 						return err
 					}
 
 					err = db.removeSchemaMigration(tx, m)
 					if err != nil {
-						tx.Rollback()
+						_ = tx.Rollback()
 						return err
 					}
 
@@ -468,7 +473,7 @@ func (db *DB) Seed() error {
 	if db.seed != nil {
 		err := db.seed(tx)
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return err
 		}
 	}
