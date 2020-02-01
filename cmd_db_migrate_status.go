@@ -11,7 +11,7 @@ import (
 func newDBMigrateStatusCommand(config *Config, dbManager *DBManager, logger *Logger) *Command {
 	return &Command{
 		Use:   "db:migrate:status",
-		Short: "List all the database migration status(default: all, use --database to specify just 1) for the current environment",
+		Short: "List all the database migration status(default: all, use --database to specify the target database) for the current environment",
 		Run: func(cmd *Command, args []string) {
 			if len(config.Errors()) > 0 {
 				logger.Fatal(config.Errors()[0])
@@ -32,15 +32,15 @@ func newDBMigrateStatusCommand(config *Config, dbManager *DBManager, logger *Log
 					continue
 				}
 
-				fmt.Println()
-				fmt.Printf("database: %s\n", name)
-				fmt.Println()
-
 				err := db.Connect()
 				if err != nil {
 					logger.Fatal(err)
 				}
 				defer db.Close()
+
+				fmt.Println()
+				fmt.Printf("database: %s\n", name)
+				fmt.Println()
 
 				status, err := db.MigrateStatus()
 				if err != nil {

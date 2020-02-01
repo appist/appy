@@ -102,11 +102,6 @@ func (db *DB) Connect() error {
 	db.AddQueryHook(db.logger)
 
 	_, err := db.Exec("SELECT 1 /* appy framework */")
-	if err != nil {
-		opts.Database = "postgres"
-	}
-
-	_, err = db.Exec("SELECT 1 /* appy framework */")
 	return err
 }
 

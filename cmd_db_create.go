@@ -34,12 +34,15 @@ func runDBCreateAll(config *Config, dbManager *DBManager, logger *Logger) {
 
 		logger.Infof("Creating '%s' database...", name)
 
+		targetDB := db.config.Database
+		db.config.Database = "postgres"
 		err := db.Connect()
 		if err != nil {
 			logger.Fatal(err)
 		}
 		defer db.Close()
 
+		db.config.Database = targetDB
 		errs := db.Create()
 		if errs != nil {
 			logger.Fatal(errs[0])

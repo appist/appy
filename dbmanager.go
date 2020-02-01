@@ -104,7 +104,7 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			config.Password = val
 		}
 
-		config.Database = "appy"
+		config.Database = "postgres"
 		if val, ok := os.LookupEnv("DB_DATABASE_" + dbName); ok && val != "" {
 			config.Database = val
 		}
