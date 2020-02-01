@@ -12,6 +12,7 @@ type (
 		asset      *Asset
 		command    *Command
 		config     *Config
+		dbManager  *DBManager
 		i18n       *I18n
 		logger     *Logger
 		mailer     *Mailer
@@ -32,6 +33,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	support := &Support{}
 	logger := NewLogger()
 	config := NewConfig(asset, logger, support)
+	dbManager := NewDbManager(logger, support)
 	i18n := NewI18n(asset, config, logger)
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
@@ -58,17 +60,24 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newBuildCommand(asset, logger, server))
 	command.AddCommand(newConfigDecCommand(config, logger, support))
 	command.AddCommand(newConfigEncCommand(config, logger, support))
+	command.AddCommand(newDBCreateCommand(config, dbManager, logger))
+	command.AddCommand(newDBDropCommand(config, dbManager, logger))
+	command.AddCommand(newDBMigrateCommand(config, dbManager, logger))
+	command.AddCommand(newDBMigrateStatusCommand(config, dbManager, logger))
+	command.AddCommand(newDBSchemaLoadCommand(config, dbManager, logger))
 	command.AddCommand(newDcDownCommand(asset, logger))
 	command.AddCommand(newDcRestartCommand(asset, logger))
 	command.AddCommand(newDcUpCommand(asset, logger))
 	command.AddCommand(newMiddlewareCommand(config, logger, server))
 	command.AddCommand(newRoutesCommand(config, logger, server))
 	command.AddCommand(newSecretCommand(logger))
-	command.AddCommand(newServeCommand(logger, server))
+	command.AddCommand(newServeCommand(dbManager, logger, server))
 	command.AddCommand(newSSLSetupCommand(logger, server))
 	command.AddCommand(newSSLTeardownCommand(logger, server))
 
 	if IsDebugBuild() {
+		command.AddCommand(newDBSchemaDumpCommand(config, dbManager, logger))
+		command.AddCommand(newGenMigrationCommand(config, dbManager, logger, support))
 		command.AddCommand(newStartCommand(logger, server))
 	}
 
@@ -76,6 +85,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 		asset:      asset,
 		command:    command,
 		config:     config,
+		dbManager:  dbManager,
 		i18n:       i18n,
 		logger:     logger,
 		mailer:     mailer,
@@ -98,6 +108,11 @@ func (a *App) Command() *Command {
 // Config returns the app instance's config.
 func (a *App) Config() *Config {
 	return a.config
+}
+
+// DBManager eturns the app instance's DB manager.
+func (a *App) DBManager() *DBManager {
+	return a.dbManager
 }
 
 // I18n returns the app instance's i18n manager.
