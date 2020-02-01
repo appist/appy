@@ -218,5 +218,5 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 		dbConfig[support.ToCamelCase(dbName)] = config
 	}
 
-	return dbConfig, nil
+	return dbConfig, errs
 }
