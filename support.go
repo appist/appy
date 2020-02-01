@@ -28,6 +28,11 @@ type (
 		IsPascalCase(s string) bool
 		IsSnakeCase(s string) bool
 		ParseEnv(c interface{}) error
+		ToCamelCase(str string) string
+		ToChainCase(str string) string
+		ToFlatCase(str string) string
+		ToPascalCase(str string) string
+		ToSnakeCase(str string) string
 	}
 
 	// Support contains the useful functions.
