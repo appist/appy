@@ -377,6 +377,11 @@ func (db *DB) RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) err
 	}
 }
 
+// RegisterSeedTx registers the seeding that will be executed in transaction.
+func (db *DB) RegisterSeedTx(seed func(*DBTx) error) {
+	db.seed = seed
+}
+
 // Rollback rolls back the last migration for the current environment.
 func (db *DB) Rollback() error {
 	db.mu.Lock()
@@ -450,6 +455,30 @@ func (db *DB) Schema() string {
 // SetSchema stores the database schema.
 func (db *DB) SetSchema(schema string) {
 	db.schema = schema
+}
+
+// Seed runs the seeding for the current environment.
+func (db *DB) Seed() error {
+	tx, err := db.Begin()
+	defer tx.Close()
+	if err != nil {
+		return err
+	}
+
+	if db.seed != nil {
+		err := db.seed(tx)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (db *DB) addMigration(newMigration *DBMigration) {
@@ -689,6 +718,50 @@ func init() {
 		Database: database,
 		Module:   moduleName(),
 		Schema:   "\n" + schema,
+	})
+
+	if err != nil {
+		return []byte(""), err
+	}
+
+	return tpl.Bytes(), err
+}
+
+func seedTpl(database, schema string) ([]byte, error) {
+	type data struct {
+		Database, Module string
+	}
+
+	t, err := template.New("seed").Parse(
+		`package {{.Database}}
+
+import (
+	"github.com/appist/appy"
+
+	"{{.Module}}/pkg/app"
+)
+
+func init() {
+	db := app.DBManager.DB("{{.Database}}")
+
+	if db != nil {
+		db.RegisterSeedTx(
+			func(db *appy.DBTx) error {
+				return nil
+			},
+		)
+	}
+}
+`)
+
+	if err != nil {
+		return []byte(""), err
+	}
+
+	var tpl bytes.Buffer
+	err = t.Execute(&tpl, data{
+		Database: database,
+		Module:   moduleName(),
 	})
 
 	if err != nil {

@@ -66,6 +66,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newDBMigrateStatusCommand(config, dbManager, logger))
 	command.AddCommand(newDBRollbackCommand(config, dbManager, logger))
 	command.AddCommand(newDBSchemaLoadCommand(config, dbManager, logger))
+	command.AddCommand(newDBSeedCommand(config, dbManager, logger))
 	command.AddCommand(newDcDownCommand(asset, logger))
 	command.AddCommand(newDcRestartCommand(asset, logger))
 	command.AddCommand(newDcUpCommand(asset, logger))
