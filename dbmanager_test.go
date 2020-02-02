@@ -30,7 +30,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithDefaultConfig() {
 	s.Nil(dbManager.DB("primary"))
 	s.NotNil(dbManager.DB("mainApp"))
 	s.Equal(0, len(dbManager.Errors()))
-	s.Equal(dbManager.Info(), "* DBs: mainApp")
+	s.Equal("* DBs: mainApp", dbManager.Info())
 
 	config := dbManager.DB("mainApp").Config()
 	s.Equal("public", config.SchemaSearchPath)
@@ -62,7 +62,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithNoConfig() {
 	s.Nil(dbManager.DB("primary"))
 	s.Nil(dbManager.DB("mainApp"))
 	s.Equal(0, len(dbManager.Errors()))
-	s.Equal(dbManager.Info(), "* DBs: none")
+	s.Equal("* DBs: none", dbManager.Info())
 }
 
 func (s *DBManagerSuite) TestNewDBManagerWithCustomConfig() {
@@ -117,7 +117,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithCustomConfig() {
 	s.Nil(dbManager.DB("primary"))
 	s.NotNil(dbManager.DB("mainApp"))
 	s.Equal(0, len(dbManager.Errors()))
-	s.Equal(dbManager.Info(), "* DBs: mainApp")
+	s.Equal("* DBs: mainApp", dbManager.Info())
 
 	config := dbManager.DB("mainApp").Config()
 	s.Equal("appist", config.SchemaSearchPath)
@@ -182,7 +182,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithInvalidConfig() {
 	s.Nil(dbManager.DB("primary"))
 	s.NotNil(dbManager.DB("mainApp"))
 	s.Equal(14, len(dbManager.Errors()))
-	s.Equal(dbManager.Info(), "* DBs: mainApp")
+	s.Equal("* DBs: mainApp", dbManager.Info())
 }
 
 func TestDBManagerSuite(t *testing.T) {
