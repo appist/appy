@@ -25,10 +25,7 @@ func (s *DBSuite) SetupTest() {
 }
 
 func (s *DBSuite) TestDBGenerateMigration() {
-	if os.Getenv("DB_ADDR_PRIMARY") == "" {
-		os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
-	}
-
+	os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
 	os.Setenv("DB_USER_PRIMARY", "postgres")
 	os.Setenv("DB_PASSWORD_PRIMARY", "whatever")
 	os.Setenv("DB_DATABASE_PRIMARY", "appy")
@@ -36,6 +33,7 @@ func (s *DBSuite) TestDBGenerateMigration() {
 	dbMigratePath = "tmp/" + dbMigratePath
 	defer func() {
 		dbMigratePath = oldDBMigratePath
+		os.Unsetenv("DB_ADDR_PRIMARY")
 		os.Unsetenv("DB_USER_PRIMARY")
 		os.Unsetenv("DB_PASSWORD_PRIMARY")
 		os.Unsetenv("DB_DATABASE_PRIMARY")
@@ -82,10 +80,7 @@ func (s *DBSuite) TestDBGenerateMigration() {
 }
 
 func (s *DBSuite) TestDBOps() {
-	if os.Getenv("DB_ADDR_PRIMARY") == "" {
-		os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
-	}
-
+	os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
 	os.Setenv("DB_USER_PRIMARY", "postgres")
 	os.Setenv("DB_PASSWORD_PRIMARY", "whatever")
 	os.Setenv("DB_DATABASE_PRIMARY", "appy")
@@ -93,6 +88,7 @@ func (s *DBSuite) TestDBOps() {
 	dbMigratePath = "tmp/" + dbMigratePath
 	defer func() {
 		dbMigratePath = oldDBMigratePath
+		os.Unsetenv("DB_ADDR_PRIMARY")
 		os.Unsetenv("DB_USER_PRIMARY")
 		os.Unsetenv("DB_PASSWORD_PRIMARY")
 		os.Unsetenv("DB_DATABASE_PRIMARY")
@@ -243,14 +239,12 @@ func (s *DBSuite) TestDBOps() {
 }
 
 func (s *DBSuite) TestDBSchema() {
-	if os.Getenv("DB_ADDR_PRIMARY") == "" {
-		os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
-	}
-	
+	os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
 	os.Setenv("DB_USER_PRIMARY", "postgres")
 	os.Setenv("DB_PASSWORD_PRIMARY", "whatever")
 	os.Setenv("DB_DATABASE_PRIMARY", "appy")
 	defer func() {
+		os.Unsetenv("DB_ADDR_PRIMARY")
 		os.Unsetenv("DB_USER_PRIMARY")
 		os.Unsetenv("DB_PASSWORD_PRIMARY")
 		os.Unsetenv("DB_DATABASE_PRIMARY")

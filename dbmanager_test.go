@@ -21,14 +21,8 @@ func (s *DBManagerSuite) TearDownTest() {
 }
 
 func (s *DBManagerSuite) TestNewDBManagerWithDefaultConfig() {
-	addr := os.Getenv("DB_ADDR_PRIMARY")
-	if addr != "" {
-		os.Unsetenv("DB_ADDR_PRIMARY")
-	}
-
 	os.Setenv("DB_ADDR_MAIN_APP", "0.0.0.0:5432")
 	defer func() {
-		os.Setenv("DB_ADDR_PRIMARY", addr)
 		os.Unsetenv("DB_ADDR_MAIN_APP")
 	}()
 
@@ -64,11 +58,6 @@ func (s *DBManagerSuite) TestNewDBManagerWithDefaultConfig() {
 }
 
 func (s *DBManagerSuite) TestNewDBManagerWithNoConfig() {
-	addr := os.Getenv("DB_ADDR_PRIMARY")
-	if addr != "" {
-		os.Unsetenv("DB_ADDR_PRIMARY")
-	}
-
 	dbManager := NewDBManager(s.logger, s.support)
 	s.Nil(dbManager.DB("primary"))
 	s.Nil(dbManager.DB("mainApp"))
@@ -77,15 +66,6 @@ func (s *DBManagerSuite) TestNewDBManagerWithNoConfig() {
 }
 
 func (s *DBManagerSuite) TestNewDBManagerWithCustomConfig() {
-	addr := os.Getenv("DB_ADDR_PRIMARY")
-	if addr != "" {
-		os.Unsetenv("DB_ADDR_PRIMARY")
-	}
-
-	defer func() {
-		os.Setenv("DB_ADDR_PRIMARY", addr)
-	}()
-
 	os.Setenv("DB_SCHEMA_SEARCH_PATH_MAIN_APP", "appist")
 	os.Setenv("DB_NETWORK_MAIN_APP", "unix")
 	os.Setenv("DB_ADDR_MAIN_APP", "0.0.0.0:25432")
@@ -109,7 +89,6 @@ func (s *DBManagerSuite) TestNewDBManagerWithCustomConfig() {
 	os.Setenv("DB_WRITE_TIMEOUT_MAIN_APP", "25s")
 	os.Setenv("DB_SCHEMA_MIGRATIONS_TABLE_MAIN_APP", "custom_migrations")
 	defer func() {
-		os.Setenv("DB_ADDR_PRIMARY", addr)
 		os.Unsetenv("DB_SCHEMA_SEARCH_PATH_MAIN_APP")
 		os.Unsetenv("DB_NETWORK_MAIN_APP")
 		os.Unsetenv("DB_ADDR_MAIN_APP")
@@ -166,11 +145,6 @@ func (s *DBManagerSuite) TestNewDBManagerWithCustomConfig() {
 }
 
 func (s *DBManagerSuite) TestNewDBManagerWithInvalidConfig() {
-	addr := os.Getenv("DB_ADDR_PRIMARY")
-	if addr != "" {
-		os.Unsetenv("DB_ADDR_PRIMARY")
-	}
-
 	os.Setenv("DB_ADDR_MAIN_APP", "0.0.0.0:25432")
 	os.Setenv("DB_REPLICA_MAIN_APP", "100")
 	os.Setenv("DB_MAX_RETRIES_MAIN_APP", "true")
@@ -187,7 +161,6 @@ func (s *DBManagerSuite) TestNewDBManagerWithInvalidConfig() {
 	os.Setenv("DB_READ_TIMEOUT_MAIN_APP", "true")
 	os.Setenv("DB_WRITE_TIMEOUT_MAIN_APP", "true")
 	defer func() {
-		os.Setenv("DB_ADDR_PRIMARY", addr)
 		os.Unsetenv("DB_ADDR_MAIN_APP")
 		os.Unsetenv("DB_REPLICA_MAIN_APP")
 		os.Unsetenv("DB_MAX_RETRIES_MAIN_APP")
