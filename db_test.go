@@ -76,7 +76,10 @@ func (s *DBSuite) TestDBGenerateMigration() {
 }
 
 func (s *DBSuite) TestDBOps() {
-	os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
+	if os.Getenv("DB_ADDR_PRIMARY") == "" {
+		os.Setenv("DB_ADDR_PRIMARY", "0.0.0.0:5432")
+	}
+
 	os.Setenv("DB_USER_PRIMARY", "postgres")
 	os.Setenv("DB_PASSWORD_PRIMARY", "whatever")
 	os.Setenv("DB_DATABASE_PRIMARY", "appy")

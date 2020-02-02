@@ -13,7 +13,7 @@ jobs:
 
     services:
       psql-master:
-        image: "bitnami/postgresql:11"
+        image: "bitnami/postgresql:12"
         ports:
           - 5432/tcp
         env:
@@ -22,10 +22,9 @@ jobs:
           POSTGRESQL_REPLICATION_PASSWORD: whatever
           POSTGRESQL_USERNAME: postgres
           POSTGRESQL_PASSWORD: whatever
-          POSTGRESQL_DATABASE: appy
 
       psql-slave:
-        image: "bitnami/postgresql:11"
+        image: "bitnami/postgresql:12"
         ports:
           - 5433/tcp
         env:
