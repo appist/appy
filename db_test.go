@@ -44,7 +44,9 @@ func (s *DBSuite) TestDBGenerateMigration() {
 
 	migratePath := dbMigratePath + "primary"
 	db := NewDB(config["primary"], s.logger, s.support)
-	db.GenerateMigration("CreateUsers", "primary", false)
+	err := db.GenerateMigration("CreateUsers", "primary", false)
+	s.Nil(err)
+
 	files := []string{}
 	_ = filepath.Walk(migratePath, func(path string, info os.FileInfo, err error) error {
 		if strings.Contains(path, ".go") {
@@ -59,7 +61,9 @@ func (s *DBSuite) TestDBGenerateMigration() {
 	err = os.RemoveAll(dbMigratePath)
 	s.Nil(err)
 
-	db.GenerateMigration("CreateUsers", "primary", true)
+	err = db.GenerateMigration("CreateUsers", "primary", true)
+	s.Nil(err)
+	
 	files = []string{}
 	_ = filepath.Walk(migratePath, func(path string, info os.FileInfo, err error) error {
 		if strings.Contains(path, ".go") {
