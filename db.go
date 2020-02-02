@@ -41,6 +41,15 @@ type (
 		SchemaMigrationsTable string
 	}
 
+	// DBConn represents a single database connection rather than a pool of database connections. Prefer running queries
+	// from DB unless there is a specific need for a continuous single database connection.
+	//
+	// A DBConn must call Close to return the connection to the database pool and may do so concurrently with a running
+	// query.
+	//
+	// After a call to Close, all operations on the connection fail.
+	DBConn = pg.Conn
+
 	// DBMigration contains database migration.
 	DBMigration struct {
 		File    string
@@ -81,6 +90,8 @@ var (
 
 	// DBScan returns ColumnScanner that copies the columns in the row into the values.
 	DBScan = pg.Scan
+
+	dbMigratePath = "db/migrate/"
 )
 
 // NewDB initializes the DB handler that is used to connect to the database.
@@ -129,7 +140,7 @@ func (db *DB) Create() []error {
 	return errs
 }
 
-// Drop creates the database.
+// Drop drops the database.
 func (db *DB) Drop() []error {
 	var errs []error
 	_, err := db.Exec(
@@ -160,7 +171,7 @@ func (db *DB) DumpSchema(name string) error {
 		out      string
 	)
 
-	path := "db/migrate/" + name
+	path := dbMigratePath + name
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return err
@@ -251,7 +262,7 @@ func (db *DB) DumpSchema(name string) error {
 
 // GenerateMigration generates the migration file for the target database.
 func (db *DB) GenerateMigration(name, target string, tx bool) error {
-	path := "db/migrate/" + target
+	path := dbMigratePath + target
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return err
@@ -316,6 +327,11 @@ func (db *DB) Migrate() error {
 					return err
 				}
 
+				err = tx.Commit()
+				if err != nil {
+					return err
+				}
+
 				continue
 			}
 
@@ -329,11 +345,6 @@ func (db *DB) Migrate() error {
 				return err
 			}
 		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -385,16 +396,16 @@ func (db *DB) MigrateStatus() ([][]string, error) {
 }
 
 // RegisterMigration registers the up/down migrations that won't be executed in transaction.
-func (db *DB) RegisterMigration(up func(*DB) error, down func(*DB) error) {
-	err := db.registerMigration(up, down, nil, nil)
+func (db *DB) RegisterMigration(up func(*DB) error, down func(*DB) error, args ...string) {
+	err := db.registerMigration(up, down, nil, nil, args...)
 	if err != nil {
 		db.logger.Fatal(err)
 	}
 }
 
 // RegisterMigrationTx registers the up/down migrations that will be executed in transaction.
-func (db *DB) RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error) {
-	err := db.registerMigration(nil, nil, upTx, downTx)
+func (db *DB) RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string) {
+	err := db.registerMigration(nil, nil, upTx, downTx, args...)
 	if err != nil {
 		db.logger.Fatal(err)
 	}
@@ -449,6 +460,11 @@ func (db *DB) Rollback() error {
 						return err
 					}
 
+					err = tx.Commit()
+					if err != nil {
+						return err
+					}
+
 					continue
 				}
 
@@ -465,11 +481,6 @@ func (db *DB) Rollback() error {
 				break
 			}
 		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -591,8 +602,13 @@ func (db *DB) migratedVersions(tx *DBTx) ([]string, error) {
 	return migratedVersions, nil
 }
 
-func (db *DB) registerMigration(up func(*DB) error, down func(*DB) error, upTx func(*DBTx) error, downTx func(*DBTx) error) error {
+func (db *DB) registerMigration(up func(*DB) error, down func(*DB) error, upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string) error {
 	file := migrationFile()
+
+	if len(args) > 0 {
+		file = args[0]
+	}
+
 	version, err := migrationVersion(file)
 	if err != nil {
 		return err
@@ -658,8 +674,7 @@ func migrationVersion(name string) (string, error) {
 	splits := strings.Split(base, "_")
 	_, err := time.Parse("20060102150405", splits[0])
 	if len(splits) < 3 || err != nil {
-		err := fmt.Errorf("invalid filename '%q', a valid example: 20060102150405_create_users.go", base)
-		return "", err
+		return "", fmt.Errorf("invalid filename '%q', a valid example: 20060102150405_create_users.go", base)
 	}
 
 	return splits[0], nil

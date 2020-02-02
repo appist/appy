@@ -20,8 +20,7 @@ type (
 )
 
 const (
-	// DBQueryComment is used to identify which DB query is trigerred from within appy framework.
-	DBQueryComment = "/* appy framework */"
+	dbQueryComment = "/* appy framework */"
 )
 
 // NewLogger initializes Logger instance.
@@ -62,7 +61,7 @@ func (l Logger) BeforeQuery(c context.Context, e *DBQueryEvent) (context.Context
 func (l Logger) AfterQuery(c context.Context, e *DBQueryEvent) error {
 	query, err := e.FormattedQuery()
 
-	if !strings.Contains(query, DBQueryComment) && l.dbLogging {
+	if !strings.Contains(query, dbQueryComment) && l.dbLogging {
 		replacer := strings.NewReplacer("\n", "", ",\n", ", ", "\t", "")
 		l.SugaredLogger.Infof("[SQL] %s in %s", replacer.Replace(query), time.Since(e.StartTime))
 	}
@@ -70,13 +69,13 @@ func (l Logger) AfterQuery(c context.Context, e *DBQueryEvent) error {
 	return err
 }
 
-// DbLogging can be used to check if DB logging is enabled or not.
-func (l Logger) DbLogging() bool {
+// DBLogging can be used to check if DB logging is enabled or not.
+func (l Logger) DBLogging() bool {
 	return l.dbLogging
 }
 
-// SetDbLogging can be used to toggle the DB logging.
-func (l *Logger) SetDbLogging(enabled bool) {
+// SetDBLogging can be used to toggle the DB logging.
+func (l *Logger) SetDBLogging(enabled bool) {
 	l.dbLogging = enabled
 }
 

@@ -11,7 +11,6 @@ services:
       - POSTGRESQL_REPLICATION_PASSWORD=whatever
       - POSTGRESQL_USERNAME=postgres
       - POSTGRESQL_PASSWORD=whatever
-      - POSTGRESQL_DATABASE=appy
 
   psql-slave:
     image: bitnami/postgresql:12

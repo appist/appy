@@ -236,6 +236,15 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			config.SchemaMigrationsTable = val
 		}
 
+		config.OnConnect = func(conn *DBConn) error {
+			_, err := conn.Exec("SET search_path=? ?", DBSafeQuery(config.SchemaSearchPath), DBSafeQuery(dbQueryComment))
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+
 		dbConfig[support.ToCamelCase(dbName)] = config
 	}
 

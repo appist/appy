@@ -19,7 +19,7 @@ func newDBSchemaDumpCommand(config *Config, dbManager *DBManager, logger *Logger
 				logger.Fatal(dbManager.Errors()[0])
 			}
 
-			logger.SetDbLogging(false)
+			logger.SetDBLogging(false)
 			if len(dbManager.databases) < 1 {
 				logger.Fatalf("No database is defined in 'configs/.env.%s'", config.AppyEnv)
 			}

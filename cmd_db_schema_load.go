@@ -27,7 +27,7 @@ func newDBSchemaLoadCommand(config *Config, dbManager *DBManager, logger *Logger
 }
 
 func runDBSchemaLoad(config *Config, dbManager *DBManager, logger *Logger) {
-	logger.SetDbLogging(false)
+	logger.SetDBLogging(false)
 
 	for name, db := range dbManager.databases {
 		if db.Config().Replica {
