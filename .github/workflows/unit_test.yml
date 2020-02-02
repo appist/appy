@@ -12,32 +12,6 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     services:
-      mysql-master:
-        image: "bitnami/mysql:8.0"
-        ports:
-          - 3306/tcp
-        env:
-          MYSQL_REPLICATION_MODE: master
-          MYSQL_REPLICATION_USER: mysql-slave
-          MYSQL_USER: mysql
-          MYSQL_DATABASE: appy
-          MYSQL_ROOT_PASSWORD: whatever
-          ALLOW_EMPTY_PASSWORD: yes
-
-      mysql-slave:
-        image: "bitnami/mysql:8.0"
-        ports:
-          - 3307/tcp
-        env:
-          MYSQL_REPLICATION_MODE: slave
-          MYSQL_REPLICATION_USER: mysql-slave
-          MYSQL_USER: mysql
-          MYSQL_DATABASE: appy
-          MYSQL_MASTER_HOST: mysql-master
-          MYSQL_MASTER_PORT_NUMBER: 3306
-          MYSQL_MASTER_ROOT_PASSWORD: whatever
-          ALLOW_EMPTY_PASSWORD: yes
-
       psql-master:
         image: "bitnami/postgresql:11"
         ports:
@@ -78,6 +52,7 @@ jobs:
           go get -u golang.org/x/lint/golint
           golint -set_exit_status ./... || exit 1
       - run: go vet ./...
+      - run: which pg_dump || echo "shit"
       - run: go test -covermode=atomic -coverprofile=coverage.out -tags=test -race -failfast ./...
         env:
           DB_ADDR_PRIMARY: localhost:${{ job.services.psql-master.ports[5432] }}
