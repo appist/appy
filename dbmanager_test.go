@@ -15,6 +15,9 @@ type DBManagerSuite struct {
 func (s *DBManagerSuite) SetupTest() {
 	s.logger, _, _ = NewFakeLogger()
 	s.support = &Support{}
+
+	// A workaround for Github actions environment variable.
+	os.Unsetenv("DB_ADDR_PRIMARY")
 }
 
 func (s *DBManagerSuite) TearDownTest() {
