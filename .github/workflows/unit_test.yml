@@ -46,13 +46,15 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - uses: actions/checkout@master
+      - run: |
+          sudo apt-get install postgresql postgresql-contrib
+          which pg_dump
       - run: go mod download
       - run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           go get -u golang.org/x/lint/golint
           golint -set_exit_status ./... || exit 1
       - run: go vet ./...
-      - run: which pg_dump || echo "shit"
       - run: go test -covermode=atomic -coverprofile=coverage.out -tags=test -race -failfast ./...
         env:
           DB_ADDR_PRIMARY: localhost:${{ job.services.psql-master.ports[5432] }}
