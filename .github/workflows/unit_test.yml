@@ -23,10 +23,12 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install postgresql-client-12
       - run: make up
-      - run: |
+      - name: Run dependencies installation
+        run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           make install
-      - run: |
+      - name: Run code quality check
+        run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           make codecheck
       - run: make test
