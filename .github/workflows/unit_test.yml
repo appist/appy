@@ -46,9 +46,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - uses: actions/checkout@master
-      - run: |
-          sudo apt-get install postgresql postgresql-contrib
-          which pg_dump
+      - run: sudo apt-get install postgresql postgresql-contrib
       - run: go mod download
       - run: |
           export PATH=$PATH:$(go env GOPATH)/bin
