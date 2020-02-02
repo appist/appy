@@ -4,7 +4,7 @@ services:
   psql-master:
     image: bitnami/postgresql:12
     ports:
-      - "5432:5432"
+      - "15432:5432"
     environment:
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_REPLICATION_USER=psql-slave
@@ -15,7 +15,7 @@ services:
   psql-slave:
     image: bitnami/postgresql:12
     ports:
-      - "5433:5432"
+      - "15433:5432"
     depends_on:
       - psql-master
     environment:
@@ -29,6 +29,6 @@ services:
   redis:
     image: bitnami/redis:5.0.5
     ports:
-      - "6379:6379"
+      - "16379:6379"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes

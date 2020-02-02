@@ -21,7 +21,7 @@ func (s *DBManagerSuite) TearDownTest() {
 }
 
 func (s *DBManagerSuite) TestNewDBManagerWithDefaultConfig() {
-	os.Setenv("DB_ADDR_MAIN_APP", "0.0.0.0:5432")
+	os.Setenv("DB_ADDR_MAIN_APP", "0.0.0.0:15432")
 	defer func() {
 		os.Unsetenv("DB_ADDR_MAIN_APP")
 	}()
@@ -35,7 +35,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithDefaultConfig() {
 	config := dbManager.DB("mainApp").Config()
 	s.Equal("public", config.SchemaSearchPath)
 	s.Equal("tcp", config.Network)
-	s.Equal("0.0.0.0:5432", config.Addr)
+	s.Equal("0.0.0.0:15432", config.Addr)
 	s.Equal("postgres", config.User)
 	s.Equal("postgres", config.Password)
 	s.Equal("postgres", config.Database)

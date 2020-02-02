@@ -11,7 +11,7 @@ bootstrap:
 
 codecheck:
 	go vet ./...
-	golint -set_exit_status ./...
+	golint -set_exit_status ./... || exit 1
 
 down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans

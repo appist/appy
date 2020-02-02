@@ -21,9 +21,8 @@ jobs:
       - run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           go get -u golang.org/x/lint/golint
-          golint -set_exit_status ./... || exit 1
-      - run: go vet ./...
-      - run: go test -covermode=atomic -coverprofile=coverage.out -tags=test -race -failfast ./...
+          make codecheck
+      - run: make test
       - run: bash <(curl -s https://codecov.io/bash)
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -49,6 +49,7 @@ func (s *SessionManagerSuite) SetupTest() {
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
+	os.Setenv("HTTP_SESSION_REDIS_ADDR", "0.0.0.0:16379")
 
 	s.logger = NewLogger()
 	s.asset = NewAsset(http.Dir("testdata"), nil)
