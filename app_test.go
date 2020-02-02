@@ -25,6 +25,7 @@ func (s *AppSuite) TestNewApp() {
 	s.NotNil(app.Asset())
 	s.NotNil(app.Command())
 	s.NotNil(app.Config())
+	s.NotNil(app.DBManager())
 	s.NotNil(app.I18n())
 	s.NotNil(app.Logger())
 	s.NotNil(app.Mailer())

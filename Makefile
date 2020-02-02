@@ -10,15 +10,15 @@ bootstrap:
 	asdf reshim nodejs
 
 codecheck:
+	golint -set_exit_status ./... || exit 1
 	go vet ./...
-	golint -set_exit_status ./...
 
 down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
 
 install:
 	go get -u golang.org/x/lint/golint
-	go mod tidy
+	go mod download
 
 restart:
 	docker-compose -p appy -f .docker/docker-compose.yml restart

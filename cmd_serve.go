@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
-func newServeCommand(logger *Logger, server *Server) *Command {
+func newServeCommand(dbManager *DBManager, logger *Logger, server *Server) *Command {
 	return &Command{
 		Use:   "serve",
 		Short: "Run the HTTP/HTTPS web server without `webpack-dev-server`",
@@ -19,23 +20,35 @@ func newServeCommand(logger *Logger, server *Server) *Command {
 				logger.Fatal(server.Config().Errors()[0])
 			}
 
+			if len(dbManager.Errors()) > 0 {
+				logger.Fatal(dbManager.Errors()[0])
+			}
+
 			if server.Config().HTTPSSLEnabled && !server.IsSSLCertExisted() {
 				logger.Fatal("HTTP_SSL_ENABLED is set to true without SSL certs, please generate using `go run . ssl:setup` first.")
 			}
 
-			serve(logger, server)
+			serve(dbManager, logger, server)
 		},
 	}
 }
 
-func serve(logger *Logger, server *Server) {
+func serve(dbManager *DBManager, logger *Logger, server *Server) {
 	httpDone := make(chan bool, 1)
 	httpQuit := make(chan os.Signal, 1)
 	signal.Notify(httpQuit, os.Interrupt)
 	signal.Notify(httpQuit, syscall.SIGTERM)
+
 	go func() {
 		<-httpQuit
 		logger.Infof("* Gracefully shutting down the server within %s...", server.Config().HTTPGracefulTimeout)
+
+		for _, db := range dbManager.databases {
+			err := db.Close()
+			if err != nil {
+				logger.Fatal(err)
+			}
+		}
 
 		// TODO: Allow graceful handling from the app.
 
@@ -55,9 +68,18 @@ func serve(logger *Logger, server *Server) {
 		close(httpDone)
 	}()
 
-	// TODO: Add database connection establishing
+	for _, db := range dbManager.databases {
+		err := db.Connect()
+		if err != nil {
+			logger.Fatal(err)
+		}
+	}
 
 	for _, info := range server.Info() {
+		if strings.Contains(info, "* Listening on") {
+			logger.Info(dbManager.Info())
+		}
+
 		logger.Info(info)
 	}
 
