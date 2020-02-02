@@ -11,6 +11,7 @@ An opinionated productive web framework that helps scaling business easier.
 
 - [Go >= 1.13](https://golang.org/dl/)
 - [NodeJS >=10 <=12](https://nodejs.org/en/download/)
+- [PostgreSQL >= 12](https://www.postgresql.org/download/)
 
 ## Quick Start
 
@@ -45,12 +46,13 @@ $ go run .
 
 This project is heavily inspired by:
 
-- [rails](https://github.com/rails/rails)
 - [cobra](https://github.com/spf13/cobra)
 - [httprouter](https://github.com/julienschmidt/httprouter)
 - [gin](https://github.com/gin-gonic/gin)
-- [zap](https://github.com/uber-go/zap)
+- [go-pg](https://github.com/go-pg/pg)
+- [rails](https://github.com/rails/rails)
 - [testify](https://github.com/stretchr/testify)
+- [zap](https://github.com/uber-go/zap)
 
 ## Contribution
 
