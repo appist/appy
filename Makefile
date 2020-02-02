@@ -10,8 +10,6 @@ bootstrap:
 	asdf reshim nodejs
 
 codecheck:
-	export PATH=$$PATH:$$(go env GOPATH)/bin
-	go get -u golang.org/x/lint/golint
 	golint -set_exit_status ./... || exit 1
 	go vet ./...
 
@@ -19,6 +17,7 @@ down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
 
 install:
+	go get -u golang.org/x/lint/golint
 	go mod download
 
 restart:

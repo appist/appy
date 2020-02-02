@@ -18,8 +18,12 @@ jobs:
       - name: Run PostgreSQL installation
         run: sudo apt-get -y install postgresql postgresql-contrib
       - run: make up
-      - run: make install
-      - run: make codecheck
+      - run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          make install
+      - run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          make codecheck
       - run: make test
       - run: bash <(curl -s https://codecov.io/bash)
         env:
