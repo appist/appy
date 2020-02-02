@@ -775,7 +775,7 @@ func init() {
 	return tpl.Bytes(), err
 }
 
-func seedTpl(database, schema string) ([]byte, error) {
+func seedTpl(database string) ([]byte, error) {
 	type data struct {
 		Database, Module string
 	}

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 type DBSuite struct {
@@ -183,6 +184,46 @@ func (s *DBSuite) TestDBOps() {
 	s.Equal("up", migrations[0][0])
 	s.Equal("up", migrations[1][0])
 
+	// Test DB seed
+	type User struct {
+		tableName struct{} `pg:",discard_unknown_columns"`
+		ID        int
+		Email     string
+		Username  string
+		CreatedAt time.Time
+		UpdatedAt time.Time
+	}
+
+	db.RegisterSeedTx(
+		func(h *DBTx) error {
+			users := []User{
+				User{
+					Email:     "john@gmail.com",
+					Username:  "john",
+					CreatedAt: time.Now(),
+				},
+				User{
+					Email:     "doe@gmail.com",
+					Username:  "doe",
+					CreatedAt: time.Now(),
+				},
+			}
+			_, err := h.Model(&users).Insert()
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
+
+	err = db.Seed()
+	s.Nil(err)
+
+	res, err = db.Exec("SELECT * FROM users")
+	s.Nil(err)
+	s.Equal(2, res.RowsReturned())
+
 	// Test DB dump schema
 	err = db.DumpSchema("appy")
 	s.Nil(err)
@@ -258,6 +299,12 @@ func (s *DBSuite) TestDBSchema() {
 
 	db.SetSchema("SQL schema")
 	s.Equal("SQL schema", db.Schema())
+}
+
+func (s *DBSuite) TestDBSeedTpl() {
+	tpl, err := seedTpl("primary")
+	s.Nil(err)
+	s.Contains(string(tpl), "db.RegisterSeedTx(")
 }
 
 func TestDBSuite(t *testing.T) {
