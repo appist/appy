@@ -16,8 +16,8 @@ type DBManager struct {
 	logger    *Logger
 }
 
-// NewDbManager initializes DbManager instance.
-func NewDbManager(logger *Logger, support Supporter) *DBManager {
+// NewDBManager initializes DbManager instance.
+func NewDBManager(logger *Logger, support Supporter) *DBManager {
 	dbManager := &DBManager{
 		databases: map[string]*DB{},
 		logger:    logger,
@@ -89,6 +89,11 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			config.SchemaSearchPath = val
 		}
 
+		config.Network = "tcp"
+		if val, ok := os.LookupEnv("DB_NETWORK_" + dbName); ok && val != "" {
+			config.Network = val
+		}
+
 		config.Addr = "0.0.0.0:5432"
 		if val, ok := os.LookupEnv("DB_ADDR_" + dbName); ok && val != "" {
 			config.Addr = val
@@ -138,7 +143,23 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			}
 		}
 
-		config.PoolSize = 25
+		config.MinRetryBackoff = 250 * time.Millisecond
+		if val, ok := os.LookupEnv("DB_MIN_RETRY_BACKOFF_" + dbName); ok && val != "" {
+			config.MinRetryBackoff, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		config.MaxRetryBackoff = 4 * time.Second
+		if val, ok := os.LookupEnv("DB_MAX_RETRY_BACKOFF_" + dbName); ok && val != "" {
+			config.MaxRetryBackoff, err = time.ParseDuration(val)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		config.PoolSize = 10
 		if val, ok := os.LookupEnv("DB_POOL_SIZE_" + dbName); ok && val != "" {
 			config.PoolSize, err = strconv.Atoi(val)
 			if err != nil {
@@ -146,7 +167,7 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			}
 		}
 
-		config.PoolTimeout = 30 * time.Second
+		config.PoolTimeout = 10 * time.Second
 		if val, ok := os.LookupEnv("DB_POOL_TIMEOUT_" + dbName); ok && val != "" {
 			config.PoolTimeout, err = time.ParseDuration(val)
 			if err != nil {
@@ -170,7 +191,7 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			}
 		}
 
-		config.DialTimeout = 30 * time.Second
+		config.DialTimeout = 5 * time.Second
 		if val, ok := os.LookupEnv("DB_DIAL_TIMEOUT_" + dbName); ok && val != "" {
 			config.DialTimeout, err = time.ParseDuration(val)
 			if err != nil {
@@ -194,7 +215,7 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			}
 		}
 
-		config.ReadTimeout = 30 * time.Second
+		config.ReadTimeout = 10 * time.Second
 		if val, ok := os.LookupEnv("DB_READ_TIMEOUT_" + dbName); ok && val != "" {
 			config.ReadTimeout, err = time.ParseDuration(val)
 			if err != nil {
@@ -202,7 +223,7 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			}
 		}
 
-		config.WriteTimeout = 30 * time.Second
+		config.WriteTimeout = 10 * time.Second
 		if val, ok := os.LookupEnv("DB_WRITE_TIMEOUT_" + dbName); ok && val != "" {
 			config.WriteTimeout, err = time.ParseDuration(val)
 			if err != nil {

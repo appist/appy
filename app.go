@@ -33,7 +33,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	support := &Support{}
 	logger := NewLogger()
 	config := NewConfig(asset, logger, support)
-	dbManager := NewDbManager(logger, support)
+	dbManager := NewDBManager(logger, support)
 	i18n := NewI18n(asset, config, logger)
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
