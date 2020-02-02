@@ -15,13 +15,10 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - uses: actions/checkout@master
-      - run: sudo apt-get install postgresql postgresql-contrib
+      - run: sudo apt-get install postgresql-12 postgresql-contrib-12
       - run: make up
-      - run: go mod download
-      - run: |
-          export PATH=$PATH:$(go env GOPATH)/bin
-          go get -u golang.org/x/lint/golint
-          make codecheck
+      - run: make install
+      - run: make codecheck
       - run: make test
       - run: bash <(curl -s https://codecov.io/bash)
         env:
