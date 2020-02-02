@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   psql-master:
-    image: bitnami/postgresql:11
+    image: bitnami/postgresql:12
     ports:
       - "5432:5432"
     environment:
@@ -14,7 +14,7 @@ services:
       - POSTGRESQL_DATABASE=appy
 
   psql-slave:
-    image: bitnami/postgresql:11
+    image: bitnami/postgresql:12
     ports:
       - "5433:5432"
     depends_on:
