@@ -10,7 +10,7 @@ An opinionated productive web framework that helps scaling business easier.
 ## Prerequisites
 
 - [Go >= 1.13](https://golang.org/dl/)
-- [NodeJS >=10 <=12](https://nodejs.org/en/download/)
+- [NodeJS >= 13](https://nodejs.org/en/download/)
 - [PostgreSQL >= 12](https://www.postgresql.org/download/)
 
 ## Quick Start
