@@ -36,6 +36,13 @@ func (s *LoggerSuite) TestNewFakeLogger() {
 	s.Contains(buf.String(), "info\ttest")
 }
 
+func (s *LoggerSuite) TestSetDbLogging() {
+	logger := appy.NewLogger()
+	s.Equal(true, logger.DbLogging())
+	logger.SetDbLogging(false)
+	s.Equal(false, logger.DbLogging())
+}
+
 func TestLoggerSuite(t *testing.T) {
 	appy.RunTestSuite(t, new(LoggerSuite))
 }

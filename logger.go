@@ -32,6 +32,7 @@ func NewLogger() *Logger {
 
 	return &Logger{
 		SugaredLogger: logger.Sugar(),
+		dbLogging:     true,
 	}
 }
 

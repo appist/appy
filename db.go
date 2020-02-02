@@ -33,6 +33,14 @@ type (
 		support    Supporter
 	}
 
+	// DBConfig contains database connection options.
+	DBConfig struct {
+		pg.Options
+		Replica               bool
+		SchemaSearchPath      string
+		SchemaMigrationsTable string
+	}
+
 	// DBMigration contains database migration.
 	DBMigration struct {
 		File    string
