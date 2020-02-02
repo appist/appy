@@ -194,7 +194,7 @@ func (db *DB) DumpSchema(name string) error {
 	}
 
 	dumpArgs := []string{
-		"-s", "-x", "-O", "--no-comments",
+		"-s", "-x", "-O",
 		"-d", db.config.Database,
 		"-n", db.config.SchemaSearchPath,
 		"-h", u.Hostname(),
