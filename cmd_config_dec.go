@@ -13,10 +13,6 @@ func newConfigDecCommand(config *Config, logger *Logger, support Supporter) *Com
 		Short: "Decrypt a config value using the key in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`",
 		Args:  ExactArgs(1),
 		Run: func(cmd *Command, args []string) {
-			if len(config.Errors()) > 0 {
-				logger.Fatal(config.Errors()[0])
-			}
-
 			masterKey := config.MasterKey()
 			if masterKey == nil {
 				logger.Fatal(config.Errors())
