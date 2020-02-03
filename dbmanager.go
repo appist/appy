@@ -1,12 +1,15 @@
 package appy
 
 import (
+	"crypto/tls"
 	"fmt"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-pg/pg/v9"
 )
 
 // DBManager manages multiple database handles.
@@ -72,11 +75,25 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 	dbNames := []string{}
 
 	for _, val := range os.Environ() {
-		re := regexp.MustCompile("DB_ADDR_(.*)")
-		match := re.FindStringSubmatch(val)
+		addrRegex := regexp.MustCompile("DB_ADDR_(.*)")
+		addrMatch := addrRegex.FindStringSubmatch(val)
 
-		if len(match) > 1 {
-			splits := strings.Split(match[1], "=")
+		if len(addrMatch) > 1 {
+			splits := strings.Split(addrMatch[1], "=")
+			dbNames = append(dbNames, splits[0])
+		}
+
+		urlRegex := regexp.MustCompile("DB_URL_(.*)")
+		urlMatch := urlRegex.FindStringSubmatch(val)
+
+		if len(urlMatch) > 1 {
+			splits := strings.Split(urlMatch[1], "=")
+
+			if support.ArrayContains(dbNames, splits[0]) {
+				errs = append(errs, fmt.Errorf("please only specify either 'DB_ADDR_%s' or 'DB_URL_%s'", splits[0], splits[0]))
+				continue
+			}
+
 			dbNames = append(dbNames, splits[0])
 		}
 	}
@@ -236,6 +253,18 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			config.SchemaMigrationsTable = val
 		}
 
+		config.TLSConfig = nil
+		if val, ok := os.LookupEnv("DB_SSLMODE_" + dbName); ok && val != "" && val != "disable" {
+			switch val {
+			case "verify-ca", "verify-full":
+				config.TLSConfig = &tls.Config{}
+			case "allow", "prefer", "require":
+				config.TLSConfig = &tls.Config{InsecureSkipVerify: true} //nolint
+			default:
+				errs = append(errs, fmt.Errorf("sslmode '%v' is not supported", val))
+			}
+		}
+
 		config.OnConnect = func(conn *DBConn) error {
 			_, err := conn.Exec("SET search_path=? ?", DBSafeQuery(config.SchemaSearchPath), DBSafeQuery(dbQueryComment))
 			if err != nil {
@@ -243,6 +272,20 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 			}
 
 			return nil
+		}
+
+		if os.Getenv("DB_URL_"+dbName) != "" {
+			opts, err := pg.ParseURL(os.Getenv("DB_URL_" + dbName))
+			if err != nil {
+				errs = append(errs, err)
+			} else {
+				config.Addr = opts.Addr
+				config.User = opts.User
+				config.Password = opts.Password
+				config.Database = opts.Database
+				config.DialTimeout = opts.DialTimeout
+				config.TLSConfig = opts.TLSConfig
+			}
 		}
 
 		dbConfig[support.ToCamelCase(dbName)] = config

@@ -55,6 +55,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithDefaultConfig() {
 	s.Equal(10*time.Second, config.ReadTimeout)
 	s.Equal(10*time.Second, config.WriteTimeout)
 	s.Equal("schema_migrations", config.SchemaMigrationsTable)
+	s.Empty(config.TLSConfig)
 }
 
 func (s *DBManagerSuite) TestNewDBManagerWithNoConfig() {
@@ -88,6 +89,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithCustomConfig() {
 	os.Setenv("DB_READ_TIMEOUT_MAIN_APP", "25s")
 	os.Setenv("DB_WRITE_TIMEOUT_MAIN_APP", "25s")
 	os.Setenv("DB_SCHEMA_MIGRATIONS_TABLE_MAIN_APP", "custom_migrations")
+	os.Setenv("DB_SSLMODE_MAIN_APP", "allow")
 	defer func() {
 		os.Unsetenv("DB_SCHEMA_SEARCH_PATH_MAIN_APP")
 		os.Unsetenv("DB_NETWORK_MAIN_APP")
@@ -111,6 +113,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithCustomConfig() {
 		os.Unsetenv("DB_READ_TIMEOUT_MAIN_APP")
 		os.Unsetenv("DB_WRITE_TIMEOUT_MAIN_APP")
 		os.Unsetenv("DB_SCHEMA_MIGRATIONS_TABLE_MAIN_APP")
+		os.Unsetenv("DB_SSLMODE_MAIN_APP")
 	}()
 
 	dbManager := NewDBManager(s.logger, s.support)
@@ -142,6 +145,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithCustomConfig() {
 	s.Equal(25*time.Second, config.ReadTimeout)
 	s.Equal(25*time.Second, config.WriteTimeout)
 	s.Equal("custom_migrations", config.SchemaMigrationsTable)
+	s.NotEqual(nil, config.TLSConfig)
 }
 
 func (s *DBManagerSuite) TestNewDBManagerWithInvalidConfig() {
@@ -160,6 +164,7 @@ func (s *DBManagerSuite) TestNewDBManagerWithInvalidConfig() {
 	os.Setenv("DB_IDLE_CHECK_FREQUENCY_MAIN_APP", "true")
 	os.Setenv("DB_READ_TIMEOUT_MAIN_APP", "true")
 	os.Setenv("DB_WRITE_TIMEOUT_MAIN_APP", "true")
+	os.Setenv("DB_SSLMODE_MAIN_APP", "dummy")
 	defer func() {
 		os.Unsetenv("DB_ADDR_MAIN_APP")
 		os.Unsetenv("DB_REPLICA_MAIN_APP")
@@ -176,13 +181,53 @@ func (s *DBManagerSuite) TestNewDBManagerWithInvalidConfig() {
 		os.Unsetenv("DB_IDLE_CHECK_FREQUENCY_MAIN_APP")
 		os.Unsetenv("DB_READ_TIMEOUT_MAIN_APP")
 		os.Unsetenv("DB_WRITE_TIMEOUT_MAIN_APP")
+		os.Unsetenv("DB_SSLMODE_MAIN_APP")
 	}()
 
 	dbManager := NewDBManager(s.logger, s.support)
 	s.Nil(dbManager.DB("primary"))
 	s.NotNil(dbManager.DB("mainApp"))
-	s.Equal(14, len(dbManager.Errors()))
+	s.Equal(15, len(dbManager.Errors()))
 	s.Equal("* DBs: mainApp", dbManager.Info())
+}
+
+func (s *DBManagerSuite) TestNewDBManagerWithDBURL() {
+	os.Setenv("DB_URL_MAIN_APP", "http://appy:whatever@0.0.0.0:15432/appy?sslmode=disable&application_name=appy&connect_timeout=10")
+	dbManager := NewDBManager(s.logger, s.support)
+	s.Equal(1, len(dbManager.Errors()))
+
+	os.Setenv("DB_URL_MAIN_APP", "postgres://appy:whatever@0.0.0.0:15432/appy?sslmode=disable&application_name=appy&connect_timeout=10")
+	defer func() {
+		os.Unsetenv("DB_URL_MAIN_APP")
+	}()
+
+	dbManager = NewDBManager(s.logger, s.support)
+	s.Nil(dbManager.DB("primary"))
+	s.NotNil(dbManager.DB("mainApp"))
+	s.Equal(0, len(dbManager.Errors()))
+	s.Equal("* DBs: mainApp", dbManager.Info())
+
+	config := dbManager.DB("mainApp").Config()
+	s.Equal("0.0.0.0:15432", config.Addr)
+	s.Equal("appy", config.User)
+	s.Equal("whatever", config.Password)
+	s.Equal("appy", config.ApplicationName)
+	s.Equal(10*time.Second, config.DialTimeout)
+	s.Empty(config.TLSConfig)
+}
+
+func (s *DBManagerSuite) TestNewDBManagerWithDBURLAndAddr() {
+	os.Setenv("DB_ADDR_MAIN_APP", "0.0.0.0:15432")
+	os.Setenv("DB_URL_MAIN_APP", "postgres://appy:whatever@0.0.0.0:15432/appy?sslmode=disable&application_name=appy&connect_timeout=10")
+	defer func() {
+		os.Unsetenv("DB_ADDR_MAIN_APP")
+		os.Unsetenv("DB_URL_MAIN_APP")
+	}()
+
+	dbManager := NewDBManager(s.logger, s.support)
+	s.Nil(dbManager.DB("primary"))
+	s.NotNil(dbManager.DB("mainApp"))
+	s.Equal(1, len(dbManager.Errors()))
 }
 
 func TestDBManagerSuite(t *testing.T) {
