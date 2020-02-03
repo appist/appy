@@ -43,9 +43,11 @@ func newDBRollbackCommand(config *Config, dbManager *DBManager, logger *Logger) 
 				logger.Fatal(err)
 			}
 
-			err = db.DumpSchema(target)
-			if err != nil {
-				logger.Fatal(err)
+			if IsDebugBuild() {
+				err = db.DumpSchema(target)
+				if err != nil {
+					logger.Fatal(err)
+				}
 			}
 
 			logger.Infof("Rolling back '%s' database... DONE", target)

@@ -82,9 +82,11 @@ func runDBMigrateAll(config *Config, dbManager *DBManager, logger *Logger) {
 			logger.Fatal(err)
 		}
 
-		err = db.DumpSchema(name)
-		if err != nil {
-			logger.Fatal(err)
+		if IsDebugBuild() {
+			err = db.DumpSchema(name)
+			if err != nil {
+				logger.Fatal(err)
+			}
 		}
 
 		logger.Infof("Migrating '%s' database... DONE", name)
