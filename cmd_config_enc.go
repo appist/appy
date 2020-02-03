@@ -15,7 +15,7 @@ func newConfigEncCommand(config *Config, logger *Logger, support Supporter) *Com
 		Run: func(cmd *Command, args []string) {
 			masterKey := config.MasterKey()
 			if masterKey == nil {
-				logger.Fatal(config.Errors())
+				logger.Fatal(ErrMissingMasterKey)
 			}
 
 			plaintext := []byte(args[0])

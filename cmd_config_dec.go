@@ -15,7 +15,7 @@ func newConfigDecCommand(config *Config, logger *Logger, support Supporter) *Com
 		Run: func(cmd *Command, args []string) {
 			masterKey := config.MasterKey()
 			if masterKey == nil {
-				logger.Fatal(config.Errors())
+				logger.Fatal(ErrMissingMasterKey)
 			}
 
 			ciphertext, err := hex.DecodeString(args[0])
