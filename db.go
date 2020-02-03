@@ -696,7 +696,7 @@ import (
 )
 
 func init() {
-	db := app.DBManager.DB("{{.Database}}")
+	db := app.DB("{{.Database}}")
 
 	if db != nil {
 		db.RegisterMigration{{if .Tx}}Tx{{end}}(
@@ -746,7 +746,7 @@ import (
 )
 
 func init() {
-	db := app.DBManager.DB("{{.Database}}")
+	db := app.DB("{{.Database}}")
 
 	if db != nil {
 		db.SetSchema(` + "`" +
@@ -790,7 +790,7 @@ import (
 )
 
 func init() {
-	db := app.DBManager.DB("{{.Database}}")
+	db := app.DB("{{.Database}}")
 
 	if db != nil {
 		db.RegisterSeedTx(
