@@ -50,6 +50,7 @@ This project is heavily inspired by:
 - [httprouter](https://github.com/julienschmidt/httprouter)
 - [gin](https://github.com/gin-gonic/gin)
 - [go-pg](https://github.com/go-pg/pg)
+- [gqlgen](https://gqlgen.com/)
 - [rails](https://github.com/rails/rails)
 - [testify](https://github.com/stretchr/testify)
 - [zap](https://github.com/uber-go/zap)
