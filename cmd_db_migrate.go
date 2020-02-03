@@ -44,9 +44,11 @@ func newDBMigrateCommand(config *Config, dbManager *DBManager, logger *Logger) *
 					logger.Fatal(err)
 				}
 
-				err = db.DumpSchema(target)
-				if err != nil {
-					logger.Fatal(err)
+				if IsDebugBuild() {
+					err = db.DumpSchema(target)
+					if err != nil {
+						logger.Fatal(err)
+					}
 				}
 
 				logger.Infof("Migrating '%s' database... DONE", target)
