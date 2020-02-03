@@ -183,7 +183,7 @@ func (c Config) decryptConfig(asset *Asset, masterKey []byte, support Supporter)
 	var errs []error
 	if len(masterKey) != 0 {
 		for key, value := range envMap {
-			if origEnvMap[key] {
+			if origEnvMap[key] || value == "" {
 				continue
 			}
 
