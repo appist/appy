@@ -18,6 +18,7 @@ func SPA(server *Server, prefix string, fs http.FileSystem) HandlerFunc {
 	return func(c *Context) {
 		req := c.Request
 		if server.isSSRPath(req.URL.Path) ||
+			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout()["docker"]) ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout()["config"]) ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout()["locale"]) ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout()["view"]) {
