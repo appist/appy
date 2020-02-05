@@ -15,24 +15,26 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - uses: actions/checkout@master
-      - name: Run PostgreSQL 12 installation
+      - name: Install PostgreSQL 12
         run: |
           sudo apt-get -y install bash-completion wget
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |sudo tee  /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update
           sudo apt-get -y install postgresql-client-12
-      - name: Setup datastore
+      - name: Setup Local Datastore
         run: make up
-      - name: Run dependencies installation
+      - name: Install Project Dependencies
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           make install
-      - name: Run code quality check
+      - name: Check Code Quality
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           make codecheck
-      - run: make test
-      - run: bash <(curl -s https://codecov.io/bash)
+      - name: Unit Test
+        run: make test
+      - name: Send Code Coverage To CodeCov
+        run: bash <(curl -s https://codecov.io/bash)
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
