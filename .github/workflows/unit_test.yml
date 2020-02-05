@@ -22,7 +22,8 @@ jobs:
           echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |sudo tee  /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update
           sudo apt-get -y install postgresql-client-12
-      - run: make up
+      - name: Setup datastore
+        run: make up
       - name: Run dependencies installation
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
