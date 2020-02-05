@@ -74,8 +74,10 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newRoutesCommand(config, logger, server))
 	command.AddCommand(newSecretCommand(logger))
 	command.AddCommand(newServeCommand(dbManager, logger, server))
+	command.AddCommand(newSetupCommand(asset, config, dbManager, logger))
 	command.AddCommand(newSSLSetupCommand(logger, server))
 	command.AddCommand(newSSLTeardownCommand(logger, server))
+	command.AddCommand(newTeardownCommand(asset, config, dbManager, logger))
 
 	if IsDebugBuild() {
 		command.AddCommand(newDBSchemaDumpCommand(config, dbManager, logger))
