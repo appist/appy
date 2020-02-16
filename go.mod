@@ -35,7 +35,7 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/vektah/gqlparser v1.2.1
+	github.com/vektah/gqlparser v1.3.1
 	go.uber.org/zap v1.13.0
 	golang.org/x/lint v0.0.0-20200130185559-910be7a94367 // indirect
 	golang.org/x/text v0.3.2
