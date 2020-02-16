@@ -3,7 +3,7 @@ module github.com/appist/appy
 go 1.13.4
 
 require (
-	github.com/99designs/gqlgen v0.10.3-0.20200107225458-28c032d1f3ba
+	github.com/99designs/gqlgen v0.10.3-0.20200214100432-4ece3857c9ab
 	github.com/BurntSushi/toml v0.3.1
 	github.com/CloudyKit/fastprinter v0.0.0-20170127035650-74b38d55f37a // indirect
 	github.com/CloudyKit/jet v2.1.2+incompatible
