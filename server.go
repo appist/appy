@@ -20,7 +20,7 @@ import (
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/vektah/gqlparser/gqlerror"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -224,9 +224,9 @@ func (s *Server) SetupGraphQL(path string, es graphql.ExecutableSchema, exts []g
 		queryCacheSize = s.Config().GQLQueryCacheSize
 	}
 	gqlServer.SetQueryCache(gqlLRU.New(queryCacheSize))
-	gqlServer.SetErrorPresenter(func(c context.Context, err error) *gqlerror.Error {
+	gqlServer.SetErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
 		// Refer to https://gqlgen.com/reference/errors/#the-error-presenter for custom error handling.
-		return graphql.DefaultErrorPresenter(c, err)
+		return graphql.DefaultErrorPresenter(ctx, err)
 	})
 	gqlServer.SetRecoverFunc(func(c context.Context, err interface{}) error {
 		// TODO: Implement error alert.

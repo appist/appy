@@ -15,7 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/appist/appy"
 	"github.com/gorilla/websocket"
-	"github.com/vektah/gqlparser/gqlerror"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 type ServerSuite struct {
@@ -293,6 +293,11 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 
 type fakeGQLExt struct{}
 
+var _ interface {
+	graphql.OperationParameterMutator
+	graphql.HandlerExtension
+} = fakeGQLExt{}
+
 func (c fakeGQLExt) ExtensionName() string {
 	return "fakeGQLExt"
 }
@@ -301,7 +306,7 @@ func (c fakeGQLExt) Validate(schema graphql.ExecutableSchema) error {
 	return nil
 }
 
-func (c fakeGQLExt) MutateOperationContext(ctx context.Context, rc *graphql.OperationContext) *gqlerror.Error {
+func (c fakeGQLExt) MutateOperationParameters(ctx context.Context, rawParams *graphql.RawParams) *gqlerror.Error {
 	return nil
 }
 
