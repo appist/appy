@@ -44,14 +44,20 @@ func newDBMigrateCommand(config *Config, dbManager *DBManager, logger *Logger) *
 					logger.Fatal(err)
 				}
 
+				logger.Infof("Migrating '%s' database... DONE", target)
+
 				if IsDebugBuild() {
+					logger.Infof("")
+					logger.Infof("Dumping schema for '%s' database...", target)
+
 					err = db.DumpSchema(target)
 					if err != nil {
 						logger.Fatal(err)
 					}
+
+					logger.Infof("Dumping schema for '%s' database... DONE", target)
 				}
 
-				logger.Infof("Migrating '%s' database... DONE", target)
 				return
 			}
 
@@ -82,13 +88,18 @@ func runDBMigrateAll(config *Config, dbManager *DBManager, logger *Logger) {
 			logger.Fatal(err)
 		}
 
+		logger.Infof("Migrating '%s' database... DONE", name)
+
 		if IsDebugBuild() {
+			logger.Infof("")
+			logger.Infof("Dumping schema for '%s' database...", name)
+
 			err = db.DumpSchema(name)
 			if err != nil {
 				logger.Fatal(err)
 			}
-		}
 
-		logger.Infof("Migrating '%s' database... DONE", name)
+			logger.Infof("Dumping schema for '%s' database... DONE", name)
+		}
 	}
 }
