@@ -57,7 +57,6 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	server.Use(Recovery(logger))
 
 	command := NewRootCommand()
-	command.AddCommand(newBuildCommand(asset, logger, server))
 	command.AddCommand(newConfigDecCommand(config, logger, support))
 	command.AddCommand(newConfigEncCommand(config, logger, support))
 	command.AddCommand(newDBCreateCommand(config, dbManager, logger))
@@ -80,6 +79,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newTeardownCommand(asset, config, dbManager, logger))
 
 	if IsDebugBuild() {
+		command.AddCommand(newBuildCommand(asset, logger, server))
 		command.AddCommand(newDBSchemaDumpCommand(config, dbManager, logger))
 		command.AddCommand(newGenMigrationCommand(config, dbManager, logger, support))
 		command.AddCommand(newStartCommand(logger, server))
