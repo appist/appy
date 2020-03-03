@@ -1,6 +1,6 @@
 module github.com/appist/appy
 
-go 1.13.4
+go 1.14
 
 require (
 	github.com/99designs/gqlgen v0.11.1
@@ -10,7 +10,7 @@ require (
 	github.com/bndr/gotabulate v1.1.2
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/chromedp/cdproto v0.0.0-20200116234248-4da64dd111ac
-	github.com/chromedp/chromedp v0.5.3
+	github.com/chromedp/chromedp v0.5.4-0.20200303084119-2bb39134ab9e
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/camelcase v1.0.0
 	github.com/gin-contrib/multitemplate v0.0.0-20191128031210-95dee0dedf35
@@ -39,6 +39,6 @@ require (
 	go.uber.org/zap v1.14.0
 	golang.org/x/lint v0.0.0-20200130185559-910be7a94367 // indirect
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20200131211209-ecb101ed6550 // indirect
+	golang.org/x/tools v0.0.0-20200228224639-71482053b885 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )
