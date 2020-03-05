@@ -1,8 +1,10 @@
 package appy
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -49,6 +51,27 @@ func SPA(server *Server, prefix string, fs http.FileSystem) HandlerFunc {
 		resource := server.spaResource(req.URL.Path)
 		if resource == nil || resource.fs == nil {
 			c.Next()
+			return
+		}
+
+		// If the request path is a pretty URL, serve the index.html from the prefix as fallback.
+		if filepath.Ext(req.URL.Path) == "" {
+			file, err := resource.fs.Open(prefix + "/index.html")
+			if err != nil {
+				server.logger.Error(err)
+				c.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
+
+			data, err := ioutil.ReadAll(file)
+			if err != nil {
+				server.logger.Error(err)
+				c.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
+
+			c.Data(http.StatusOK, "text/html; charset=utf-8", data)
+			c.Abort()
 			return
 		}
 

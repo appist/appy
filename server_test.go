@@ -264,8 +264,8 @@ func (s *ServerSuite) TestCSRWithReleaseBuild() {
 	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
 
 	w = server.TestHTTPRequest("GET", "/foo", nil, nil)
-	s.Equal(http.StatusNotFound, w.Code)
-	s.Contains(w.Body.String(), "404 page not found")
+	s.Equal(http.StatusOK, w.Code)
+	s.Contains(w.Body.String(), `<div id="app">we build apps</div>`)
 
 	w = server.TestHTTPRequest("GET", "/tools", nil, nil)
 	s.Equal(http.StatusOK, w.Code)
