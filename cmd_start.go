@@ -133,7 +133,7 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 				}
 
 				go func() {
-					ticker := time.NewTicker(100 * time.Millisecond)
+					ticker := time.NewTicker(16 * time.Millisecond)
 					defer ticker.Stop()
 
 					for {
