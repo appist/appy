@@ -33,14 +33,14 @@ import (
 )
 
 var (
-	apiServeCmd, webServeCmd                                 *exec.Cmd
-	apiServeCmdReady                                         chan bool
-	apiServeConsole, webServeConsole, workerConsole          *text.Text
-	apiServeConsoleBuf, webServeConsoleBuf, workerConsoleBuf string
-	terminalBox                                              *termbox.Terminal
-	isGenerating                                                           = false
-	watcherPollInterval                                      time.Duration = 1
-	liveReloadWSConn, liveReloadWSSConn                      *websocket.Conn
+	apiServeCmd, webServeCmd               *exec.Cmd
+	apiServeCmdReady                       chan bool
+	apiServeConsole, webServeConsole       *text.Text
+	apiServeConsoleBuf, webServeConsoleBuf string
+	terminalBox                            *termbox.Terminal
+	isGenerating                                         = false
+	watcherPollInterval                    time.Duration = 1
+	liveReloadWSConn, liveReloadWSSConn    *websocket.Conn
 )
 
 func newStartCommand(logger *Logger, server *Server) *Command {
@@ -110,34 +110,19 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 					logger.Fatal(err)
 				}
 
-				workerConsole, err = text.New(text.RollContent(), text.WrapAtRunes(), text.WrapAtWords())
-				if err != nil {
-					quit <- os.Kill
-					logger.Fatal(err)
-				}
-
 				ctx, cancel := context.WithCancel(context.Background())
 				ctn, err := container.New(
 					terminalBox,
 					container.SplitVertical(
 						container.Left(
-							container.SplitHorizontal(
-								container.Top(
-									container.Border(linestyle.Light),
-									container.BorderTitle(" Backend "),
-									container.PlaceWidget(apiServeConsole),
-								),
-								container.Bottom(
-									container.Border(linestyle.Light),
-									container.BorderTitle(" Frontend (webpack-dev-server) "),
-									container.PlaceWidget(webServeConsole),
-								),
-							),
+							container.Border(linestyle.Light),
+							container.BorderTitle(" Backend "),
+							container.PlaceWidget(apiServeConsole),
 						),
 						container.Right(
 							container.Border(linestyle.Light),
-							container.BorderTitle(" Worker "),
-							container.PlaceWidget(workerConsole),
+							container.BorderTitle(" Frontend (webpack-dev-server) "),
+							container.PlaceWidget(webServeConsole),
 						),
 					),
 				)
@@ -148,7 +133,7 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 				}
 
 				go func() {
-					ticker := time.NewTicker(1 * time.Second)
+					ticker := time.NewTicker(100 * time.Millisecond)
 					defer ticker.Stop()
 
 					for {
@@ -167,15 +152,6 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 								webServeBuf := webServeConsoleBuf
 								webServeConsoleBuf = ""
 								if err := webServeConsole.Write(webServeBuf); err != nil {
-									quit <- os.Kill
-									logger.Fatal(err)
-								}
-							}
-
-							if workerConsoleBuf != "" {
-								workerServeBuf := workerConsoleBuf
-								workerConsoleBuf = ""
-								if err := workerConsole.Write(workerServeBuf); err != nil {
 									quit <- os.Kill
 									logger.Fatal(err)
 								}
