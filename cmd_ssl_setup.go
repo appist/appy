@@ -24,6 +24,10 @@ func newSSLSetupCommand(logger *Logger, server *Server) *Command {
 			os.MkdirAll(server.Config().HTTPSSLCertPath, os.ModePerm)
 			setupArgs := []string{"-install", "-cert-file", server.Config().HTTPSSLCertPath + "/cert.pem", "-key-file", server.Config().HTTPSSLCertPath + "/key.pem"}
 			hosts, _ := server.Hosts()
+			if !server.support.ArrayContains(hosts, "0.0.0.0") {
+				hosts = append(hosts, "0.0.0.0")
+			}
+
 			setupArgs = append(setupArgs, hosts...)
 			setupCmd := exec.Command("mkcert", setupArgs...)
 			setupCmd.Stdout = os.Stdout
