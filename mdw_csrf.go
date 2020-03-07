@@ -257,6 +257,7 @@ func saveCSRFTokenIntoCookie(token []byte, c *Context, config *Config) error {
 		config.HTTPCSRFCookieMaxAge,
 		config.HTTPCSRFCookiePath,
 		config.HTTPCSRFCookieDomain,
+		config.HTTPCSRFCookieSameSite,
 		config.HTTPCSRFCookieSecure,
 		config.HTTPCSRFCookieHTTPOnly,
 	)
@@ -271,6 +272,7 @@ func saveAuthenticityTokenIntoCookie(token string, c *Context, config *Config) {
 		config.HTTPCSRFCookieMaxAge,
 		config.HTTPCSRFCookiePath,
 		config.HTTPCSRFCookieDomain,
+		config.HTTPCSRFCookieSameSite,
 		config.HTTPCSRFCookieSecure,
 		false,
 	)
