@@ -21,6 +21,7 @@ func (s *CookieStore) Options(options ginsessions.Options) {
 		Path:     options.Path,
 		Domain:   options.Domain,
 		MaxAge:   options.MaxAge,
+		SameSite: options.SameSite,
 		Secure:   options.Secure,
 		HttpOnly: options.HttpOnly,
 	}

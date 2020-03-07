@@ -142,6 +142,7 @@ func newSessionStore(config *Config) (SessionStore, error) {
 			MaxAge:   config.HTTPSessionExpiration,
 			Path:     config.HTTPSessionPath,
 			Secure:   config.HTTPSessionSecure,
+			SameSite: config.HTTPSessionSameSite,
 		})
 	}
 
@@ -219,6 +220,7 @@ func (s *Session) Options(options ginsessions.Options) {
 		Path:     options.Path,
 		Domain:   options.Domain,
 		MaxAge:   options.MaxAge,
+		SameSite: options.SameSite,
 		Secure:   options.Secure,
 		HttpOnly: options.HttpOnly,
 	}

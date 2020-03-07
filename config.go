@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -57,14 +58,15 @@ type (
 		HTTPSessionRedisWait            bool          `env:"HTTP_SESSION_REDIS_WAIT" envDefault:"true"`
 
 		// Session related configuration.
-		HTTPSessionName       string   `env:"HTTP_SESSION_NAME" envDefault:"_session"`
-		HTTPSessionProvider   string   `env:"HTTP_SESSION_PROVIDER" envDefault:"cookie"`
-		HTTPSessionExpiration int      `env:"HTTP_SESSION_EXPIRATION" envDefault:"1209600"`
-		HTTPSessionDomain     string   `env:"HTTP_SESSION_DOMAIN" envDefault:"localhost"`
-		HTTPSessionHTTPOnly   bool     `env:"HTTP_SESSION_HTTP_ONLY" envDefault:"true"`
-		HTTPSessionPath       string   `env:"HTTP_SESSION_PATH" envDefault:"/"`
-		HTTPSessionSecure     bool     `env:"HTTP_SESSION_SECURE" envDefault:"false"`
-		HTTPSessionSecrets    [][]byte `env:"HTTP_SESSION_SECRETS,required" envDefault:""`
+		HTTPSessionName       string        `env:"HTTP_SESSION_NAME" envDefault:"_session"`
+		HTTPSessionProvider   string        `env:"HTTP_SESSION_PROVIDER" envDefault:"cookie"`
+		HTTPSessionExpiration int           `env:"HTTP_SESSION_EXPIRATION" envDefault:"1209600"`
+		HTTPSessionDomain     string        `env:"HTTP_SESSION_DOMAIN" envDefault:"localhost"`
+		HTTPSessionHTTPOnly   bool          `env:"HTTP_SESSION_HTTP_ONLY" envDefault:"true"`
+		HTTPSessionPath       string        `env:"HTTP_SESSION_PATH" envDefault:"/"`
+		HTTPSessionSameSite   http.SameSite `env:"HTTP_SESSION_SAME_SITE" envDefault:"1"`
+		HTTPSessionSecure     bool          `env:"HTTP_SESSION_SECURE" envDefault:"false"`
+		HTTPSessionSecrets    [][]byte      `env:"HTTP_SESSION_SECRETS,required" envDefault:""`
 
 		// Security related configuration.
 		HTTPAllowedHosts            []string          `env:"HTTP_ALLOWED_HOSTS" envDefault:""`
@@ -73,6 +75,7 @@ type (
 		HTTPCSRFCookieMaxAge        int               `env:"HTTP_CSRF_COOKIE_MAX_AGE" envDefault:"0"`
 		HTTPCSRFCookieName          string            `env:"HTTP_CSRF_COOKIE_NAME" envDefault:"_csrf_token"`
 		HTTPCSRFCookiePath          string            `env:"HTTP_CSRF_COOKIE_PATH" envDefault:"/"`
+		HTTPCSRFCookieSameSite      http.SameSite     `env:"HTTP_CSRF_COOKIE_SAME_SITE" envDefault:"1"`
 		HTTPCSRFCookieSecure        bool              `env:"HTTP_CSRF_COOKIE_SECURE" envDefault:"false"`
 		HTTPCSRFFieldName           string            `env:"HTTP_CSRF_FIELD_NAME" envDefault:"authenticity_token"`
 		HTTPCSRFRequestHeader       string            `env:"HTTP_CSRF_REQUEST_HEADER" envDefault:"X-CSRF-Token"`
