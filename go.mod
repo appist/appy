@@ -29,7 +29,7 @@ require (
 	github.com/mum4k/termdash v0.10.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
-	github.com/otiai10/copy v1.1.0
+	github.com/otiai10/copy v1.1.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0
 	github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0
