@@ -29,7 +29,7 @@ func (s *AttachI18nSuite) SetupTest() {
 		"view":   "testdata/i18n/pkg/views",
 		"web":    "testdata/i18n/web",
 	}
-	s.asset = NewAsset(http.Dir("testdata/i18n"), layout)
+	s.asset = NewAsset(http.Dir("testdata/i18n"), layout, "")
 	s.config = NewConfig(s.asset, s.logger, &Support{})
 	s.i18n = NewI18n(s.asset, s.config, s.logger)
 }

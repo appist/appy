@@ -30,7 +30,7 @@ func (s *RecoverySuite) SetupTest() {
 
 	s.support = &Support{}
 	s.logger, s.buffer, s.writer = NewFakeLogger()
-	s.asset = NewAsset(http.Dir("testdata"), nil)
+	s.asset = NewAsset(http.Dir("testdata"), nil, "")
 	s.config = NewConfig(s.asset, s.logger, s.support)
 	s.recorder = httptest.NewRecorder()
 	s.server = NewServer(s.asset, s.config, s.logger, s.support)

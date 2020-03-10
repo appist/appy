@@ -29,7 +29,7 @@ func (s *AttachViewEngineSuite) SetupTest() {
 		"view":   "testdata/pkg/views",
 		"web":    "testdata/web",
 	}
-	s.asset = NewAsset(http.Dir("testdata"), layout)
+	s.asset = NewAsset(http.Dir("testdata"), layout, "")
 	s.config = NewConfig(s.asset, s.logger, &Support{})
 	s.viewEngine = NewViewEngine(s.asset, s.config, s.logger)
 }

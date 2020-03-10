@@ -54,7 +54,7 @@ func (s *GzipSuite) SetupTest() {
 
 	s.support = &Support{}
 	s.logger, _, _ = NewFakeLogger()
-	s.asset = NewAsset(http.Dir("testdata"), nil)
+	s.asset = NewAsset(http.Dir("testdata"), nil, "")
 	s.config = NewConfig(s.asset, s.logger, s.support)
 }
 

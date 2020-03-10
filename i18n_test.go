@@ -28,7 +28,7 @@ func (s *I18nSuite) SetupTest() {
 		"locale": "testdata/i18n/pkg/locales",
 		"view":   "testdata/i18n/pkg/views",
 		"web":    "testdata/i18n/web",
-	})
+	}, "")
 
 	s.config = appy.NewConfig(s.asset, s.logger, &appy.Support{})
 }
@@ -41,7 +41,7 @@ func (s *I18nSuite) TearDownTest() {
 }
 
 func (s *I18nSuite) TestInitializePanic() {
-	s.asset = appy.NewAsset(http.Dir("testdata/i18n"), nil)
+	s.asset = appy.NewAsset(http.Dir("testdata/i18n"), nil, "")
 	s.Panics(func() { appy.NewI18n(s.asset, s.config, s.logger) })
 }
 

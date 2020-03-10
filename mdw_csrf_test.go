@@ -34,7 +34,7 @@ func (s *CSRFSuite) SetupTest() {
 
 	s.support = &Support{}
 	s.logger, s.buffer, s.writer = NewFakeLogger()
-	s.asset = NewAsset(http.Dir("testdata"), nil)
+	s.asset = NewAsset(http.Dir("testdata"), nil, "")
 	s.config = NewConfig(s.asset, s.logger, s.support)
 	s.recorder = httptest.NewRecorder()
 	csrfSecureCookie = securecookie.New([]byte("481e5d98a31585148b8b1dfb6a3c0465"), nil)

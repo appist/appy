@@ -52,7 +52,7 @@ func (s *SessionManagerSuite) SetupTest() {
 	os.Setenv("HTTP_SESSION_REDIS_ADDR", "0.0.0.0:16379")
 
 	s.logger = NewLogger()
-	s.asset = NewAsset(http.Dir("testdata"), nil)
+	s.asset = NewAsset(http.Dir("testdata"), nil, "")
 	s.config = NewConfig(s.asset, s.logger, &Support{})
 	s.recorder = httptest.NewRecorder()
 }

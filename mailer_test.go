@@ -33,7 +33,7 @@ func (s *MailerSuite) SetupTest() {
 		"locale": "testdata/mailer/pkg/locales",
 		"view":   "testdata/mailer/pkg/views",
 		"web":    "testdata/mailer/web",
-	})
+	}, "")
 	s.config = appy.NewConfig(s.asset, s.logger, s.support)
 	s.i18n = appy.NewI18n(s.asset, s.config, s.logger)
 	s.server = appy.NewServer(s.asset, s.config, s.logger, s.support)

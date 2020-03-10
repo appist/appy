@@ -24,7 +24,7 @@ func (s *ConfigSuite) SetupTest() {
 		"view":   "testdata/config/pkg/views",
 		"web":    "testdata/config/web",
 	}
-	s.asset = appy.NewAsset(nil, layout)
+	s.asset = appy.NewAsset(nil, layout, "")
 	s.logger, _, _ = appy.NewFakeLogger()
 	s.support = &appy.Support{}
 }
@@ -272,7 +272,7 @@ func (s *ConfigSuite) TestNewConfigWithInvalidAssetsPath() {
 		os.Unsetenv("APPY_MASTER_KEY")
 	}()
 
-	config := appy.NewConfig(appy.NewAsset(nil, nil), s.logger, s.support)
+	config := appy.NewConfig(appy.NewAsset(nil, nil, ""), s.logger, s.support)
 	s.Contains(config.Errors()[0].Error(), "open configs/.env.development: no such file or directory")
 }
 

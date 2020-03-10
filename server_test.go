@@ -41,7 +41,7 @@ func (s *ServerSuite) SetupTest() {
 		"locale": "testdata/server/pkg/locales",
 		"view":   "testdata/server/pkg/views",
 		"web":    "testdata/server/web",
-	})
+	}, "")
 	s.logger, s.buffer, s.writer = appy.NewFakeLogger()
 	s.config = appy.NewConfig(s.asset, s.logger, s.support)
 }

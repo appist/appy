@@ -9,12 +9,13 @@ import (
 
 // Asset manages the application assets.
 type Asset struct {
-	embedded http.FileSystem
-	layout   map[string]string
+	embedded   http.FileSystem
+	layout     map[string]string
+	moduleRoot string
 }
 
 // NewAsset initializes the assets instance.
-func NewAsset(embedded http.FileSystem, layout map[string]string) *Asset {
+func NewAsset(embedded http.FileSystem, layout map[string]string, moduleRoot string) *Asset {
 	asset := &Asset{
 		embedded: embedded,
 		layout: map[string]string{
@@ -24,6 +25,7 @@ func NewAsset(embedded http.FileSystem, layout map[string]string) *Asset {
 			"view":   "pkg/views",
 			"web":    "web",
 		},
+		moduleRoot: moduleRoot,
 	}
 
 	if layout != nil {
@@ -35,6 +37,18 @@ func NewAsset(embedded http.FileSystem, layout map[string]string) *Asset {
 
 // Layout returns the appy's project layout.
 func (a *Asset) Layout() map[string]string {
+	if IsDebugBuild() {
+		if a.moduleRoot != "" {
+			layout := map[string]string{}
+
+			for key, val := range a.layout {
+				layout[key] = a.moduleRoot + "/" + val
+			}
+
+			return layout
+		}
+	}
+
 	return a.layout
 }
 

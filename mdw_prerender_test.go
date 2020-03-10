@@ -27,7 +27,7 @@ func (s *PrerenderSuite) SetupTest() {
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
 	s.logger, s.buffer, s.writer = NewFakeLogger()
-	s.asset = NewAsset(http.Dir("testdata"), nil)
+	s.asset = NewAsset(http.Dir("testdata"), nil, "")
 	s.config = NewConfig(s.asset, s.logger, &Support{})
 	s.recorder = httptest.NewRecorder()
 }

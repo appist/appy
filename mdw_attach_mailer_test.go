@@ -32,7 +32,7 @@ func (s *AttachMailerSuite) SetupTest() {
 		"locale": "testdata/app/pkg/locales",
 		"view":   "testdata/app/pkg/views",
 		"web":    "testdata/app/web",
-	})
+	}, "")
 	s.config = NewConfig(s.asset, s.logger, s.support)
 	s.i18n = NewI18n(s.asset, s.config, s.logger)
 	s.server = NewServer(s.asset, s.config, s.logger, s.support)

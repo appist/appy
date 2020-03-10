@@ -16,7 +16,7 @@ func (s *ViewLoaderSuite) TearDownTest() {
 }
 
 func (s *ViewLoaderSuite) TestNewViewLoader() {
-	asset := NewAsset(nil, nil)
+	asset := NewAsset(nil, nil, "")
 	viewLoader := NewViewLoader(asset)
 	s.NotNil(viewLoader)
 	s.NotNil(viewLoader.asset)
@@ -29,7 +29,7 @@ func (s *ViewLoaderSuite) TestOpenWithDebugBuild() {
 		"locale": "testdata/viewloader/pkg/locales",
 		"view":   "testdata/viewloader/pkg/views",
 		"web":    "testdata/viewloader/web",
-	})
+	}, "")
 	viewLoader := NewViewLoader(asset)
 	reader, err := viewLoader.Open("testdata/viewloader/pkg/views/home/index.html")
 	s.NotNil(reader)
@@ -42,7 +42,7 @@ func (s *ViewLoaderSuite) TestOpenWithReleaseBuild() {
 		Build = DebugBuild
 	}()
 
-	asset := NewAsset(http.Dir("testdata/viewloader"), nil)
+	asset := NewAsset(http.Dir("testdata/viewloader"), nil, "")
 	viewLoader := NewViewLoader(asset)
 	reader, err := viewLoader.Open("pkg/views/home/index.html")
 	s.NotNil(reader)
@@ -56,7 +56,7 @@ func (s *ViewLoaderSuite) TestExistsWithDebugBuild() {
 		"locale": "testdata/viewloader/pkg/locales",
 		"view":   "testdata/viewloader/pkg/views",
 		"web":    "testdata/viewloader/web",
-	})
+	}, "")
 	viewLoader := NewViewLoader(asset)
 	filename, exists := viewLoader.Exists("home/index.html")
 	s.Equal("testdata/viewloader/pkg/views/home/index.html", filename)
@@ -73,7 +73,7 @@ func (s *ViewLoaderSuite) TestExistsWithReleaseBuild() {
 		Build = DebugBuild
 	}()
 
-	asset := NewAsset(http.Dir("testdata/viewloader"), nil)
+	asset := NewAsset(http.Dir("testdata/viewloader"), nil, "")
 	viewLoader := NewViewLoader(asset)
 	filename, exists := viewLoader.Exists("home/index.html")
 	s.Equal("pkg/views/home/index.html", filename)

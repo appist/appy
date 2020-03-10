@@ -33,7 +33,7 @@ func (s *ContextSuite) SetupTest() {
 		"locale": "testdata/context/pkg/locales",
 		"view":   "testdata/context/pkg/views",
 		"web":    "testdata/context/web",
-	})
+	}, "")
 	s.config = NewConfig(s.asset, s.logger, s.support)
 	s.i18n = NewI18n(s.asset, s.config, s.logger)
 	s.viewEngine = NewViewEngine(s.asset, s.config, s.logger)
@@ -184,7 +184,7 @@ func (s *ContextSuite) TestViewEngineWithReleaseBuild() {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 
-	s.asset = NewAsset(http.Dir("testdata/context"), nil)
+	s.asset = NewAsset(http.Dir("testdata/context"), nil, "")
 	s.viewEngine = NewViewEngine(s.asset, s.config, s.logger)
 
 	server := NewServer(s.asset, s.config, s.logger, s.support)

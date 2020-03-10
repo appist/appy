@@ -30,7 +30,7 @@ func (s *ViewEngineSuite) SetupTest() {
 		"locale": "testdata/viewengine/pkg/locales",
 		"view":   "testdata/viewengine/pkg/views",
 		"web":    "testdata/viewengine/web",
-	})
+	}, "")
 	s.config = NewConfig(s.asset, s.logger, s.support)
 	s.viewEngine = NewViewEngine(s.asset, s.config, s.logger)
 }
@@ -108,7 +108,7 @@ func (s *ViewEngineSuite) TestAssetPathWithReleaseBuild() {
 		Build = DebugBuild
 	}()
 
-	s.asset = NewAsset(nil, nil)
+	s.asset = NewAsset(nil, nil, "")
 	s.config = NewConfig(s.asset, s.logger, s.support)
 	s.viewEngine = NewViewEngine(s.asset, s.config, s.logger)
 	s.Panics(func() { s.viewEngine.assetPath("/images/a.png") })
@@ -119,7 +119,7 @@ func (s *ViewEngineSuite) TestAssetPathWithReleaseBuild() {
 		"locale": "testdata/viewengine/pkg/locales",
 		"view":   "testdata/viewengine/pkg/views",
 		"web":    "testdata/viewengine/web",
-	})
+	}, "")
 	s.config = NewConfig(s.asset, s.logger, s.support)
 	s.viewEngine = NewViewEngine(s.asset, s.config, s.logger)
 
