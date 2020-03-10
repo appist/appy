@@ -18,7 +18,10 @@ An opinionated productive web framework that helps scaling business easier.
 ### Step 1: Create the project folder with go module
 
 ```sh
+// Create project folder
 $ mkdir PROJECT_NAME && cd $_
+
+// Initialize go modules for the project
 $ go mod init PROJECT_NAME
 ```
 
@@ -39,21 +42,19 @@ func main() {
 ### Step 3: Initialize the appy's project layout
 
 ```sh
+// Start generating the project skeleton
 $ go run .
 ```
 
-## Credits
+## Acknowledgements
 
-This project is heavily inspired by:
-
-- [cobra](https://github.com/spf13/cobra)
-- [httprouter](https://github.com/julienschmidt/httprouter)
-- [gin](https://github.com/gin-gonic/gin)
-- [go-pg](https://github.com/go-pg/pg)
-- [gqlgen](https://gqlgen.com/)
-- [rails](https://github.com/rails/rails)
-- [testify](https://github.com/stretchr/testify)
-- [zap](https://github.com/uber-go/zap)
+- [asynq](https://github.com/hibiken/asynq) - For processing background jobs
+- [cobra](https://github.com/spf13/cobra) - For building CLI
+- [gin](https://github.com/gin-gonic/gin) - For building web server
+- [go-pg](https://github.com/go-pg/pg) - For interacting with PostgreSQL
+- [gqlgen](https://gqlgen.com/) - For building GraphQL API
+- [testify](https://github.com/stretchr/testify) - For writing unit tests
+- [zap](https://github.com/uber-go/zap) - For blazing fast, structured and leveled logging
 
 ## Contribution
 
