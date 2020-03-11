@@ -56,6 +56,9 @@ func newBuildCommand(asset *Asset, logger *Logger, server *Server) *Command {
 			}
 
 			logger.Infof("Copying server-side assets into '%s' folder...", releasePath)
+
+			// Ensure asset is using the original layout.
+			asset.moduleRoot = ""
 			err = copy.Copy(asset.Layout()["docker"], releasePath+"/"+asset.Layout()["docker"])
 			if err != nil {
 				logger.Fatal(err)
