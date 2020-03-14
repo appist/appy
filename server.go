@@ -132,7 +132,7 @@ func (s *Server) Hosts() ([]string, error) {
 func (s *Server) Info() []string {
 	configPath := s.config.Path()
 
-	if strings.Contains(configPath, s.asset.moduleRoot+"/") {
+	if s.asset.moduleRoot != "" && strings.Contains(configPath, s.asset.moduleRoot+"/") {
 		configPath = strings.ReplaceAll(configPath, s.asset.moduleRoot+"/", "")
 	}
 
