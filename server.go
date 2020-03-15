@@ -130,10 +130,16 @@ func (s *Server) Hosts() ([]string, error) {
 
 // Info returns the server info.
 func (s *Server) Info() []string {
+	configPath := s.config.Path()
+
+	if s.asset.moduleRoot != "" && strings.Contains(configPath, s.asset.moduleRoot+"/") {
+		configPath = strings.ReplaceAll(configPath, s.asset.moduleRoot+"/", "")
+	}
+
 	lines := []string{}
 	lines = append(lines,
 		fmt.Sprintf("* appy %s (%s), build: %s, environment: %s, config: %s",
-			VERSION, runtime.Version(), Build, s.config.AppyEnv, s.config.Path(),
+			VERSION, runtime.Version(), Build, s.config.AppyEnv, configPath,
 		),
 	)
 
