@@ -33,14 +33,14 @@ import (
 )
 
 var (
-	apiServeCmd, webServeCmd               *exec.Cmd
-	apiServeCmdReady                       chan bool
-	apiServeConsole, webServeConsole       *text.Text
-	apiServeConsoleBuf, webServeConsoleBuf string
-	terminalBox                            *termbox.Terminal
-	isGenerating                                         = false
-	watcherPollInterval                    time.Duration = 1
-	liveReloadWSConn, liveReloadWSSConn    *websocket.Conn
+	apiServeCmd, webServeCmd, workerCmd                      *exec.Cmd
+	apiServeCmdReady                                         chan bool
+	apiServeConsole, webServeConsole, workerConsole          *text.Text
+	apiServeConsoleBuf, webServeConsoleBuf, workerConsoleBuf string
+	terminalBox                                              *termbox.Terminal
+	isGenerating                                                           = false
+	watcherPollInterval                                      time.Duration = 1
+	liveReloadWSConn, liveReloadWSSConn                      *websocket.Conn
 )
 
 func newStartCommand(logger *Logger, server *Server) *Command {
@@ -75,19 +75,16 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 				<-quit
 				killWebServeCmd()
 				killAPIServeCmd()
+				killWorkerCmd()
 			}()
 
 			if _, err := os.Stat(wd + "/package.json"); !os.IsNotExist(err) {
 				go runWebServeCmd(logger, server)
 			}
 
-			go func() {
-				runAPIServeCmd(logger)
-			}()
-
-			go func() {
-				runLiveReloadServer(logger, server)
-			}()
+			go runAPIServeCmd(logger)
+			go runWorkerCmd(logger)
+			go runLiveReloadServer(logger, server)
 
 			go func() {
 				var err error
@@ -110,19 +107,34 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 					logger.Fatal(err)
 				}
 
+				workerConsole, err = text.New(text.RollContent(), text.WrapAtRunes(), text.WrapAtWords())
+				if err != nil {
+					quit <- os.Kill
+					logger.Fatal(err)
+				}
+
 				ctx, cancel := context.WithCancel(context.Background())
 				ctn, err := container.New(
 					terminalBox,
 					container.SplitVertical(
 						container.Left(
-							container.Border(linestyle.Light),
-							container.BorderTitle(" Backend "),
-							container.PlaceWidget(apiServeConsole),
+							container.SplitHorizontal(
+								container.Top(
+									container.Border(linestyle.Light),
+									container.BorderTitle(" Backend "),
+									container.PlaceWidget(apiServeConsole),
+								),
+								container.Bottom(
+									container.Border(linestyle.Light),
+									container.BorderTitle(" Frontend (webpack-dev-server) "),
+									container.PlaceWidget(webServeConsole),
+								),
+							),
 						),
 						container.Right(
 							container.Border(linestyle.Light),
-							container.BorderTitle(" Frontend (webpack-dev-server) "),
-							container.PlaceWidget(webServeConsole),
+							container.BorderTitle(" Worker "),
+							container.PlaceWidget(workerConsole),
 						),
 					),
 				)
@@ -156,6 +168,15 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 									logger.Fatal(err)
 								}
 							}
+
+							if workerConsoleBuf != "" {
+								workerBuf := workerConsoleBuf
+								workerConsoleBuf = ""
+								if err := workerConsole.Write(workerBuf); err != nil {
+									quit <- os.Kill
+									logger.Fatal(err)
+								}
+							}
 						case <-ctx.Done():
 							return
 						}
@@ -168,6 +189,7 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 						time.Sleep(250 * time.Millisecond)
 						killAPIServeCmd()
 						killWebServeCmd()
+						killWorkerCmd()
 						os.Exit(0)
 					}
 				}
@@ -212,6 +234,7 @@ func watchHandler(e watcher.Event, logger *Logger) {
 
 	isGenerating = false
 	go runAPIServeCmd(logger)
+	go runWorkerCmd(logger)
 }
 
 func gqlgenLoadConfig() (*gqlgenCfg.Config, error) {
@@ -265,6 +288,7 @@ func runAPIServeCmd(logger *Logger) {
 			if r := recover(); r != nil {
 				killWebServeCmd()
 				killAPIServeCmd()
+				killWorkerCmd()
 				logger.Fatal(r)
 			}
 		}()
@@ -288,6 +312,7 @@ func runAPIServeCmd(logger *Logger) {
 			if r := recover(); r != nil {
 				killWebServeCmd()
 				killAPIServeCmd()
+				killWorkerCmd()
 				logger.Fatal(r)
 			}
 		}()
@@ -308,6 +333,66 @@ func runAPIServeCmd(logger *Logger) {
 
 	apiServeConsole.Write("INFO * Compiling...\n")
 	apiServeCmd.Run()
+}
+
+func killWorkerCmd() {
+	if workerCmd != nil {
+		syscall.Kill(-workerCmd.Process.Pid, syscall.SIGINT)
+		workerCmd = nil
+	}
+}
+
+func runWorkerCmd(logger *Logger) {
+	killWorkerCmd()
+	time.Sleep(500 * time.Millisecond)
+
+	workerCmd = exec.Command("go", "run", ".", "worker")
+	workerCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	workerCmdOut, _ := workerCmd.StdoutPipe()
+	workerCmdErr, _ := workerCmd.StderrPipe()
+
+	go func(stdout io.ReadCloser) {
+		defer func() {
+			if r := recover(); r != nil {
+				killWebServeCmd()
+				killAPIServeCmd()
+				killWorkerCmd()
+				logger.Fatal(r)
+			}
+		}()
+
+		out := bufio.NewScanner(stdout)
+		for out.Scan() {
+			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
+			outText := strings.Trim(out.Text(), " ")
+			outText = regex.ReplaceAllString(outText, "")
+			outText = strings.ReplaceAll(outText, "\t", " ")
+			workerConsoleBuf += outText + "\n"
+		}
+	}(workerCmdOut)
+
+	go func(stderr io.ReadCloser) {
+		defer func() {
+			if r := recover(); r != nil {
+				killWebServeCmd()
+				killAPIServeCmd()
+				killWorkerCmd()
+				logger.Fatal(r)
+			}
+		}()
+
+		err := bufio.NewScanner(stderr)
+		for err.Scan() {
+			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
+			errText := strings.Trim(err.Text(), " ")
+			errText = regex.ReplaceAllString(errText, "")
+			errText = strings.ReplaceAll(errText, "\t", " ")
+			workerConsoleBuf += errText + "\n"
+		}
+	}(workerCmdErr)
+
+	workerConsole.Write("INFO * Compiling...\n")
+	workerCmd.Run()
 }
 
 func killWebServeCmd() {
@@ -345,6 +430,7 @@ func runWebServeCmd(logger *Logger, server *Server) {
 			if r := recover(); r != nil {
 				killWebServeCmd()
 				killAPIServeCmd()
+				killWorkerCmd()
 				logger.Fatal(r)
 			}
 		}()
@@ -364,6 +450,7 @@ func runWebServeCmd(logger *Logger, server *Server) {
 			if r := recover(); r != nil {
 				killWebServeCmd()
 				killAPIServeCmd()
+				killWorkerCmd()
 				logger.Fatal(r)
 			}
 		}()
@@ -398,6 +485,7 @@ func runLiveReloadServer(logger *Logger, server *Server) {
 		if err != nil {
 			killWebServeCmd()
 			killAPIServeCmd()
+			killWorkerCmd()
 			logger.Fatal(err)
 		}
 
@@ -423,6 +511,7 @@ func runLiveReloadServer(logger *Logger, server *Server) {
 		if err != nil {
 			killWebServeCmd()
 			killAPIServeCmd()
+			killWorkerCmd()
 			logger.Fatal(err)
 		}
 
@@ -446,6 +535,7 @@ func runLiveReloadServer(logger *Logger, server *Server) {
 			if err != http.ErrServerClosed {
 				killWebServeCmd()
 				killAPIServeCmd()
+				killWorkerCmd()
 				logger.Fatal(err)
 			}
 		}
@@ -455,6 +545,7 @@ func runLiveReloadServer(logger *Logger, server *Server) {
 	if err != http.ErrServerClosed {
 		killWebServeCmd()
 		killAPIServeCmd()
+		killWorkerCmd()
 		logger.Fatal(err)
 	}
 }
@@ -473,6 +564,7 @@ func watch(logger *Logger, watchPaths []string, callback func(e watcher.Event)) 
 			if r := recover(); r != nil {
 				killWebServeCmd()
 				killAPIServeCmd()
+				killWorkerCmd()
 				logger.Fatal(r)
 			}
 		}()
@@ -484,6 +576,7 @@ func watch(logger *Logger, watchPaths []string, callback func(e watcher.Event)) 
 			case err := <-w.Error:
 				killWebServeCmd()
 				killAPIServeCmd()
+				killWorkerCmd()
 				logger.Fatal(err)
 			case <-w.Closed:
 				return
@@ -506,6 +599,7 @@ func watch(logger *Logger, watchPaths []string, callback func(e watcher.Event)) 
 	if err := w.Start(time.Second * watcherPollInterval); err != nil {
 		killWebServeCmd()
 		killAPIServeCmd()
+		killWorkerCmd()
 		logger.Fatal(err)
 	}
 }

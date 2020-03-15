@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -295,6 +296,21 @@ func (s *Support) ParseEnv(c interface{}) error {
 				}
 
 				newMaps[splits[0]] = splits[1]
+			}
+
+			return newMaps, nil
+		},
+		reflect.TypeOf(map[string]int{}): func(v string) (interface{}, error) {
+			newMaps := map[string]int{}
+			maps := strings.Split(v, ",")
+			for _, m := range maps {
+				splits := strings.Split(m, ":")
+				if len(splits) != 2 {
+					continue
+				}
+
+				val, _ := strconv.Atoi(splits[1])
+				newMaps[splits[0]] = val
 			}
 
 			return newMaps, nil
