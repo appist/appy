@@ -20,10 +20,6 @@ type (
 		asset  *Asset
 		config *Config
 	}
-
-	WorkerHandler interface {
-		ProcessTask(context.Context, *Job) error
-	}
 )
 
 // NewWorker initializes a worker to process background jobs.
