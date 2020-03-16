@@ -1,21 +1,30 @@
 package appy
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/go-redis/redis/v7"
 	"github.com/hibiken/asynq"
 )
 
-// Worker processes the background jobs.
-type Worker struct {
-	*asynq.Background
-	*asynq.ServeMux
-	asset  *Asset
-	config *Config
-}
+type (
+	// Worker processes the background jobs.
+	Worker struct {
+		*asynq.Background
+		*asynq.Client
+		*asynq.ServeMux
+		asset  *Asset
+		config *Config
+	}
+
+	WorkerHandler interface {
+		ProcessTask(context.Context, *Job) error
+	}
+)
 
 // NewWorker initializes a worker to process background jobs.
 func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
@@ -51,6 +60,7 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 
 	worker := &Worker{
 		asynq.NewBackground(redisConnOpt, workerConfig),
+		asynq.NewClient(redisConnOpt),
 		asynq.NewServeMux(),
 		asset,
 		config,
@@ -67,6 +77,7 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 
 		worker = &Worker{
 			asynq.NewBackground(redisConnOpt, workerConfig),
+			asynq.NewClient(redisConnOpt),
 			asynq.NewServeMux(),
 			asset,
 			config,
@@ -75,6 +86,41 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 
 	workerLogger.worker = worker
 	return worker
+}
+
+// Enqueue enqueues task to be processed immediately.
+//
+// Enqueue returns nil if the task is enqueued successfully, otherwise returns an error.
+func (w *Worker) Enqueue(job *Job) error {
+	return w.Client.Enqueue(job.Task)
+}
+
+// EnqueueAt schedules task to be enqueued at the specified time.
+//
+// It returns nil if the task is scheduled successfully, otherwise returns an error.
+func (w *Worker) EnqueueAt(t time.Time, job *Job) error {
+	return w.Client.EnqueueAt(t, job.Task)
+}
+
+// EnqueueIn schedules task to be enqueued after the specified delay.
+//
+// It returns nil if the task is scheduled successfully, otherwise returns an error.
+func (w *Worker) EnqueueIn(d time.Duration, job *Job) error {
+	return w.Client.EnqueueIn(d, job.Task)
+}
+
+// HandleFunc registers the handler function for the given pattern.
+func (w *Worker) HandleFunc(pattern string, handler func(context.Context, *Job) error) {
+	w.ServeMux.HandleFunc(pattern, func(ctx context.Context, task *asynq.Task) error {
+		return handler(ctx, &Job{
+			task,
+		})
+	})
+}
+
+// ProcessTask dispatches the task to the handler whose pattern most closely matches the task type.
+func (w *Worker) ProcessTask(ctx context.Context, job *Job) {
+	w.ServeMux.ProcessTask(ctx, job.Task)
 }
 
 // Info returns the worker info.

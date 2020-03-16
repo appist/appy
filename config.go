@@ -110,13 +110,13 @@ type (
 		WorkerRedisSentinelDB         int            `env:"WORKER_REDIS_SENTINEL_DB" envDefault:"0"`
 		WorkerRedisSentinelMasterName string         `env:"WORKER_REDIS_SENTINEL_MASTER_NAME" envDefault:""`
 		WorkerRedisSentinelPassword   string         `env:"WORKER_REDIS_SENTINEL_PASSWORD" envDefault:""`
-		WorkerRedisSentinelPoolSize   int            `env:"WORKER_REDIS_SENTINEL_POOL_SIZE" envDefault:"10"`
+		WorkerRedisSentinelPoolSize   int            `env:"WORKER_REDIS_SENTINEL_POOL_SIZE" envDefault:"25"`
 		WorkerRedisAddr               string         `env:"WORKER_REDIS_ADDR" envDefault:""`
 		WorkerRedisDB                 int            `env:"WORKER_REDIS_DB" envDefault:"0"`
 		WorkerRedisPassword           string         `env:"WORKER_REDIS_PASSWORD" envDefault:""`
-		WorkerRedisPoolSize           int            `env:"WORKER_REDIS_POOL_SIZE" envDefault:"10"`
+		WorkerRedisPoolSize           int            `env:"WORKER_REDIS_POOL_SIZE" envDefault:"25"`
 		WorkerRedisURL                string         `env:"WORKER_REDIS_URL" envDefault:""`
-		WorkerConcurrency             int            `env:"WORKER_CONCURRENCY" envDefault:"10"`
+		WorkerConcurrency             int            `env:"WORKER_CONCURRENCY" envDefault:"25"`
 		WorkerQueues                  map[string]int `env:"WORKER_QUEUES" envDefault:"default:10"`
 		WorkerStrictPriority          bool           `env:"WORKER_STRICT_PRIORITY" envDefault:"false"`
 

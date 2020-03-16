@@ -242,7 +242,7 @@ func (s *SupportSuite) TestParseEnv() {
 	s.Equal([][]byte{[]byte("hello"), []byte("world")}, c1.Secrets)
 
 	type cfg2 struct {
-		Users map[string]int `env:"TEST_USERS" envDefault:"user1:1,user2:2"`
+		Users map[string]bool `env:"TEST_USERS" envDefault:"user1:true,user2:false"`
 	}
 
 	c2 := &cfg2{}

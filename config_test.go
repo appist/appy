@@ -109,6 +109,19 @@ func (s *ConfigSuite) TestNewConfig() {
 		"MailerSMTPPlainAuthPassword":     "",
 		"MailerSMTPPlainAuthHost":         "",
 		"MailerPreviewBaseURL":            "/appy/mailers",
+		"WorkerRedisSentinelAddrs":        []string{},
+		"WorkerRedisSentinelDB":           0,
+		"WorkerRedisSentinelMasterName":   "",
+		"WorkerRedisSentinelPassword":     "",
+		"WorkerRedisSentinelPoolSize":     25,
+		"WorkerRedisAddr":                 "",
+		"WorkerRedisDB":                   0,
+		"WorkerRedisPassword":             "",
+		"WorkerRedisPoolSize":             25,
+		"WorkerRedisURL":                  "",
+		"WorkerConcurrency":               25,
+		"WorkerQueues":                    "default:10",
+		"WorkerStrictPriority":            false,
 	}
 
 	config := appy.NewConfig(s.asset, s.logger, s.support)
