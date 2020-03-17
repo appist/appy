@@ -3,6 +3,7 @@ package appy
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -11,16 +12,16 @@ import (
 	"github.com/hibiken/asynq"
 )
 
-type (
-	// Worker processes the background jobs.
-	Worker struct {
-		*asynq.Background
-		*asynq.Client
-		*asynq.ServeMux
-		asset  *Asset
-		config *Config
-	}
-)
+var rawWorkerDataRegex = regexp.MustCompile("(?i)({data:map[|]})")
+
+// Worker processes the background jobs.
+type Worker struct {
+	*asynq.Background
+	*asynq.Client
+	*asynq.ServeMux
+	asset  *Asset
+	config *Config
+}
 
 // NewWorker initializes a worker to process background jobs.
 func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
@@ -54,10 +55,25 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 		redisConnOpt.Password = redisParseURL.Password
 	}
 
+	mux := asynq.NewServeMux()
+	mux.Use(func(h asynq.Handler) asynq.Handler {
+		return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
+			payload := strings.ReplaceAll(fmt.Sprintf("%+v", t.Payload), "{data:map[", "")
+			payload = strings.ReplaceAll(fmt.Sprintf("%+v", payload), "]}", "")
+			logger.Infof(`[WORKER] job: %s, payload: (%s) start`, t.Type, payload)
+
+			start := time.Now()
+			err := h.ProcessTask(ctx, t)
+			logger.Infof(`[WORKER] job: %s, payload: (%s) done in %s`, t.Type, payload, time.Since(start))
+
+			return err
+		})
+	})
+
 	worker := &Worker{
 		asynq.NewBackground(redisConnOpt, workerConfig),
 		asynq.NewClient(redisConnOpt),
-		asynq.NewServeMux(),
+		mux,
 		asset,
 		config,
 	}
@@ -74,7 +90,7 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 		worker = &Worker{
 			asynq.NewBackground(redisConnOpt, workerConfig),
 			asynq.NewClient(redisConnOpt),
-			asynq.NewServeMux(),
+			mux,
 			asset,
 			config,
 		}
@@ -84,25 +100,25 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 	return worker
 }
 
-// Enqueue enqueues task to be processed immediately.
+// Enqueue enqueues job to be processed immediately.
 //
-// Enqueue returns nil if the task is enqueued successfully, otherwise returns an error.
-func (w *Worker) Enqueue(job *Job) error {
-	return w.Client.Enqueue(job.Task)
+// Enqueue returns nil if the job is enqueued successfully, otherwise returns an error.
+func (w *Worker) Enqueue(job *Job, opts *JobOptions) error {
+	return w.Client.Enqueue(job.Task, parseJobOptions(opts))
 }
 
-// EnqueueAt schedules task to be enqueued at the specified time.
+// EnqueueAt schedules job to be enqueued at the specified time.
 //
-// It returns nil if the task is scheduled successfully, otherwise returns an error.
-func (w *Worker) EnqueueAt(t time.Time, job *Job) error {
-	return w.Client.EnqueueAt(t, job.Task)
+// It returns nil if the job is scheduled successfully, otherwise returns an error.
+func (w *Worker) EnqueueAt(t time.Time, job *Job, opts *JobOptions) error {
+	return w.Client.EnqueueAt(t, job.Task, parseJobOptions(opts))
 }
 
-// EnqueueIn schedules task to be enqueued after the specified delay.
+// EnqueueIn schedules job to be enqueued after the specified delay.
 //
-// It returns nil if the task is scheduled successfully, otherwise returns an error.
-func (w *Worker) EnqueueIn(d time.Duration, job *Job) error {
-	return w.Client.EnqueueIn(d, job.Task)
+// It returns nil if the job is scheduled successfully, otherwise returns an error.
+func (w *Worker) EnqueueIn(d time.Duration, job *Job, opts *JobOptions) error {
+	return w.Client.EnqueueIn(d, job.Task, parseJobOptions(opts))
 }
 
 // HandleFunc registers the handler function for the given pattern.
@@ -114,7 +130,7 @@ func (w *Worker) HandleFunc(pattern string, handler func(context.Context, *Job) 
 	})
 }
 
-// ProcessTask dispatches the task to the handler whose pattern most closely matches the task type.
+// ProcessTask dispatches the job to the handler whose pattern most closely matches the job type.
 func (w *Worker) ProcessTask(ctx context.Context, job *Job) {
 	w.ServeMux.ProcessTask(ctx, job.Task)
 }
