@@ -19,6 +19,7 @@ type Worker struct {
 	*asynq.Background
 	*asynq.Client
 	*asynq.ServeMux
+	asynq.RedisConnOpt
 	asset  *Asset
 	config *Config
 	logger *Logger
@@ -56,8 +57,8 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 
 	redisConnOpt := &asynq.RedisClientOpt{
 		Addr:     config.WorkerRedisAddr,
-		DB:       config.WorkerRedisDB,
 		Password: config.WorkerRedisPassword,
+		DB:       config.WorkerRedisDB,
 		PoolSize: config.WorkerRedisPoolSize,
 	}
 
@@ -68,14 +69,15 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 		}
 
 		redisConnOpt.Addr = redisParseURL.Addr
-		redisConnOpt.DB = redisParseURL.DB
 		redisConnOpt.Password = redisParseURL.Password
+		redisConnOpt.DB = redisParseURL.DB
 	}
 
 	worker := &Worker{
 		asynq.NewBackground(redisConnOpt, workerConfig),
 		asynq.NewClient(redisConnOpt),
 		asynq.NewServeMux(),
+		redisConnOpt,
 		asset,
 		config,
 		logger,
@@ -94,6 +96,7 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 			asynq.NewBackground(redisConnOpt, workerConfig),
 			asynq.NewClient(redisConnOpt),
 			asynq.NewServeMux(),
+			redisConnOpt,
 			asset,
 			config,
 			logger,
@@ -101,7 +104,6 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 	}
 
 	workerLogger.worker = worker
-
 	worker.ServeMux.Use(func(next WorkerHandler) WorkerHandler {
 		return WorkerHandlerFunc(func(ctx context.Context, task *asynq.Task) error {
 			payload := strings.ReplaceAll(fmt.Sprintf("%+v", task.Payload), "{data:map[", "")
