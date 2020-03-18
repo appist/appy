@@ -83,11 +83,10 @@ func newLoggerConfig() zap.Config {
 	c := zap.NewDevelopmentConfig()
 	c.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	c.EncoderConfig.CallerKey = ""
-	c.EncoderConfig.EncodeTime = nil
+	c.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	if IsReleaseBuild() {
 		c = zap.NewProductionConfig()
-		c.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	}
 
 	return c
