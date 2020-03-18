@@ -19,6 +19,7 @@ type (
 		server     *Server
 		support    Supporter
 		viewEngine *ViewEngine
+		worker     *Worker
 	}
 )
 
@@ -38,6 +39,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
 	mailer := NewMailer(asset, config, i18n, logger, server, viewFuncs)
+	worker := NewWorker(asset, config, logger)
 
 	// Setup the default middleware.
 	server.Use(AttachLogger(logger))
@@ -77,6 +79,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newSSLSetupCommand(logger, server))
 	command.AddCommand(newSSLTeardownCommand(logger, server))
 	command.AddCommand(newTeardownCommand(asset, config, dbManager, logger))
+	command.AddCommand(newWorkerCommand(config, dbManager, logger, worker))
 
 	if IsDebugBuild() {
 		command.AddCommand(newBuildCommand(asset, logger, server))
@@ -96,6 +99,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 		server:     server,
 		support:    support,
 		viewEngine: viewEngine,
+		worker:     worker,
 	}
 }
 
@@ -147,6 +151,11 @@ func (a *App) Support() Supporter {
 // ViewEngine returns the app instance's view engine.
 func (a *App) ViewEngine() *ViewEngine {
 	return a.viewEngine
+}
+
+// Worker returns the app instance's worker.
+func (a *App) Worker() *Worker {
+	return a.worker
 }
 
 // Run starts running the app instance.
