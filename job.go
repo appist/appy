@@ -6,29 +6,25 @@ import (
 	"github.com/hibiken/asynq"
 )
 
-// Job represents a unit of work to be performed.
-type Job struct {
-	*asynq.Task
-}
+type (
+	// Job represents a unit of work to be performed.
+	Job = asynq.Task
 
-// JobPayload holds arbitrary data needed for job processing.
-type JobPayload struct {
-	*asynq.Payload
-}
+	// JobPayload holds arbitrary data needed for job processing.
+	JobPayload = asynq.Payload
 
-// JobOptions specifies how a job should be processed.
-type JobOptions struct {
-	Deadline time.Time
-	MaxRetry int
-	Queue    string
-	Timeout  time.Duration
-}
-
-// NewJob initializes a job instance with a unique identifier and its data for background job processing.
-func NewJob(id string, data map[string]interface{}) *Job {
-	return &Job{
-		asynq.NewTask(id, data),
+	// JobOptions specifies how a job should be processed.
+	JobOptions struct {
+		Deadline time.Time
+		MaxRetry int
+		Queue    string
+		Timeout  time.Duration
 	}
+)
+
+// NewJob initializes a job with a unique identifier and its data for background job processing.
+func NewJob(id string, data map[string]interface{}) *Job {
+	return asynq.NewTask(id, data)
 }
 
 func parseJobOptions(opts *JobOptions) []asynq.Option {
