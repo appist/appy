@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v7"
@@ -22,7 +23,9 @@ type Worker struct {
 	asynq.RedisConnOpt
 	asset  *Asset
 	config *Config
+	jobs   []*Job
 	logger *Logger
+	mu     *sync.Mutex
 }
 
 // WorkerHandler processes tasks.
@@ -80,7 +83,9 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 		redisConnOpt,
 		asset,
 		config,
+		[]*Job{},
 		logger,
+		&sync.Mutex{},
 	}
 
 	if len(config.WorkerRedisSentinelAddrs) > 0 {
@@ -99,7 +104,9 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 			redisConnOpt,
 			asset,
 			config,
+			[]*Job{},
 			logger,
+			&sync.Mutex{},
 		}
 	}
 
@@ -121,10 +128,26 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 	return worker
 }
 
+// Drain simulates job processing by removing them, only available for unit test with APPY_ENV=test.
+func (w *Worker) Drain() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	w.jobs = []*Job{}
+}
+
 // Enqueue enqueues job to be processed immediately.
 //
 // Enqueue returns nil if the job is enqueued successfully, otherwise returns an error.
 func (w *Worker) Enqueue(job *Job, opts *JobOptions) error {
+	if w.config.AppyEnv == "test" {
+		w.mu.Lock()
+		defer w.mu.Unlock()
+
+		w.jobs = append(w.jobs, job)
+		return nil
+	}
+
 	return w.Client.Enqueue(job, parseJobOptions(opts))
 }
 
@@ -132,6 +155,14 @@ func (w *Worker) Enqueue(job *Job, opts *JobOptions) error {
 //
 // It returns nil if the job is scheduled successfully, otherwise returns an error.
 func (w *Worker) EnqueueAt(t time.Time, job *Job, opts *JobOptions) error {
+	if w.config.AppyEnv == "test" {
+		w.mu.Lock()
+		defer w.mu.Unlock()
+
+		w.jobs = append(w.jobs, job)
+		return nil
+	}
+
 	return w.Client.EnqueueAt(t, job, parseJobOptions(opts))
 }
 
@@ -139,6 +170,14 @@ func (w *Worker) EnqueueAt(t time.Time, job *Job, opts *JobOptions) error {
 //
 // It returns nil if the job is scheduled successfully, otherwise returns an error.
 func (w *Worker) EnqueueIn(d time.Duration, job *Job, opts *JobOptions) error {
+	if w.config.AppyEnv == "test" {
+		w.mu.Lock()
+		defer w.mu.Unlock()
+
+		w.jobs = append(w.jobs, job)
+		return nil
+	}
+
 	return w.Client.EnqueueIn(d, job, parseJobOptions(opts))
 }
 
@@ -147,6 +186,11 @@ func (w *Worker) HandleFunc(pattern string, handler func(context.Context, *Job) 
 	w.ServeMux.HandleFunc(pattern, func(ctx context.Context, job *Job) error {
 		return handler(ctx, job)
 	})
+}
+
+// Jobs returns the enqueued jobs, only available for unit test with APPY_ENV=test.
+func (w *Worker) Jobs() []*Job {
+	return w.jobs
 }
 
 // ProcessTask dispatches the job to the handler whose pattern most closely matches the job type.

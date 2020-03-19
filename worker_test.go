@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hibiken/asynq"
 )
@@ -94,6 +95,29 @@ func (s *WorkerSuite) TestWorkerGlobalMiddleware() {
 	s.Contains(s.buffer.String(), "INFO")
 	s.Contains(s.buffer.String(), "[WORKER] job: test, payload: (name:barfoo) start")
 	s.Contains(s.buffer.String(), "[WORKER] job: test, payload: (name:barfoo) done in")
+}
+
+func (s *WorkerSuite) TestWorkerTestUtils() {
+	os.Setenv("APPY_ENV", "test")
+	defer os.Unsetenv("APPY_ENV")
+
+	s.config = NewConfig(s.asset, s.logger, &Support{})
+	worker := NewWorker(s.asset, s.config, s.logger)
+
+	err := worker.Enqueue(NewJob("foo", map[string]interface{}{}), nil)
+	s.Nil(err)
+	s.Equal(len(worker.Jobs()), 1)
+
+	err = worker.EnqueueAt(time.Now(), NewJob("foo", map[string]interface{}{}), nil)
+	s.Nil(err)
+	s.Equal(len(worker.Jobs()), 2)
+
+	worker.Drain()
+	s.Equal(len(worker.Jobs()), 0)
+
+	err = worker.EnqueueIn(5*time.Minute, NewJob("foo", map[string]interface{}{}), nil)
+	s.Nil(err)
+	s.Equal(len(worker.Jobs()), 1)
 }
 
 func TestWorkerSuite(t *testing.T) {
