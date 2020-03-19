@@ -23,7 +23,7 @@ type (
 		GQLPlaygroundPath             string        `env:"GQL_PLAYGROUND_PATH" envDefault:"/docs/graphql"`
 		GQLAPQCacheSize               int           `env:"GQL_APQ_CACHE_SIZE" envDefault:"100"`
 		GQLQueryCacheSize             int           `env:"GQL_QUERY_CACHE_SIZE" envDefault:"1000"`
-		GQLComplexityLimit            int           `env:"GQL_COMPLEXITY_LIMIT" envDefault:"100"`
+		GQLComplexityLimit            int           `env:"GQL_COMPLEXITY_LIMIT" envDefault:"1000"`
 		GQLMultipartMaxMemory         int64         `env:"GQL_MULTIPART_MAX_MEMORY" envDefault:"0"`
 		GQLMultipartMaxUploadSize     int64         `env:"GQL_MULTIPART_MAX_UPLOAD_SIZE" envDefault:"0"`
 		GQLWebsocketKeepAliveDuration time.Duration `env:"GQL_WEBSOCKET_KEEP_ALIVE_DURATION" envDefault:"10s"`
