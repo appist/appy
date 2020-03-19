@@ -44,7 +44,7 @@ func (s *ConfigSuite) TestNewConfig() {
 		"GQLPlaygroundPath":               "/docs/graphql",
 		"GQLAPQCacheSize":                 100,
 		"GQLQueryCacheSize":               1000,
-		"GQLComplexityLimit":              100,
+		"GQLComplexityLimit":              1000,
 		"GQLMultipartMaxMemory":           int64(0),
 		"GQLMultipartMaxUploadSize":       int64(0),
 		"GQLWebsocketKeepAliveDuration":   10 * time.Second,
