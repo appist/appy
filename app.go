@@ -79,7 +79,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	command.AddCommand(newSSLSetupCommand(logger, server))
 	command.AddCommand(newSSLTeardownCommand(logger, server))
 	command.AddCommand(newTeardownCommand(asset, config, dbManager, logger))
-	command.AddCommand(newWorkerCommand(config, dbManager, logger, worker))
+	command.AddCommand(newWorkCommand(config, dbManager, logger, worker))
 
 	if IsDebugBuild() {
 		command.AddCommand(newBuildCommand(asset, logger, server))

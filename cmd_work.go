@@ -2,9 +2,9 @@
 
 package appy
 
-func newWorkerCommand(config *Config, dbManager *DBManager, logger *Logger, worker *Worker) *Command {
+func newWorkCommand(config *Config, dbManager *DBManager, logger *Logger, worker *Worker) *Command {
 	return &Command{
-		Use:   "worker",
+		Use:   "work",
 		Short: "Run the worker to process background jobs",
 		Run: func(cmd *Command, args []string) {
 			if len(config.Errors()) > 0 {
