@@ -32,15 +32,21 @@ import (
 	"go.uber.org/zap"
 )
 
+type textWithWriteOption struct {
+	text    string
+	options text.WriteOption
+}
+
 var (
-	apiServeCmd, webServeCmd, workerCmd                      *exec.Cmd
-	apiServeCmdReady                                         chan bool
-	apiServeConsole, webServeConsole, workerConsole          *text.Text
-	apiServeConsoleBuf, webServeConsoleBuf, workerConsoleBuf string
-	terminalBox                                              *termbox.Terminal
-	isGenerating                                                           = false
-	watcherPollInterval                                      time.Duration = 1
-	liveReloadWSConn, liveReloadWSSConn                      *websocket.Conn
+	apiServeCmd, webServeCmd, workerCmd             *exec.Cmd
+	apiServeCmdReady                                chan bool
+	apiServeConsole, webServeConsole, workerConsole *text.Text
+	terminalBox                                     *termbox.Terminal
+	isGenerating                                                  = false
+	watcherPollInterval                             time.Duration = 1
+	liveReloadWSConn, liveReloadWSSConn             *websocket.Conn
+	colorRe                                         = regexp.MustCompile(`[\x1b|\033]\[[0-9;]*[0-9]+m[^\ .]*[\x1b|\033]\[[0-9;]*[0-9]+m`)
+	wordRe                                          = regexp.MustCompile(`[\x1b|\033]\[[0-9;]*[0-9]+m(.*)[\x1b|\033]\[[0-9;]*[0-9]+m`)
 )
 
 func newStartCommand(logger *Logger, server *Server) *Command {
@@ -73,9 +79,7 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 
 			go func() {
 				<-quit
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 			}()
 
 			if _, err := os.Stat(wd + "/package.json"); !os.IsNotExist(err) {
@@ -91,6 +95,7 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 				terminalBox, err = termbox.New()
 				if err != nil {
 					quit <- os.Kill
+					killAllCommands()
 					logger.Fatal(err)
 				}
 				defer terminalBox.Close()
@@ -98,18 +103,21 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 				apiServeConsole, err = text.New(text.RollContent(), text.WrapAtRunes(), text.WrapAtWords())
 				if err != nil {
 					quit <- os.Kill
+					killAllCommands()
 					logger.Fatal(err)
 				}
 
 				webServeConsole, err = text.New(text.RollContent(), text.WrapAtRunes(), text.WrapAtWords())
 				if err != nil {
 					quit <- os.Kill
+					killAllCommands()
 					logger.Fatal(err)
 				}
 
 				workerConsole, err = text.New(text.RollContent(), text.WrapAtRunes(), text.WrapAtWords())
 				if err != nil {
 					quit <- os.Kill
+					killAllCommands()
 					logger.Fatal(err)
 				}
 
@@ -141,61 +149,22 @@ func newStartCommand(logger *Logger, server *Server) *Command {
 
 				if err != nil {
 					quit <- os.Kill
+					killAllCommands()
 					logger.Fatal(err)
 				}
-
-				go func() {
-					ticker := time.NewTicker(16 * time.Millisecond)
-					defer ticker.Stop()
-
-					for {
-						select {
-						case <-ticker.C:
-							if apiServeConsoleBuf != "" {
-								apiServeBuf := apiServeConsoleBuf
-								apiServeConsoleBuf = ""
-								if err := apiServeConsole.Write(apiServeBuf); err != nil {
-									quit <- os.Kill
-									logger.Fatal(err)
-								}
-							}
-
-							if webServeConsoleBuf != "" {
-								webServeBuf := webServeConsoleBuf
-								webServeConsoleBuf = ""
-								if err := webServeConsole.Write(webServeBuf); err != nil {
-									quit <- os.Kill
-									logger.Fatal(err)
-								}
-							}
-
-							if workerConsoleBuf != "" {
-								workerBuf := workerConsoleBuf
-								workerConsoleBuf = ""
-								if err := workerConsole.Write(workerBuf); err != nil {
-									quit <- os.Kill
-									logger.Fatal(err)
-								}
-							}
-						case <-ctx.Done():
-							return
-						}
-					}
-				}()
 
 				tQuit := func(k *terminalapi.Keyboard) {
 					if k.Key == -26 {
 						cancel()
 						time.Sleep(250 * time.Millisecond)
-						killAPIServeCmd()
-						killWebServeCmd()
-						killWorkerCmd()
+						killAllCommands()
 						os.Exit(0)
 					}
 				}
 
 				if err := termdash.Run(ctx, terminalBox, ctn, termdash.KeyboardSubscriber(tQuit)); err != nil {
 					quit <- os.Kill
+					killAllCommands()
 					logger.Fatal(err)
 				}
 			}()
@@ -214,10 +183,13 @@ func watchHandler(e watcher.Event, logger *Logger) {
 
 	isGenerating = true
 	if strings.Contains(e.Path, ".gql") || strings.Contains(e.Path, ".graphql") || strings.Contains(e.Path, "pkg/graphql/config.yml") {
-		apiServeConsole.Write("INFO * Generating GraphQL boilerplate code...\n")
+		apiServeConsole.Write(time.Now().Format("2006-01-02T15:04:05.000-0700") + " ")
+		apiServeConsole.Write("INFO", text.WriteCellOpts(cell.FgColor(cell.ColorBlue)))
+		apiServeConsole.Write(" * Generating GraphQL boilerplate code...\n")
 
 		err := generateGQL()
 		if err != nil {
+			apiServeConsole.Write(time.Now().Format("2006-01-02T15:04:05.000-0700") + " ")
 			apiServeConsole.Write("ERROR", text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 			apiServeConsole.Write(" " + err.Error() + "\n")
 		}
@@ -286,52 +258,64 @@ func runAPIServeCmd(logger *Logger) {
 	go func(stdout io.ReadCloser) {
 		defer func() {
 			if r := recover(); r != nil {
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(r)
 			}
 		}()
 
 		out := bufio.NewScanner(stdout)
 		for out.Scan() {
-			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
-			outText := strings.Trim(out.Text(), " ")
-			outText = regex.ReplaceAllString(outText, "")
-			outText = strings.ReplaceAll(outText, "\t", " ")
-			if strings.Contains(outText, "* Listening on") {
-				apiServeCmdReady <- true
+			results := preprocessText(out.Text())
+
+			for _, result := range results {
+				if result.text == "" {
+					continue
+				}
+
+				if err := apiServeConsole.Write(result.text, result.options); err != nil {
+					killAllCommands()
+					logger.Fatal(err)
+				}
 			}
 
-			apiServeConsoleBuf += outText + "\n"
+			if len(results) > 0 && strings.Contains(results[len(results)-1].text, "* Listening on") {
+				apiServeCmdReady <- true
+			}
 		}
 	}(apiServeCmdOut)
 
 	go func(stderr io.ReadCloser) {
 		defer func() {
 			if r := recover(); r != nil {
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(r)
 			}
 		}()
 
 		err := bufio.NewScanner(stderr)
 		for err.Scan() {
-			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
-			errText := strings.Trim(err.Text(), " ")
-			errText = regex.ReplaceAllString(errText, "")
-			errText = strings.ReplaceAll(errText, "\t", " ")
-			if strings.Contains(errText, "* Listening on") {
-				apiServeCmdReady <- true
+			results := preprocessText(err.Text())
+
+			for _, result := range results {
+				if result.text == "" {
+					continue
+				}
+
+				if err := apiServeConsole.Write(result.text, result.options); err != nil {
+					killAllCommands()
+					logger.Fatal(err)
+				}
 			}
 
-			apiServeConsoleBuf += errText + "\n"
+			if len(results) > 0 && strings.Contains(results[len(results)-1].text, "* Listening on") {
+				apiServeCmdReady <- true
+			}
 		}
 	}(apiServeCmdErr)
 
-	apiServeConsole.Write("INFO * Compiling...\n")
+	apiServeConsole.Write(time.Now().Format("2006-01-02T15:04:05.000-0700") + " ")
+	apiServeConsole.Write("INFO", text.WriteCellOpts(cell.FgColor(cell.ColorBlue)))
+	apiServeConsole.Write(" * Compiling...\n")
 	apiServeCmd.Run()
 }
 
@@ -354,44 +338,56 @@ func runWorkerCmd(logger *Logger) {
 	go func(stdout io.ReadCloser) {
 		defer func() {
 			if r := recover(); r != nil {
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(r)
 			}
 		}()
 
 		out := bufio.NewScanner(stdout)
 		for out.Scan() {
-			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
-			outText := strings.Trim(out.Text(), " ")
-			outText = regex.ReplaceAllString(outText, "")
-			outText = strings.ReplaceAll(outText, "\t", " ")
-			workerConsoleBuf += outText + "\n"
+			results := preprocessText(out.Text())
+
+			for _, result := range results {
+				if result.text == "" || string(result.text) == "\n" {
+					continue
+				}
+
+				if err := workerConsole.Write(result.text, result.options); err != nil {
+					killAllCommands()
+					logger.Fatal(err)
+				}
+			}
 		}
 	}(workerCmdOut)
 
 	go func(stderr io.ReadCloser) {
 		defer func() {
 			if r := recover(); r != nil {
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(r)
 			}
 		}()
 
 		err := bufio.NewScanner(stderr)
 		for err.Scan() {
-			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
-			errText := strings.Trim(err.Text(), " ")
-			errText = regex.ReplaceAllString(errText, "")
-			errText = strings.ReplaceAll(errText, "\t", " ")
-			workerConsoleBuf += errText + "\n"
+			results := preprocessText(err.Text())
+
+			for _, result := range results {
+				if result.text == "" || string(result.text) == "\n" {
+					continue
+				}
+
+				if err := workerConsole.Write(result.text, result.options); err != nil {
+					killAllCommands()
+					logger.Fatal(err)
+				}
+			}
 		}
 	}(workerCmdErr)
 
-	workerConsole.Write("INFO * Compiling...\n")
+	workerConsole.Write(time.Now().Format("2006-01-02T15:04:05.000-0700") + " ")
+	workerConsole.Write("INFO", text.WriteCellOpts(cell.FgColor(cell.ColorBlue)))
+	workerConsole.Write(" * Compiling...\n")
 	workerCmd.Run()
 }
 
@@ -428,44 +424,193 @@ func runWebServeCmd(logger *Logger, server *Server) {
 	go func(stdout io.ReadCloser) {
 		defer func() {
 			if r := recover(); r != nil {
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(r)
 			}
 		}()
 
 		out := bufio.NewScanner(stdout)
 		for out.Scan() {
-			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
-			outText := strings.Trim(out.Text(), " ")
-			outText = regex.ReplaceAllString(outText, "")
-			outText = strings.ReplaceAll(outText, "\t", " ")
-			webServeConsoleBuf += outText + "\n"
+			results := preprocessText(out.Text())
+
+			for _, result := range results {
+				if result.text == "" {
+					continue
+				}
+
+				if err := webServeConsole.Write(result.text, result.options); err != nil {
+					killAllCommands()
+					logger.Fatal(err)
+				}
+			}
 		}
 	}(webServeCmdOut)
 
 	go func(stderr io.ReadCloser) {
 		defer func() {
 			if r := recover(); r != nil {
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(r)
 			}
 		}()
 
 		err := bufio.NewScanner(stderr)
 		for err.Scan() {
-			regex := regexp.MustCompile("(\x1b[[0-9;]*m)")
-			errText := strings.Trim(err.Text(), " ")
-			errText = regex.ReplaceAllString(errText, "")
-			errText = strings.ReplaceAll(errText, "\t", " ")
-			webServeConsoleBuf += errText + "\n"
+			results := preprocessText(err.Text())
+
+			for _, result := range results {
+				if result.text == "" {
+					continue
+				}
+
+				if err := webServeConsole.Write(result.text, result.options); err != nil {
+					killAllCommands()
+					logger.Fatal(err)
+				}
+			}
 		}
 	}(webServeCmdErr)
 
 	webServeCmd.Run()
+}
+
+func killAllCommands() {
+	killWebServeCmd()
+	killAPIServeCmd()
+	killWorkerCmd()
+}
+
+func convertText(input string) textWithWriteOption {
+	colorWordPairs := wordRe.FindStringSubmatch(input)
+
+	if len(colorWordPairs) != 2 {
+		return textWithWriteOption{
+			text:    input,
+			options: text.WriteCellOpts(),
+		}
+	}
+
+	splits := strings.Split(input, colorWordPairs[1])
+
+	var options text.WriteOption
+	switch splits[0] {
+	case "\x1b[30m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorBlack))
+	case "\x1b[31m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorRed))
+	case "\x1b[32m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorGreen))
+	case "\x1b[33m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorYellow))
+	case "\x1b[34m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorBlue))
+	case "\x1b[35m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorMagenta))
+	case "\x1b[36m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorCyan))
+	case "\x1b[40m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorBlack))
+	case "\x1b[41m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorRed))
+	case "\x1b[42m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorGreen))
+	case "\x1b[43m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorYellow))
+	case "\x1b[44m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorBlue))
+	case "\x1b[45m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorMagenta))
+	case "\x1b[47m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorWhite))
+	case "\x1b[90m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorRGB24(85, 85, 85)))
+	case "\x1b[91m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorRGB24(255, 85, 85)))
+	case "\x1b[92m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorRGB24(85, 255, 85)))
+	case "\x1b[93m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorRGB24(255, 255, 85)))
+	case "\x1b[94m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorRGB24(85, 85, 255)))
+	case "\x1b[95m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorRGB24(255, 85, 255)))
+	case "\x1b[96m":
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorRGB24(85, 255, 255)))
+	case "\x1b[100m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorRGB24(85, 85, 85)))
+	case "\x1b[101m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorRGB24(255, 85, 85)))
+	case "\x1b[102m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorRGB24(85, 255, 85)))
+	case "\x1b[103m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorRGB24(255, 255, 85)))
+	case "\x1b[104m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorRGB24(85, 85, 255)))
+	case "\x1b[105m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorRGB24(255, 85, 255)))
+	case "\x1b[106m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorRGB24(85, 255, 255)))
+	case "\x1b[107m":
+		options = text.WriteCellOpts(cell.BgColor(cell.ColorWhite))
+	default:
+		options = text.WriteCellOpts(cell.FgColor(cell.ColorWhite))
+	}
+
+	return textWithWriteOption{
+		text:    colorWordPairs[1],
+		options: options,
+	}
+}
+
+func preprocessText(input string) []textWithWriteOption {
+	output := strings.ReplaceAll(input, "\t", " ")
+	output = strings.Trim(output, "\n")
+	matchIndexes := colorRe.FindAllSubmatchIndex([]byte(output), -1)
+	results := []textWithWriteOption{
+		textWithWriteOption{
+			text:    output,
+			options: text.WriteCellOpts(),
+		},
+	}
+
+	if len(matchIndexes) > 0 {
+		results = []textWithWriteOption{}
+		ptr := 0
+		currMatchIdx := 0
+
+		for currMatchIdx < len(matchIndexes) {
+			idxStart := matchIndexes[currMatchIdx][0]
+			idxEnd := matchIndexes[currMatchIdx][1]
+
+			if ptr < idxStart {
+				results = append(results, convertText(output[ptr:idxStart]))
+				ptr = idxStart
+			} else if ptr >= idxStart && ptr <= idxEnd {
+				if len(results) > 0 {
+					lastResult := results[len(results)-1]
+					lastChar := lastResult.text[len(lastResult.text)-1]
+
+					if string(lastChar) != " " {
+						results = append(results, convertText(" "))
+					}
+				}
+
+				results = append(results, convertText(output[idxStart:idxEnd]))
+				ptr = idxEnd + 1
+				currMatchIdx++
+			}
+		}
+
+		if ptr < len(output) {
+			results = append(results, convertText(output[ptr-1:len(output)]))
+		}
+	}
+
+	if len(results) > 0 {
+		results[len(results)-1].text += "\n"
+	}
+
+	return results
 }
 
 func runLiveReloadServer(logger *Logger, server *Server) {
@@ -483,9 +628,7 @@ func runLiveReloadServer(logger *Logger, server *Server) {
 
 		liveReloadWSConn, err = upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			killWebServeCmd()
-			killAPIServeCmd()
-			killWorkerCmd()
+			killAllCommands()
 			logger.Fatal(err)
 		}
 
@@ -509,9 +652,7 @@ func runLiveReloadServer(logger *Logger, server *Server) {
 
 		liveReloadWSSConn, err = upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			killWebServeCmd()
-			killAPIServeCmd()
-			killWorkerCmd()
+			killAllCommands()
 			logger.Fatal(err)
 		}
 
@@ -533,9 +674,7 @@ func runLiveReloadServer(logger *Logger, server *Server) {
 		if server.Config().HTTPSSLEnabled {
 			err := wss.ListenAndServeTLS(server.Config().HTTPSSLCertPath+"/cert.pem", server.Config().HTTPSSLCertPath+"/key.pem")
 			if err != http.ErrServerClosed {
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(err)
 			}
 		}
@@ -543,9 +682,7 @@ func runLiveReloadServer(logger *Logger, server *Server) {
 
 	err := ws.ListenAndServe()
 	if err != http.ErrServerClosed {
-		killWebServeCmd()
-		killAPIServeCmd()
-		killWorkerCmd()
+		killAllCommands()
 		logger.Fatal(err)
 	}
 }
@@ -562,9 +699,7 @@ func watch(logger *Logger, watchPaths []string, callback func(e watcher.Event)) 
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(r)
 			}
 		}()
@@ -574,9 +709,7 @@ func watch(logger *Logger, watchPaths []string, callback func(e watcher.Event)) 
 			case event := <-w.Event:
 				callback(event)
 			case err := <-w.Error:
-				killWebServeCmd()
-				killAPIServeCmd()
-				killWorkerCmd()
+				killAllCommands()
 				logger.Fatal(err)
 			case <-w.Closed:
 				return
@@ -597,9 +730,7 @@ func watch(logger *Logger, watchPaths []string, callback func(e watcher.Event)) 
 	}()
 
 	if err := w.Start(time.Second * watcherPollInterval); err != nil {
-		killWebServeCmd()
-		killAPIServeCmd()
-		killWorkerCmd()
+		killAllCommands()
 		logger.Fatal(err)
 	}
 }

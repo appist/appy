@@ -23,7 +23,7 @@ func (l *WorkerLogger) Debug(format string, args ...interface{}) {
 
 // Info uses fmt.Sprintf to log a templated information message.
 func (l *WorkerLogger) Info(format string, args ...interface{}) {
-	if skipMessageRegex.Match([]byte(format)) {
+	if skipMessageRegex.Match([]byte(format)) || format == "" {
 		return
 	}
 

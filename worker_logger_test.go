@@ -3,7 +3,9 @@ package appy
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -85,7 +87,7 @@ func (s *WorkerLoggerSuite) TestWorkerInfo() {
 	s.logger.Info("Send signal TERM to")
 	s.writer.Flush()
 	s.Contains(s.buffer.String(), "INFO")
-	s.Contains(s.buffer.String(), "* appy 0.1.0 (go1.14), build: debug, environment: development, config: testdata/server/configs/.env.development")
+	s.Contains(s.buffer.String(), fmt.Sprintf("* appy 0.1.0 (%s), build: debug, environment: development, config: testdata/server/configs/.env.development", runtime.Version()))
 	s.Contains(s.buffer.String(), "* Concurrency: 25, queues: default=10")
 	s.Contains(s.buffer.String(), "* Worker is now ready to process jobs...")
 }
