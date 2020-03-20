@@ -582,19 +582,19 @@ func preprocessText(input string) []textWithWriteOption {
 			idxStart := matchIndexes[currMatchIdx][0]
 			idxEnd := matchIndexes[currMatchIdx][1]
 
+			if len(results) > 0 {
+				lastResult := results[len(results)-1]
+				lastChar := lastResult.text[len(lastResult.text)-1]
+
+				if string(lastChar) != " " {
+					results = append(results, convertText(" "))
+				}
+			}
+
 			if ptr < idxStart {
 				results = append(results, convertText(output[ptr:idxStart]))
 				ptr = idxStart
 			} else if ptr >= idxStart && ptr <= idxEnd {
-				if len(results) > 0 {
-					lastResult := results[len(results)-1]
-					lastChar := lastResult.text[len(lastResult.text)-1]
-
-					if string(lastChar) != " " {
-						results = append(results, convertText(" "))
-					}
-				}
-
 				results = append(results, convertText(output[idxStart:idxEnd]))
 				ptr = idxEnd + 1
 				currMatchIdx++
