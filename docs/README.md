@@ -18,7 +18,7 @@ Common problems that slow down engineers today:
 * lack of a way to deliver the product to 3rd party while keeping the source code secure
 * and more...
 
-All the above are happening in startups which don't use frameworks like [Django](https://www.djangoproject.com/)/[Rails](https://rubyonrails.org/)/[Laravel](https://laravel.com/) which leads their engineers to focus on building the missing parts instead of what matters to their startup businesses. Even if a startup is using [Django](https://www.djangoproject.com/)/[Rails](https://rubyonrails.org/)/[Laravel](https://laravel.com/), they tend to quickly get worried about the server costs and have to spend time too much time on code optimisation instead of feature development. And that is why `appy` was built to help businesses, especially startups to focus more on feature development at their early stage.
+All the above are happening in startups which don't use frameworks like [Django](https://www.djangoproject.com/)/[Rails](https://rubyonrails.org/)/[Laravel](https://laravel.com/) which leads their engineers to focus on building the missing parts instead of what matters to their businesses. Even if a startup is using [Django](https://www.djangoproject.com/)/[Rails](https://rubyonrails.org/)/[Laravel](https://laravel.com/), they tend to quickly get worried about the server costs and have to spend too much time on code optimisation instead of feature development. And that is why `appy` was built to help businesses, especially startups to focus more on feature development at its early stage.
 
 ### Features
 
