@@ -28,12 +28,13 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 * Support Dotenv configuration\(encrypted line-by-line\) for clearer PR review
 * Support [PostgreSQL ORM](https://github.com/go-pg/pg) with database toolings
 * Support I18n on both [server-side](https://github.com/nicksnyder/go-i18n) + [client-side](https://github.com/fnando/i18n-js)
-* Support [Jet template engine](https://github.com/CloudyKit/jet) for server-side rendering
+* Support [Jet template engine](https://github.com/CloudyKit/jet) for server-side rendering + hot reload upon changes
 * Support [SvelteJS](https://svelte.dev/) SPA static resource embedding + prerendering
-* Support [GraphQL](https://graphql.org/) development with [gqlgen](https://gqlgen.com/) setup
-* Support background job processing worker with [asynq](https://github.com/hibiken/asynq)
-* Support mailer with preview UI
-* Support custom commands building
+* Support [NightwatchJS](https://nightwatchjs.org/) with Chrome/Firefox drivers for e2e testing
+* Support [GraphQL](https://graphql.org/) development via [gqlgen](https://gqlgen.com/) + [GraphQL Playground](https://github.com/prisma-labs/graphql-playground)
+* Support background job processing worker via [asynq](https://github.com/hibiken/asynq) + web UI \(coming soon\)
+* Support SMTP email sending with I18n support + preview web UI
+* Support custom commands building via [cobra](https://github.com/spf13/cobra)
 * Support local development with auto-recompile
 * Support local cluster setup using docker-compose \(even with the binary!\)
 * Support local HTTPS setup via [mkcert](https://github.com/FiloSottile/mkcert)
