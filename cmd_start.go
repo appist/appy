@@ -330,7 +330,7 @@ func runWorkerCmd(logger *Logger) {
 	killWorkerCmd()
 	time.Sleep(500 * time.Millisecond)
 
-	workerCmd = exec.Command("go", "run", ".", "worker")
+	workerCmd = exec.Command("go", "run", ".", "work")
 	workerCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	workerCmdOut, _ := workerCmd.StdoutPipe()
 	workerCmdErr, _ := workerCmd.StderrPipe()
