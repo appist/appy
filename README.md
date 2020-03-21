@@ -9,6 +9,14 @@
 
 An opinionated productive web framework that helps scaling business easier.
 
+##### Debug Mode - Local Development
+
+[![asciicast](https://asciinema.org/a/312186.svg)](https://asciinema.org/a/312186)
+
+##### Release Mode - Get Ready For Deployment
+
+[![asciicast](https://asciinema.org/a/312188.svg)](https://asciinema.org/a/312188)
+
 ## Documentation
 
 Please refer to [here](https://appist.gitbook.io/appy/) for more detailed documentation.
