@@ -15,7 +15,7 @@ require (
 	github.com/fatih/camelcase v1.0.0
 	github.com/gin-contrib/multitemplate v0.0.0-20191128031210-95dee0dedf35
 	github.com/gin-contrib/sessions v0.0.3
-	github.com/gin-gonic/gin v1.5.1-0.20200307022333-1d055af1bc15
+	github.com/gin-gonic/gin v1.5.1-0.20200316165202-73ccfea3ba5a
 	github.com/go-pg/pg/v9 v9.1.3
 	github.com/go-redis/redis/v7 v7.2.0
 	github.com/gomodule/redigo v2.0.0+incompatible
