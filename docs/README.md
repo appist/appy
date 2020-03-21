@@ -22,12 +22,34 @@ All the above are happening in startups which don't use frameworks like [Django]
 
 ### Features
 
-* Follow [12factor](https://12factor.net/) 
+* Support [12factor](https://12factor.net/) app
+* Support Dotenv configuration\(encrypted line-by-line\) for clearer PR review
+* Support [PostgreSQL ORM](https://github.com/go-pg/pg) with database toolings
+* Support I18n on both [server-side](https://github.com/nicksnyder/go-i18n) + [client-side](https://github.com/fnando/i18n-js)
+* Support [Jet template engine](https://github.com/CloudyKit/jet) for server-side rendering
+* Support [SvelteJS](https://svelte.dev/) SPA static resource embedding + prerendering
+* Support [GraphQL](https://graphql.org/) development with [gqlgen](https://gqlgen.com/) setup
+* Support background job processing worker with [asynq](https://github.com/hibiken/asynq)
+* Support mailer with preview UI
+* Support custom commands building
+* Support local development with auto-recompile
+* Support local cluster setup using docker-compose \(even with the binary!\)
+* Support local HTTPS setup via [mkcert](https://github.com/FiloSottile/mkcert)
 
 ### Caveats
 
-* Built-in HTTP server isn't meant/optimised for pure API server's high conccurent request handling.
-* Built-in HTTP server only supports [Jet template engine](https://github.com/CloudyKit/jet) for server-side rendering.
-* Built-in SQL ORM only supports [PostgreSQL](https://www.postgresql.org/) but comes with [great performance](https://github.com/go-pg/pg/wiki/FAQ#why-go-pg) in Go ecosystem.
-* Built-in tooling only supports macOS and Linux due to limited Go internals support on Windows.
+* Built-in HTTP server isn't meant/optimised for pure API server
+* Built-in HTTP server has an [issue](https://github.com/gin-gonic/gin/issues/2016) with wildcard route
+* Built-in SQL ORM only supports [PostgreSQL](https://www.postgresql.org/) but comes with [great performance](https://github.com/go-pg/pg/wiki/FAQ#why-go-pg) in Go ecosystem
+* Built-in tooling only supports macOS and Linux due to limited Go internals support on Windows
+
+### Acknowledgement
+
+* [asynq](https://github.com/hibiken/asynq) - For processing background jobs
+* [cobra](https://github.com/spf13/cobra) - For building CLI
+* [gin](https://github.com/gin-gonic/gin) - For building web server
+* [go-pg](https://github.com/go-pg/pg) - For interacting with PostgreSQL
+* [gqlgen](https://gqlgen.com/) - For building GraphQL API
+* [testify](https://github.com/stretchr/testify) - For writing unit tests
+* [zap](https://github.com/uber-go/zap) - For blazing fast, structured and leveled logging
 

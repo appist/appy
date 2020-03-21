@@ -13,6 +13,10 @@ description: Everything you need to know to install appy and create your first a
 
 ## Quick Start
 
+{% hint style="info" %}
+The project scaffolding is still being built. If you're interested in experiencing appy framework, please proceed to [https://github.com/appist/appist](https://github.com/appist/appist) to try it out first.
+{% endhint %}
+
 #### Step 1: Create the project folder with go module.
 
 ```bash
