@@ -4,19 +4,18 @@ package appy
 
 import (
 	"io"
-	"net/http"
 	"os"
 	"testing"
 )
 
 func newServer() *Server {
-	asset := NewAsset(http.Dir("testdata/app"), map[string]string{
+	asset := NewAsset(nil, map[string]string{
 		"docker": "testdata/app/.docker",
 		"config": "testdata/app/configs",
 		"locale": "testdata/app/pkg/locales",
 		"view":   "testdata/app/pkg/views",
 		"web":    "testdata/config/web",
-	})
+	}, "")
 	support := &Support{}
 	logger, _, _ := NewFakeLogger()
 	config := NewConfig(asset, logger, support)
