@@ -3,10 +3,12 @@ package appy
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"html/template"
 	"net/http"
 	"net/smtp"
 	"net/textproto"
+	"strings"
 
 	"github.com/CloudyKit/jet"
 	"github.com/jordan-wright/email"
@@ -138,12 +140,34 @@ func (m *Mailer) composeEmail(mail Mail) (*email.Email, error) {
 
 func (m *Mailer) content(locale, name string, obj interface{}) ([]byte, error) {
 	m.viewEngine.AddGlobal("t", func(key string, args ...interface{}) string {
-		var tplLocale string
+		var (
+			tplCount  int
+			tplData   H
+			tplLocale string
+		)
+
 		for _, arg := range args {
 			switch v := arg.(type) {
+			case int:
+				tplCount = v
+			case float64:
+				tplCount = int(v)
 			case string:
+				if strings.HasPrefix(v, "{") && strings.HasSuffix(v, "}") {
+					_ = json.Unmarshal([]byte(v), &tplData)
+					continue
+				}
+
 				tplLocale = v
 			}
+		}
+
+		if tplCount != 0 {
+			args = append(args, tplCount)
+		}
+
+		if tplData != nil {
+			args = append(args, tplData)
 		}
 
 		if tplLocale == "" {

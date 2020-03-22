@@ -69,11 +69,11 @@ func (s *MailerSuite) TestNewMailerWithDebugBuild() {
 
 	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=html&name=mailers/user/verify_account", nil, nil)
 	s.Equal(http.StatusOK, w.Code)
-	s.Contains(w.Body.String(), "<div>\n  Welcome cayter!\n  测试\n</div>")
+	s.Contains(w.Body.String(), "<div>\n  Welcome cayter!\n  测试\n  Hi, John Doe! You have 2 messages.\n</div>")
 
 	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=txt&name=mailers/user/verify_account", nil, nil)
 	s.Equal(http.StatusOK, w.Code)
-	s.Contains(w.Body.String(), "Welcome cayter! 测试")
+	s.Contains(w.Body.String(), "Welcome cayter! 测试 Hi, John Doe! You have 2 messages.")
 
 	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=html&name=mailers/user/missing", nil, nil)
 	s.Equal(http.StatusNotFound, w.Code)
@@ -120,6 +120,8 @@ func (s *MailerSuite) TestNewMailerWithReleaseBuild() {
 	}()
 
 	mailer := appy.NewMailer(s.asset, s.config, s.i18n, s.logger, s.server, nil)
+	mailer.SetupPreview()
+
 	mail := s.previewMail
 	mail.Subject = "mailers.user.verifyAccount.subject"
 	mail.Template = "mailers/user/verify_account"

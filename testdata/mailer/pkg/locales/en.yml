@@ -4,3 +4,8 @@ mailers:
       subject: Verify Your Account
       welcome: Welcome
       test: Test
+
+    message:
+      Zero: Hi, {{.Name}}! You have {{.Count}} message.
+      One: Hi, {{.Name}}! You have {{.Count}} message.
+      Other: Hi, {{.Name}}! You have {{.Count}} messages.

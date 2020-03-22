@@ -62,7 +62,7 @@ func (i *I18n) Locales() []string {
 
 // T translates a message based on the given key and locale.
 func (i *I18n) T(key string, args ...interface{}) string {
-	var data H
+	data := H{}
 	count := -1
 	locale := i.config.I18nDefaultLocale
 
