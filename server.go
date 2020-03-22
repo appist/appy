@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -420,7 +421,7 @@ func (s *Server) Middleware() []HandlerFunc {
 
 func (s *Server) isSSRPath(path string) bool {
 	for _, route := range s.Routes() {
-		if strings.Contains(path, route.Path) {
+		if filepath.Ext(path) == "" && strings.Contains(path, route.Path) {
 			return true
 		}
 	}
