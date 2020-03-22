@@ -120,6 +120,17 @@ func (s *WorkerSuite) TestWorkerTestUtils() {
 	s.Equal(len(worker.Jobs()), 1)
 }
 
+func (s *WorkerSuite) TestFakeWorkerHandler() {
+	ctx := context.Background()
+	job := NewJob("test", nil)
+
+	mockedHandler := NewFakeWorkerHandler()
+	mockedHandler.On("ProcessTask", ctx, job).Return(nil)
+
+	s.Nil(mockedHandler.ProcessTask(ctx, job))
+	mockedHandler.AssertExpectations(s.T())
+}
+
 func TestWorkerSuite(t *testing.T) {
 	RunTestSuite(t, new(WorkerSuite))
 }

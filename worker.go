@@ -232,3 +232,20 @@ func (w *Worker) Info() []string {
 func (w *Worker) Run() {
 	w.Background.Run(w.ServeMux)
 }
+
+// FakeWorkerHandler is used for mocking in unit test.
+type FakeWorkerHandler struct {
+	TestMock
+}
+
+// NewFakeWorkerHandler initializes a fake WorkerHandler instance that is useful for unit test.
+func NewFakeWorkerHandler() *FakeWorkerHandler {
+	return new(FakeWorkerHandler)
+}
+
+// ProcessTask mocks the job processing functionality that is useful for unit test.
+func (h *FakeWorkerHandler) ProcessTask(ctx context.Context, job *Job) error {
+	args := h.Called(ctx, job)
+
+	return args.Error(0)
+}
