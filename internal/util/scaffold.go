@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Scaffold generates a new project using the template.
 func Scaffold(tplPath, name, description string) {
 	err := filepath.Walk(tplPath,
 		func(src string, info os.FileInfo, err error) error {

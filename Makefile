@@ -10,8 +10,8 @@ bootstrap:
 	asdf reshim nodejs
 
 codecheck:
-	golint -set_exit_status ./... || exit 1
-	go vet ./...
+	golint -set_exit_status $$(go list ./... | grep -v /templates\/scaffold/) || exit 1
+	go vet $$(go list ./... | grep -v /templates\/scaffold/)
 
 down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
