@@ -1,5 +1,13 @@
 package appy
 
+import (
+	"log"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+)
+
 const (
 	// DebugBuild tends to be slow as it includes debug lvl logging which is more verbose.
 	DebugBuild = "debug"
@@ -33,4 +41,31 @@ func IsDebugBuild() bool {
 // IsReleaseBuild indicates the current build is release build which is meant for production deployment.
 func IsReleaseBuild() bool {
 	return Build == ReleaseBuild
+}
+
+// Scaffold generates a new project using the template.
+func Scaffold(name, description string) {
+	_, dirname, _, _ := runtime.Caller(0)
+	tplPath := filepath.Dir(dirname) + "/templates/scaffold"
+
+	err := filepath.Walk(tplPath,
+		func(src string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			dest := strings.ReplaceAll(src, tplPath+"/", "")
+			if info.IsDir() {
+				err := os.MkdirAll(dest, 0777)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+
+			return nil
+		})
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }

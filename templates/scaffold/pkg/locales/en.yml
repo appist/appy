@@ -1,0 +1,7 @@
+welcome: Welcome, {{.Title}} {{.Name}}!
+
+title: Mr.
+
+mailers:
+  welcome:
+    subject: Welcome

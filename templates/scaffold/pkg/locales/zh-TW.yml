@@ -1,0 +1,7 @@
+welcome: 歡迎，{{.Name}}{{.Title}}!
+
+title: 先生
+
+mailers:
+  welcome:
+    subject: 歡迎

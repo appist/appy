@@ -1,0 +1,1 @@
+{{t("welcome", `{"Name": "John Doe", "Title": "` + t("title") + `"}`)}}
