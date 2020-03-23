@@ -1,11 +1,10 @@
 package appy
 
 import (
-	"log"
-	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
+
+	"github.com/appist/appy/internal/util"
 )
 
 const (
@@ -47,25 +46,5 @@ func IsReleaseBuild() bool {
 func Scaffold(name, description string) {
 	_, dirname, _, _ := runtime.Caller(0)
 	tplPath := filepath.Dir(dirname) + "/templates/scaffold"
-
-	err := filepath.Walk(tplPath,
-		func(src string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			dest := strings.ReplaceAll(src, tplPath+"/", "")
-			if info.IsDir() {
-				err := os.MkdirAll(dest, 0777)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-
-			return nil
-		})
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	util.Scaffold(tplPath, name, description)
 }
