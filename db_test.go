@@ -197,12 +197,12 @@ func (s *DBSuite) TestDBOps() {
 	db.RegisterSeedTx(
 		func(h *DBTx) error {
 			users := []User{
-				User{
+				{
 					Email:     "john@gmail.com",
 					Username:  "john",
 					CreatedAt: time.Now(),
 				},
-				User{
+				{
 					Email:     "doe@gmail.com",
 					Username:  "doe",
 					CreatedAt: time.Now(),
