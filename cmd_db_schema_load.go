@@ -2,6 +2,8 @@
 
 package appy
 
+import "strings"
+
 func newDBSchemaLoadCommand(config *Config, dbManager *DBManager, logger *Logger) *Command {
 	cmd := &Command{
 		Use:   "db:schema:load",
@@ -42,9 +44,12 @@ func runDBSchemaLoad(config *Config, dbManager *DBManager, logger *Logger) {
 		}
 		defer db.Close()
 
-		_, err = db.Exec(db.Schema())
-		if err != nil {
-			logger.Fatal(err)
+		schema := db.Schema()
+		if strings.Trim(schema, " ") != "" {
+			_, err = db.Exec(schema)
+			if err != nil {
+				logger.Fatal(err)
+			}
 		}
 
 		logger.Infof("Loading schema for '%s' database... DONE", name)
