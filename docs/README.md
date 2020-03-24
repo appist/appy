@@ -31,7 +31,7 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 * Support [PostgreSQL ORM](https://github.com/go-pg/pg) with database toolings
 * Support I18n on both [server-side](https://github.com/nicksnyder/go-i18n) + [client-side](https://github.com/fnando/i18n-js)
 * Support [Jet template engine](https://github.com/CloudyKit/jet) for server-side rendering + browser auto-reload upon changes
-* Support [SvelteJS](https://svelte.dev/) SPA static resource embedding + prerendering
+* Support [SvelteJS](https://svelte.dev/) PWA static resource embedding + prerendering
 * Support [NightwatchJS](https://nightwatchjs.org/) with Chrome/Firefox drivers for e2e testing
 * Support [GraphQL](https://graphql.org/) development via [gqlgen](https://gqlgen.com/) + [GraphQL Playground](https://github.com/prisma-labs/graphql-playground)
 * Support background job processing worker via [asynq](https://github.com/hibiken/asynq) + web UI \(coming soon\)
