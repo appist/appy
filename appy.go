@@ -1,5 +1,12 @@
 package appy
 
+import (
+	"path/filepath"
+	"runtime"
+
+	"github.com/appist/appy/internal/util"
+)
+
 const (
 	// DebugBuild tends to be slow as it includes debug lvl logging which is more verbose.
 	DebugBuild = "debug"
@@ -33,4 +40,11 @@ func IsDebugBuild() bool {
 // IsReleaseBuild indicates the current build is release build which is meant for production deployment.
 func IsReleaseBuild() bool {
 	return Build == ReleaseBuild
+}
+
+// Scaffold generates a new project using the template.
+func Scaffold(name, description string) {
+	_, dirname, _, _ := runtime.Caller(0)
+	tplPath := filepath.Dir(dirname) + "/templates/scaffold"
+	util.Scaffold(tplPath, name, description)
 }
