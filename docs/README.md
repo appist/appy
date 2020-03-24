@@ -4,7 +4,9 @@ description: Everything you need to know what appy is all about and why it was b
 
 # Introduction
 
-### Motivation
+[![Build Status](https://github.com/appist/appy/workflows/Unit%20Test/badge.svg)](https://github.com/appist/appy/actions?workflow=Unit+Test) [![Go Report Card](https://goreportcard.com/badge/github.com/appist/appy)](https://goreportcard.com/report/github.com/appist/appy) [![Coverage Status](https://img.shields.io/codecov/c/gh/appist/appy.svg?logo=codecov)](https://codecov.io/gh/appist/appy) [![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg)](https://pkg.go.dev/github.com/appist/appy?tab=doc) [![Join the chat at https://gitter.im/Appist/appy](https://badges.gitter.im/Appist/appy.svg)](https://gitter.im/Appist/appy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Platform Support](https://img.shields.io/badge/platform-macos%20%7C%20linux-blue)](https://github.com/appist/appy)
+
+## Motivation
 
 Every software built has a purpose, be it for commercial or non-commercial purpose, what matters most in the end of the day is: do your engineers have the most productive framework to work with that would help to speed up the overall progress for your awesome business idea?
 
@@ -22,7 +24,7 @@ All the above are happening in startups which don't use frameworks like [Django]
 
 Hence, `appy` was built to help businesses, especially startups, to focus more on feature development at its early stage by having a single monolith codebase to keep the infrastructure simple so that the business growth keeps going on. And later, when the business grows to a scale where it really needs a microservices architecture, `appy` can also help with easily migrating some of the logic out from the monolith to another service that is based off of [GRPC](https://grpc.io/).
 
-### Features
+## Features
 
 * Support [12factor](https://12factor.net/) app
 * Support Dotenv configuration\(encrypted line-by-line\) for clearer PR review
@@ -39,14 +41,14 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 * Support local cluster setup using docker-compose \(even with the binary!\)
 * Support local HTTPS setup via [mkcert](https://github.com/FiloSottile/mkcert)
 
-### Caveats
+## Caveats
 
 * Built-in HTTP server isn't meant/optimised for pure API server
 * Built-in HTTP server has an [issue](https://github.com/gin-gonic/gin/issues/2016) with wildcard route
 * Built-in SQL ORM only supports [PostgreSQL](https://www.postgresql.org/) but comes with [great performance](https://github.com/go-pg/pg/wiki/FAQ#why-go-pg) in Go ecosystem
 * Built-in tooling only supports macOS and Linux due to limited Go internals support on Windows
 
-### Acknowledgement
+## Acknowledgement
 
 * [asynq](https://github.com/hibiken/asynq) - For processing background jobs
 * [cobra](https://github.com/spf13/cobra) - For building CLI
