@@ -48,7 +48,6 @@ func (s *ConfigSuite) TestNewConfig() {
 		"GQLMultipartMaxMemory":           int64(0),
 		"GQLMultipartMaxUploadSize":       int64(0),
 		"GQLWebsocketKeepAliveDuration":   10 * time.Second,
-		"HTTPDebugEnabled":                false,
 		"HTTPGzipCompressLevel":           -1,
 		"HTTPGzipExcludedExts":            []string{},
 		"HTTPLogFilterParameters":         []string{"password"},
@@ -242,11 +241,11 @@ func (s *ConfigSuite) TestNewConfigWithEmptyMasterKeyFile() {
 func (s *ConfigSuite) TestNewConfigWithUnparsableEnvVariable() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
-	os.Setenv("HTTP_DEBUG_ENABLED", "nil")
+	os.Setenv("GQL_PLAYGROUND_ENABLED", "nil")
 	defer func() {
 		os.Unsetenv("APPY_ENV")
 		os.Unsetenv("APPY_MASTER_KEY")
-		os.Unsetenv("HTTP_DEBUG_ENABLED")
+		os.Unsetenv("GQL_PLAYGROUND_ENABLED")
 	}()
 
 	config := appy.NewConfig(s.asset, s.logger, s.support)

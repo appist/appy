@@ -15,37 +15,120 @@ import (
 type (
 	// Config defines the application settings.
 	Config struct {
-		AppyEnv   string `env:"APPY_ENV" envDefault:"development"`
+		// AppyEnv indicates the environment that the codebase is running on and it determines which config to use. By
+		// default, it is is "development" and its corresponding config is "configs/.env.development".
+		//
+		// Note: APPY_ENV=test is used for unit tests.
+		AppyEnv string `env:"APPY_ENV" envDefault:"development"`
+
+		// AssetHost indicates the asset host to use with "assetPath()" for the server-side rendering which is very useful
+		// it comes to hosting the static assets on CDN. By default, it is "" which uses the current server host.
 		AssetHost string `env:"ASSET_HOST" envDefault:""`
 
-		// GraphQL related configuration.
-		GQLPlaygroundEnabled          bool          `env:"GQL_PLAYGROUND_ENABLED" envDefault:"false"`
-		GQLPlaygroundPath             string        `env:"GQL_PLAYGROUND_PATH" envDefault:"/docs/graphql"`
-		GQLAPQCacheSize               int           `env:"GQL_APQ_CACHE_SIZE" envDefault:"100"`
-		GQLQueryCacheSize             int           `env:"GQL_QUERY_CACHE_SIZE" envDefault:"1000"`
-		GQLComplexityLimit            int           `env:"GQL_COMPLEXITY_LIMIT" envDefault:"1000"`
-		GQLMultipartMaxMemory         int64         `env:"GQL_MULTIPART_MAX_MEMORY" envDefault:"0"`
-		GQLMultipartMaxUploadSize     int64         `env:"GQL_MULTIPART_MAX_UPLOAD_SIZE" envDefault:"0"`
+		// GQLPlaygroundEnabled indicates if the GraphQL playground is enabled. By default, it is false.
+		GQLPlaygroundEnabled bool `env:"GQL_PLAYGROUND_ENABLED" envDefault:"false"`
+
+		// GQLPlaygroundPath indicates the GraphQL playground path to host at. By default, it is "/docs/graphql".
+		GQLPlaygroundPath string `env:"GQL_PLAYGROUND_PATH" envDefault:"/docs/graphql"`
+
+		// GQLAPQCacheSize indicates how many APQ to persist in the memory at one time. By default, it is 100.
+		//
+		// For more details about APQ, please refer to https://gqlgen.com/reference/apq.
+		GQLAPQCacheSize int `env:"GQL_APQ_CACHE_SIZE" envDefault:"100"`
+
+		// GQLQueryCacheSize indicates how many queries to cache in the memory. By default, it is 1000.
+		GQLQueryCacheSize int `env:"GQL_QUERY_CACHE_SIZE" envDefault:"1000"`
+
+		// GQLComplexityLimit indicates the query complexity which can be used to mitigate DDoS attacks risk. By default,
+		// it is 1000.
+		GQLComplexityLimit int `env:"GQL_COMPLEXITY_LIMIT" envDefault:"1000"`
+
+		// GQLMultipartMaxMemory indicates the maximum number of bytes used to parse a request body as multipart/form-data
+		// in memory, with the remainder stored on disk in temporary files. By default, it is 0 (no limit).
+		GQLMultipartMaxMemory int64 `env:"GQL_MULTIPART_MAX_MEMORY" envDefault:"0"`
+
+		// GQLMultipartMaxUploadSize indicates the maximum number of bytes used to parse a request body as
+		// multipart/form-data. By default, it is 0 (no limit).
+		GQLMultipartMaxUploadSize int64 `env:"GQL_MULTIPART_MAX_UPLOAD_SIZE" envDefault:"0"`
+
+		// GQLWebsocketKeepAliveDuration indicates how long the websocket connection should be kept alive for sending
+		// subsequent messages without re-establishing the connection which is an overhead. By default, it is 10s.
 		GQLWebsocketKeepAliveDuration time.Duration `env:"GQL_WEBSOCKET_KEEP_ALIVE_DURATION" envDefault:"10s"`
 
-		// Server related configuration.
-		HTTPDebugEnabled        bool          `env:"HTTP_DEBUG_ENABLED" envDefault:"false"`
-		HTTPGzipCompressLevel   int           `env:"HTTP_GZIP_COMPRESS_LEVEL" envDefault:"-1"`
-		HTTPGzipExcludedExts    []string      `env:"HTTP_GZIP_EXCLUDED_EXTS" envDefault:""`
-		HTTPGzipExcludedPaths   []string      `env:"HTTP_GZIP_EXCLUDED_PATHS" envDefault:""`
-		HTTPLogFilterParameters []string      `env:"HTTP_LOG_FILTER_PARAMETERS" envDefault:"password"`
-		HTTPHealthCheckURL      string        `env:"HTTP_HEALTH_CHECK_URL" envDefault:"/health_check"`
-		HTTPHost                string        `env:"HTTP_HOST" envDefault:"localhost"`
-		HTTPPort                string        `env:"HTTP_PORT" envDefault:"3000"`
-		HTTPGracefulTimeout     time.Duration `env:"HTTP_GRACEFUL_TIMEOUT" envDefault:"30s"`
-		HTTPIdleTimeout         time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"75s"`
-		HTTPMaxHeaderBytes      int           `env:"HTTP_MAX_HEADER_BYTES" envDefault:"0"`
-		HTTPReadTimeout         time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"60s"`
-		HTTPReadHeaderTimeout   time.Duration `env:"HTTP_READ_HEADER_TIMEOUT" envDefault:"60s"`
-		HTTPWriteTimeout        time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"60s"`
-		HTTPSSLCertPath         string        `env:"HTTP_SSL_CERT_PATH" envDefault:"./tmp/ssl"`
-		HTTPSSLEnabled          bool          `env:"HTTP_SSL_ENABLED" envDefault:"false"`
-		HTTPSSLPort             string        `env:"HTTP_SSL_PORT" envDefault:"3443"`
+		// HTTPGzipCompressLevel indicates the compression level used to compress the HTTP response. By default, it is -1.
+		//
+		// Avalable compression level:
+		// 	 - Default Compression -> -1
+		//   - No Compression -> 0
+		//   - Fastest Compression -> 1
+		//   - Best Compression -> 9
+		HTTPGzipCompressLevel int `env:"HTTP_GZIP_COMPRESS_LEVEL" envDefault:"-1"`
+
+		// HTTPGzipExcludedExts indicates which file extensions not to compress. By default, it is "".
+		HTTPGzipExcludedExts []string `env:"HTTP_GZIP_EXCLUDED_EXTS" envDefault:""`
+
+		// HTTPGzipExcludedPaths indicates which paths not to compress. By default, it is "".
+		HTTPGzipExcludedPaths []string `env:"HTTP_GZIP_EXCLUDED_PATHS" envDefault:""`
+
+		// HTTPLogFilterParameters indicates which query parameters in the URL to filter so that the sensitive information
+		// like password are masked in the HTTP request log. By default, it is "password".
+		HTTPLogFilterParameters []string `env:"HTTP_LOG_FILTER_PARAMETERS" envDefault:"password"`
+
+		// HTTPHealthCheckURL indicates the path to check if the HTTP server is healthy. This endpoint is a middleware
+		// that is designed to avoid redundant computing resource usage. By default, it is "/health_check".
+		//
+		// In general, if your server is running behind a load balancer, this endpoint will be served to inform the load
+		// balancer that the server is healthy and ready to receive HTTP requests.
+		HTTPHealthCheckURL string `env:"HTTP_HEALTH_CHECK_URL" envDefault:"/health_check"`
+
+		// HTTPHost indicates which host the HTTP server should be hosted at. By default, it is "localhost". If you would
+		// like to connect to the HTTP server from within your LAN network, use "0.0.0.0" instead.
+		HTTPHost string `env:"HTTP_HOST" envDefault:"localhost"`
+
+		// HTTPPort indicates which port the HTTP server should be hosted at. By default, it is "3000".
+		HTTPPort string `env:"HTTP_PORT" envDefault:"3000"`
+
+		// HTTPGracefulTimeout indicates how long to wait for the HTTP server to shut down so that any active connection
+		// is not interrupted by SIGTERM/SIGINT. By default, it is "30s".
+		HTTPGracefulTimeout time.Duration `env:"HTTP_GRACEFUL_TIMEOUT" envDefault:"30s"`
+
+		// HTTPIdleTimeout is the maximum amount of time to wait for the next request when keep-alives are enabled. If
+		// HTTPIdleTimeout is zero, the value of HTTPReadTimeout is used. If both are zero, there is no timeout. By
+		// default, it is "75s".
+		HTTPIdleTimeout time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"75s"`
+
+		// HTTPMaxHeaderBytes controls the maximum number of bytes the server will read parsing the request header's keys
+		// and values, including the request line. It does not limit the size of the request body. If zero,
+		// http.DefaultMaxHeaderBytes (1 << 20 which is 1 MB) is used.
+		HTTPMaxHeaderBytes int `env:"HTTP_MAX_HEADER_BYTES" envDefault:"0"`
+
+		// HTTPReadTimeout is the maximum duration for reading the entire request, including the body. Because
+		// HTTPReadTimeout does not let Handlers make per-request decisions on each request body's acceptable deadline or
+		// upload rate, most users will prefer to use HTTPReadHeaderTimeout. It is valid to use them both. By default, it
+		// is "60s".
+		HTTPReadTimeout time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"60s"`
+
+		// HTTPReadHeaderTimeout is the amount of time allowed to read request headers. The connection's read deadline is
+		// reset after reading the headers and the Handler can decide what is considered too slow for the body. If
+		// HTTPReadHeaderTimeout is zero, the value of HTTPReadTimeout is used. If both are zero, there is no timeout. By
+		// default, it is "60s".
+		HTTPReadHeaderTimeout time.Duration `env:"HTTP_READ_HEADER_TIMEOUT" envDefault:"60s"`
+
+		// HTTPWriteTimeout is the maximum duration before timing out writes of the response. It is reset whenever a new
+		// request's header is read. Like HTTPReadTimeout, it does not let Handlers make decisions on a per-request basis.
+		// By default, it is "60s".
+		HTTPWriteTimeout time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"60s"`
+
+		// HTTPSSLCertPath indicates which path to store the locally trusted SSL certificates which are created using
+		// "go run . ssl:setup" command. By default, it is "./tmp/ssl".
+		HTTPSSLCertPath string `env:"HTTP_SSL_CERT_PATH" envDefault:"./tmp/ssl"`
+
+		// HTTPSSLEnabled indicates if the HTTPS server should be enabled. When enabled, please ensure the SSL certificates
+		// are created in the "HTTPSSLCertPath". By default, it is false.
+		HTTPSSLEnabled bool `env:"HTTP_SSL_ENABLED" envDefault:"false"`
+
+		// HTTPSSLPort indicates which port the HTTPS server should be hosted at. By default, it is "3443".
+		HTTPSSLPort string `env:"HTTP_SSL_PORT" envDefault:"3443"`
 
 		// Session related configuration using redis pool.
 		HTTPSessionRedisAddr            string        `env:"HTTP_SESSION_REDIS_ADDR" envDefault:"localhost:6379"`
@@ -94,7 +177,10 @@ type (
 		HTTPIENoOpen                bool              `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
 		HTTPSSLProxyHeaders         map[string]string `env:"HTTP_SSL_PROXY_HEADERS" envDefault:"X-Forwarded-Proto:https"`
 
-		// I18n related configuration.
+		// I18nDefaultLocale indicates the default locale to use for translations in handlers/mailers/views when the desire
+		// locale is not found. By default, it is "en".
+		//
+		// Note: If the locale is "en", the translation file would be "pkg/locales/en.yml".
 		I18nDefaultLocale string `env:"I18N_DEFAULT_LOCALE" envDefault:"en"`
 
 		// Mailer related configuration.
