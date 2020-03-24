@@ -567,7 +567,7 @@ func preprocessText(input string) []textWithWriteOption {
 	output = strings.Trim(output, "\n")
 	matchIndexes := colorRe.FindAllSubmatchIndex([]byte(output), -1)
 	results := []textWithWriteOption{
-		textWithWriteOption{
+		{
 			text:    output,
 			options: text.WriteCellOpts(),
 		},
@@ -602,7 +602,7 @@ func preprocessText(input string) []textWithWriteOption {
 		}
 
 		if ptr < len(output) {
-			results = append(results, convertText(output[ptr-1:len(output)]))
+			results = append(results, convertText(output[ptr-1:]))
 		}
 	}
 

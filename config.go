@@ -57,7 +57,7 @@ type (
 
 		// HTTPGzipCompressLevel indicates the compression level used to compress the HTTP response. By default, it is -1.
 		//
-		// Avalable compression level:
+		// Available compression level:
 		// 	 - Default Compression -> -1
 		//   - No Compression -> 0
 		//   - Fastest Compression -> 1
