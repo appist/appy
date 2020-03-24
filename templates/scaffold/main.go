@@ -1,25 +1,25 @@
 package main
 
 import (
-	"{{.Project.Name}}/pkg/app"
+	"{{.projectName}}/pkg/app"
 
 	// Import custom commands.
-	_ "{{.Project.Name}}/cmd"
+	_ "{{.projectName}}/cmd"
 
 	// Import database migration/seed.
-	_ "{{.Project.Name}}/db/migrate/primary"
+	_ "{{.projectName}}/db/migrate/primary"
 
 	// Import GraphQL handler.
-	_ "{{.Project.Name}}/pkg/graphql"
+	_ "{{.projectName}}/pkg/graphql"
 
 	// Import HTTP handlers.
-	_ "{{.Project.Name}}/pkg/handler"
+	_ "{{.projectName}}/pkg/handler"
 
 	// Import background jobs.
-	_ "{{.Project.Name}}/pkg/job"
+	_ "{{.projectName}}/pkg/job"
 
 	// Import mailer with preview.
-	_ "{{.Project.Name}}/pkg/mailer"
+	_ "{{.projectName}}/pkg/mailer"
 )
 
 func main() {

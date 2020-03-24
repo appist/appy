@@ -3,7 +3,7 @@ package primary
 import (
 	"github.com/appist/appy"
 
-	"{{.Project.Name}}/pkg/app"
+	"{{.projectName}}/pkg/app"
 )
 
 func init() {

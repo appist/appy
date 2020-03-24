@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"{{.Project.Name}}/pkg/app"
+	"{{.projectName}}/pkg/app"
 	"bufio"
 	"bytes"
 	"net/http/httptest"

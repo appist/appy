@@ -1,7 +1,7 @@
 package primary
 
 import (
-	"{{.Project.Name}}/pkg/app"
+	"{{.projectName}}/pkg/app"
 )
 
 func init() {

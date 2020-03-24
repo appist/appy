@@ -1,6 +1,6 @@
-# {{.Project.Name}}
+# {{.projectName}}
 
-{{.Project.Description}}
+{{.projectDesc}}
 
 ## Prerequisites
 

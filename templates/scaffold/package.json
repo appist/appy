@@ -1,6 +1,6 @@
 {
-  "name": "{{.Project.Name}}",
-  "description": "{{.Project.Description}}",
+  "name": "{{.projectName}}",
+  "description": "{{.projectDesc}}",
   "main": "web/src/main.ts",
   "scripts": {
     "build": "NODE_ENV=production npx webpack --mode=production --progress",

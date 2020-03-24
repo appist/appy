@@ -1,8 +1,8 @@
 package job
 
 import (
-	"{{.Project.Name}}/pkg/app"
-	"{{.Project.Name}}/pkg/job/middleware"
+	"{{.projectName}}/pkg/app"
+	"{{.projectName}}/pkg/job/middleware"
 )
 
 func init() {

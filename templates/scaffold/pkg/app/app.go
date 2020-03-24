@@ -1,7 +1,7 @@
 package app
 
 import (
-	"{{.Project.Name}}/pkg/viewhelper"
+	"{{.projectName}}/pkg/viewhelper"
 	"path/filepath"
 	"runtime"
 
@@ -51,7 +51,7 @@ func init() {
 
 	// Setup the application's root command.
 	Command = app.Command()
-	Command.Short = "{{.Project.Description}}"
+	Command.Short = "{{.projectDesc}}"
 
 	// Setup the application's database manager.
 	DBManager = app.DBManager()

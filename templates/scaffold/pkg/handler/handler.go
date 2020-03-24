@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"{{.Project.Name}}/pkg/app"
-	"{{.Project.Name}}/pkg/handler/middleware"
+	"{{.projectName}}/pkg/app"
+	"{{.projectName}}/pkg/handler/middleware"
 )
 
 func init() {

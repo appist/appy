@@ -10,7 +10,7 @@ RUN apk update && \
 # The intermediate image to build the binary
 FROM base AS builder
 
-WORKDIR /home/{{.Project.Name}}
+WORKDIR /home/{{.projectName}}
 COPY . .
 
 RUN go mod download
@@ -20,13 +20,13 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go run . build
 # The final image to run on production
 FROM alpine:3.10.3
 
-ENV APP_HOME=/home/{{.Project.Name}}
-ENV GROUP_NAME={{.Project.Name}}
-ENV USER_NAME={{.Project.Name}}
+ENV APP_HOME=/home/{{.projectName}}
+ENV GROUP_NAME={{.projectName}}
+ENV USER_NAME={{.projectName}}
 HEALTHCHECK CMD curl -f http://localhost:3000/health_check || exit 1
 WORKDIR ${APP_HOME}
 
-COPY --from=builder /home/{{.Project.Name}}/{{.Project.Name}} ${APP_HOME}
+COPY --from=builder /home/{{.projectName}}/{{.projectName}} ${APP_HOME}
 
 RUN apk update && apk upgrade && \
   apk add --no-cache chromium && \
@@ -35,4 +35,4 @@ RUN addgroup -S ${GROUP_NAME} && adduser -S ${GROUP_NAME} -G ${USER_NAME} && \
   chown -R ${GROUP_NAME}:${USER_NAME} ${APP_HOME}
 
 USER ${USER_NAME}
-CMD ["./{{.Project.Name}}", "serve"]
+CMD ["./{{.projectName}}", "serve"]

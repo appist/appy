@@ -1,5 +1,5 @@
 clean:
-	rm -rf dist coverage.out {{.Project.Name}} **/*.log
+	rm -rf dist coverage.out {{.projectName}} **/*.log
 
 format:
 	go vet ./...

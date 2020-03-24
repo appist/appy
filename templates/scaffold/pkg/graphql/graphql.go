@@ -1,9 +1,9 @@
 package graphql
 
 import (
-	"{{.Project.Name}}/pkg/app"
-	"{{.Project.Name}}/pkg/graphql/generated"
-	"{{.Project.Name}}/pkg/graphql/resolver"
+	"{{.projectName}}/pkg/app"
+	"{{.projectName}}/pkg/graphql/generated"
+	"{{.projectName}}/pkg/graphql/resolver"
 
 	gqlgen "github.com/99designs/gqlgen/graphql"
 )

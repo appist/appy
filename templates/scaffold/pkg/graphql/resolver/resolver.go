@@ -1,8 +1,8 @@
 package resolver
 
 import (
-	"{{.Project.Name}}/pkg/graphql/generated"
-	"{{.Project.Name}}/pkg/graphql/model"
+	"{{.projectName}}/pkg/graphql/generated"
+	"{{.projectName}}/pkg/graphql/model"
 	"context"
 )
 

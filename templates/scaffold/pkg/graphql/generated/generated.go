@@ -3,7 +3,7 @@
 package generated
 
 import (
-	"{{.Project.Name}}/pkg/graphql/model"
+	"{{.projectName}}/pkg/graphql/model"
 	"bytes"
 	"context"
 	"errors"
@@ -410,7 +410,7 @@ func (ec *executionContext) _Mutation_addTodo(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Todo)
 	fc.Result = res
-	return ec.marshalNTodo2ᚖ{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx, field.Selections, res)
+	return ec.marshalNTodo2ᚖ{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_todos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -444,7 +444,7 @@ func (ec *executionContext) _Query_todos(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Todo)
 	fc.Result = res
-	return ec.marshalNTodo2ᚕᚖ{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodoᚄ(ctx, field.Selections, res)
+	return ec.marshalNTodo2ᚕᚖ{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodoᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -558,7 +558,7 @@ func (ec *executionContext) _Subscription_todoAdded(ctx context.Context, field g
 			w.Write([]byte{'{'})
 			graphql.MarshalString(field.Alias).MarshalGQL(w)
 			w.Write([]byte{':'})
-			ec.marshalOTodo2ᚖ{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx, field.Selections, res).MarshalGQL(w)
+			ec.marshalOTodo2ᚖ{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx, field.Selections, res).MarshalGQL(w)
 			w.Write([]byte{'}'})
 		})
 	}
@@ -2201,11 +2201,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTodo2{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
 	return ec._Todo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTodo2ᚕᚖ{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚕᚖ{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Todo) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2229,7 +2229,7 @@ func (ec *executionContext) marshalNTodo2ᚕᚖ{{.Project.Name}}ᚋpkgᚋgraphql
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTodo2ᚖ{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx, sel, v[i])
+			ret[i] = ec.marshalNTodo2ᚖ{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2242,7 +2242,7 @@ func (ec *executionContext) marshalNTodo2ᚕᚖ{{.Project.Name}}ᚋpkgᚋgraphql
 	return ret
 }
 
-func (ec *executionContext) marshalNTodo2ᚖ{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚖ{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -2524,11 +2524,11 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOTodo2{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalOTodo2{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
 	return ec._Todo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOTodo2ᚖ{{.Project.Name}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalOTodo2ᚖ{{.projectName}}ᚋpkgᚋgraphqlᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

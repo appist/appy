@@ -1,7 +1,7 @@
 package mailer
 
 import (
-	"{{.Project.Name}}/pkg/app"
+	"{{.projectName}}/pkg/app"
 
 	"github.com/appist/appy"
 )

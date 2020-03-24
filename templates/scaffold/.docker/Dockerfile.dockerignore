@@ -31,6 +31,6 @@ Brewfile.lock.json
 README.md
 terraform.tfstate
 terraform.tfvars
-{{.Project.Name}}
+{{.projectName}}
 dist
 tmp
