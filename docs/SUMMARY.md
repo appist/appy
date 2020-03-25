@@ -3,11 +3,12 @@
 * [Introduction](README.md)
 * [Getting Started](getting-started/README.md)
   * [Debug vs Release Build Mode](getting-started/debug-vs-release-build-mode.md)
+  * [Folder Structure](getting-started/folder-structure.md)
 
 ## Config
 
-* [Store Config In The Environment](config/store-config-in-the-environment.md)
-* [General Configuration](config/general-configuration.md)
+* [Store & Retrieve](config/store-config-in-the-environment.md)
+* [Manage Environments](config/general-configuration.md)
 
 ## Handler
 

@@ -1,6 +1,6 @@
 ---
 description: >-
-  Understanding what the debug and release mode is and how they are different in
+  Covers what the debug and release mode is and how they are different in
   practice.
 ---
 
