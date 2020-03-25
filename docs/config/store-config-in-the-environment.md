@@ -63,5 +63,5 @@ And this is how we pass in the `DB_URL` value to the application \(for example, 
 $ DB_URL=postgresql://user:password@staging.aws-rds.com:5432/appist ./appist serve
 ```
 
-By following the same idea, we can extend to more config values that are being used by the application and this is basically the fundamental of how `appy` stores/retrieves the application config.
+By following the same idea, we can extend to more config values that are being used by the application and this is basically the fundamental of how `appy` stores/retrieves the application config on different environments.
 
