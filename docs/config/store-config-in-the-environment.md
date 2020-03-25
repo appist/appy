@@ -18,7 +18,7 @@ import (
 
 func main() {
 				db, err := sql.Open(
-								"postgresql", 
+								"postgres", 
 								"postgresql://user:password@localhost:5432/appist",
 				)
 				
@@ -45,7 +45,7 @@ import (
 
 func main() {
 				db, err := sql.Open(
-								"postgresql", 
+								"postgres", 
 								os.Getenv("DB_URL"),
 				)
 				
