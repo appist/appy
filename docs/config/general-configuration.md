@@ -8,10 +8,10 @@ In `appy`, all the environment variables are stored in a file and loaded into me
 
 ```bash
 configs/
-├── .env.development - used when APPY_ENV is "development" which is the default value
-├── .env.test - used when APPY_ENV is "test"
-├── development.key - same as APPY_MASTER_KEY but used when APPY_ENV is "development"
-└── test.key - same as APPY_MASTER_KEY but used when APPY_ENV is "test"
+├── .env.development (used when APPY_ENV is "development" which is the default value)
+├── .env.test        (used when APPY_ENV is "test")
+├── development.key  (same as APPY_MASTER_KEY but used when APPY_ENV is "development")
+└── test.key         (same as APPY_MASTER_KEY but used when APPY_ENV is "test")
 ```
 
 If the codebase needs to run on other environments, such as `staging` or `production` , simply do:
