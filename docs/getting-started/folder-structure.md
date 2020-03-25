@@ -71,7 +71,7 @@ description: Covers what each folder is being used for.
 │   │   ├── ...                    (the application background job)
 │   │   └── middleware             (the middleware for background job)
 │   │       └── ...
-│   ├── locales                    (the backend locales)      
+│   ├── locales                    (the backend locales in YAML format)      
 │   │   └── ...
 │   ├── mailer                     
 │   │   ├── mailer.go              (the application mailer entry, used to setup base preview/email)
@@ -93,43 +93,33 @@ description: Covers what each folder is being used for.
 ├── svelte.config.js               (the config file for svelte-preprocess)
 ├── tsconfig.json                  (the config file for Typescript)
 ├── web                            
-│   ├── e2e
+│   ├── e2e                        (the NightwatchJS e2e tests, refer to https://nightwatchjs.org/guide)
 │   │   ├── custom-assertions
-│   │   │   └── .gitkeep
-│   │   ├── custom-commands
-│   │   │   └── .gitkeep
-│   │   ├── page-objects
-│   │   │   └── .gitkeep
-│   │   └── specs
-│   │       └── test.js
-│   ├── public
-│   │   ├── brand.png
-│   │   ├── favicon.ico
-│   │   ├── index.html
-│   │   └── robots.txt
-│   ├── src
-│   │   ├── components
-│   │   │   ├── App.pug
-│   │   │   ├── App.svelte
-│   │   │   └── App.svelte.spec.ts
-│   │   ├── initI18n.ts
-│   │   ├── initServiceWorker.ts
-│   │   ├── locales
 │   │   │   └── ...
-│   │   ├── main.ts
-│   │   ├── pages
-│   │   │   ├── Home.pug
-│   │   │   ├── Home.svelte
-│   │   │   ├── Home.svelte.spec.ts
-│   │   │   ├── NotFound.pug
-│   │   │   ├── NotFound.svelte
-│   │   │   └── NotFound.svelte.spec.ts
-│   │   ├── stores
-│   │   │   └── index.ts
-│   │   └── types
-│   │       └── .gitkeep
-│   └── tests
-│       └── setup.js
-└── webpack.config.js
+│   │   ├── custom-commands
+│   │   │   └── ...
+│   │   ├── page-objects
+│   │   │   └── ...
+│   │   └── specs
+│   │       └── ...
+│   ├── public                     (the public folder which its files will be served at the root)
+│   │   └── ...
+│   ├── src
+│   │   ├── components             (the web components written in SvelteJS)
+│   │   │   └── ...
+│   │   ├── initI18n.ts            (the web I18n entry)
+│   │   ├── initServiceWorker.ts   (the web service-worker entry)
+│   │   ├── locales                (the web I18n locales in JSON format)
+│   │   │   └── ...
+│   │   ├── main.ts                (the web entry)
+│   │   ├── pages                  (the web pages written in SvelteJS)
+│   │   │   └── ...
+│   │   ├── stores                 (the web SvelteJS stores)
+│   │   │   └── ...
+│   │   └── types                  (the web type definition)
+│   │       └── ...
+│   └── tests                      
+│       └── setup.js               (the web test setup for Jest)
+└── webpack.config.js              (the web's webpack config)
 ```
 
