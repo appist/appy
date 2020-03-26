@@ -62,16 +62,16 @@ $ go run . setup
 $ go run . start
 ```
 
-#### Step 7: Tear down everything once you're done.
-
-```bash
-$ go run . teardown
-```
-
-#### Step 8: Build the application binary \(release mode\)
+#### Step 7: Build the application binary \(release mode\)
 
 ```text
 $ go run . build
+```
+
+#### Step 8: Tear down everything once you're done.
+
+```bash
+$ go run . teardown
 ```
 
 {% hint style="info" %}
