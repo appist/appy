@@ -6,6 +6,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
+	"net/http"
 	"os"
 	"reflect"
 	"strconv"
@@ -309,7 +310,11 @@ func (s *Support) ParseEnv(c interface{}) error {
 					continue
 				}
 
-				val, _ := strconv.Atoi(splits[1])
+				val, err := strconv.Atoi(splits[1])
+				if err != nil {
+					return nil, err
+				}
+
 				newMaps[splits[0]] = val
 			}
 
@@ -326,6 +331,14 @@ func (s *Support) ParseEnv(c interface{}) error {
 			}
 
 			return newBytes, nil
+		},
+		reflect.TypeOf(http.SameSite(1)): func(v string) (interface{}, error) {
+			ss, err := strconv.Atoi(v)
+			if err != nil {
+				return nil, err
+			}
+
+			return http.SameSite(ss), nil
 		},
 	})
 

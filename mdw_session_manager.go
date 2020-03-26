@@ -99,7 +99,7 @@ func SessionManager(config *Config) HandlerFunc {
 			panic(err)
 		}
 
-		s := &Session{config.HTTPSessionName, c.Request, sessionStore, nil, false, c.Writer}
+		s := &Session{config.HTTPSessionCookieName, c.Request, sessionStore, nil, false, c.Writer}
 		c.Set(sessionManagerCtxKey.String(), s)
 		defer context.Clear(c.Request)
 		c.Next()
@@ -119,7 +119,7 @@ func newSessionStore(config *Config) (SessionStore, error) {
 		redisPoolConfig := RedisPoolConfig{
 			Addr:            config.HTTPSessionRedisAddr,
 			Auth:            config.HTTPSessionRedisAuth,
-			Db:              config.HTTPSessionRedisDb,
+			Db:              config.HTTPSessionRedisDB,
 			IdleTimeout:     config.HTTPSessionRedisIdleTimeout,
 			MaxConnLifetime: config.HTTPSessionRedisMaxConnLifetime,
 			MaxActive:       config.HTTPSessionRedisMaxActive,
@@ -137,12 +137,12 @@ func newSessionStore(config *Config) (SessionStore, error) {
 
 	if sessionStore != nil {
 		sessionStore.Options(ginsessions.Options{
-			Domain:   config.HTTPSessionDomain,
-			HttpOnly: config.HTTPSessionHTTPOnly,
+			Domain:   config.HTTPSessionCookieDomain,
+			HttpOnly: config.HTTPSessionCookieHTTPOnly,
 			MaxAge:   config.HTTPSessionExpiration,
-			Path:     config.HTTPSessionPath,
-			Secure:   config.HTTPSessionSecure,
-			SameSite: config.HTTPSessionSameSite,
+			Path:     config.HTTPSessionCookiePath,
+			Secure:   config.HTTPSessionCookieSecure,
+			SameSite: config.HTTPSessionCookieSameSite,
 		})
 	}
 

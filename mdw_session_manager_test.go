@@ -81,7 +81,7 @@ func (s *SessionManagerSuite) TestSessionCookieStore() {
 	session.Options(ginsessions.Options{
 		MaxAge: 368400,
 	})
-	sessionCookie, _ := c.Cookie(s.config.HTTPSessionName)
+	sessionCookie, _ := c.Cookie(s.config.HTTPSessionCookieName)
 	s.NotNil(sessionCookie)
 	testSessionOps(s, session)
 }
@@ -116,7 +116,7 @@ func (s *SessionManagerSuite) TestSessionRedisStoreInvalidDb() {
 	ctx, _ := NewTestContext(s.recorder)
 	ctx.Request = &http.Request{}
 	s.config.HTTPSessionProvider = "redis"
-	s.config.HTTPSessionRedisDb = "-1"
+	s.config.HTTPSessionRedisDB = "-1"
 	s.Panics(func() { SessionManager(s.config)(ctx) })
 }
 

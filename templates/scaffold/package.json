@@ -94,6 +94,13 @@
     "> 1%",
     "last 2 versions"
   ],
+  "husky": {
+    "hooks": {
+      "pre-commit": [
+        "lint-staged"
+      ]
+    }
+  },
   "jest": {
     "collectCoverage": true,
     "coverageDirectory": "tmp/coverage/web",
@@ -173,12 +180,5 @@
     "scope": "/",
     "start_url": "./index.html",
     "theme_color": ""
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": [
-        "lint-staged"
-      ]
-    }
   }
 }

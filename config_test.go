@@ -1,6 +1,7 @@
 package appy_test
 
 import (
+	"net/http"
 	"os"
 	"reflect"
 	"testing"
@@ -64,26 +65,28 @@ func (s *ConfigSuite) TestNewConfig() {
 		"HTTPSSLCertPath":                 "./tmp/ssl",
 		"HTTPSessionRedisAddr":            "localhost:6379",
 		"HTTPSessionRedisAuth":            "",
-		"HTTPSessionRedisDb":              "0",
+		"HTTPSessionRedisDB":              "0",
 		"HTTPSessionRedisMaxActive":       64,
 		"HTTPSessionRedisMaxIdle":         32,
 		"HTTPSessionRedisIdleTimeout":     30 * time.Second,
 		"HTTPSessionRedisMaxConnLifetime": 30 * time.Second,
 		"HTTPSessionRedisWait":            true,
-		"HTTPSessionName":                 "_session",
+		"HTTPSessionCookieName":           "_session",
 		"HTTPSessionProvider":             "cookie",
-		"HTTPSessionSecrets":              [][]byte{},
-		"HTTPSessionDomain":               "localhost",
-		"HTTPSessionHTTPOnly":             true,
 		"HTTPSessionExpiration":           1209600,
-		"HTTPSessionPath":                 "/",
-		"HTTPSessionSecure":               false,
+		"HTTPSessionSecrets":              [][]byte{},
+		"HTTPSessionCookieDomain":         "localhost",
+		"HTTPSessionCookieHTTPOnly":       true,
+		"HTTPSessionCookiePath":           "/",
+		"HTTPSessionCookieSameSite":       http.SameSite(1),
+		"HTTPSessionCookieSecure":         false,
 		"HTTPAllowedHosts":                []string{},
 		"HTTPCSRFCookieDomain":            "localhost",
 		"HTTPCSRFCookieHTTPOnly":          true,
 		"HTTPCSRFCookieMaxAge":            0,
 		"HTTPCSRFCookieName":              "_csrf_token",
 		"HTTPCSRFCookiePath":              "/",
+		"HTTPCSRFCookieSameSite":          http.SameSite(1),
 		"HTTPCSRFCookieSecure":            false,
 		"HTTPCSRFFieldName":               "authenticity_token",
 		"HTTPCSRFRequestHeader":           "X-CSRF-Token",

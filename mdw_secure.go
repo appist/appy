@@ -26,7 +26,7 @@ type (
 		// Default is false.
 		SSLRedirect bool
 
-		// If SSLTemporaryRedirect is true, the a 302 will be used while redirecting.
+		// If SSLTemporaryRedirect is true, then a 302 will be used while redirecting.
 		// Default is false (301).
 		SSLTemporaryRedirect bool
 
