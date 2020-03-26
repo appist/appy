@@ -62,20 +62,20 @@ func (s *MailerSuite) TestNewMailerWithDebugBuild() {
 	s.Error(mailer.Deliver(mail))
 	s.Equal(0, len(mailer.Deliveries()))
 
-	w := s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL, nil, nil)
+	w := s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath, nil, nil)
 	s.Equal(1, len(mailer.Previews()))
 	s.Equal(http.StatusOK, w.Code)
 	s.Contains(w.Body.String(), `data-name="mailers/user/verify_account">mailers/user/verify_account</a>`)
 
-	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=html&name=mailers/user/verify_account", nil, nil)
+	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath+"/preview?locale=en&ext=html&name=mailers/user/verify_account", nil, nil)
 	s.Equal(http.StatusOK, w.Code)
 	s.Contains(w.Body.String(), "<div>\n  Welcome cayter!\n  测试\n  Hi, John Doe! You have 2 messages.\n</div>")
 
-	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=txt&name=mailers/user/verify_account", nil, nil)
+	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath+"/preview?locale=en&ext=txt&name=mailers/user/verify_account", nil, nil)
 	s.Equal(http.StatusOK, w.Code)
 	s.Contains(w.Body.String(), "Welcome cayter! 测试 Hi, John Doe! You have 2 messages.")
 
-	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=html&name=mailers/user/missing", nil, nil)
+	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath+"/preview?locale=en&ext=html&name=mailers/user/missing", nil, nil)
 	s.Equal(http.StatusNotFound, w.Code)
 
 	mail = s.previewMail
@@ -86,7 +86,7 @@ func (s *MailerSuite) TestNewMailerWithDebugBuild() {
 	}
 	mailer.AddPreview(mail)
 
-	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=html&name=mailers/user/html_error", nil, nil)
+	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath+"/preview?locale=en&ext=html&name=mailers/user/html_error", nil, nil)
 	s.Equal(http.StatusInternalServerError, w.Code)
 
 	mail = s.previewMail
@@ -97,7 +97,7 @@ func (s *MailerSuite) TestNewMailerWithDebugBuild() {
 	}
 	mailer.AddPreview(mail)
 
-	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=txt&name=mailers/user/txt_error", nil, nil)
+	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath+"/preview?locale=en&ext=txt&name=mailers/user/txt_error", nil, nil)
 	s.Equal(http.StatusInternalServerError, w.Code)
 
 	mail = s.previewMail
@@ -109,7 +109,7 @@ func (s *MailerSuite) TestNewMailerWithDebugBuild() {
 	mail.Attachments = []string{"testdata/mailer/attachments/missing.txt"}
 	mailer.AddPreview(mail)
 
-	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=html&name=mailers/user/verify_account", nil, nil)
+	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath+"/preview?locale=en&ext=html&name=mailers/user/verify_account", nil, nil)
 	s.Equal(http.StatusInternalServerError, w.Code)
 }
 
@@ -132,14 +132,14 @@ func (s *MailerSuite) TestNewMailerWithReleaseBuild() {
 	s.Error(mailer.Deliver(mail))
 	s.Equal(0, len(mailer.Deliveries()))
 
-	w := s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL, nil, nil)
+	w := s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath, nil, nil)
 	s.Equal(1, len(mailer.Previews()))
 	s.Equal(http.StatusNotFound, w.Code)
 
-	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=html&name=mailers/user/verify_account", nil, nil)
+	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath+"/preview?locale=en&ext=html&name=mailers/user/verify_account", nil, nil)
 	s.Equal(http.StatusNotFound, w.Code)
 
-	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewBaseURL+"/preview?locale=en&ext=txt&name=mailers/user/verify_account", nil, nil)
+	w = s.server.TestHTTPRequest("GET", s.config.MailerPreviewPath+"/preview?locale=en&ext=txt&name=mailers/user/verify_account", nil, nil)
 	s.Equal(http.StatusNotFound, w.Code)
 }
 

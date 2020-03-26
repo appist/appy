@@ -275,7 +275,7 @@ func (m *Mailer) previewTpl() string {
 					</div>
 					<div id="iframe-card" class="card mt-3">
 						<div class="card-body">
-							<iframe src="{{.baseURL}}/preview?name={{.name}}&ext={{.ext}}&locale={{.locale}}" frameBorder="0"></iframe>
+							<iframe src="{{.path}}/preview?name={{.name}}&ext={{.ext}}&locale={{.locale}}" frameBorder="0"></iframe>
 						</div>
 					</div>
 				{{else}}
@@ -374,7 +374,7 @@ func (m *Mailer) previewTplLower() string {
 			<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 			<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
 			<script>
-				var previewURL = '{{.baseURL}}/preview'
+				var previewURL = '{{.path}}/preview'
 				$("#menu-toggle").click(function(e) {
 					e.preventDefault()
 					$("#wrapper").toggleClass("toggled")
@@ -432,7 +432,7 @@ func (m *Mailer) SetupPreview() {
 	m.server.HTMLRenderer().AddFromString("mailer/preview", m.previewTpl())
 
 	// Serve the preview listing page.
-	m.server.GET(m.config.MailerPreviewBaseURL, func(c *Context) {
+	m.server.GET(m.config.MailerPreviewPath, func(c *Context) {
 		name := c.DefaultQuery("name", "")
 		if name == "" && len(m.Previews()) > 0 {
 			for _, preview := range m.Previews() {
@@ -460,7 +460,7 @@ func (m *Mailer) SetupPreview() {
 		}
 
 		c.defaultHTML(http.StatusOK, "mailer/preview", H{
-			"baseURL":       m.config.MailerPreviewBaseURL,
+			"path":          m.config.MailerPreviewPath,
 			"previews":      m.Previews(),
 			"title":         "Mailer Preview",
 			"name":          name,
@@ -473,7 +473,7 @@ func (m *Mailer) SetupPreview() {
 	})
 
 	// Serve the preview content.
-	m.server.GET(m.config.MailerPreviewBaseURL+"/preview", func(c *Context) {
+	m.server.GET(m.config.MailerPreviewPath+"/preview", func(c *Context) {
 		name := c.Query("name")
 		preview, exists := m.Previews()[name]
 		if !exists {

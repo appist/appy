@@ -175,8 +175,8 @@ type (
 		// HTTPSessionRedisDB indicates the Redis database to use. By default, it is "0".
 		HTTPSessionRedisDB string `env:"HTTP_SESSION_REDIS_DB" envDefault:"0"`
 
-		// HTTPSessionRedisMaxActive indicates how many maximum active connections should remain in the
-		// connection pool at one time. If it is 0, there is no limit. By default, it is 64.
+		// HTTPSessionRedisMaxActive indicates how many maximum active connections should remain in
+		// the connection pool at one time. If it is 0, there is no limit. By default, it is 64.
 		HTTPSessionRedisMaxActive int `env:"HTTP_SESSION_REDIS_MAX_ACTIVE" envDefault:"64"`
 
 		// HTTPSessionRedisMaxIdle indicates how many maximum idle connections should remain in the
@@ -203,16 +203,16 @@ type (
 		// default, it is "localhost".
 		HTTPSessionCookieDomain string `env:"HTTP_SESSION_COOKIE_DOMAIN" envDefault:"localhost"`
 
-		// HTTPSessionCookieHTTPOnly indicates if the session cookie is only accessible via HTTP request
-		// and not Javascript `Document.cookie` API. By default, it is true.
+		// HTTPSessionCookieHTTPOnly indicates if the session cookie is only accessible via HTTP
+		// request and not Javascript `Document.cookie` API. By default, it is true.
 		HTTPSessionCookieHTTPOnly bool `env:"HTTP_SESSION_COOKIE_HTTP_ONLY" envDefault:"true"`
 
-		// HTTPSessionCookiePath indicates which URL path the session cookie can be sent to. By default,
-		// it is "/".
+		// HTTPSessionCookiePath indicates which URL path the session cookie can be sent to. By
+		// default, it is "/".
 		HTTPSessionCookiePath string `env:"HTTP_SESSION_COOKIE_PATH" envDefault:"/"`
 
-		// HTTPSessionCookieSameSite indicates if the session cookie can be sent with cross-site requests.
-		// By default, it is 1.
+		// HTTPSessionCookieSameSite indicates if the session cookie can be sent with cross-site
+		// requests. By default, it is 1.
 		//
 		// Available options:
 		//   - SameSiteDefaultMode = 1
@@ -327,34 +327,97 @@ type (
 		// your site’s context. By default, it is false.
 		HTTPIENoOpen bool `env:"HTTP_IE_NO_OPEN" envDefault:"false"`
 
-		// I18nDefaultLocale indicates the default locale to use for translations in handlers/mailers/views
-		// when the desire locale is not found. By default, it is "en".
+		// I18nDefaultLocale indicates the default locale to use for translations in
+		// handlers/mailers/views when the desire locale is not found. By default, it is "en".
 		//
 		// Note: If the locale is "en", the translation file would be "pkg/locales/en.yml".
 		I18nDefaultLocale string `env:"I18N_DEFAULT_LOCALE" envDefault:"en"`
 
-		// Mailer related configuration.
-		MailerSMTPAddr              string `env:"MAILER_SMTP_ADDR" envDefault:""`
-		MailerSMTPPlainAuthIdentity string `env:"MAILER_SMTP_PLAIN_AUTH_IDENTITY" envDefault:""`
-		MailerSMTPPlainAuthUsername string `env:"MAILER_SMTP_PLAIN_AUTH_USERNAME" envDefault:""`
-		MailerSMTPPlainAuthPassword string `env:"MAILER_SMTP_PLAIN_AUTH_PASSWORD" envDefault:""`
-		MailerSMTPPlainAuthHost     string `env:"MAILER_SMTP_PLAIN_AUTH_HOST" envDefault:""`
-		MailerPreviewBaseURL        string `env:"MAILER_PREVIEW_BASE_URL" envDefault:"/appy/mailers"`
+		// MailerSMTPAddr indicates the SMTP server hostname that sends out email. By default, it is "".
+		MailerSMTPAddr string `env:"MAILER_SMTP_ADDR" envDefault:""`
 
-		// Worker related configuration.
-		WorkerRedisSentinelAddrs      []string       `env:"WORKER_REDIS_SENTINEL_ADDRS" envDefault:""`
-		WorkerRedisSentinelDB         int            `env:"WORKER_REDIS_SENTINEL_DB" envDefault:"0"`
-		WorkerRedisSentinelMasterName string         `env:"WORKER_REDIS_SENTINEL_MASTER_NAME" envDefault:""`
-		WorkerRedisSentinelPassword   string         `env:"WORKER_REDIS_SENTINEL_PASSWORD" envDefault:""`
-		WorkerRedisSentinelPoolSize   int            `env:"WORKER_REDIS_SENTINEL_POOL_SIZE" envDefault:"25"`
-		WorkerRedisAddr               string         `env:"WORKER_REDIS_ADDR" envDefault:""`
-		WorkerRedisDB                 int            `env:"WORKER_REDIS_DB" envDefault:"0"`
-		WorkerRedisPassword           string         `env:"WORKER_REDIS_PASSWORD" envDefault:""`
-		WorkerRedisPoolSize           int            `env:"WORKER_REDIS_POOL_SIZE" envDefault:"25"`
-		WorkerRedisURL                string         `env:"WORKER_REDIS_URL" envDefault:""`
-		WorkerConcurrency             int            `env:"WORKER_CONCURRENCY" envDefault:"25"`
-		WorkerQueues                  map[string]int `env:"WORKER_QUEUES" envDefault:"default:10"`
-		WorkerStrictPriority          bool           `env:"WORKER_STRICT_PRIORITY" envDefault:"false"`
+		// MailerSMTPPlainAuthIdentity indicates the SMTP plain auth identity to use for sending out
+		// email. By default, it is "".
+		//
+		// Note: This is normally not needed.
+		MailerSMTPPlainAuthIdentity string `env:"MAILER_SMTP_PLAIN_AUTH_IDENTITY" envDefault:""`
+
+		// MailerSMTPPlainAuthUsername indicates the SMTP plain auth username to use for sending out
+		// email. By default, it is "".
+		MailerSMTPPlainAuthUsername string `env:"MAILER_SMTP_PLAIN_AUTH_USERNAME" envDefault:""`
+
+		// MailerSMTPPlainAuthPassword indicates the SMTP plain auth password to use for sending out
+		// email. By default, it is "".
+		MailerSMTPPlainAuthPassword string `env:"MAILER_SMTP_PLAIN_AUTH_PASSWORD" envDefault:""`
+
+		// MailerSMTPPlainAuthHost indicates the SMTP plain auth server host to use for sending out
+		// email. By default, it is "".
+		MailerSMTPPlainAuthHost string `env:"MAILER_SMTP_PLAIN_AUTH_HOST" envDefault:""`
+
+		// MailerPreviewPath indicates the path for previewing the mailers. By default, it is
+		// "/appy/mailers".
+		MailerPreviewPath string `env:"MAILER_PREVIEW_PATH" envDefault:"/appy/mailers"`
+
+		// WorkerRedisSentinelAddrs indicates the Redis sentinel hosts to connect to. By default, it
+		// is "".
+		//
+		// Note: If this is configured to non-empty string, both WorkerRedisAddr or
+		// WorkerRedisURL will be ignored.
+		WorkerRedisSentinelAddrs []string `env:"WORKER_REDIS_SENTINEL_ADDRS" envDefault:""`
+
+		// WorkerRedisSentinelDB indicates the Redis DB to connect in the sentinel hosts. By default,
+		// it is 0.
+		WorkerRedisSentinelDB int `env:"WORKER_REDIS_SENTINEL_DB" envDefault:"0"`
+
+		// WorkerRedisSentinelMasterName indicates the Redis sentinel master name to connect to. By
+		// default, it is "".
+		WorkerRedisSentinelMasterName string `env:"WORKER_REDIS_SENTINEL_MASTER_NAME" envDefault:""`
+
+		// WorkerRedisSentinelPassword indicates the password used to connect to the sentinel hosts.
+		// By default, it is "".
+		WorkerRedisSentinelPassword string `env:"WORKER_REDIS_SENTINEL_PASSWORD" envDefault:""`
+
+		// WorkerRedisSentinelPoolSize indicates the connection pool size for the sentinel hosts. By
+		// default, it is 25.
+		WorkerRedisSentinelPoolSize int `env:"WORKER_REDIS_SENTINEL_POOL_SIZE" envDefault:"25"`
+
+		// WorkerRedisAddr indicates the Redis hostname to connect. By default, it is "localhost:6379".
+		WorkerRedisAddr string `env:"WORKER_REDIS_ADDR" envDefault:"localhost:6379"`
+
+		// WorkerRedisDB indicates the Redis DB to connect. By default, it is 0.
+		WorkerRedisDB int `env:"WORKER_REDIS_DB" envDefault:"0"`
+
+		// WorkerRedisPassword indicates the password used to connect to the Redis server. By default,
+		// it is "".
+		WorkerRedisPassword string `env:"WORKER_REDIS_PASSWORD" envDefault:""`
+
+		// WorkerRedisPoolSize indicates the connection pool size for the Redis server. By default,
+		// it is 25.
+		WorkerRedisPoolSize int `env:"WORKER_REDIS_POOL_SIZE" envDefault:"25"`
+
+		// WorkerRedisURL indicates the Redis URL to connect to. By default, it is "".
+		WorkerRedisURL string `env:"WORKER_REDIS_URL" envDefault:""`
+
+		// WorkerConcurrency indicates how many background jobs should be processed at one time. By
+		// default, it is 25.
+		WorkerConcurrency int `env:"WORKER_CONCURRENCY" envDefault:"25"`
+
+		// WorkerQueues indicates how many queues to process and the number followed is the priority. By
+		// default, it is "default:10".
+		//
+		// If the value is "critical:6,default:3,low:1", this will allow the worker to process 3 queues
+		// as below:
+		// - tasks in critical queue will be processed 60% of the time
+		// - tasks in default queue will be processed 30% of the time
+		// - tasks in low queue will be processed 10% of the time
+		WorkerQueues map[string]int `env:"WORKER_QUEUES" envDefault:"default:10"`
+
+		// WorkerStrictPriority indicates if the worker should strictly follow the priority to process
+		// the background jobs. By default, it is false.
+		//
+		// If the value is true, the queues with higher priority is always processed first, and queues
+		// with lower priority is processed only if all the other queues with higher priorities are empty.
+		WorkerStrictPriority bool `env:"WORKER_STRICT_PRIORITY" envDefault:"false"`
 
 		path      string
 		errors    []error
