@@ -2,7 +2,7 @@
 description: Covers how appy stores/retrieves the configuration into/from the environment.
 ---
 
-# Store & Retrieve
+# Getting Started
 
 We strictly follow [12factor](https://12factor.net/) principle by storing config in environment which allows us to run our application on different environments. What does that really mean? Let us go through the scenario below.
 

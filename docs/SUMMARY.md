@@ -7,26 +7,31 @@
 
 ## Config
 
-* [Store & Retrieve](config/store-config-in-the-environment.md)
+* [Getting Started](config/store-config-in-the-environment.md)
 * [Manage Environments](config/general-configuration.md)
+* [Configuring Application](config/configuring-application.md)
+
+## GraphQL
+
+* [Getting Started](graphql/getting-started.md)
 
 ## Handler
 
-* [Untitled](handler/untitled.md)
+* [Getting Started](handler/untitled.md)
 
 ## Mailer
 
-* [Untitled](mailer/untitled.md)
+* [Getting Started](mailer/untitled.md)
 
 ## Model
 
-* [Untitled](model/untitled.md)
+* [Getting Started](model/untitled.md)
 
 ## View
 
-* [Untitled](view/untitled.md)
+* [Getting Started](view/untitled.md)
 
 ## Worker
 
-* [Untitled](worker/untitled.md)
+* [Getting Started](worker/untitled.md)
 
