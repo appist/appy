@@ -35,7 +35,7 @@ require (
 	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0
 	github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0
-	github.com/spf13/cobra v0.0.6
+	github.com/spf13/cobra v0.0.7
 	github.com/stretchr/testify v1.5.1
 	github.com/vektah/gqlparser/v2 v2.0.1
 	go.uber.org/zap v1.14.1
