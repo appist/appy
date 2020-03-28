@@ -16,7 +16,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -133,7 +132,6 @@ func (db *DB) ConnectDB(database string) error {
 		case "postgres":
 			u.Path = "/" + database
 			uri = u.String()
-		case "sqlite3":
 		}
 	}
 
@@ -152,17 +150,9 @@ func (db *DB) ConnectDB(database string) error {
 
 // Create creates the database.
 func (db *DB) CreateDB(database string) error {
-	switch db.config.Adapter {
-	case "mysql", "postgres":
-		_, err := db.Exec("CREATE DATABASE " + database)
-		if err != nil {
-			return err
-		}
-	case "sqlite3":
-		_, err := os.Create(database)
-		if err != nil {
-			return err
-		}
+	_, err := db.Exec("CREATE DATABASE " + database)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -181,25 +171,17 @@ func (db *DB) DropDB(database string) error {
 		}
 	}
 
-	switch db.config.Adapter {
-	case "mysql", "postgres":
-		_, err := db.Exec("DROP DATABASE " + database)
-		if err != nil {
-			return err
-		}
-	case "sqlite3":
-		err := os.Remove(database)
-		if err != nil {
-			return err
-		}
+	_, err := db.Exec("DROP DATABASE " + database)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// DumpSchema dumps the database schema into "db/migrate/<database>/schema.go".
-func (db *DB) DumpSchema(database string) error {
-	path := dbMigratePath + database
+// DumpSchema dumps the database schema into "db/migrate/<dbname>/schema.go".
+func (db *DB) DumpSchema(dbname string) error {
+	path := dbMigratePath + dbname
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return err
@@ -211,10 +193,10 @@ func (db *DB) DumpSchema(database string) error {
 	}
 
 	var (
-		outBytes    bytes.Buffer
-		out         string
-		versionRows *sql.Rows
-		versions    []string
+		outBytes      bytes.Buffer
+		database, out string
+		versionRows   *sql.Rows
+		versions      []string
 	)
 
 	switch db.config.Adapter {
@@ -255,6 +237,7 @@ func (db *DB) DumpSchema(database string) error {
 				db.config.SchemaMigrationsTable,
 			),
 		)
+		database = db.config.Database
 	case "postgres":
 		_, err = exec.LookPath("pg_dump")
 		if err != nil {
@@ -296,6 +279,7 @@ func (db *DB) DumpSchema(database string) error {
 				db.config.SchemaMigrationsTable,
 			),
 		)
+		database = db.config.SchemaSearchPath
 	}
 
 	if err != nil {
@@ -313,7 +297,7 @@ func (db *DB) DumpSchema(database string) error {
 	versionRows.Close()
 
 	if len(versions) > 0 {
-		out += fmt.Sprintf("\n\nINSERT INTO %s.%s (version) VALUES\n", db.config.SchemaSearchPath, db.config.SchemaMigrationsTable)
+		out += fmt.Sprintf("\n\nINSERT INTO %s.%s (version) VALUES\n", database, db.config.SchemaMigrationsTable)
 
 		for idx, version := range versions {
 			out += "('" + version + "')"
@@ -326,7 +310,8 @@ func (db *DB) DumpSchema(database string) error {
 		}
 	}
 
-	tpl, err := schemaDumpTpl(database, out)
+	out = strings.Trim(out, "\n")
+	tpl, err := schemaDumpTpl(dbname, out)
 	if err != nil {
 		return err
 	}
@@ -698,7 +683,7 @@ func (db *DB) addSchemaMigration(tx *DBTx, migration *DBMigration) error {
 	var query string
 
 	switch db.config.Adapter {
-	case "mysql", "sqlite":
+	case "mysql":
 		query = fmt.Sprintf(
 			"INSERT INTO %s.%s (version) VALUES (%s)",
 			db.config.Database,
@@ -732,7 +717,7 @@ func (db *DB) removeSchemaMigration(tx *DBTx, migration *DBMigration) error {
 	var query string
 
 	switch db.config.Adapter {
-	case "mysql", "sqlite":
+	case "mysql":
 		query = fmt.Sprintf(
 			`DELETE FROM %s.%s WHERE version = '%s'`,
 			db.config.Database,
@@ -782,11 +767,6 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 			db.config.SchemaSearchPath,
 			db.config.SchemaMigrationsTable,
 		)
-	case "sqlite3":
-		rows, err = db.Query(
-			`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = ?`,
-			db.config.SchemaMigrationsTable,
-		)
 	}
 
 	if err != nil {
@@ -802,7 +782,7 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 
 	if count < 1 {
 		switch db.config.Adapter {
-		case "mysql", "sqlite3":
+		case "mysql":
 			_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + db.config.SchemaMigrationsTable + " (`version` varchar(64), PRIMARY KEY (`version`)) ")
 			if err != nil {
 				return err
@@ -830,7 +810,7 @@ func (db *DB) migratedVersions(tx *DBTx) ([]string, error) {
 	)
 
 	switch db.config.Adapter {
-	case "mysql", "sqlite3":
+	case "mysql":
 		rows, err = tx.Query(fmt.Sprintf("SELECT version FROM %s.%s ORDER BY version ASC", db.config.Database, db.config.SchemaMigrationsTable))
 	case "postgres":
 		rows, err = tx.Query(fmt.Sprintf("SELECT version FROM %s.%s ORDER BY version ASC", db.config.SchemaSearchPath, db.config.SchemaMigrationsTable))

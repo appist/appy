@@ -2,10 +2,6 @@
 
 package appy
 
-import (
-	"strings"
-)
-
 func newDBCreateCommand(config *Config, dbManager *DBManager, logger *Logger) *Command {
 	cmd := &Command{
 		Use:   "db:create",
@@ -37,38 +33,23 @@ func runDBCreateAll(config *Config, dbManager *DBManager, logger *Logger) {
 			continue
 		}
 
-		if dbConfig.Adapter != "sqlite3" {
-			err := db.ConnectDB(dbConfig.Adapter)
-			defer db.Close()
+		err := db.ConnectDB(dbConfig.Adapter)
+		defer db.Close()
 
-			if err != nil {
-				logger.Fatal(err)
-			}
+		if err != nil {
+			logger.Fatal(err)
 		}
 
 		logger.Infof("Creating '%s' database...", name)
 
-		switch dbConfig.Adapter {
-		case "mysql", "postgres":
-			err := db.CreateDB(dbConfig.Database)
-			if err != nil {
-				logger.Fatal(err)
-			}
+		err = db.CreateDB(dbConfig.Database)
+		if err != nil {
+			logger.Fatal(err)
+		}
 
-			err = db.CreateDB(dbConfig.Database + "_test")
-			if err != nil {
-				logger.Fatal(err)
-			}
-		case "sqlite3":
-			err := db.CreateDB(dbConfig.URI)
-			if err != nil {
-				logger.Fatal(err)
-			}
-
-			err = db.CreateDB(strings.ReplaceAll(dbConfig.URI, ".sqlite3", "_test.sqlite3"))
-			if err != nil {
-				logger.Fatal(err)
-			}
+		err = db.CreateDB(dbConfig.Database + "_test")
+		if err != nil {
+			logger.Fatal(err)
 		}
 
 		logger.Infof("Creating '%s' database... DONE", name)

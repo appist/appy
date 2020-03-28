@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var SUPPORTED_ADAPTERS = []string{"mysql", "postgres", "sqlite3"}
+var supportedAdapters = []string{"mysql", "postgres"}
 
 // DBConfig contains database connection configuration.
 type DBConfig struct {
@@ -60,7 +60,6 @@ type DBConfig struct {
 	// URI connection string documentation:
 	//   - mysql: https://dev.mysql.com/doc/refman/8.0/en/connecting-using-uri-or-key-value-pairs.html#connecting-using-uri
 	//   - postgres: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
-	//   - sqlite3: https://www.sqlite.org/uri.html
 	URI string
 
 	// Username indicates the username to use for connecting to the database. The value is parsed from "DB_URI_<DB_NAME>".
@@ -82,8 +81,6 @@ func (c *DBConfig) parseDBInfoFromURI() (err error) {
 		newURI = strings.ReplaceAll(newURI, "mysql://", "")
 	case "postgres", "postgresql":
 		scheme = "postgres"
-	default:
-		scheme = "sqlite3"
 	}
 
 	c.Adapter = scheme
@@ -168,7 +165,7 @@ func parseDBConfig(support Supporter) (map[string]*DBConfig, []error) {
 				continue
 			}
 
-			if !support.ArrayContains(SUPPORTED_ADAPTERS, config.Adapter) {
+			if !support.ArrayContains(supportedAdapters, config.Adapter) {
 				errs = append(errs, fmt.Errorf("adapter '%s' for database '%s' is not supported", config.Adapter, support.ToCamelCase(dbName)))
 				continue
 			}

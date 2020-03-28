@@ -2,10 +2,6 @@
 
 package appy
 
-import (
-	"strings"
-)
-
 func newDBDropCommand(config *Config, dbManager *DBManager, logger *Logger) *Command {
 	cmd := &Command{
 		Use:   "db:drop",
@@ -41,38 +37,23 @@ func runDBDropAll(config *Config, dbManager *DBManager, logger *Logger) {
 			continue
 		}
 
-		if dbConfig.Adapter != "sqlite3" {
-			err := db.ConnectDB(dbConfig.Adapter)
-			defer db.Close()
+		err := db.ConnectDB(dbConfig.Adapter)
+		defer db.Close()
 
-			if err != nil {
-				logger.Fatal(err)
-			}
+		if err != nil {
+			logger.Fatal(err)
 		}
 
 		logger.Infof("Dropping '%s' database...", name)
 
-		switch dbConfig.Adapter {
-		case "mysql", "postgres":
-			err := db.DropDB(dbConfig.Database)
-			if err != nil {
-				logger.Fatal(err)
-			}
+		err = db.DropDB(dbConfig.Database)
+		if err != nil {
+			logger.Fatal(err)
+		}
 
-			err = db.DropDB(dbConfig.Database + "_test")
-			if err != nil {
-				logger.Fatal(err)
-			}
-		case "sqlite3":
-			err := db.DropDB(dbConfig.URI)
-			if err != nil {
-				logger.Fatal(err)
-			}
-
-			err = db.DropDB(strings.ReplaceAll(dbConfig.URI, ".sqlite3", "_test.sqlite3"))
-			if err != nil {
-				logger.Fatal(err)
-			}
+		err = db.DropDB(dbConfig.Database + "_test")
+		if err != nil {
+			logger.Fatal(err)
 		}
 
 		logger.Infof("Dropping '%s' database... DONE", name)

@@ -54,14 +54,14 @@ func migrationVersion(name string) (string, error) {
 	return splits[0], nil
 }
 
-func migrationTpl(database string, tx bool) ([]byte, error) {
+func migrationTpl(dbname string, tx bool) ([]byte, error) {
 	type data struct {
-		Database, Module string
-		Tx               bool
+		DBName, Module string
+		Tx             bool
 	}
 
 	t, err := template.New("migration").Parse(
-		`package {{.Database}}
+		`package {{.DBName}}
 
 import (
 	"github.com/appist/appy"
@@ -69,7 +69,7 @@ import (
 )
 
 func init() {
-	db := app.DB("{{.Database}}")
+	db := app.DB("{{.DBName}}")
 	if db != nil {
 		db.RegisterMigration{{if .Tx}}Tx{{end}}(
 			// Up migration
@@ -93,9 +93,9 @@ func init() {
 
 	var tpl bytes.Buffer
 	err = t.Execute(&tpl, data{
-		Database: database,
-		Module:   moduleName(),
-		Tx:       tx,
+		DBName: dbname,
+		Module: moduleName(),
+		Tx:     tx,
 	})
 
 	if err != nil {
