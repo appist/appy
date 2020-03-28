@@ -75,13 +75,13 @@ func runDBMigrateAll(config *Config, dbManager *DBManager, logger *Logger) {
 			continue
 		}
 
-		logger.Infof("Migrating '%s' database...", name)
-
 		err := db.Connect()
 		if err != nil {
 			logger.Fatal(err)
 		}
 		defer db.Close()
+
+		logger.Infof("Migrating '%s' database...", name)
 
 		err = db.Migrate()
 		if err != nil {
@@ -94,7 +94,7 @@ func runDBMigrateAll(config *Config, dbManager *DBManager, logger *Logger) {
 			logger.Infof("")
 			logger.Infof("Dumping schema for '%s' database...", name)
 
-			err = db.DumpSchema(name)
+			err := db.DumpSchema(name)
 			if err != nil {
 				logger.Fatal(err)
 			}

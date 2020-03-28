@@ -29,20 +29,18 @@ func newDBSchemaLoadCommand(config *Config, dbManager *DBManager, logger *Logger
 }
 
 func runDBSchemaLoad(config *Config, dbManager *DBManager, logger *Logger) {
-	logger.SetDBLogging(false)
-
 	for name, db := range dbManager.databases {
 		if db.Config().Replica {
 			continue
 		}
-
-		logger.Infof("Loading schema for '%s' database...", name)
 
 		err := db.Connect()
 		if err != nil {
 			logger.Fatal(err)
 		}
 		defer db.Close()
+
+		logger.Infof("Loading schema for '%s' database...", name)
 
 		schema := db.Schema()
 		if strings.Trim(schema, " ") != "" {

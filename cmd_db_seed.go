@@ -30,13 +30,13 @@ func runDBSeedAll(config *Config, dbManager *DBManager, logger *Logger) {
 			continue
 		}
 
-		logger.Infof("Seeding '%s' database...", name)
-
 		err := db.Connect()
 		if err != nil {
 			logger.Fatal(err)
 		}
 		defer db.Close()
+
+		logger.Infof("Seeding '%s' database...", name)
 
 		err = db.Seed()
 		if err != nil {

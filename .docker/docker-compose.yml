@@ -1,13 +1,39 @@
 version: "3.7"
 
 services:
+  mysql-master:
+    image: bitnami/mysql:8.0
+    ports:
+      - "13306:3306"
+    environment:
+      - MYSQL_REPLICATION_MODE=master
+      - MYSQL_REPLICATION_USER=replicator
+      - MYSQL_REPLICATION_PASSWORD=whatever
+      - MYSQL_ROOT_PASSWORD=whatever
+      - MYSQL_USER=mysql
+      - MYSQL_PASSWORD=whatever
+
+  mysql-slave:
+    image: bitnami/mysql:8.0
+    ports:
+      - "13307:3306"
+    depends_on:
+      - mysql-master
+    environment:
+      - MYSQL_REPLICATION_MODE=slave
+      - MYSQL_REPLICATION_USER=replicator
+      - MYSQL_REPLICATION_PASSWORD=whatever
+      - MYSQL_MASTER_HOST=mysql-master
+      - MYSQL_MASTER_PORT_NUMBER=3306
+      - MYSQL_MASTER_ROOT_PASSWORD=whatever
+
   psql-master:
     image: bitnami/postgresql:12
     ports:
       - "15432:5432"
     environment:
       - POSTGRESQL_REPLICATION_MODE=master
-      - POSTGRESQL_REPLICATION_USER=psql-slave
+      - POSTGRESQL_REPLICATION_USER=replicator
       - POSTGRESQL_REPLICATION_PASSWORD=whatever
       - POSTGRESQL_USERNAME=postgres
       - POSTGRESQL_PASSWORD=whatever
@@ -20,7 +46,7 @@ services:
       - psql-master
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
-      - POSTGRESQL_REPLICATION_USER=psql-slave
+      - POSTGRESQL_REPLICATION_USER=replicator
       - POSTGRESQL_REPLICATION_PASSWORD=whatever
       - POSTGRESQL_MASTER_HOST=psql-master
       - POSTGRESQL_PASSWORD=whatever
