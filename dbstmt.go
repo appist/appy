@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-var (
-	loggerPreparedStatementPrefix = "prepared statement: "
-	loggerParametersPrefix        = "parameters: "
-)
-
 // DBStmter implements all DBStmt methods and is useful for mocking DBStmt in unit tests.
 type DBStmter interface {
 	Exec(args ...interface{}) (sql.Result, error)
