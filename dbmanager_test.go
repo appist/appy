@@ -16,14 +16,14 @@ func (s *DBManagerSuite) SetupTest() {
 	s.support = &Support{}
 }
 
-func (s *DBSuite) TestDBManagerWithBadDBConfig() {
+func (s *DBManagerSuite) TestDBManagerWithBadDBConfig() {
 	os.Setenv("DB_URI_PRIMARY", "0.0.0.0:13306/appy")
 	defer os.Unsetenv("DB_URI_PRIMARY")
 	dbManager := NewDBManager(s.logger, s.support)
 	s.Equal(1, len(dbManager.Errors()))
 }
 
-func (s *DBSuite) TestDBManagerWithValidDBConfig() {
+func (s *DBManagerSuite) TestDBManagerWithValidDBConfig() {
 	os.Setenv("DB_URI_PRIMARY", "mysql://root:whatever@0.0.0.0:13306/appy")
 	os.Setenv("DB_URI_PRIMARY_REPLICA", "mysql://root:whatever@0.0.0.0:13307/appy")
 	defer func() {
