@@ -552,7 +552,7 @@ func (db *DB) PrepareNamed(query string) (*sqlx.NamedStmt, error) {
 	return db.DB.PrepareNamed(query)
 }
 
-// PrepareNamed returns a sqlx.NamedStmt.
+// PrepareNamedContext returns a sqlx.NamedStmt.
 func (db *DB) PrepareNamedContext(ctx context.Context, query string) (*sqlx.NamedStmt, error) {
 	db.logger.Info(formatDBQuery(query))
 	return db.DB.PrepareNamedContext(ctx, query)
