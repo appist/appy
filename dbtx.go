@@ -3,6 +3,8 @@ package appy
 import (
 	"context"
 	"database/sql"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // DBTxer implements all DBTx methods and is useful for mocking DBTx in unit tests.
@@ -30,7 +32,7 @@ type DBTxer interface {
 // The statements prepared for a transaction by calling the transaction's Prepare or Stmt methods
 // are closed by the call to Commit or Rollback.
 type DBTx struct {
-	*sql.Tx
+	*sqlx.Tx
 	logger *Logger
 }
 
@@ -59,7 +61,7 @@ func (tx *DBTx) ExecContext(ctx context.Context, query string, args ...interface
 //
 // To use an existing prepared statement on this transaction, see DBTx.Stmt.
 func (tx *DBTx) Prepare(query string) (*DBStmt, error) {
-	stmt, err := tx.Tx.Prepare(query)
+	stmt, err := tx.Tx.Preparex(query)
 	return &DBStmt{stmt, tx.logger, query}, err
 }
 
@@ -73,7 +75,7 @@ func (tx *DBTx) Prepare(query string) (*DBStmt, error) {
 // The provided context will be used for the preparation of the context, not for the execution of
 // the returned statement. The returned statement will run in the transaction context.
 func (tx *DBTx) PrepareContext(ctx context.Context, query string) (*DBStmt, error) {
-	stmt, err := tx.Tx.PrepareContext(ctx, query)
+	stmt, err := tx.Tx.PreparexContext(ctx, query)
 	return &DBStmt{stmt, tx.logger, query}, err
 }
 
@@ -125,7 +127,7 @@ func (tx *DBTx) Rollback() error {
 // The returned statement operates within the transaction and will be closed when the transaction
 // has been committed or rolled back.
 func (tx *DBTx) Stmt(stmt *DBStmt) *DBStmt {
-	return &DBStmt{tx.Tx.Stmt(stmt.Stmt), tx.logger, stmt.query}
+	return &DBStmt{tx.Tx.Stmtx(stmt.Stmt), tx.logger, stmt.query}
 }
 
 // StmtContext returns a transaction-specific prepared statement from an existing statement.
@@ -143,5 +145,5 @@ func (tx *DBTx) Stmt(stmt *DBStmt) *DBStmt {
 // The returned statement operates within the transaction and will be closed when the transaction
 // has been committed or rolled back.
 func (tx *DBTx) StmtContext(ctx context.Context, stmt *DBStmt) *DBStmt {
-	return &DBStmt{tx.Tx.StmtContext(ctx, stmt.Stmt), tx.logger, stmt.query}
+	return &DBStmt{tx.Tx.StmtxContext(ctx, stmt.Stmt), tx.logger, stmt.query}
 }

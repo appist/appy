@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -38,35 +39,49 @@ type DBer interface {
 	BindNamed(query string, arg interface{}) (string, []interface{}, error)
 	Close() error
 	Config() *DBConfig
+	Conn(ctx context.Context) (*sql.Conn, error)
 	Connect() error
 	ConnectDB(database string) error
 	CreateDB(database string) error
+	Driver() driver.Driver
+	DriverName() string
 	DropDB(database string) error
 	DumpSchema(database string) error
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	GenerateMigration(name, target string, tx bool) error
+	Get(dest interface{}, query string, args ...interface{}) error
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	Migrate() error
 	MigrateStatus() ([][]string, error)
+	NamedExec(query string, arg interface{}) (sql.Result, error)
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+	NamedQuery(query string, arg interface{}) (*sqlx.Rows, error)
+	NamedQueryContext(ctx context.Context, query string, arg interface{}) (*sqlx.Rows, error)
+	Ping() error
+	PingContext(ctx context.Context) error
 	Prepare(query string) (*DBStmt, error)
 	PrepareContext(ctx context.Context, query string) (*DBStmt, error)
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
-	QueryRowx(query string, args ...interface{}) *sqlx.Row
-	QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
-	Queryx(query string, args ...interface{}) (*sqlx.Rows, error)
-	QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error)
+	PrepareNamed(query string) (*sqlx.NamedStmt, error)
+	PrepareNamedContext(ctx context.Context, query string) (*sqlx.NamedStmt, error)
+	Query(query string, args ...interface{}) (*sqlx.Rows, error)
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error)
+	QueryRow(query string, args ...interface{}) *sqlx.Row
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
+	Rebind(query string) string
 	RegisterMigration(up func(*DB) error, down func(*DB) error, args ...string)
 	RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string)
 	RegisterSeedTx(seed func(*DBTx) error)
 	Rollback() error
+	Schema() string
 	Seed() error
 	Select(dest interface{}, query string, args ...interface{}) error
 	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	Schema() string
+	SetConnMaxLifetime(d time.Duration)
+	SetMaxIdleConns(n int)
+	SetMaxOpenConns(n int)
 	SetSchema(schema string)
+	Stats() sql.DBStats
 }
 
 // DB manages the database config/connection/migrations.
@@ -99,7 +114,7 @@ func NewDB(config *DBConfig, logger *Logger, support Supporter) *DB {
 func (db *DB) Begin() (*DBTx, error) {
 	db.logger.Info(formatDBQuery("BEGIN;"))
 
-	tx, err := db.DB.Begin()
+	tx, err := db.DB.Beginx()
 	return &DBTx{tx, db.logger}, err
 }
 
@@ -114,7 +129,7 @@ func (db *DB) Begin() (*DBTx, error) {
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*DBTx, error) {
 	db.logger.Info(formatDBQuery("BEGIN;"))
 
-	tx, err := db.DB.BeginTx(ctx, opts)
+	tx, err := db.DB.BeginTxx(ctx, opts)
 	return &DBTx{tx, db.logger}, err
 }
 
@@ -235,7 +250,7 @@ func (db *DB) DumpSchema(dbname string) error {
 	var (
 		outBytes      bytes.Buffer
 		database, out string
-		versionRows   *sql.Rows
+		versionRows   *sqlx.Rows
 		versions      []string
 	)
 
@@ -364,6 +379,20 @@ func (db *DB) DumpSchema(dbname string) error {
 	return nil
 }
 
+// Exec executes a query without returning any rows. The args are for any placeholder parameters
+// in the query.
+func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	db.logger.Infof(formatDBQuery(query), args...)
+	return db.DB.Exec(query, args...)
+}
+
+// ExecContext executes a query without returning any rows. The args are for any placeholder
+// parameters in the query.
+func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	db.logger.Infof(formatDBQuery(query), args...)
+	return db.DB.ExecContext(ctx, query, args...)
+}
+
 // GenerateMigration generates the migration file for the target database.
 func (db *DB) GenerateMigration(name, target string, tx bool) error {
 	path := dbMigratePath + target
@@ -388,6 +417,20 @@ func (db *DB) GenerateMigration(name, target string, tx bool) error {
 
 	db.logger.Infof("Generating migration '%s' for '%s' database... DONE", fn, target)
 	return nil
+}
+
+// Get using this DB. Any placeholder parameters are replaced with supplied args. An error is
+// returned if the result set is empty.
+func (db *DB) Get(dest interface{}, query string, args ...interface{}) error {
+	db.logger.Infof(formatDBQuery(query), args...)
+	return db.DB.Get(dest, query, args...)
+}
+
+// GetContext using this DB. Any placeholder parameters are replaced with supplied args. An error
+// is returned if the result set is empty.
+func (db *DB) GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+	db.logger.Infof(formatDBQuery(query), args...)
+	return db.DB.GetContext(ctx, dest, query, args...)
 }
 
 // Migrate runs migrations for the current environment that have not run yet.
@@ -478,32 +521,55 @@ func (db *DB) MigrateStatus() ([][]string, error) {
 	return migrationStatus, nil
 }
 
-// Exec executes a query without returning any rows. The args are for any placeholder parameters
-// in the query.
-func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
-	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.Exec(query, args...)
+// NamedExec using this DB. Any named placeholder parameters are replaced with fields from arg.
+func (db *DB) NamedExec(query string, arg interface{}) (sql.Result, error) {
+	db.logger.Infof(formatDBQuery(query), arg)
+	return db.DB.NamedExec(query, arg)
 }
 
-// ExecContext executes a query without returning any rows. The args are for any placeholder
-// parameters in the query.
-func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.ExecContext(ctx, query, args...)
+// NamedExecContext using this DB. Any named placeholder parameters are replaced with fields from
+// arg.
+func (db *DB) NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
+	db.logger.Infof(formatDBQuery(query), arg)
+	return db.DB.NamedExecContext(ctx, query, arg)
+}
+
+// NamedQuery using this DB. Any named placeholder parameters are replaced with fields from arg.
+func (db *DB) NamedQuery(query string, arg interface{}) (*sqlx.Rows, error) {
+	db.logger.Infof(formatDBQuery(query), arg)
+	return db.DB.NamedQuery(query, arg)
+}
+
+// NamedQueryContext using this DB. Any named placeholder parameters are replaced with fields from arg.
+func (db *DB) NamedQueryContext(ctx context.Context, query string, arg interface{}) (*sqlx.Rows, error) {
+	db.logger.Infof(formatDBQuery(query), arg)
+	return db.DB.NamedQueryContext(ctx, query, arg)
+}
+
+// PrepareNamed returns a sqlx.NamedStmt.
+func (db *DB) PrepareNamed(query string) (*sqlx.NamedStmt, error) {
+	db.logger.Info(formatDBQuery(query))
+	return db.DB.PrepareNamed(query)
+}
+
+// PrepareNamed returns a sqlx.NamedStmt.
+func (db *DB) PrepareNamedContext(ctx context.Context, query string) (*sqlx.NamedStmt, error) {
+	db.logger.Info(formatDBQuery(query))
+	return db.DB.PrepareNamedContext(ctx, query)
 }
 
 // Query executes a query that returns rows, typically a SELECT. The args are for any placeholder
 // parameters in the query.
-func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (db *DB) Query(query string, args ...interface{}) (*sqlx.Rows, error) {
 	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.Query(query, args...)
+	return db.DB.Queryx(query, args...)
 }
 
 // QueryContext executes a query that returns rows, typically a SELECT. The args are for any
 // placeholder parameters in the query.
-func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error) {
 	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.QueryContext(ctx, query, args...)
+	return db.DB.QueryxContext(ctx, query, args...)
 }
 
 // QueryRow executes a query that is expected to return at most one row. QueryRow always returns a
@@ -511,9 +577,9 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 //
 // If the query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan
 // scans the first selected row and discards the rest.
-func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
+func (db *DB) QueryRow(query string, args ...interface{}) *sqlx.Row {
 	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.QueryRow(query, args...)
+	return db.DB.QueryRowx(query, args...)
 }
 
 // QueryRowContext executes a query that is expected to return at most one row. QueryRowContext
@@ -521,37 +587,9 @@ func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
 //
 // If the query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan
 // scans the first selected row and discards the rest.
-func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.QueryRowContext(ctx, query, args...)
-}
-
-// QueryRowx queries the database and returns an *sqlx.Row. Any placeholder parameters are replaced
-// with supplied args.
-func (db *DB) QueryRowx(query string, args ...interface{}) *sqlx.Row {
-	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.QueryRowx(query, args...)
-}
-
-// QueryRowxContext queries the database and returns an *sqlx.Row. Any placeholder parameters are
-// replaced with supplied args.
-func (db *DB) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row {
+func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row {
 	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.QueryRowxContext(ctx, query, args...)
-}
-
-// Queryx queries the database and returns an *sqlx.Rows. Any placeholder parameters are replaced
-// with supplied args.
-func (db *DB) Queryx(query string, args ...interface{}) (*sqlx.Rows, error) {
-	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.Queryx(query, args...)
-}
-
-// QueryxContext queries the database and returns an *sqlx.Rows. Any placeholder parameters are
-// replaced with supplied args.
-func (db *DB) QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error) {
-	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.QueryxContext(ctx, query, args...)
 }
 
 // RegisterMigration registers the up/down migrations that won't be executed in transaction.
@@ -644,7 +682,7 @@ func (db *DB) Rollback() error {
 // executions may be run concurrently from the returned statement. The caller must call the
 // statement's Close method when the statement is no longer needed.
 func (db *DB) Prepare(query string) (*DBStmt, error) {
-	stmt, err := db.DB.Prepare(query)
+	stmt, err := db.DB.Preparex(query)
 	return &DBStmt{stmt, db.logger, query}, err
 }
 
@@ -655,7 +693,7 @@ func (db *DB) Prepare(query string) (*DBStmt, error) {
 // The provided context is used for the preparation of the statement, not for the execution of
 // the statement.
 func (db *DB) PrepareContext(ctx context.Context, query string) (*DBStmt, error) {
-	stmt, err := db.DB.PrepareContext(ctx, query)
+	stmt, err := db.DB.PreparexContext(ctx, query)
 	return &DBStmt{stmt, db.logger, query}, err
 }
 
@@ -787,7 +825,7 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 	var (
 		count int
 		err   error
-		rows  *sql.Rows
+		rows  *sqlx.Rows
 	)
 
 	switch db.config.Adapter {
@@ -857,7 +895,7 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 func (db *DB) migratedVersions() ([]string, error) {
 	var (
 		err  error
-		rows *sql.Rows
+		rows *sqlx.Rows
 	)
 
 	switch db.config.Adapter {
@@ -924,11 +962,11 @@ func (db *DB) registerMigration(up func(*DB) error, down func(*DB) error, upTx f
 
 func (db *DB) setupWrapper(wrapper *sqlx.DB) error {
 	db.DB = wrapper
-	db.DB.SetConnMaxLifetime(db.config.ConnMaxLifetime)
-	db.DB.SetMaxIdleConns(db.config.MaxIdleConns)
-	db.DB.SetMaxOpenConns(db.config.MaxOpenConns)
+	db.SetConnMaxLifetime(db.config.ConnMaxLifetime)
+	db.SetMaxIdleConns(db.config.MaxIdleConns)
+	db.SetMaxOpenConns(db.config.MaxOpenConns)
 
-	return db.DB.Ping()
+	return db.Ping()
 }
 
 func formatDBQuery(query string) string {

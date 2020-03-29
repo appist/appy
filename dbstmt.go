@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // DBStmter implements all DBStmt methods and is useful for mocking DBStmt in unit tests.
@@ -27,7 +29,7 @@ type DBStmter interface {
 // DB. When the DBStmt needs to execute on a new underlying connection, it will prepare itself on
 // the new connection automatically.
 type DBStmt struct {
-	*sql.Stmt
+	*sqlx.Stmt
 	logger *Logger
 	query  string
 }
