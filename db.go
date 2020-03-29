@@ -14,20 +14,24 @@ import (
 	"sync"
 	"time"
 
+	// Automatically import mysql driver to make it easier for appy's users.
 	_ "github.com/go-sql-driver/mysql"
+
+	// Automatically import postgres driver to make it easier for appy's users.
 	_ "github.com/lib/pq"
 
 	"github.com/jmoiron/sqlx"
 )
 
 const (
-	LOGGER_DB_PREFIX = "[DB] "
+	loggerDBPrefix = "[DB] "
 )
 
 var (
 	dbMigratePath = "db/migrate/"
 )
 
+// DBer implements all DB methods and is useful for mocking DB in unit tests.
 type DBer interface {
 	BindNamed(query string, arg interface{}) (string, []interface{}, error)
 	Close() error
@@ -61,6 +65,7 @@ type DBer interface {
 	SetSchema(schema string)
 }
 
+// DB manages the database config/connection/migrations.
 type DB struct {
 	*sqlx.DB
 	config     *DBConfig
@@ -71,8 +76,6 @@ type DB struct {
 	seed       func(*DBTx) error
 	support    Supporter
 }
-
-type DBTx = sql.Tx
 
 // NewDB initializes the database handler that is used to connect to the database.
 func NewDB(config *DBConfig, logger *Logger, support Supporter) *DB {
@@ -88,9 +91,17 @@ func NewDB(config *DBConfig, logger *Logger, support Supporter) *DB {
 	}
 }
 
+// Begin starts a transaction. The default isolation level is dependent on the driver.
+func (db *DB) Begin() (*DBTx, error) {
+	db.logger.Info(formatDBQuery("BEGIN;"))
+
+	tx, err := db.DB.Begin()
+	return &DBTx{tx, db.logger}, err
+}
+
 // BindNamed binds a query using the DB driver's bindvar type.
 func (db *DB) BindNamed(query string, arg interface{}) (string, []interface{}, error) {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, arg)
+	db.logger.Infof(formatDBQuery(query), arg)
 	return db.DB.BindNamed(query, arg)
 }
 
@@ -148,9 +159,14 @@ func (db *DB) ConnectDB(database string) error {
 	return nil
 }
 
-// Create creates the database.
+// CreateDB creates the database.
 func (db *DB) CreateDB(database string) error {
-	_, err := db.Exec("CREATE DATABASE " + database)
+	_, err := db.Exec(
+		fmt.Sprintf(
+			"CREATE DATABASE %s;",
+			database,
+		),
+	)
 	if err != nil {
 		return err
 	}
@@ -158,11 +174,11 @@ func (db *DB) CreateDB(database string) error {
 	return nil
 }
 
-// Drop drops the database.
+// DropDB drops the database.
 func (db *DB) DropDB(database string) error {
 	if db.config.Adapter == "postgres" {
 		_, err := db.Exec(
-			`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1`,
+			`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1;`,
 			database,
 		)
 
@@ -171,7 +187,12 @@ func (db *DB) DropDB(database string) error {
 		}
 	}
 
-	_, err := db.Exec("DROP DATABASE " + database)
+	_, err := db.Exec(
+		fmt.Sprintf(
+			"DROP DATABASE %s;",
+			database,
+		),
+	)
 	if err != nil {
 		return err
 	}
@@ -232,7 +253,7 @@ func (db *DB) DumpSchema(dbname string) error {
 
 		versionRows, err = db.Query(
 			fmt.Sprintf(
-				"SELECT version FROM %s.%s ORDER BY version ASC",
+				"SELECT version FROM %s.%s ORDER BY version ASC;",
 				db.config.Database,
 				db.config.SchemaMigrationsTable,
 			),
@@ -274,7 +295,7 @@ func (db *DB) DumpSchema(dbname string) error {
 
 		versionRows, err = db.Query(
 			fmt.Sprintf(
-				"SELECT version FROM %s.%s ORDER BY version ASC",
+				"SELECT version FROM %s.%s ORDER BY version ASC;",
 				db.config.SchemaSearchPath,
 				db.config.SchemaMigrationsTable,
 			),
@@ -360,23 +381,19 @@ func (db *DB) Migrate() error {
 		return err
 	}
 
-	tx, err := db.Begin()
+	migratedVersions, err := db.migratedVersions()
 	if err != nil {
 		return err
-	}
-
-	migratedVersions, err := db.migratedVersions(tx)
-	if err != nil {
-		err = tx.Commit()
-		if err != nil {
-			defer tx.Rollback()
-			return err
-		}
 	}
 
 	for _, m := range db.migrations {
 		if !db.support.ArrayContains(migratedVersions, m.Version) {
 			if m.UpTx != nil {
+				tx, err := db.Begin()
+				if err != nil {
+					return err
+				}
+
 				err = m.UpTx(tx)
 				if err != nil {
 					defer tx.Rollback()
@@ -423,19 +440,10 @@ func (db *DB) MigrateStatus() ([][]string, error) {
 		return nil, err
 	}
 
-	tx, err := db.Begin()
+	var migrationStatus [][]string
+	migratedVersions, err := db.migratedVersions()
 	if err != nil {
 		return nil, err
-	}
-
-	var migrationStatus [][]string
-	migratedVersions, err := db.migratedVersions(tx)
-	if err != nil {
-		err = tx.Commit()
-		if err != nil {
-			defer tx.Rollback()
-			return nil, err
-		}
 	}
 
 	wd, _ := os.Getwd()
@@ -448,40 +456,34 @@ func (db *DB) MigrateStatus() ([][]string, error) {
 		migrationStatus = append(migrationStatus, []string{status, m.Version, strings.ReplaceAll(m.File, wd+"/", "")})
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		defer tx.Rollback()
-		return nil, err
-	}
-
 	return migrationStatus, nil
 }
 
 // Exec executes a query without returning any rows. The args are for any placeholder parameters
 // in the query.
 func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.Exec(query, args...)
 }
 
 // ExecContext executes a query without returning any rows. The args are for any placeholder
 // parameters in the query.
 func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.ExecContext(ctx, query, args...)
 }
 
 // Query executes a query that returns rows, typically a SELECT. The args are for any placeholder
 // parameters in the query.
 func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.Query(query, args...)
 }
 
 // QueryContext executes a query that returns rows, typically a SELECT. The args are for any
 // placeholder parameters in the query.
 func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.QueryContext(ctx, query, args...)
 }
 
@@ -491,7 +493,7 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 // If the query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan
 // scans the first selected row and discards the rest.
 func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.QueryRow(query, args...)
 }
 
@@ -501,35 +503,35 @@ func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
 // If the query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan
 // scans the first selected row and discards the rest.
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.QueryRowContext(ctx, query, args...)
 }
 
 // QueryRowx queries the database and returns an *sqlx.Row. Any placeholder parameters are replaced
 // with supplied args.
 func (db *DB) QueryRowx(query string, args ...interface{}) *sqlx.Row {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.QueryRowx(query, args...)
 }
 
 // QueryRowxContext queries the database and returns an *sqlx.Row. Any placeholder parameters are
 // replaced with supplied args.
 func (db *DB) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.QueryRowxContext(ctx, query, args...)
 }
 
 // Queryx queries the database and returns an *sqlx.Rows. Any placeholder parameters are replaced
 // with supplied args.
 func (db *DB) Queryx(query string, args ...interface{}) (*sqlx.Rows, error) {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.Queryx(query, args...)
 }
 
 // QueryxContext queries the database and returns an *sqlx.Rows. Any placeholder parameters are
 // replaced with supplied args.
 func (db *DB) QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error) {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.QueryxContext(ctx, query, args...)
 }
 
@@ -564,18 +566,9 @@ func (db *DB) Rollback() error {
 		return err
 	}
 
-	tx, err := db.Begin()
+	migratedVersions, err := db.migratedVersions()
 	if err != nil {
 		return err
-	}
-
-	migratedVersions, err := db.migratedVersions(tx)
-	if err != nil {
-		err = tx.Commit()
-		if err != nil {
-			defer tx.Rollback()
-			return err
-		}
 	}
 
 	if len(migratedVersions) > 0 {
@@ -584,6 +577,11 @@ func (db *DB) Rollback() error {
 
 			if migratedVersions[len(migratedVersions)-1] == m.Version {
 				if m.DownTx != nil {
+					tx, err := db.Begin()
+					if err != nil {
+						return err
+					}
+
 					err = m.DownTx(tx)
 					if err != nil {
 						defer tx.Rollback()
@@ -625,13 +623,13 @@ func (db *DB) Rollback() error {
 
 // Select using this DB. Any placeholder parameters are replaced with supplied args.
 func (db *DB) Select(dest interface{}, query string, args ...interface{}) error {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.Select(dest, query, args...)
 }
 
 // SelectContext using this DB. Any placeholder parameters are replaced with supplied args.
 func (db *DB) SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
-	db.logger.Infof(LOGGER_DB_PREFIX+query, args...)
+	db.logger.Infof(formatDBQuery(query), args...)
 	return db.DB.SelectContext(ctx, dest, query, args...)
 }
 
@@ -685,7 +683,7 @@ func (db *DB) addSchemaMigration(tx *DBTx, migration *DBMigration) error {
 	switch db.config.Adapter {
 	case "mysql":
 		query = fmt.Sprintf(
-			"INSERT INTO %s.%s (version) VALUES (%s)",
+			"INSERT INTO %s.%s (version) VALUES (%s);",
 			db.config.Database,
 			db.config.SchemaMigrationsTable,
 			migration.Version,
@@ -697,7 +695,7 @@ func (db *DB) addSchemaMigration(tx *DBTx, migration *DBMigration) error {
 		}
 	case "postgres":
 		query = fmt.Sprintf(
-			"INSERT INTO %s.%s (version) VALUES (%s)",
+			"INSERT INTO %s.%s (version) VALUES (%s);",
 			db.config.SchemaSearchPath,
 			db.config.SchemaMigrationsTable,
 			migration.Version,
@@ -719,7 +717,7 @@ func (db *DB) removeSchemaMigration(tx *DBTx, migration *DBMigration) error {
 	switch db.config.Adapter {
 	case "mysql":
 		query = fmt.Sprintf(
-			`DELETE FROM %s.%s WHERE version = '%s'`,
+			`DELETE FROM %s.%s WHERE version = '%s';`,
 			db.config.Database,
 			db.config.SchemaMigrationsTable,
 			migration.Version,
@@ -731,7 +729,7 @@ func (db *DB) removeSchemaMigration(tx *DBTx, migration *DBMigration) error {
 		}
 	case "postgres":
 		query = fmt.Sprintf(
-			`DELETE FROM %s.%s WHERE version = '%s'`,
+			`DELETE FROM %s.%s WHERE version = '%s';`,
 			db.config.SchemaSearchPath,
 			db.config.SchemaMigrationsTable,
 			migration.Version,
@@ -757,13 +755,13 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 	switch db.config.Adapter {
 	case "mysql":
 		rows, err = db.Query(
-			`SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?`,
+			`SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?;`,
 			db.config.Database,
 			db.config.SchemaMigrationsTable,
 		)
 	case "postgres":
 		rows, err = db.Query(
-			`SELECT COUNT(*) FROM pg_tables WHERE schemaname = $1 AND tablename = $2`,
+			`SELECT COUNT(*) FROM pg_tables WHERE schemaname = $1 AND tablename = $2;`,
 			db.config.SchemaSearchPath,
 			db.config.SchemaMigrationsTable,
 		)
@@ -783,17 +781,32 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 	if count < 1 {
 		switch db.config.Adapter {
 		case "mysql":
-			_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + db.config.SchemaMigrationsTable + " (`version` varchar(64), PRIMARY KEY (`version`)) ")
+			_, err = db.Exec(
+				fmt.Sprintf(
+					"CREATE TABLE IF NOT EXISTS %s (version varchar(64), PRIMARY KEY (version));",
+					db.config.SchemaMigrationsTable,
+				),
+			)
 			if err != nil {
 				return err
 			}
 		case "postgres":
-			_, err = db.Exec("CREATE SCHEMA IF NOT EXISTS " + db.config.SchemaSearchPath)
+			_, err = db.Exec(
+				fmt.Sprintf(
+					"CREATE SCHEMA IF NOT EXISTS %s;",
+					db.config.SchemaSearchPath,
+				),
+			)
 			if err != nil {
 				return err
 			}
 
-			_, err = db.Exec("CREATE TABLE " + db.config.SchemaMigrationsTable + " (version VARCHAR PRIMARY KEY) ")
+			_, err = db.Exec(
+				fmt.Sprintf(
+					"CREATE TABLE %s (version VARCHAR PRIMARY KEY);",
+					db.config.SchemaMigrationsTable,
+				),
+			)
 			if err != nil {
 				return err
 			}
@@ -803,7 +816,7 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 	return nil
 }
 
-func (db *DB) migratedVersions(tx *DBTx) ([]string, error) {
+func (db *DB) migratedVersions() ([]string, error) {
 	var (
 		err  error
 		rows *sql.Rows
@@ -811,9 +824,21 @@ func (db *DB) migratedVersions(tx *DBTx) ([]string, error) {
 
 	switch db.config.Adapter {
 	case "mysql":
-		rows, err = tx.Query(fmt.Sprintf("SELECT version FROM %s.%s ORDER BY version ASC", db.config.Database, db.config.SchemaMigrationsTable))
+		rows, err = db.Query(
+			fmt.Sprintf(
+				"SELECT version FROM %s.%s ORDER BY version ASC;",
+				db.config.Database,
+				db.config.SchemaMigrationsTable,
+			),
+		)
 	case "postgres":
-		rows, err = tx.Query(fmt.Sprintf("SELECT version FROM %s.%s ORDER BY version ASC", db.config.SchemaSearchPath, db.config.SchemaMigrationsTable))
+		rows, err = db.Query(
+			fmt.Sprintf(
+				"SELECT version FROM %s.%s ORDER BY version ASC;",
+				db.config.SchemaSearchPath,
+				db.config.SchemaMigrationsTable,
+			),
+		)
 	}
 
 	if err != nil {
@@ -866,4 +891,15 @@ func (db *DB) setupWrapper(wrapper *sqlx.DB) error {
 	db.DB.SetMaxOpenConns(db.config.MaxOpenConns)
 
 	return db.DB.Ping()
+}
+
+func formatDBQuery(query string) string {
+	formattedQuery := strings.Trim(query, "\n")
+	formattedQuery = strings.TrimSpace(formattedQuery)
+
+	if strings.Contains(formattedQuery, "\n") {
+		formattedQuery = strings.ReplaceAll(formattedQuery, "\n", "\n\t\t\t\t\t     ")
+	}
+
+	return loggerDBPrefix + formattedQuery
 }
