@@ -58,9 +58,9 @@ func (tx *DBTx) ExecContext(ctx context.Context, query string, args ...interface
 // transaction has been committed or rolled back.
 //
 // To use an existing prepared statement on this transaction, see DBTx.Stmt.
-func (tx *DBTx) Prepare(query string) (*sql.Stmt, error) {
-	tx.logger.Info(formatDBQuery(query))
-	return tx.Tx.Prepare(query)
+func (tx *DBTx) Prepare(query string) (*DBStmt, error) {
+	stmt, err := tx.Tx.Prepare(query)
+	return &DBStmt{stmt, tx.logger, query}, err
 }
 
 // PrepareContext creates a prepared statement for use within a transaction.
@@ -72,9 +72,9 @@ func (tx *DBTx) Prepare(query string) (*sql.Stmt, error) {
 //
 // The provided context will be used for the preparation of the context, not for the execution of
 // the returned statement. The returned statement will run in the transaction context.
-func (tx *DBTx) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
-	tx.logger.Info(formatDBQuery(query))
-	return tx.Tx.PrepareContext(ctx, query)
+func (tx *DBTx) PrepareContext(ctx context.Context, query string) (*DBStmt, error) {
+	stmt, err := tx.Tx.PrepareContext(ctx, query)
+	return &DBStmt{stmt, tx.logger, query}, err
 }
 
 // Query executes a query that returns rows, typically a SELECT.
@@ -124,8 +124,8 @@ func (tx *DBTx) Rollback() error {
 //
 // The returned statement operates within the transaction and will be closed when the transaction
 // has been committed or rolled back.
-func (tx *DBTx) Stmt(stmt *sql.Stmt) *sql.Stmt {
-	return tx.Tx.Stmt(stmt)
+func (tx *DBTx) Stmt(stmt *DBStmt) *DBStmt {
+	return &DBStmt{tx.Tx.Stmt(stmt.Stmt), tx.logger, stmt.query}
 }
 
 // StmtContext returns a transaction-specific prepared statement from an existing statement.
@@ -142,6 +142,6 @@ func (tx *DBTx) Stmt(stmt *sql.Stmt) *sql.Stmt {
 //
 // The returned statement operates within the transaction and will be closed when the transaction
 // has been committed or rolled back.
-func (tx *DBTx) StmtContext(ctx context.Context, stmt *sql.Stmt) *sql.Stmt {
-	return tx.Tx.StmtContext(ctx, stmt)
+func (tx *DBTx) StmtContext(ctx context.Context, stmt *DBStmt) *DBStmt {
+	return &DBStmt{tx.Tx.StmtContext(ctx, stmt.Stmt), tx.logger, stmt.query}
 }

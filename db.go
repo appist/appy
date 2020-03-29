@@ -33,6 +33,8 @@ var (
 
 // DBer implements all DB methods and is useful for mocking DB in unit tests.
 type DBer interface {
+	Begin() (*DBTx, error)
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*DBTx, error)
 	BindNamed(query string, arg interface{}) (string, []interface{}, error)
 	Close() error
 	Config() *DBConfig
@@ -46,6 +48,8 @@ type DBer interface {
 	GenerateMigration(name, target string, tx bool) error
 	Migrate() error
 	MigrateStatus() ([][]string, error)
+	Prepare(query string) (*DBStmt, error)
+	PrepareContext(ctx context.Context, query string) (*DBStmt, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
@@ -96,6 +100,21 @@ func (db *DB) Begin() (*DBTx, error) {
 	db.logger.Info(formatDBQuery("BEGIN;"))
 
 	tx, err := db.DB.Begin()
+	return &DBTx{tx, db.logger}, err
+}
+
+// BeginTx starts a transaction.
+//
+// The provided context is used until the transaction is committed or rolled back. If the context
+// is canceled, the sql package will roll back the transaction. Tx.Commit will return an error if
+// the context provided to BeginTx is canceled.
+//
+// The provided TxOptions is optional and may be nil if defaults should be used. If a non-default
+// isolation level is used that the driver doesn't support, an error will be returned.
+func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*DBTx, error) {
+	db.logger.Info(formatDBQuery("BEGIN;"))
+
+	tx, err := db.DB.BeginTx(ctx, opts)
 	return &DBTx{tx, db.logger}, err
 }
 
@@ -619,6 +638,25 @@ func (db *DB) Rollback() error {
 	}
 
 	return nil
+}
+
+// Prepare creates a prepared statement for later queries or executions. Multiple queries or
+// executions may be run concurrently from the returned statement. The caller must call the
+// statement's Close method when the statement is no longer needed.
+func (db *DB) Prepare(query string) (*DBStmt, error) {
+	stmt, err := db.DB.Prepare(query)
+	return &DBStmt{stmt, db.logger, query}, err
+}
+
+// PrepareContext creates a prepared statement for later queries or executions. Multiple queries
+// or executions may be run concurrently from the returned statement. The caller must call the
+// statement's Close method when the statement is no longer needed.
+//
+// The provided context is used for the preparation of the statement, not for the execution of
+// the statement.
+func (db *DB) PrepareContext(ctx context.Context, query string) (*DBStmt, error) {
+	stmt, err := db.DB.PrepareContext(ctx, query)
+	return &DBStmt{stmt, db.logger, query}, err
 }
 
 // Select using this DB. Any placeholder parameters are replaced with supplied args.
