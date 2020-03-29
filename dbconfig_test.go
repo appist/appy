@@ -138,5 +138,3 @@ func (s *DBConfigSuite) TestParseDBConfigForPostgreSQL() {
 func TestDBConfigSuite(t *testing.T) {
 	RunTestSuite(t, new(DBConfigSuite))
 }
-
-

@@ -830,13 +830,13 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 
 	switch db.config.Adapter {
 	case "mysql":
-		rows, err = db.Query(
+		err = db.Get(&count,
 			`SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?;`,
 			db.config.Database,
 			db.config.SchemaMigrationsTable,
 		)
 	case "postgres":
-		rows, err = db.Query(
+		err = db.Get(&count,
 			`SELECT COUNT(*) FROM pg_tables WHERE schemaname = $1 AND tablename = $2;`,
 			db.config.SchemaSearchPath,
 			db.config.SchemaMigrationsTable,
