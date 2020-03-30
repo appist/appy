@@ -106,6 +106,8 @@ type (
 		*sqlx.Rows
 	}
 
+	// DBNamedStmt is a prepared statement that executes named queries.  Prepare it how you would
+	// execute a NamedQuery, but pass in a struct or map when executing.
 	DBNamedStmt struct {
 		*sqlx.NamedStmt
 	}
