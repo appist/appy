@@ -12,15 +12,15 @@ type DBTxer interface {
 	Commit() error
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-	Prepare(query string) (*sql.Stmt, error)
-	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+	Prepare(query string) (*DBStmt, error)
+	PrepareContext(ctx context.Context, query string) (*DBStmt, error)
+	Query(query string, args ...interface{}) (*DBRows, error)
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*DBRows, error)
+	QueryRow(query string, args ...interface{}) *DBRow
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *DBRow
 	Rollback() error
-	Stmt(stmt *sql.Stmt) *sql.Stmt
-	StmtContext(ctx context.Context, stmt *sql.Stmt) *sql.Stmt
+	Stmt(stmt *DBStmt) *DBStmt
+	StmtContext(ctx context.Context, stmt *DBStmt) *DBStmt
 }
 
 // DBTx is an in-progress database transaction.
@@ -80,33 +80,37 @@ func (tx *DBTx) PrepareContext(ctx context.Context, query string) (*DBStmt, erro
 }
 
 // Query executes a query that returns rows, typically a SELECT.
-func (tx *DBTx) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (tx *DBTx) Query(query string, args ...interface{}) (*DBRows, error) {
 	tx.logger.Infof(formatDBQuery(query), args...)
-	return tx.Tx.Query(query, args...)
+
+	rows, err := tx.Tx.Queryx(query, args...)
+	return &DBRows{rows}, err
 }
 
 // QueryContext executes a query that returns rows, typically a SELECT.
-func (tx *DBTx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (tx *DBTx) QueryContext(ctx context.Context, query string, args ...interface{}) (*DBRows, error) {
 	tx.logger.Infof(formatDBQuery(query), args...)
-	return tx.Tx.QueryContext(ctx, query, args...)
+
+	rows, err := tx.Tx.QueryxContext(ctx, query, args...)
+	return &DBRows{rows}, err
 }
 
 // QueryRow executes a query that is expected to return at most one row. QueryRow always returns
 // a non-nil value. Errors are deferred until Row's Scan method is called. If the query selects no
-// rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan scans the first
+// rows, the *DBRow's Scan will return ErrNoRows. Otherwise, the *DBRow's Scan scans the first
 // selected row and discards the rest.
-func (tx *DBTx) QueryRow(query string, args ...interface{}) *sql.Row {
+func (tx *DBTx) QueryRow(query string, args ...interface{}) *DBRow {
 	tx.logger.Infof(formatDBQuery(query), args...)
-	return tx.Tx.QueryRow(query, args...)
+	return &DBRow{tx.Tx.QueryRowx(query, args...)}
 }
 
 // QueryRowContext executes a query that is expected to return at most one row. QueryRowContext
 // always returns a non-nil value. Errors are deferred until Row's Scan method is called. If the
-// query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan scans
+// query selects no rows, the *DBRow's Scan will return ErrNoRows. Otherwise, the *DBRow's Scan scans
 // the first selected row and discards the rest.
-func (tx *DBTx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (tx *DBTx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *DBRow {
 	tx.logger.Infof(formatDBQuery(query), args...)
-	return tx.Tx.QueryRowContext(ctx, query, args...)
+	return &DBRow{tx.Tx.QueryRowxContext(ctx, query, args...)}
 }
 
 // Rollback aborts the transaction.

@@ -32,78 +32,84 @@ var (
 	dbMigratePath = "db/migrate/"
 )
 
-// DBer implements all DB methods and is useful for mocking DB in unit tests.
-type DBer interface {
-	Begin() (*DBTx, error)
-	BeginTx(ctx context.Context, opts *sql.TxOptions) (*DBTx, error)
-	Close() error
-	Config() *DBConfig
-	Conn(ctx context.Context) (*sql.Conn, error)
-	Connect() error
-	ConnectDB(database string) error
-	CreateDB(database string) error
-	Driver() driver.Driver
-	DriverName() string
-	DropDB(database string) error
-	DumpSchema(database string) error
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-	GenerateMigration(name, target string, tx bool) error
-	Get(dest interface{}, query string, args ...interface{}) error
-	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	Migrate() error
-	MigrateStatus() ([][]string, error)
-	NamedExec(query string, arg interface{}) (sql.Result, error)
-	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
-	NamedQuery(query string, arg interface{}) (*DBRows, error)
-	NamedQueryContext(ctx context.Context, query string, arg interface{}) (*DBRows, error)
-	Ping() error
-	PingContext(ctx context.Context) error
-	Prepare(query string) (*DBStmt, error)
-	PrepareContext(ctx context.Context, query string) (*DBStmt, error)
-	PrepareNamed(query string) (*sqlx.NamedStmt, error)
-	PrepareNamedContext(ctx context.Context, query string) (*sqlx.NamedStmt, error)
-	Query(query string, args ...interface{}) (*DBRows, error)
-	QueryContext(ctx context.Context, query string, args ...interface{}) (*DBRows, error)
-	QueryRow(query string, args ...interface{}) *DBRow
-	QueryRowContext(ctx context.Context, query string, args ...interface{}) *DBRow
-	Rebind(query string) string
-	RegisterMigration(up func(*DB) error, down func(*DB) error, args ...string) error
-	RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string) error
-	RegisterSeedTx(seed func(*DBTx) error)
-	Rollback() error
-	Schema() string
-	Seed() error
-	Select(dest interface{}, query string, args ...interface{}) error
-	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	SetConnMaxLifetime(d time.Duration)
-	SetMaxIdleConns(n int)
-	SetMaxOpenConns(n int)
-	SetSchema(schema string)
-	Stats() sql.DBStats
-}
+type (
+	// DBer implements all DB methods and is useful for mocking DB in unit tests.
+	DBer interface {
+		Begin() (*DBTx, error)
+		BeginContext(ctx context.Context, opts *sql.TxOptions) (*DBTx, error)
+		Close() error
+		Config() *DBConfig
+		Conn(ctx context.Context) (*sql.Conn, error)
+		Connect() error
+		ConnectDB(database string) error
+		CreateDB(database string) error
+		Driver() driver.Driver
+		DriverName() string
+		DropDB(database string) error
+		DumpSchema(database string) error
+		Exec(query string, args ...interface{}) (sql.Result, error)
+		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+		GenerateMigration(name, target string, tx bool) error
+		Get(dest interface{}, query string, args ...interface{}) error
+		GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+		Migrate() error
+		MigrateStatus() ([][]string, error)
+		NamedExec(query string, arg interface{}) (sql.Result, error)
+		NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+		NamedQuery(query string, arg interface{}) (*DBRows, error)
+		NamedQueryContext(ctx context.Context, query string, arg interface{}) (*DBRows, error)
+		Ping() error
+		PingContext(ctx context.Context) error
+		Prepare(query string) (*DBStmt, error)
+		PrepareContext(ctx context.Context, query string) (*DBStmt, error)
+		PrepareNamed(query string) (*DBNamedStmt, error)
+		PrepareNamedContext(ctx context.Context, query string) (*DBNamedStmt, error)
+		Query(query string, args ...interface{}) (*DBRows, error)
+		QueryContext(ctx context.Context, query string, args ...interface{}) (*DBRows, error)
+		QueryRow(query string, args ...interface{}) *DBRow
+		QueryRowContext(ctx context.Context, query string, args ...interface{}) *DBRow
+		Rebind(query string) string
+		RegisterMigration(up func(*DB) error, down func(*DB) error, args ...string) error
+		RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string) error
+		RegisterSeedTx(seed func(*DBTx) error)
+		Rollback() error
+		Schema() string
+		Seed() error
+		Select(dest interface{}, query string, args ...interface{}) error
+		SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+		SetConnMaxLifetime(d time.Duration)
+		SetMaxIdleConns(n int)
+		SetMaxOpenConns(n int)
+		SetSchema(schema string)
+		Stats() sql.DBStats
+	}
 
-// DB manages the database config/connection/migrations.
-type DB struct {
-	*sqlx.DB
-	config     *DBConfig
-	logger     *Logger
-	migrations []*DBMigration
-	mu         *sync.Mutex
-	schema     string
-	seed       func(*DBTx) error
-	support    Supporter
-}
+	// DB manages the database config/connection/migrations.
+	DB struct {
+		*sqlx.DB
+		config     *DBConfig
+		logger     *Logger
+		migrations []*DBMigration
+		mu         *sync.Mutex
+		schema     string
+		seed       func(*DBTx) error
+		support    Supporter
+	}
 
-// DBRow is a wrapper around sqlx.Row.
-type DBRow struct {
-	*sqlx.Row
-}
+	// DBRow is a wrapper around sqlx.Row.
+	DBRow struct {
+		*sqlx.Row
+	}
 
-// DBRows is a wrapper around sqlx.Rows.
-type DBRows struct {
-	*sqlx.Rows
-}
+	// DBRows is a wrapper around sqlx.Rows.
+	DBRows struct {
+		*sqlx.Rows
+	}
+
+	DBNamedStmt struct {
+		*sqlx.NamedStmt
+	}
+)
 
 // NewDB initializes the database handler that is used to connect to the database.
 func NewDB(config *DBConfig, logger *Logger, support Supporter) *DB {
@@ -127,15 +133,15 @@ func (db *DB) Begin() (*DBTx, error) {
 	return &DBTx{tx, db.logger}, err
 }
 
-// BeginTx starts a transaction.
+// BeginContext starts a transaction.
 //
 // The provided context is used until the transaction is committed or rolled back. If the context
 // is canceled, the sql package will roll back the transaction. Tx.Commit will return an error if
-// the context provided to BeginTx is canceled.
+// the context provided to BeginContext is canceled.
 //
 // The provided TxOptions is optional and may be nil if defaults should be used. If a non-default
 // isolation level is used that the driver doesn't support, an error will be returned.
-func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*DBTx, error) {
+func (db *DB) BeginContext(ctx context.Context, opts *sql.TxOptions) (*DBTx, error) {
 	db.logger.Info(formatDBQuery("BEGIN;"))
 
 	tx, err := db.DB.BeginTxx(ctx, opts)
@@ -553,16 +559,20 @@ func (db *DB) NamedQueryContext(ctx context.Context, query string, arg interface
 	return &DBRows{rows}, err
 }
 
-// PrepareNamed returns a sqlx.NamedStmt.
-func (db *DB) PrepareNamed(query string) (*sqlx.NamedStmt, error) {
+// PrepareNamed returns a DBNamedStmt.
+func (db *DB) PrepareNamed(query string) (*DBNamedStmt, error) {
 	db.logger.Info(formatDBQuery(query))
-	return db.DB.PrepareNamed(query)
+
+	namedStmt, err := db.DB.PrepareNamed(query)
+	return &DBNamedStmt{namedStmt}, err
 }
 
-// PrepareNamedContext returns a sqlx.NamedStmt.
-func (db *DB) PrepareNamedContext(ctx context.Context, query string) (*sqlx.NamedStmt, error) {
+// PrepareNamedContext returns DBNamedStmt.
+func (db *DB) PrepareNamedContext(ctx context.Context, query string) (*DBNamedStmt, error) {
 	db.logger.Info(formatDBQuery(query))
-	return db.DB.PrepareNamedContext(ctx, query)
+
+	namedStmt, err := db.DB.PrepareNamedContext(ctx, query)
+	return &DBNamedStmt{namedStmt}, err
 }
 
 // Query executes a query that returns rows, typically a SELECT. The args are for any placeholder

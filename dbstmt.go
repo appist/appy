@@ -13,10 +13,10 @@ import (
 type DBStmter interface {
 	Exec(args ...interface{}) (sql.Result, error)
 	ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
-	Query(args ...interface{}) (*sql.Rows, error)
-	QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
-	QueryRow(args ...interface{}) *sql.Row
-	QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
+	Query(args ...interface{}) (*DBRows, error)
+	QueryContext(ctx context.Context, args ...interface{}) (*DBRows, error)
+	QueryRow(args ...interface{}) *DBRow
+	QueryRowContext(ctx context.Context, args ...interface{}) *DBRow
 }
 
 // DBStmt is a prepared statement.
@@ -50,16 +50,20 @@ func (s *DBStmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Resu
 
 // Query executes a prepared query statement with the given arguments and returns the query
 // results as a *Rows.
-func (s *DBStmt) Query(args ...interface{}) (*sql.Rows, error) {
+func (s *DBStmt) Query(args ...interface{}) (*DBRows, error) {
 	s.logger.Info(formatDBQuery(s.query) + formatDBStmtParams(args...))
-	return s.Stmt.Query(args...)
+
+	rows, err := s.Stmt.Queryx(args...)
+	return &DBRows{rows}, err
 }
 
 // QueryContext executes a prepared query statement with the given arguments and returns the query
 // results as a *Rows.
-func (s *DBStmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
+func (s *DBStmt) QueryContext(ctx context.Context, args ...interface{}) (*DBRows, error) {
 	s.logger.Info(formatDBQuery(s.query) + formatDBStmtParams(args...))
-	return s.Stmt.QueryContext(ctx, args...)
+
+	rows, err := s.Stmt.QueryxContext(ctx, args...)
+	return &DBRows{rows}, err
 }
 
 // QueryRow executes a prepared query statement with the given arguments. If an error occurs during
@@ -71,18 +75,22 @@ func (s *DBStmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Ro
 //
 //  var name string
 //  err := nameByUseridStmt.QueryRow(id).Scan(&name)
-func (s *DBStmt) QueryRow(args ...interface{}) *sql.Row {
+func (s *DBStmt) QueryRow(args ...interface{}) *DBRow {
 	s.logger.Info(formatDBQuery(s.query) + formatDBStmtParams(args...))
-	return s.Stmt.QueryRow(args...)
+
+	row := s.Stmt.QueryRowx(args...)
+	return &DBRow{row}
 }
 
 // QueryRowContext executes a prepared query statement with the given arguments. If an error occurs
 // during the execution of the statement, that error will be returned by a call to Scan on the
 // returned *Row, which is always non-nil. If the query selects no rows, the *Row's Scan will
 // return ErrNoRows. Otherwise, the *Row's Scan scans the first selected row and discards the rest.
-func (s *DBStmt) QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row {
+func (s *DBStmt) QueryRowContext(ctx context.Context, args ...interface{}) *DBRow {
 	s.logger.Info(formatDBQuery(s.query) + formatDBStmtParams(args...))
-	return s.Stmt.QueryRowContext(ctx, args...)
+
+	row := s.Stmt.QueryRowxContext(ctx, args...)
+	return &DBRow{row}
 }
 
 func formatDBStmtParams(args ...interface{}) string {

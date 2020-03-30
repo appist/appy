@@ -248,7 +248,7 @@ func (s *DBSuite) TestTransactionWithContextForMySQL() {
 	s.setupMySQL(database)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	tx, err := s.mysqlDB.BeginTx(ctx, nil)
+	tx, err := s.mysqlDB.BeginContext(ctx, nil)
 	s.Nil(err)
 
 	_, err = tx.Exec("INSERT INTO users VALUES(?);", "barfoo")
@@ -267,7 +267,7 @@ func (s *DBSuite) TestTransactionWithContextForPostgreSQL() {
 	s.setupPostgreSQL(database)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	tx, err := s.psqlDB.BeginTx(ctx, nil)
+	tx, err := s.psqlDB.BeginContext(ctx, nil)
 	s.Nil(err)
 
 	_, err = tx.Exec("INSERT INTO users VALUES($1);", "barfoo")
@@ -562,21 +562,12 @@ func (s *DBSuite) TestDBOperations() {
 	_, err = s.mysqlDB.Exec("SELECT * FROM users;")
 	s.Nil(err)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	_, err = s.mysqlDB.ExecContext(ctx, "SELECT * FROM users;")
-	s.Equal("context canceled", err.Error())
-
 	var count int
 	err = s.mysqlDB.Get(&count, "SELECT COUNT(*) FROM users;")
 	s.Nil(err)
 	s.Equal(0, count)
 
-	err = s.mysqlDB.GetContext(ctx, &count, "SELECT COUNT(*) FROM users;")
-	s.Equal("context canceled", err.Error())
-
-	_, err = s.mysqlDB.NamedExec(`INSERT INTO users (username) VALUES (:username)`,
+	_, err = s.mysqlDB.NamedExec(`INSERT INTO users (username) VALUES (:username);`,
 		map[string]interface{}{
 			"username": "Smith",
 		},
@@ -587,25 +578,85 @@ func (s *DBSuite) TestDBOperations() {
 	s.Nil(err)
 	s.Equal(1, count)
 
-	_, err = s.mysqlDB.NamedExecContext(ctx, `INSERT INTO users (username) VALUES (:username)`,
-		map[string]interface{}{
-			"username": "Smith",
-		},
-	)
-	s.Equal("context canceled", err.Error())
-
-	_, err = s.mysqlDB.NamedQuery(`SELECT * FROM users WHERE username=:username`,
+	_, err = s.mysqlDB.NamedQuery(`SELECT * FROM users WHERE username=:username;`,
 		map[string]interface{}{
 			"username": "Smith",
 		},
 	)
 	s.Nil(err)
 
-	_, err = s.mysqlDB.NamedQueryContext(ctx, `SELECT * FROM users WHERE username=:username`,
+	type User struct {
+		Username string `db:"username"`
+	}
+
+	user := User{Username: "Smith"}
+	users := []User{}
+	namedStmt, err := s.mysqlDB.PrepareNamed(`SELECT * FROM users WHERE username = :username;`)
+	s.Nil(err)
+
+	err = namedStmt.Select(&users, user)
+	s.Nil(err)
+	s.Equal(1, len(users))
+
+	row := s.mysqlDB.QueryRow(`SELECT * FROM users WHERE username=?;`, "Smith")
+	var username string
+	err = row.Scan(&username)
+	s.Nil(err)
+	s.Equal("Smith", username)
+
+	stmt, err := s.mysqlDB.Prepare(`SELECT * FROM users WHERE username=?;`)
+	row = stmt.QueryRow("Smith")
+	s.Nil(err)
+	row.Scan(&user)
+	s.Equal("Smith", user.Username)
+
+	var usernames []string
+	err = s.mysqlDB.Select(&usernames, "SELECT username FROM users;")
+	s.Nil(err)
+	s.Equal(1, len(usernames))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err = s.mysqlDB.ExecContext(ctx, "SELECT * FROM users;")
+	s.Equal("context canceled", err.Error())
+
+	err = s.mysqlDB.GetContext(ctx, &count, "SELECT COUNT(*) FROM users;")
+	s.Equal("context canceled", err.Error())
+
+	_, err = s.mysqlDB.NamedExecContext(ctx, `INSERT INTO users (username) VALUES (:username);`,
 		map[string]interface{}{
 			"username": "Smith",
 		},
 	)
+	s.Equal("context canceled", err.Error())
+
+	_, err = s.mysqlDB.NamedQueryContext(ctx, `SELECT * FROM users WHERE username=:username;`,
+		map[string]interface{}{
+			"username": "Smith",
+		},
+	)
+	s.Equal("context canceled", err.Error())
+
+	users = []User{}
+	_, err = s.mysqlDB.PrepareNamedContext(ctx, `SELECT * FROM users WHERE username = :username;`)
+	s.Equal("context canceled", err.Error())
+
+	_, err = s.mysqlDB.Query(`SELECT * FROM users;`)
+	s.Nil(err)
+
+	_, err = s.mysqlDB.QueryContext(ctx, `SELECT * FROM users;`)
+	s.Equal("context canceled", err.Error())
+
+	usernames = []string{}
+	err = s.mysqlDB.SelectContext(ctx, &usernames, "SELECT username FROM users;")
+	s.Equal("context canceled", err.Error())
+
+	row = s.mysqlDB.QueryRowContext(ctx, `SELECT * FROM users WHERE username=?;`, "Smith")
+	err = row.Scan(&username)
+	s.Equal("context canceled", err.Error())
+
+	_, err = s.mysqlDB.PrepareContext(ctx, `SELECT * FROM users WHERE username=?;`)
 	s.Equal("context canceled", err.Error())
 }
 
