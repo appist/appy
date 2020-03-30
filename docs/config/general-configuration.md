@@ -35,7 +35,7 @@ Now, start adding your encrypted environment variable into the corresponding env
 $ APPY_ENV=<ENV> go run . config:enc <VALUE>
 
 // Copy the encrypted value into the config file for the specific environment.
-$ echo DB_URL=<ENCRYPTED_VALUE> > configs/.env.<ENV>
+$ echo DB_URL=<ENCRYPTED_VALUE> >> configs/.env.<ENV>
 ```
 
 After setting up the encrypted values in the config for the new environment, simply do:
