@@ -36,7 +36,6 @@ var (
 type DBer interface {
 	Begin() (*DBTx, error)
 	BeginTx(ctx context.Context, opts *sql.TxOptions) (*DBTx, error)
-	BindNamed(query string, arg interface{}) (string, []interface{}, error)
 	Close() error
 	Config() *DBConfig
 	Conn(ctx context.Context) (*sql.Conn, error)
@@ -131,12 +130,6 @@ func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*DBTx, error) {
 
 	tx, err := db.DB.BeginTxx(ctx, opts)
 	return &DBTx{tx, db.logger}, err
-}
-
-// BindNamed binds a query using the DB driver's bindvar type.
-func (db *DB) BindNamed(query string, arg interface{}) (string, []interface{}, error) {
-	db.logger.Infof(formatDBQuery(query), arg)
-	return db.DB.BindNamed(query, arg)
 }
 
 // Config returns the database config.
@@ -825,7 +818,6 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 	var (
 		count int
 		err   error
-		rows  *sqlx.Rows
 	)
 
 	switch db.config.Adapter {
@@ -846,13 +838,6 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 	if err != nil {
 		return err
 	}
-
-	rows.Next()
-	err = rows.Scan(&count)
-	if err != nil {
-		return err
-	}
-	rows.Close()
 
 	if count < 1 {
 		switch db.config.Adapter {
