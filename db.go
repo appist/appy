@@ -55,21 +55,21 @@ type DBer interface {
 	MigrateStatus() ([][]string, error)
 	NamedExec(query string, arg interface{}) (sql.Result, error)
 	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
-	NamedQuery(query string, arg interface{}) (*sqlx.Rows, error)
-	NamedQueryContext(ctx context.Context, query string, arg interface{}) (*sqlx.Rows, error)
+	NamedQuery(query string, arg interface{}) (*DBRows, error)
+	NamedQueryContext(ctx context.Context, query string, arg interface{}) (*DBRows, error)
 	Ping() error
 	PingContext(ctx context.Context) error
 	Prepare(query string) (*DBStmt, error)
 	PrepareContext(ctx context.Context, query string) (*DBStmt, error)
 	PrepareNamed(query string) (*sqlx.NamedStmt, error)
 	PrepareNamedContext(ctx context.Context, query string) (*sqlx.NamedStmt, error)
-	Query(query string, args ...interface{}) (*sqlx.Rows, error)
-	QueryContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error)
-	QueryRow(query string, args ...interface{}) *sqlx.Row
-	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
+	Query(query string, args ...interface{}) (*DBRows, error)
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*DBRows, error)
+	QueryRow(query string, args ...interface{}) *DBRow
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *DBRow
 	Rebind(query string) string
-	RegisterMigration(up func(*DB) error, down func(*DB) error, args ...string)
-	RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string)
+	RegisterMigration(up func(*DB) error, down func(*DB) error, args ...string) error
+	RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string) error
 	RegisterSeedTx(seed func(*DBTx) error)
 	Rollback() error
 	Schema() string
@@ -93,6 +93,16 @@ type DB struct {
 	schema     string
 	seed       func(*DBTx) error
 	support    Supporter
+}
+
+// DBRow is a wrapper around sqlx.Row.
+type DBRow struct {
+	*sqlx.Row
+}
+
+// DBRows is a wrapper around sqlx.Rows.
+type DBRows struct {
+	*sqlx.Rows
 }
 
 // NewDB initializes the database handler that is used to connect to the database.
@@ -243,7 +253,7 @@ func (db *DB) DumpSchema(dbname string) error {
 	var (
 		outBytes      bytes.Buffer
 		database, out string
-		versionRows   *sqlx.Rows
+		versionRows   *DBRows
 		versions      []string
 	)
 
@@ -528,15 +538,19 @@ func (db *DB) NamedExecContext(ctx context.Context, query string, arg interface{
 }
 
 // NamedQuery using this DB. Any named placeholder parameters are replaced with fields from arg.
-func (db *DB) NamedQuery(query string, arg interface{}) (*sqlx.Rows, error) {
+func (db *DB) NamedQuery(query string, arg interface{}) (*DBRows, error) {
 	db.logger.Infof(formatDBQuery(query), arg)
-	return db.DB.NamedQuery(query, arg)
+
+	rows, err := db.DB.NamedQuery(query, arg)
+	return &DBRows{rows}, err
 }
 
 // NamedQueryContext using this DB. Any named placeholder parameters are replaced with fields from arg.
-func (db *DB) NamedQueryContext(ctx context.Context, query string, arg interface{}) (*sqlx.Rows, error) {
+func (db *DB) NamedQueryContext(ctx context.Context, query string, arg interface{}) (*DBRows, error) {
 	db.logger.Infof(formatDBQuery(query), arg)
-	return db.DB.NamedQueryContext(ctx, query, arg)
+
+	rows, err := db.DB.NamedQueryContext(ctx, query, arg)
+	return &DBRows{rows}, err
 }
 
 // PrepareNamed returns a sqlx.NamedStmt.
@@ -553,16 +567,20 @@ func (db *DB) PrepareNamedContext(ctx context.Context, query string) (*sqlx.Name
 
 // Query executes a query that returns rows, typically a SELECT. The args are for any placeholder
 // parameters in the query.
-func (db *DB) Query(query string, args ...interface{}) (*sqlx.Rows, error) {
+func (db *DB) Query(query string, args ...interface{}) (*DBRows, error) {
 	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.Queryx(query, args...)
+
+	rows, err := db.DB.Queryx(query, args...)
+	return &DBRows{rows}, err
 }
 
 // QueryContext executes a query that returns rows, typically a SELECT. The args are for any
 // placeholder parameters in the query.
-func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error) {
+func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*DBRows, error) {
 	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.QueryxContext(ctx, query, args...)
+
+	rows, err := db.DB.QueryxContext(ctx, query, args...)
+	return &DBRows{rows}, err
 }
 
 // QueryRow executes a query that is expected to return at most one row. QueryRow always returns a
@@ -570,9 +588,11 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 //
 // If the query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan
 // scans the first selected row and discards the rest.
-func (db *DB) QueryRow(query string, args ...interface{}) *sqlx.Row {
+func (db *DB) QueryRow(query string, args ...interface{}) *DBRow {
 	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.QueryRowx(query, args...)
+
+	row := db.DB.QueryRowx(query, args...)
+	return &DBRow{row}
 }
 
 // QueryRowContext executes a query that is expected to return at most one row. QueryRowContext
@@ -580,25 +600,31 @@ func (db *DB) QueryRow(query string, args ...interface{}) *sqlx.Row {
 //
 // If the query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan
 // scans the first selected row and discards the rest.
-func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row {
+func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *DBRow {
 	db.logger.Infof(formatDBQuery(query), args...)
-	return db.DB.QueryRowxContext(ctx, query, args...)
+
+	row := db.DB.QueryRowxContext(ctx, query, args...)
+	return &DBRow{row}
 }
 
 // RegisterMigration registers the up/down migrations that won't be executed in transaction.
-func (db *DB) RegisterMigration(up func(*DB) error, down func(*DB) error, args ...string) {
+func (db *DB) RegisterMigration(up func(*DB) error, down func(*DB) error, args ...string) error {
 	err := db.registerMigration(up, down, nil, nil, args...)
 	if err != nil {
-		db.logger.Fatal(err)
+		return err
 	}
+
+	return nil
 }
 
 // RegisterMigrationTx registers the up/down migrations that will be executed in transaction.
-func (db *DB) RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string) {
+func (db *DB) RegisterMigrationTx(upTx func(*DBTx) error, downTx func(*DBTx) error, args ...string) error {
 	err := db.registerMigration(nil, nil, upTx, downTx, args...)
 	if err != nil {
-		db.logger.Fatal(err)
+		return err
 	}
+
+	return nil
 }
 
 // RegisterSeedTx registers the seeding that will be executed in transaction.
@@ -880,7 +906,7 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 func (db *DB) migratedVersions() ([]string, error) {
 	var (
 		err  error
-		rows *sqlx.Rows
+		rows *DBRows
 	)
 
 	switch db.config.Adapter {

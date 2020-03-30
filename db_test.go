@@ -292,7 +292,20 @@ func (s *DBSuite) TestMigrateSeedRollbackForMySQL() {
 	err := s.mysqlDB.Connect()
 	s.Nil(err)
 
-	s.mysqlDB.RegisterMigrationTx(
+	err = s.mysqlDB.RegisterMigrationTx(
+		func(tx *DBTx) error {
+			_, err := tx.Exec(``)
+			return err
+		},
+		func(tx *DBTx) error {
+			_, err := tx.Exec(``)
+			return err
+		},
+		"create_orders",
+	)
+	s.Equal("invalid filename '\"create_orders\"', a valid example: 20060102150405_create_users.go", err.Error())
+
+	err = s.mysqlDB.RegisterMigrationTx(
 		func(tx *DBTx) error {
 			_, err := tx.Exec(`
 					CREATE TABLE IF NOT EXISTS orders (
@@ -310,8 +323,9 @@ func (s *DBSuite) TestMigrateSeedRollbackForMySQL() {
 		},
 		"20200201165238_create_orders",
 	)
+	s.Nil(err)
 
-	s.mysqlDB.RegisterMigration(
+	err = s.mysqlDB.RegisterMigration(
 		func(db *DB) error {
 			_, err := db.Exec(`CREATE INDEX orders_on_username ON orders(username);`)
 			return err
@@ -322,6 +336,7 @@ func (s *DBSuite) TestMigrateSeedRollbackForMySQL() {
 		},
 		"20200202165238_add_orders_on_username_index",
 	)
+	s.Nil(err)
 
 	err = s.mysqlDB.Migrate()
 	s.Nil(err)
@@ -535,6 +550,63 @@ func (s *DBSuite) TestMigrateSeedRollbackForPostgreSQL() {
 
 	err = os.RemoveAll(dbMigratePath)
 	s.Nil(err)
+}
+
+func (s *DBSuite) TestDBOperations() {
+	database := "test_ops_for_mysql"
+	s.setupMySQL(database)
+
+	err := s.mysqlDB.Connect()
+	s.Nil(err)
+
+	_, err = s.mysqlDB.Exec("SELECT * FROM users;")
+	s.Nil(err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err = s.mysqlDB.ExecContext(ctx, "SELECT * FROM users;")
+	s.Equal("context canceled", err.Error())
+
+	var count int
+	err = s.mysqlDB.Get(&count, "SELECT COUNT(*) FROM users;")
+	s.Nil(err)
+	s.Equal(0, count)
+
+	err = s.mysqlDB.GetContext(ctx, &count, "SELECT COUNT(*) FROM users;")
+	s.Equal("context canceled", err.Error())
+
+	_, err = s.mysqlDB.NamedExec(`INSERT INTO users (username) VALUES (:username)`,
+		map[string]interface{}{
+			"username": "Smith",
+		},
+	)
+	s.Nil(err)
+
+	err = s.mysqlDB.Get(&count, "SELECT COUNT(*) FROM users;")
+	s.Nil(err)
+	s.Equal(1, count)
+
+	_, err = s.mysqlDB.NamedExecContext(ctx, `INSERT INTO users (username) VALUES (:username)`,
+		map[string]interface{}{
+			"username": "Smith",
+		},
+	)
+	s.Equal("context canceled", err.Error())
+
+	_, err = s.mysqlDB.NamedQuery(`SELECT * FROM users WHERE username=:username`,
+		map[string]interface{}{
+			"username": "Smith",
+		},
+	)
+	s.Nil(err)
+
+	_, err = s.mysqlDB.NamedQueryContext(ctx, `SELECT * FROM users WHERE username=:username`,
+		map[string]interface{}{
+			"username": "Smith",
+		},
+	)
+	s.Equal("context canceled", err.Error())
 }
 
 func (s *DBSuite) TestSetSchema() {

@@ -71,7 +71,7 @@ import (
 func init() {
 	db := app.DB("{{.DBName}}")
 	if db != nil {
-		db.RegisterMigration{{if .Tx}}Tx{{end}}(
+		err := db.RegisterMigration{{if .Tx}}Tx{{end}}(
 			// Up migration
 			func(db *appy.DB{{if .Tx}}Tx{{end}}) error {
 				_, err := db.Exec(` + "`" + "`" + `)
@@ -83,6 +83,10 @@ func init() {
 				return err
 			},
 		)
+
+		if err != nil {
+			app.Logger.Fatal(err)
+		}
 	}
 }
 `)
