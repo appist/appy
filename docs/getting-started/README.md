@@ -10,6 +10,7 @@ description: Everything you need to know to install appy and create your first a
 * [Go &gt;= 1.14](https://golang.org/dl/)
 * [NodeJS &gt;= 13](https://nodejs.org/en/download/)
 * [PostgreSQL &gt;= 12](https://www.postgresql.org/download/)
+* [MySQL &gt;= 5.7](https://www.mysql.com/downloads/)
 
 ## Quick Start
 
