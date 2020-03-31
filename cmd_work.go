@@ -15,6 +15,13 @@ func newWorkCommand(config *Config, dbManager *DBManager, logger *Logger, worker
 				logger.Fatal(dbManager.Errors()[0])
 			}
 
+			for _, db := range dbManager.databases {
+				err := db.Connect()
+				if err != nil {
+					logger.Fatal(err)
+				}
+			}
+
 			worker.Run()
 		},
 	}

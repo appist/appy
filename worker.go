@@ -21,11 +21,12 @@ type Worker struct {
 	*asynq.Client
 	*asynq.ServeMux
 	asynq.RedisConnOpt
-	asset  *Asset
-	config *Config
-	jobs   []*Job
-	logger *Logger
-	mu     *sync.Mutex
+	asset     *Asset
+	config    *Config
+	dbManager *DBManager
+	jobs      []*Job
+	logger    *Logger
+	mu        *sync.Mutex
 }
 
 // WorkerHandler processes tasks.
@@ -45,7 +46,7 @@ type WorkerHandlerFunc = asynq.HandlerFunc
 type WorkerMiddlewareFunc = asynq.MiddlewareFunc
 
 // NewWorker initializes a worker to process background jobs.
-func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
+func NewWorker(asset *Asset, config *Config, dbManager *DBManager, logger *Logger) *Worker {
 	workerLogger := &WorkerLogger{
 		logger,
 		nil,
@@ -83,6 +84,7 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 		redisConnOpt,
 		asset,
 		config,
+		dbManager,
 		[]*Job{},
 		logger,
 		&sync.Mutex{},
@@ -104,6 +106,7 @@ func NewWorker(asset *Asset, config *Config, logger *Logger) *Worker {
 			redisConnOpt,
 			asset,
 			config,
+			dbManager,
 			[]*Job{},
 			logger,
 			&sync.Mutex{},
@@ -224,6 +227,7 @@ func (w *Worker) Info() []string {
 		queues = append(queues, fmt.Sprintf("%s=%d", key, value))
 	}
 
+	lines = append(lines, w.dbManager.Info())
 	lines = append(lines, fmt.Sprintf("* Concurrency: %d, queues: %s", w.config.WorkerConcurrency, strings.Join(queues, ", ")))
 	return append(lines, "* Worker is now ready to process jobs...")
 }

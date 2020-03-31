@@ -13,19 +13,22 @@ import (
 
 type WorkerSuite struct {
 	TestSuite
-	asset  *Asset
-	config *Config
-	logger *Logger
-	buffer *bytes.Buffer
-	writer *bufio.Writer
+	asset     *Asset
+	config    *Config
+	dbManager *DBManager
+	logger    *Logger
+	buffer    *bytes.Buffer
+	writer    *bufio.Writer
 }
 
 func (s *WorkerSuite) SetupTest() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("DB_URI_PRIMARY", "postgres://postgres:whatever@0.0.0.0:15432/postgres?sslmode=disable&connect_timeout=5")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
+	support := &Support{}
 	s.logger, s.buffer, s.writer = NewFakeLogger()
 	s.asset = NewAsset(nil, map[string]string{
 		"docker": "testdata/server/.docker",
@@ -34,12 +37,14 @@ func (s *WorkerSuite) SetupTest() {
 		"view":   "testdata/server/pkg/views",
 		"web":    "testdata/server/web",
 	}, "")
-	s.config = NewConfig(s.asset, s.logger, &Support{})
+	s.config = NewConfig(s.asset, s.logger, support)
+	s.dbManager = NewDBManager(s.logger, support)
 }
 
 func (s *WorkerSuite) TearDownTest() {
 	os.Unsetenv("APPY_ENV")
 	os.Unsetenv("APPY_MASTER_KEY")
+	os.Unsetenv("DB_URI_PRIMARY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
@@ -50,7 +55,7 @@ func (s *WorkerSuite) TestNewWorkerWithWorkerRedisAddr() {
 	s.config.WorkerRedisDB = 1
 	s.config.WorkerRedisPoolSize = 15
 
-	worker := NewWorker(s.asset, s.config, s.logger)
+	worker := NewWorker(s.asset, s.config, s.dbManager, s.logger)
 	s.Equal("0.0.0.0:6379", worker.RedisConnOpt.(*asynq.RedisClientOpt).Addr)
 	s.Equal("foobar", worker.RedisConnOpt.(*asynq.RedisClientOpt).Password)
 	s.Equal(1, worker.RedisConnOpt.(*asynq.RedisClientOpt).DB)
@@ -61,7 +66,7 @@ func (s *WorkerSuite) TestNewWorkerWithWorkerRedisURL() {
 	s.config.WorkerRedisURL = "redis://:barfoo@0.0.0.0:26379/3"
 	s.config.WorkerRedisPoolSize = 25
 
-	worker := NewWorker(s.asset, s.config, s.logger)
+	worker := NewWorker(s.asset, s.config, s.dbManager, s.logger)
 	s.Equal("0.0.0.0:26379", worker.RedisConnOpt.(*asynq.RedisClientOpt).Addr)
 	s.Equal("barfoo", worker.RedisConnOpt.(*asynq.RedisClientOpt).Password)
 	s.Equal(3, worker.RedisConnOpt.(*asynq.RedisClientOpt).DB)
@@ -75,7 +80,7 @@ func (s *WorkerSuite) TestNewWorkerWithWorkerRedisSentinelAddrs() {
 	s.config.WorkerRedisSentinelPassword = "foobar"
 	s.config.WorkerRedisSentinelPoolSize = 20
 
-	worker := NewWorker(s.asset, s.config, s.logger)
+	worker := NewWorker(s.asset, s.config, s.dbManager, s.logger)
 	s.Equal([]string{"localhost:6379", "localhost:6380", "localhost:6381"}, worker.RedisConnOpt.(*asynq.RedisFailoverClientOpt).SentinelAddrs)
 	s.Equal("foobar", worker.RedisConnOpt.(*asynq.RedisFailoverClientOpt).SentinelPassword)
 	s.Equal("sentinel-master", worker.RedisConnOpt.(*asynq.RedisFailoverClientOpt).MasterName)
@@ -89,12 +94,21 @@ func (s *WorkerSuite) TestWorkerGlobalMiddleware() {
 	s.config.WorkerRedisDB = 1
 	s.config.WorkerRedisPoolSize = 15
 
-	worker := NewWorker(s.asset, s.config, s.logger)
+	count := 0
+	worker := NewWorker(s.asset, s.config, s.dbManager, s.logger)
+	worker.Use(func(next WorkerHandler) WorkerHandler {
+		return WorkerHandlerFunc(func(ctx context.Context, task *Job) error {
+			count += 10
+			return next.ProcessTask(ctx, task)
+		})
+	})
 	worker.ProcessTask(context.Background(), NewJob("test", map[string]interface{}{"name": "barfoo"}))
+
 	s.writer.Flush()
 	s.Contains(s.buffer.String(), "INFO")
 	s.Contains(s.buffer.String(), "[WORKER] job: test, payload: (name:barfoo) start")
 	s.Contains(s.buffer.String(), "[WORKER] job: test, payload: (name:barfoo) done in")
+	s.Equal(10, count)
 }
 
 func (s *WorkerSuite) TestWorkerTestUtils() {
@@ -102,7 +116,7 @@ func (s *WorkerSuite) TestWorkerTestUtils() {
 	defer os.Unsetenv("APPY_ENV")
 
 	s.config = NewConfig(s.asset, s.logger, &Support{})
-	worker := NewWorker(s.asset, s.config, s.logger)
+	worker := NewWorker(s.asset, s.config, s.dbManager, s.logger)
 
 	err := worker.Enqueue(NewJob("foo", map[string]interface{}{}), nil)
 	s.Nil(err)

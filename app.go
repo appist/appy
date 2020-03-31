@@ -39,7 +39,7 @@ func NewApp(asset *Asset, viewFuncs map[string]interface{}) *App {
 	viewEngine := NewViewEngine(asset, config, logger)
 	server := NewServer(asset, config, logger, support)
 	mailer := NewMailer(asset, config, i18n, logger, server, viewFuncs)
-	worker := NewWorker(asset, config, logger)
+	worker := NewWorker(asset, config, dbManager, logger)
 
 	// Setup the default middleware.
 	server.Use(AttachLogger(logger))

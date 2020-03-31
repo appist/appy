@@ -19,9 +19,11 @@ type WorkerLoggerSuite struct {
 func (s *WorkerLoggerSuite) SetupTest() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+	os.Setenv("DB_URI_PRIMARY", "postgres://postgres:whatever@0.0.0.0:15432/postgres?sslmode=disable&connect_timeout=5")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
+	support := &Support{}
 	baseLogger, buffer, writer := NewFakeLogger()
 	asset := NewAsset(nil, map[string]string{
 		"docker": "testdata/server/.docker",
@@ -30,8 +32,9 @@ func (s *WorkerLoggerSuite) SetupTest() {
 		"view":   "testdata/server/pkg/views",
 		"web":    "testdata/server/web",
 	}, "")
-	config := NewConfig(asset, baseLogger, &Support{})
-	worker := NewWorker(asset, config, baseLogger)
+	config := NewConfig(asset, baseLogger, support)
+	dbManager := NewDBManager(baseLogger, support)
+	worker := NewWorker(asset, config, dbManager, baseLogger)
 
 	s.buffer = buffer
 	s.writer = writer
@@ -44,6 +47,7 @@ func (s *WorkerLoggerSuite) SetupTest() {
 func (s *WorkerLoggerSuite) TearDownTest() {
 	os.Unsetenv("APPY_ENV")
 	os.Unsetenv("APPY_MASTER_KEY")
+	os.Unsetenv("DB_URI_PRIMARY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }

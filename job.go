@@ -15,10 +15,11 @@ type (
 
 	// JobOptions specifies how a job should be processed.
 	JobOptions struct {
-		Deadline time.Time
-		MaxRetry int
-		Queue    string
-		Timeout  time.Duration
+		Deadline  time.Time
+		MaxRetry  int
+		Queue     string
+		Timeout   time.Duration
+		UniqueTTL time.Duration
 	}
 )
 
@@ -48,6 +49,10 @@ func parseJobOptions(opts *JobOptions) []asynq.Option {
 
 	if opts.Timeout != 0 {
 		asynqOptions = append(asynqOptions, asynq.Timeout(opts.Timeout))
+	}
+
+	if opts.UniqueTTL != 0 {
+		asynqOptions = append(asynqOptions, asynq.Unique(opts.UniqueTTL))
 	}
 
 	return asynqOptions
