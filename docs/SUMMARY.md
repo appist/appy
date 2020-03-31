@@ -22,10 +22,10 @@
 * [Getting Started](graphql/getting-started.md)
 * [Writing Unit Tests](graphql/writing-unit-tests.md)
 
-## Handler
+## HTTP Handler
 
-* [Getting Started](handler/getting-started.md)
-* [Writing Unit Tests](handler/writing-unit-tests.md)
+* [Getting Started](http-handler/getting-started.md)
+* [Writing Unit Tests](http-handler/writing-unit-tests.md)
 
 ## Mailer
 
