@@ -1,5 +1,5 @@
 ---
-description: Covers how appy GraphQL works with the underlying gqlgen engine.
+description: Covers how appy GraphQL works using gqlgen library.
 ---
 
 # Getting Started
