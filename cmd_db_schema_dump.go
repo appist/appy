@@ -2,10 +2,6 @@
 
 package appy
 
-import (
-	"os/exec"
-)
-
 func newDBSchemaDumpCommand(config *Config, dbManager *DBManager, logger *Logger) *Command {
 	cmd := &Command{
 		Use:   "db:schema:dump",
@@ -19,14 +15,8 @@ func newDBSchemaDumpCommand(config *Config, dbManager *DBManager, logger *Logger
 				logger.Fatal(dbManager.Errors()[0])
 			}
 
-			logger.SetDBLogging(false)
 			if len(dbManager.databases) < 1 {
 				logger.Fatalf("No database is defined in 'configs/.env.%s'", config.AppyEnv)
-			}
-
-			_, err := exec.LookPath("pg_dump")
-			if err != nil {
-				logger.Fatal(err)
 			}
 
 			for name, db := range dbManager.databases {
@@ -34,13 +24,13 @@ func newDBSchemaDumpCommand(config *Config, dbManager *DBManager, logger *Logger
 					continue
 				}
 
-				logger.Infof("Dumping schema for '%s' database...", name)
-
 				err := db.Connect()
 				if err != nil {
 					logger.Fatal(err)
 				}
 				defer db.Close()
+
+				logger.Infof("Dumping schema for '%s' database...", name)
 
 				err = db.DumpSchema(name)
 				if err != nil {

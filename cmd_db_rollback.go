@@ -30,13 +30,13 @@ func newDBRollbackCommand(config *Config, dbManager *DBManager, logger *Logger) 
 				logger.Fatalf("Unable to run rollback on '%s' database that is a replica", target)
 			}
 
-			logger.Infof("Rolling back '%s' database...", target)
-
 			err := db.Connect()
 			if err != nil {
 				logger.Fatal(err)
 			}
 			defer db.Close()
+
+			logger.Infof("Rolling back '%s' database...", target)
 
 			err = db.Rollback()
 			if err != nil {

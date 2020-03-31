@@ -29,14 +29,24 @@ func newDBSchemaLoadCommand(config *Config, dbManager *DBManager, logger *Logger
 }
 
 func runDBSchemaLoad(config *Config, dbManager *DBManager, logger *Logger) {
-	logger.SetDBLogging(false)
-
 	for name, db := range dbManager.databases {
-		if db.Config().Replica {
+		dbConfig := db.Config()
+		if dbConfig.Replica {
 			continue
 		}
 
-		logger.Infof("Loading schema for '%s' database...", name)
+		query := db.Schema()
+		if dbConfig.Adapter == "mysql" {
+			query = "\nSET FOREIGN_KEY_CHECKS = 0;\n" + query + "\n\nSET FOREIGN_KEY_CHECKS = 1;"
+
+			if !strings.Contains(dbConfig.URI, "multiStatements=true") {
+				if !strings.Contains(dbConfig.URI, "?") {
+					dbConfig.URI += "?"
+				}
+
+				dbConfig.URI += "multiStatements=true"
+			}
+		}
 
 		err := db.Connect()
 		if err != nil {
@@ -44,12 +54,11 @@ func runDBSchemaLoad(config *Config, dbManager *DBManager, logger *Logger) {
 		}
 		defer db.Close()
 
-		schema := db.Schema()
-		if strings.Trim(schema, " ") != "" {
-			_, err = db.Exec(schema)
-			if err != nil {
-				logger.Fatal(err)
-			}
+		logger.Infof("Loading schema for '%s' database...", name)
+
+		_, err = db.Exec(query)
+		if err != nil {
+			logger.Fatal(err)
 		}
 
 		logger.Infof("Loading schema for '%s' database... DONE", name)

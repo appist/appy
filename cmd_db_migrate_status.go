@@ -25,8 +25,6 @@ func newDBMigrateStatusCommand(config *Config, dbManager *DBManager, logger *Log
 				logger.Fatalf("No database is defined in 'configs/.env.%s'", config.AppyEnv)
 			}
 
-			logger.SetDBLogging(false)
-
 			for name, db := range dbManager.databases {
 				if db.Config().Replica {
 					continue

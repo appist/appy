@@ -21,7 +21,7 @@ var (
 )
 
 func newBuildCommand(asset *Asset, logger *Logger, server *Server) *Command {
-	return &Command{
+	cmd := &Command{
 		Use:   "build",
 		Short: "Compile the static assets into go files and build the release mode binary (only available in debug build)",
 		Run: func(cmd *Command, args []string) {
@@ -119,6 +119,7 @@ func newBuildCommand(asset *Asset, logger *Logger, server *Server) *Command {
 			}
 
 			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo jsoniter", "-ldflags", "-w -extldflags '-static' -X github.com/appist/appy.Build=release", "-o", binaryName, ".")
+			buildBinaryCmd.Env = os.Environ()
 			buildBinaryCmd.Stderr = os.Stderr
 			if err = buildBinaryCmd.Run(); err != nil {
 				logger.Fatal(err)
@@ -139,6 +140,8 @@ func newBuildCommand(asset *Asset, logger *Logger, server *Server) *Command {
 			}
 		},
 	}
+
+	return cmd
 }
 
 func generateAssetTemplate(logger *Logger) {
