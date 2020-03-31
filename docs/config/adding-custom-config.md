@@ -58,3 +58,7 @@ token, err := conf.Exchange(oauth2.NoContext, "code")
 
 Basically, this is how you can configure your application config, store securely and access it easily in your codebase.
 
+{% hint style="info" %}
+Note that appy's built-in config is embedded into `app.Config`, i.e. built-in config like `GQL_PLAYGROUND_ENABLED` is accessible via `app.Config.GQLPlaygroundEnabled` in the codebase. 
+{% endhint %}
+
