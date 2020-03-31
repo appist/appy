@@ -7,8 +7,8 @@
 
 ## Config
 
-* [Getting Started](config/store-config-in-the-environment.md)
-* [Manage Environments](config/general-configuration.md)
+* [Getting Started](config/getting-started.md)
+* [Manage Environments](config/manage-environments.md)
 * [Configuring Application](config/configuring-application.md)
 
 ## GraphQL
