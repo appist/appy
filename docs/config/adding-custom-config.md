@@ -8,7 +8,7 @@ It is very common that an application would have its own configuration, e.g. dat
 
 For example, we would like to integrate with [Facebook Graph API](https://developers.facebook.com/docs/graph-api/) and the API would require us to pass in `app_id` and `app_secret` to authenticate the request. And below is how we can configure the credentials:
 
-#### Step 1: Add the credentials into the application config struct \(&lt;PROJECT\_NAME/pkg/app/config.go&gt;\).
+#### Step 1: Add the credentials into the application config struct \(&lt;PROJECT\_NAME&gt;/pkg/app/config.go\).
 
 ```go
 package app
