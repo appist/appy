@@ -10,6 +10,7 @@ import (
 
 	// Import database migration/seed.
 	_ "{{.projectName}}/db/migrate/primary"
+	_ "{{.projectName}}/db/seed/primary"
 
 	// Import GraphQL handler.
 	_ "{{.projectName}}/pkg/graphql"
