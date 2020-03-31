@@ -6,7 +6,7 @@ description: >-
 
 # Modifying Built-In Config
 
-The framework comes with a bunch of built-in config that helps you setup the application easily. As we strictly follow [12factor](https://12factor.net/) in configuring the application,  for example: if we would like to change the path for GraphQL playground in `development` which by default is set to `/docs/graphql` , simply do:
+The framework comes with a bunch of built-in config that helps you setup the application easily. For example, we would like to change the path for GraphQL playground in `development` which by default is set to `/docs/graphql` , simply do:
 
 ```bash
 // By default, `APPY_ENV` is "development".
