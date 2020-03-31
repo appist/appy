@@ -28,7 +28,7 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 
 * Support [12factor](https://12factor.net/) app
 * Support Dotenv configuration\(encrypted line-by-line\) for clearer PR review
-* Support [PostgreSQL ORM](https://github.com/go-pg/pg) with database toolings
+* Support [sqlx](https://github.com/jmoiron/sqlx) with database toolings
 * Support I18n on both [server-side](https://github.com/nicksnyder/go-i18n) + [client-side](https://github.com/fnando/i18n-js)
 * Support [Jet template engine](https://github.com/CloudyKit/jet) for server-side rendering + browser auto-reload upon changes
 * Support [SvelteJS](https://svelte.dev/) PWA static resource embedding + prerendering
@@ -45,7 +45,6 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 
 * Built-in HTTP server isn't meant/optimised for pure API server
 * Built-in HTTP server has an [issue](https://github.com/gin-gonic/gin/issues/2016) with wildcard route
-* Built-in SQL ORM only supports [PostgreSQL](https://www.postgresql.org/) but comes with [great performance](https://github.com/go-pg/pg/wiki/FAQ#why-go-pg) in Go ecosystem
 * Built-in tooling only supports macOS and Linux due to limited Go internals support on Windows
 
 ## Acknowledgement
@@ -53,8 +52,8 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 * [asynq](https://github.com/hibiken/asynq) - For processing background jobs
 * [cobra](https://github.com/spf13/cobra) - For building CLI
 * [gin](https://github.com/gin-gonic/gin) - For building web server
-* [go-pg](https://github.com/go-pg/pg) - For interacting with PostgreSQL
 * [gqlgen](https://gqlgen.com/) - For building GraphQL API
+* [sqlx](https://github.com/jmoiron/sqlx) - For interacting with MySQL/PostgreSQL
 * [testify](https://github.com/stretchr/testify) - For writing unit tests
 * [zap](https://github.com/uber-go/zap) - For blazing fast, structured and leveled logging
 
