@@ -45,12 +45,8 @@ CREATE TABLE users (
 `)
 }
 
-func (s *DBTxSuite) TestDBOperations() {
-	type User struct {
-		Username string `db:"username"`
-	}
-
-	database := "test_db_operations"
+func (s *DBTxSuite) TestOperations() {
+	database := "test_dbtx_operations"
 	s.setupDB(database)
 
 	err := s.db.Connect()

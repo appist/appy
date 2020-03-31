@@ -307,12 +307,31 @@ func (s *DBSuite) TestMigrateSeedRollbackForMySQL() {
 
 	err = s.mysqlDB.RegisterMigrationTx(
 		func(tx *DBTx) error {
+			_, err := tx.Exec(`CREATE orders`)
+
+			return err
+		},
+		func(tx *DBTx) error {
+			_, err := tx.Exec(`DROP TABLE IF EXISTS orders;`)
+
+			return err
+		},
+		"20200201165238_create_orders",
+	)
+	s.Nil(err)
+
+	err = s.mysqlDB.Migrate()
+	s.Equal("Error 1064: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'orders' at line 1", err.Error())
+
+	s.mysqlDB.(*DB).migrations = []*DBMigration{}
+	err = s.mysqlDB.RegisterMigrationTx(
+		func(tx *DBTx) error {
 			_, err := tx.Exec(`
-					CREATE TABLE IF NOT EXISTS orders (
-						id int NOT NULL,
-						username VARCHAR(255) NOT NULL
-					);
-				`)
+				CREATE TABLE IF NOT EXISTS orders (
+					id int NOT NULL,
+					username VARCHAR(255) NOT NULL
+				);
+			`)
 
 			return err
 		},
@@ -552,8 +571,8 @@ func (s *DBSuite) TestMigrateSeedRollbackForPostgreSQL() {
 	s.Nil(err)
 }
 
-func (s *DBSuite) TestDBOperations() {
-	database := "test_ops_for_mysql"
+func (s *DBSuite) TestOperations() {
+	database := "test_db_operations"
 	s.setupMySQL(database)
 
 	err := s.mysqlDB.Connect()
