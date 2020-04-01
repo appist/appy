@@ -10,8 +10,8 @@ bootstrap:
 	asdf reshim nodejs
 
 codecheck:
-	golint -set_exit_status $$(go list ./... | grep -v /templates\/scaffold/) || exit 1
-	go vet $$(go list ./... | grep -v /templates\/scaffold/)
+	golint -set_exit_status . || exit 1
+	go vet .
 
 down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
@@ -25,7 +25,7 @@ restart:
 
 test:
 	mkdir -p tmp
-	go test -covermode=atomic -coverprofile=tmp/coverage.out -tags=test -race -failfast -v $$(go list ./... | grep -v /templates\/scaffold/)
+	go test -covermode=atomic -coverprofile=tmp/coverage.out -tags=test -race -failfast -v .
 
 testcov:
 	go tool cover -html=tmp/coverage.out

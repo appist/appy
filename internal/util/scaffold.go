@@ -67,11 +67,14 @@ func Scaffold(tplPath, name, description string) {
 		log.Fatal(err)
 	}
 
+	version := strings.ReplaceAll(runtime.Version(), "go", "")
+	versionSplits := strings.Split(version, ".")
+
 	err = ioutil.WriteFile(
 		"go.mod",
 		[]byte(`module `+name+`
 
-go `+runtime.Version()+`
+go `+versionSplits[0]+"."+versionSplits[1]+`
 
 require (
 	github.com/99designs/gqlgen v0.11.3
