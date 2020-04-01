@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 )
@@ -61,6 +62,24 @@ func Scaffold(tplPath, name, description string) {
 
 			return nil
 		})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile(
+		"go.mod",
+		[]byte(`module `+name+`
+
+go `+runtime.Version()+`
+
+require (
+	github.com/99designs/gqlgen v0.11.3
+	github.com/appist/appy latest
+	github.com/vektah/gqlparser/v2 v2.0.1
+)`),
+		0777,
+	)
 
 	if err != nil {
 		log.Fatal(err)

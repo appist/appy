@@ -25,7 +25,7 @@ restart:
 
 test:
 	mkdir -p tmp
-	go test -covermode=atomic -coverprofile=tmp/coverage.out -tags=test -race -failfast -v ./...
+	go test -covermode=atomic -coverprofile=tmp/coverage.out -tags=test -race -failfast -v $$(go list ./... | grep -v /templates\/scaffold/)
 
 testcov:
 	go tool cover -html=tmp/coverage.out
