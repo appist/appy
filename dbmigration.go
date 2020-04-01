@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -110,46 +109,16 @@ func init() {
 }
 
 func moduleName() string {
+	modulePrefix := "module "
 	wd, _ := os.Getwd()
 	data, _ := ioutil.ReadFile(wd + "/go.mod")
-	return parseModulePath(data)
-}
 
-func parseModulePath(mod []byte) string {
-	var (
-		slashSlash = []byte("//")
-		moduleStr  = []byte("module")
-	)
-
-	for len(mod) > 0 {
-		line := mod
-		mod = nil
-		if i := bytes.IndexByte(line, '\n'); i >= 0 {
-			line, mod = line[:i], line[i+1:]
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, modulePrefix) {
+			module := strings.TrimPrefix(line, modulePrefix)
+			return strings.Trim(module, "\n")
 		}
-		if i := bytes.Index(line, slashSlash); i >= 0 {
-			line = line[:i]
-		}
-		line = bytes.TrimSpace(line)
-		if !bytes.HasPrefix(line, moduleStr) {
-			continue
-		}
-		line = line[len(moduleStr):]
-		n := len(line)
-		line = bytes.TrimSpace(line)
-		if len(line) == n || len(line) == 0 {
-			continue
-		}
-
-		if line[0] == '"' || line[0] == '`' {
-			p, err := strconv.Unquote(string(line))
-			if err != nil {
-				return "" // malformed quoted string or multiline module path
-			}
-			return p
-		}
-
-		return string(line)
 	}
 
 	return ""
