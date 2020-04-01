@@ -90,7 +90,7 @@ func init() {
 }
 
 // DB is a shortcut to app.DBManager.DB().
-func DB(name string) *appy.DB {
+func DB(name string) appy.DBer {
 	return app.DBManager().DB(name)
 }
 
