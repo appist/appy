@@ -45,6 +45,6 @@ func IsReleaseBuild() bool {
 // Scaffold generates a new project using the template.
 func Scaffold(name, description string) {
 	_, dirname, _, _ := runtime.Caller(0)
-	tplPath := filepath.Dir(dirname) + "/templates/scaffold"
+	tplPath := filepath.Dir(dirname) + "/internal/templates/scaffold"
 	util.Scaffold(tplPath, name, description)
 }
