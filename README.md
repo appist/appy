@@ -11,11 +11,11 @@ An opinionated productive web framework that helps scaling business easier.
 
 ##### Debug Mode - Local Development
 
-[![asciicast](.github/assets/debug.gif)](https://asciinema.org/a/312186)
+[![asciicast](docs/.gitbook/assets/debug.gif)](https://asciinema.org/a/312186)
 
 ##### Release Mode - Get Ready For Deployment
 
-[![asciicast](.github/assets/release.gif)](https://asciinema.org/a/312188)
+[![asciicast](docs/.gitbook/assets/release.gif)](https://asciinema.org/a/312188)
 
 ## Documentation
 
