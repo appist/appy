@@ -20,7 +20,6 @@
 . $(brew --prefix asdf)/asdf.sh
 . $(brew --prefix asdf)/etc/bash_completion.d/asdf.bash
 
-export GOROOT=$(go env GOROOT)
 export GOPATH=$(go env GOPATH)
 export PATH="$GOPATH/bin:$PATH"
 
