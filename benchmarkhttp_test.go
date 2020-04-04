@@ -1,4 +1,4 @@
-//+build benchmark
+//+build benchmarkhttp
 
 package appy
 
