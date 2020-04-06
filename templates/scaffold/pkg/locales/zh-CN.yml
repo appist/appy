@@ -1,7 +1,0 @@
-welcome: 欢迎，{{.Name}}{{.Title}}！
-
-title: 先生
-
-mailers:
-  welcome:
-    subject: 欢迎

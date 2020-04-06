@@ -7,8 +7,8 @@ bootstrap:
 	asdf reshim nodejs
 
 codecheck:
-	golint -set_exit_status . || exit 1
-	go vet .
+	golint -set_exit_status ./... || exit 1
+	go vet ./...
 
 down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
@@ -22,7 +22,7 @@ restart:
 
 test:
 	mkdir -p tmp
-	go test -covermode=atomic -coverprofile=tmp/coverage.out -race -failfast -v .
+	go test -covermode=atomic -coverprofile=tmp/coverage.out -race -failfast -v ./...
 
 testcov:
 	go tool cover -html=tmp/coverage.out

@@ -25,10 +25,9 @@ Please refer to [here](https://appist.gitbook.io/appy/) for more detailed docume
 
 - [asynq](https://github.com/hibiken/asynq) - For processing background jobs
 - [cobra](https://github.com/spf13/cobra) - For building CLI
-- [gin](https://github.com/gin-gonic/gin) - For building web server
+- [httptreemux](https://github.com/dimfeld/httptreemux) - For building HTTP router
 - [gqlgen](https://gqlgen.com/) - For building GraphQL API
 - [sqlx](https://github.com/jmoiron/sqlx) - For interacting with MySQL/PostgreSQL
-- [testify](https://github.com/stretchr/testify) - For writing unit tests
 - [zap](https://github.com/uber-go/zap) - For blazing fast, structured and leveled logging
 
 ## Contribution
