@@ -1,5 +1,8 @@
 benchmarkhttp:
-	go test -run=NONE -bench=Benchmark -tags=benchmarkhttp -failfast .
+	go test -run=NONE -bench=Benchmark -tags=benchmarkhttp -benchmem -failfast .
+
+benchmarkorm:
+	go test -run=NONE -bench=Benchmark -tags=benchmarkorm -benchmem -failfast .
 
 bootstrap:
 	asdf plugin-add golang || true
@@ -33,4 +36,4 @@ testcov:
 up:
 	docker-compose -p appy -f .docker/docker-compose.yml up -d
 
-.PHONY: benchmarkhttp bootstrap codecheck down install restart test testcov up
+.PHONY: benchmarkhttp benchmarkorm bootstrap codecheck down install restart test testcov up

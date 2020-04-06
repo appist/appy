@@ -43,7 +43,6 @@ func newServer() *Server {
 }
 
 func testRequest(B *testing.B, server *Server, method, path string) {
-	B.ReportAllocs()
 	B.ResetTimer()
 
 	for i := 0; i < B.N; i++ {
