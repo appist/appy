@@ -1,2 +1,0 @@
-
-{{extends "../../layouts/mailer.txt"}} {{block body()}} foo {{.missing}} {{end}}

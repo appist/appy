@@ -1,1 +1,0 @@
-{{t("mailers.user.verifyAccount.welcome")}} {{.username}}! {{t("mailers.user.verifyAccount.test", "zh-CN")}}

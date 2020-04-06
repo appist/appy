@@ -1,8 +1,0 @@
-title:
-  test: 測試
-
-body:
-  message:
-    Zero: 嗨, {{.Name}}! 您有{{.Count}}則訊息。
-    One: 嗨, {{.Name}}! 您有{{.Count}}則訊息。
-    Other: 嗨, {{.Name}}! 您有{{.Count}}則訊息。

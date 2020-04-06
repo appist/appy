@@ -1,9 +1,3 @@
-benchmarkhttp:
-	go test -run=NONE -bench=Benchmark -tags=benchmarkhttp -benchmem -failfast .
-
-benchmarkorm:
-	go test -run=NONE -bench=Benchmark -tags=benchmarkorm -benchmem -failfast .
-
 bootstrap:
 	asdf plugin-add golang || true
 	asdf plugin-add nodejs || true
@@ -28,7 +22,7 @@ restart:
 
 test:
 	mkdir -p tmp
-	go test -covermode=atomic -coverprofile=tmp/coverage.out -tags=test -race -failfast -v .
+	go test -covermode=atomic -coverprofile=tmp/coverage.out -race -failfast -v .
 
 testcov:
 	go tool cover -html=tmp/coverage.out
@@ -36,4 +30,4 @@ testcov:
 up:
 	docker-compose -p appy -f .docker/docker-compose.yml up -d
 
-.PHONY: benchmarkhttp benchmarkorm bootstrap codecheck down install restart test testcov up
+.PHONY: bootstrap codecheck down install restart test testcov up
