@@ -10,7 +10,7 @@ import (
 type (
 	// AssetManager implements all methods for Asset.
 	AssetManager interface {
-		Layout() AssetLayout
+		Layout() *AssetLayout
 		Open(path string) (io.Reader, error)
 		ReadDir(dir string) ([]os.FileInfo, error)
 		ReadFile(filename string) ([]byte, error)
@@ -19,11 +19,7 @@ type (
 	// Asset manages the application assets.
 	Asset struct {
 		embedded http.FileSystem
-		layout   AssetLayout
-	}
-
-	AssetLayout struct {
-		config, docker, locale, root, view, web string
+		layout   *AssetLayout
 	}
 )
 
@@ -31,7 +27,7 @@ type (
 func NewAsset(embedded http.FileSystem, root string) *Asset {
 	asset := &Asset{
 		embedded: embedded,
-		layout: AssetLayout{
+		layout: &AssetLayout{
 			config: "configs",
 			docker: ".docker",
 			locale: "pkg/locales",
@@ -45,7 +41,7 @@ func NewAsset(embedded http.FileSystem, root string) *Asset {
 }
 
 // Layout keeps the path for project components.
-func (a *Asset) Layout() AssetLayout {
+func (a *Asset) Layout() *AssetLayout {
 	return a.layout
 }
 
@@ -98,4 +94,39 @@ func (a *Asset) ReadFile(filename string) ([]byte, error) {
 	}
 
 	return ioutil.ReadAll(file)
+}
+
+// AssetLayout manages the path for project components.
+type AssetLayout struct {
+	config, docker, locale, root, view, web string
+}
+
+// Config returns the path that stores the configuration.
+func (l *AssetLayout) Config() string {
+	return l.config
+}
+
+// Docker returns the path that stores the docker related files.
+func (l *AssetLayout) Docker() string {
+	return l.docker
+}
+
+// Locale returns the path that stores the server-side rendering locales.
+func (l *AssetLayout) Locale() string {
+	return l.locale
+}
+
+// Root returns the project root path.
+func (l *AssetLayout) Root() string {
+	return l.root
+}
+
+// View returns the path that stores the server-side rendering views.
+func (l *AssetLayout) View() string {
+	return l.view
+}
+
+// Web returns the path that stores the client-side rendering web app.
+func (l *AssetLayout) Web() string {
+	return l.web
 }

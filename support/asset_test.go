@@ -11,6 +11,17 @@ type AssetSuite struct {
 	test.Suite
 }
 
+func (s *AssetSuite) TestAssetLayout() {
+	asset := NewAsset(nil, "")
+
+	s.Equal("configs", asset.Layout().Config())
+	s.Equal(".docker", asset.Layout().Docker())
+	s.Equal("pkg/locales", asset.Layout().Locale())
+	s.Equal("", asset.Layout().Root())
+	s.Equal("pkg/views", asset.Layout().View())
+	s.Equal("web", asset.Layout().Web())
+}
+
 func (s *AssetSuite) TestOpsInDebugBuild() {
 	asset := NewAsset(nil, "testdata/asset/ops_in_debug_build")
 
