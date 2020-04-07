@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
+	github.com/fatih/camelcase v1.0.0
 	github.com/gin-contrib/multitemplate v0.0.0-20200226145339-3e397ee01bc6
 	github.com/gin-gonic/gin v1.6.2
 	github.com/joho/godotenv v1.3.0
