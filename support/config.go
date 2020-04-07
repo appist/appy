@@ -1,8 +1,14 @@
 package support
 
 import (
+	"encoding/hex"
+	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 // Config defines the application settings.
@@ -440,7 +446,141 @@ type Config struct {
 	// queues with higher priorities are empty.
 	WorkerStrictPriority bool `env:"WORKER_STRICT_PRIORITY" envDefault:"false"`
 
-	path      string
+	asset     AssetManager
 	errors    []error
 	masterKey []byte
+}
+
+// NewConfig initializes Config instance.
+func NewConfig(asset AssetManager, logger *Logger) *Config {
+	config := &Config{
+		asset:  asset,
+		errors: []error{},
+	}
+
+	masterKey, err := parseMasterKey(asset)
+	if err != nil {
+		config.errors = append(config.errors, err)
+	}
+
+	if masterKey != nil {
+		config.masterKey = masterKey
+
+		if errs := config.decrypt(asset); len(errs) > 0 {
+			config.errors = append(config.errors, errs...)
+		}
+
+		if err := ParseEnv(config); err != nil {
+			config.errors = append(config.errors, err)
+		}
+	}
+
+	return config
+}
+
+// Errors returns all the config retrieving/parsing errors.
+func (c *Config) Errors() []error {
+	return c.errors
+}
+
+// IsProtectedEnv is used to protect the app from being destroyed by a command
+// accidentally.
+func (c *Config) IsProtectedEnv() bool {
+	return c.AppyEnv == "production"
+}
+
+// MasterKey returns the master key for the current environment.
+func (c *Config) MasterKey() []byte {
+	return c.masterKey
+}
+
+// Path returns the config path.
+func (c *Config) Path() string {
+	return c.asset.Layout().config + "/.env." + os.Getenv("APPY_ENV")
+}
+
+func (c *Config) decrypt(asset AssetManager) []error {
+	reader, err := asset.Open(c.Path())
+	if err != nil {
+		return []error{err}
+	}
+
+	envMap, err := godotenv.Parse(reader)
+	if err != nil {
+		os.Clearenv()
+		return []error{err}
+	}
+
+	errs := []error{}
+	if len(c.masterKey) != 0 {
+		// Parse the environment variables that aren't defined in the .env config
+		// file which can be used to override the ones defined in .env config file.
+		origEnvMap := parseEnvVariables()
+
+		for key, value := range envMap {
+			if origEnvMap[key] || value == "" {
+				continue
+			}
+
+			decoded, err := hex.DecodeString(value)
+			if err != nil {
+				errs = append(errs, err)
+			}
+
+			plaintext, err := AESDecrypt(decoded, c.MasterKey())
+			if len(plaintext) < 1 || err != nil {
+				errs = append(
+					errs,
+					fmt.Errorf("unable to decrypt '%s' value in '%s'", key, c.Path()),
+				)
+			}
+
+			os.Setenv(key, string(plaintext))
+		}
+	}
+
+	return errs
+}
+
+func parseMasterKey(asset AssetManager) ([]byte, error) {
+	var (
+		err       error
+		masterKey []byte
+	)
+
+	env := "development"
+	if os.Getenv("APPY_ENV") != "" {
+		env = os.Getenv("APPY_ENV")
+	}
+
+	if os.Getenv("APPY_MASTER_KEY") != "" {
+		masterKey = []byte(os.Getenv("APPY_MASTER_KEY"))
+	}
+
+	if len(masterKey) == 0 {
+		masterKey, err = asset.ReadFile(asset.Layout().config + "/" + env + ".key")
+		if err != nil {
+			return nil, ErrReadMasterKeyFile
+		}
+	}
+
+	masterKey = []byte(strings.Trim(string(masterKey), "\n"))
+	masterKey = []byte(strings.Trim(string(masterKey), " "))
+
+	if len(masterKey) == 0 {
+		return nil, ErrMissingMasterKey
+	}
+
+	return masterKey, nil
+}
+
+func parseEnvVariables() map[string]bool {
+	envMap := map[string]bool{}
+	envs := os.Environ()
+	for _, env := range envs {
+		key := strings.Split(env, "=")[0]
+		envMap[key] = true
+	}
+
+	return envMap
 }

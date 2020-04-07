@@ -1,31 +1,101 @@
 package support
 
-import "net/http"
+import (
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+)
 
-// Asset manages the application assets.
-type Asset struct {
-	embedded   http.FileSystem
-	layout     map[string]string
-	moduleRoot string
-}
-
-// NewAsset initializes the assets instance.
-func NewAsset(embedded http.FileSystem, layout map[string]string, moduleRoot string) *Asset {
-	asset := &Asset{
-		embedded: embedded,
-		layout: map[string]string{
-			"config": "configs",
-			"docker": ".docker",
-			"locale": "pkg/locales",
-			"view":   "pkg/views",
-			"web":    "web",
-		},
-		moduleRoot: moduleRoot,
+type (
+	// AssetManager implements all methods for Asset.
+	AssetManager interface {
+		Layout() AssetLayout
+		Open(path string) (io.Reader, error)
+		ReadDir(dir string) ([]os.FileInfo, error)
+		ReadFile(filename string) ([]byte, error)
 	}
 
-	if layout != nil {
-		asset.layout = layout
+	// Asset manages the application assets.
+	Asset struct {
+		embedded http.FileSystem
+		layout   AssetLayout
+	}
+
+	AssetLayout struct {
+		config, docker, locale, root, view, web string
+	}
+)
+
+// NewAsset initializes the assets instance.
+func NewAsset(embedded http.FileSystem, root string) *Asset {
+	asset := &Asset{
+		embedded: embedded,
+		layout: AssetLayout{
+			config: "configs",
+			docker: ".docker",
+			locale: "pkg/locales",
+			root:   root,
+			view:   "pkg/views",
+			web:    "web",
+		},
 	}
 
 	return asset
+}
+
+// Layout keeps the path for project components.
+func (a *Asset) Layout() AssetLayout {
+	return a.layout
+}
+
+// Open opens the named file for reading. If the current build type is debug,
+// reads from the filesystem. Otherwise, it reads from the embedded static
+// assets which is a virtual file system.
+func (a *Asset) Open(path string) (io.Reader, error) {
+	if IsDebugBuild() {
+		return os.Open(a.Layout().root + "/" + path)
+	}
+
+	if a.embedded == nil {
+		return nil, ErrNoEmbeddedAssets
+	}
+
+	return a.embedded.Open(path)
+}
+
+// ReadDir returns a list of file/directory entries in the directory.
+func (a *Asset) ReadDir(dir string) ([]os.FileInfo, error) {
+	if IsDebugBuild() {
+		return ioutil.ReadDir(a.Layout().root + "/" + dir)
+	}
+
+	if a.embedded == nil {
+		return nil, ErrNoEmbeddedAssets
+	}
+
+	reader, err := a.embedded.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	return reader.Readdir(-1)
+}
+
+// ReadFile returns the content of the filename.
+func (a *Asset) ReadFile(filename string) ([]byte, error) {
+	if IsDebugBuild() {
+		return ioutil.ReadFile(a.Layout().root + "/" + filename)
+	}
+
+	if a.embedded == nil {
+		return nil, ErrNoEmbeddedAssets
+	}
+
+	file, err := a.embedded.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(file)
 }

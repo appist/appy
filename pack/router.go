@@ -12,7 +12,8 @@ type (
 	// HandlersChain defines the HandlerFunc array.
 	HandlersChain []HandlerFunc
 
-	// Route represents a request route's specification which contains method and path and its handler.
+	// Route represents a request route's specification which contains method
+	// and path and its handler.
 	Route struct {
 		Method      string
 		Path        string

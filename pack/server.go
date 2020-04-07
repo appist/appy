@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Server serves the HTTP requests.
+// Server processes the HTTP requests.
 type Server struct {
 	asset      *support.Asset
 	config     *support.Config
@@ -22,7 +22,7 @@ type Server struct {
 func NewServer(asset *support.Asset, config *support.Config, logger *support.Logger) *Server {
 	router := newRouter()
 
-	httpServer := &http.Server{
+	hs := &http.Server{
 		Addr:              config.HTTPHost + ":" + config.HTTPPort,
 		Handler:           router,
 		MaxHeaderBytes:    config.HTTPMaxHeaderBytes,
@@ -31,9 +31,9 @@ func NewServer(asset *support.Asset, config *support.Config, logger *support.Log
 		WriteTimeout:      config.HTTPWriteTimeout,
 		IdleTimeout:       config.HTTPIdleTimeout,
 	}
-	httpServer.ErrorLog = zap.NewStdLog(logger.Desugar())
+	hs.ErrorLog = zap.NewStdLog(logger.Desugar())
 
-	httpsServer := &http.Server{
+	hss := &http.Server{
 		Addr:              config.HTTPHost + ":" + config.HTTPSSLPort,
 		Handler:           router,
 		MaxHeaderBytes:    config.HTTPMaxHeaderBytes,
@@ -42,13 +42,13 @@ func NewServer(asset *support.Asset, config *support.Config, logger *support.Log
 		WriteTimeout:      config.HTTPWriteTimeout,
 		IdleTimeout:       config.HTTPIdleTimeout,
 	}
-	httpsServer.ErrorLog = zap.NewStdLog(logger.Desugar())
+	hss.ErrorLog = zap.NewStdLog(logger.Desugar())
 
 	return &Server{
 		asset:      asset,
 		config:     config,
-		http:       httpServer,
-		https:      httpsServer,
+		http:       hs,
+		https:      hss,
 		logger:     logger,
 		middleware: []HandlerFunc{},
 		router:     router,
