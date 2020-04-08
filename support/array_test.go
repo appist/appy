@@ -6,11 +6,11 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type ArraySuite struct {
+type arraySuite struct {
 	test.Suite
 }
 
-func (s *ArraySuite) TestArrayContains() {
+func (s *arraySuite) TestArrayContains() {
 	tt := []struct {
 		arr      interface{}
 		val      interface{}
@@ -75,5 +75,5 @@ func (s *ArraySuite) TestArrayContains() {
 }
 
 func TestArraySuite(t *testing.T) {
-	test.Run(t, new(ArraySuite))
+	test.Run(t, new(arraySuite))
 }

@@ -7,11 +7,11 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type AssetSuite struct {
+type assetSuite struct {
 	test.Suite
 }
 
-func (s *AssetSuite) TestAssetLayout() {
+func (s *assetSuite) TestAssetLayout() {
 	asset := NewAsset(nil, "")
 
 	s.Equal("configs", asset.Layout().Config())
@@ -22,7 +22,7 @@ func (s *AssetSuite) TestAssetLayout() {
 	s.Equal("web", asset.Layout().Web())
 }
 
-func (s *AssetSuite) TestOpsInDebugBuild() {
+func (s *assetSuite) TestOpsInDebugBuild() {
 	asset := NewAsset(nil, "testdata/asset/ops_in_debug_build")
 
 	_, err := asset.Open(asset.Layout().view)
@@ -43,7 +43,7 @@ func (s *AssetSuite) TestOpsInDebugBuild() {
 	s.Equal("open testdata/asset/ops_in_debug_build/pkg/views/index.html: no such file or directory", err.Error())
 }
 
-func (s *AssetSuite) TestOpsInReleaseBuild() {
+func (s *assetSuite) TestOpsInReleaseBuild() {
 	Build = ReleaseBuild
 	defer func() { Build = DebugBuild }()
 
@@ -86,5 +86,5 @@ func (s *AssetSuite) TestOpsInReleaseBuild() {
 }
 
 func TestAssetSuite(t *testing.T) {
-	test.Run(t, new(AssetSuite))
+	test.Run(t, new(assetSuite))
 }

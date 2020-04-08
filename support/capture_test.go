@@ -8,11 +8,11 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type CaptureSuite struct {
+type captureSuite struct {
 	test.Suite
 }
 
-func (s *CaptureSuite) TestCaptureOutput() {
+func (s *captureSuite) TestCaptureOutput() {
 	output := CaptureOutput(func() {
 		fmt.Fprint(os.Stdout, "foo")
 		fmt.Fprint(os.Stderr, "bar")
@@ -22,5 +22,5 @@ func (s *CaptureSuite) TestCaptureOutput() {
 }
 
 func TestCaptureSuite(t *testing.T) {
-	test.Run(t, new(CaptureSuite))
+	test.Run(t, new(captureSuite))
 }

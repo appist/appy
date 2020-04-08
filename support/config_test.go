@@ -10,16 +10,16 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type ConfigSuite struct {
+type configSuite struct {
 	test.Suite
 	logger *Logger
 }
 
-func (s *ConfigSuite) SetupTest() {
+func (s *configSuite) SetupTest() {
 	s.logger, _, _ = NewTestLogger()
 }
 
-func (s *ConfigSuite) TestDefaultValue() {
+func (s *configSuite) TestDefaultValue() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
 	defer func() {
@@ -165,7 +165,7 @@ func (s *ConfigSuite) TestDefaultValue() {
 	}
 }
 
-func (s *ConfigSuite) TestIsProtectedEnv() {
+func (s *configSuite) TestIsProtectedEnv() {
 	{
 		asset := NewAsset(nil, "")
 		config := NewConfig(asset, s.logger)
@@ -188,7 +188,7 @@ func (s *ConfigSuite) TestIsProtectedEnv() {
 	}
 }
 
-func (s *ConfigSuite) TestMasterKeyParsing() {
+func (s *configSuite) TestMasterKeyParsing() {
 	{
 		asset := NewAsset(nil, "")
 		config := NewConfig(asset, s.logger)
@@ -221,7 +221,7 @@ func (s *ConfigSuite) TestMasterKeyParsing() {
 	}
 }
 
-func (s *ConfigSuite) TestRequiredConfigMissing() {
+func (s *configSuite) TestRequiredConfigMissing() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
 	defer func() {
@@ -235,7 +235,7 @@ func (s *ConfigSuite) TestRequiredConfigMissing() {
 	s.Equal(`required environment variable "HTTP_SESSION_SECRETS" is not set. required environment variable "HTTP_CSRF_SECRET" is not set`, config.Errors()[0].Error())
 }
 
-func (s *ConfigSuite) TestConfigFileParsing() {
+func (s *configSuite) TestConfigFileParsing() {
 	{
 		os.Setenv("APPY_ENV", "malformed")
 		os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
@@ -333,5 +333,5 @@ func (s *ConfigSuite) TestConfigFileParsing() {
 }
 
 func TestConfigSuite(t *testing.T) {
-	test.Run(t, new(ConfigSuite))
+	test.Run(t, new(configSuite))
 }

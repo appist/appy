@@ -6,11 +6,11 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type StringSuite struct {
+type stringSuite struct {
 	test.Suite
 }
 
-func (s *StringSuite) TestIsCamelCase() {
+func (s *stringSuite) TestIsCamelCase() {
 	tt := [][]interface{}{
 		{"fooBar", true},
 		{"fooBar1", true},
@@ -30,7 +30,7 @@ func (s *StringSuite) TestIsCamelCase() {
 	}
 }
 
-func (s *StringSuite) TestIsChainCase() {
+func (s *stringSuite) TestIsChainCase() {
 	tt := [][]interface{}{
 		{"foo-bar", true},
 		{"foo1-bar2", true},
@@ -57,7 +57,7 @@ func (s *StringSuite) TestIsChainCase() {
 	}
 }
 
-func (s *StringSuite) TestIsFlatCase() {
+func (s *stringSuite) TestIsFlatCase() {
 	tt := [][]interface{}{
 		{"foobar", true},
 		{"foo1bar", true},
@@ -76,7 +76,7 @@ func (s *StringSuite) TestIsFlatCase() {
 	}
 }
 
-func (s *StringSuite) TestIsPascalCase() {
+func (s *stringSuite) TestIsPascalCase() {
 	tt := [][]interface{}{
 		{"FooBar", true},
 		{"FooBar1", true},
@@ -96,7 +96,7 @@ func (s *StringSuite) TestIsPascalCase() {
 	}
 }
 
-func (s *StringSuite) TestIsSnakeCase() {
+func (s *stringSuite) TestIsSnakeCase() {
 	tt := [][]interface{}{
 		{"foo_bar", true},
 		{"foo1_bar2", true},
@@ -123,7 +123,7 @@ func (s *StringSuite) TestIsSnakeCase() {
 	}
 }
 
-func (s *StringSuite) TestToCamelCase() {
+func (s *stringSuite) TestToCamelCase() {
 	tt := [][]string{
 		{"foo_bar", "fooBar"},
 		{"foo-bar", "fooBar"},
@@ -144,7 +144,7 @@ func (s *StringSuite) TestToCamelCase() {
 	}
 }
 
-func (s *StringSuite) TestToChainCase() {
+func (s *stringSuite) TestToChainCase() {
 	tt := [][]string{
 		{"foo_bar", "foo-bar"},
 		{"foo-bar", "foo-bar"},
@@ -165,7 +165,7 @@ func (s *StringSuite) TestToChainCase() {
 	}
 }
 
-func (s *StringSuite) TestToFlatCase() {
+func (s *stringSuite) TestToFlatCase() {
 	tt := [][]string{
 		{"foo_bar", "foobar"},
 		{"foo-bar", "foobar"},
@@ -186,7 +186,7 @@ func (s *StringSuite) TestToFlatCase() {
 	}
 }
 
-func (s *StringSuite) TestToPascalCase() {
+func (s *stringSuite) TestToPascalCase() {
 	tt := [][]string{
 		{"foo_bar", "FooBar"},
 		{"foo-bar", "FooBar"},
@@ -207,7 +207,7 @@ func (s *StringSuite) TestToPascalCase() {
 	}
 }
 
-func (s *StringSuite) TestToSnakeCase() {
+func (s *stringSuite) TestToSnakeCase() {
 	tt := [][]string{
 		{"foo_bar", "foo_bar"},
 		{"foo-bar", "foo_bar"},
@@ -229,5 +229,5 @@ func (s *StringSuite) TestToSnakeCase() {
 }
 
 func TestStringSuite(t *testing.T) {
-	test.Run(t, new(StringSuite))
+	test.Run(t, new(stringSuite))
 }

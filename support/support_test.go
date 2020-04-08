@@ -6,18 +6,18 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type SupportSuite struct {
+type supportSuite struct {
 	test.Suite
 }
 
-func (s *SupportSuite) TestIsDebugBuild() {
+func (s *supportSuite) TestIsDebugBuild() {
 	Build = DebugBuild
 
 	s.Equal(true, IsDebugBuild())
 	s.Equal(false, IsReleaseBuild())
 }
 
-func (s *SupportSuite) TestIsReleaseBuild() {
+func (s *supportSuite) TestIsReleaseBuild() {
 	Build = ReleaseBuild
 	defer func() { Build = DebugBuild }()
 
@@ -26,5 +26,5 @@ func (s *SupportSuite) TestIsReleaseBuild() {
 }
 
 func TestSupportSuite(t *testing.T) {
-	test.Run(t, new(SupportSuite))
+	test.Run(t, new(supportSuite))
 }

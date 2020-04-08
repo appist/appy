@@ -7,18 +7,18 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type EnvSuite struct {
+type envSuite struct {
 	test.Suite
 }
 
-func (s *EnvSuite) TestParseByteArray() {
+func (s *envSuite) TestParseByteArray() {
 	val, err := parseByteArray("foobar")
 
 	s.Nil(err)
 	s.Equal([]byte("foobar"), val)
 }
 
-func (s *EnvSuite) TestParseByte2DArray() {
+func (s *envSuite) TestParseByte2DArray() {
 	val, err := parseByte2DArray("a,b,c")
 
 	s.Nil(err)
@@ -30,7 +30,7 @@ func (s *EnvSuite) TestParseByte2DArray() {
 		}, val)
 }
 
-func (s *EnvSuite) TestParseHTTPSameSite() {
+func (s *envSuite) TestParseHTTPSameSite() {
 	{
 		val, err := parseHTTPSameSite("foobar")
 
@@ -46,7 +46,7 @@ func (s *EnvSuite) TestParseHTTPSameSite() {
 	}
 }
 
-func (s *EnvSuite) TestParseMapStrInt() {
+func (s *envSuite) TestParseMapStrInt() {
 	{
 		val, err := parseMapStrInt("a:1,b:abc,c:3")
 
@@ -82,7 +82,7 @@ func (s *EnvSuite) TestParseMapStrInt() {
 	}
 }
 
-func (s *EnvSuite) TestParseMapStrStr() {
+func (s *envSuite) TestParseMapStrStr() {
 	{
 		val, err := parseMapStrStr("a:a,b:2,c:c")
 
@@ -126,5 +126,5 @@ func (s *EnvSuite) TestParseMapStrStr() {
 }
 
 func TestEnvSuite(t *testing.T) {
-	test.Run(t, new(EnvSuite))
+	test.Run(t, new(envSuite))
 }

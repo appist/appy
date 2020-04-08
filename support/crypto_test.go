@@ -6,11 +6,11 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type CryptoSuite struct {
+type cryptoSuite struct {
 	test.Suite
 }
 
-func (s *CryptoSuite) TestAESDecrypt() {
+func (s *cryptoSuite) TestAESDecrypt() {
 	{
 		decrypted, err := AESDecrypt([]byte("foobar"), []byte("1234"))
 
@@ -33,7 +33,7 @@ func (s *CryptoSuite) TestAESDecrypt() {
 	}
 }
 
-func (s *CryptoSuite) TestAESEncrypt() {
+func (s *cryptoSuite) TestAESEncrypt() {
 	{
 		encrypted, err := AESEncrypt([]byte("foobar"), []byte("1234"))
 
@@ -49,7 +49,7 @@ func (s *CryptoSuite) TestAESEncrypt() {
 	}
 }
 
-func (s *CryptoSuite) TestAESOps() {
+func (s *cryptoSuite) TestAESOps() {
 	target := []byte("0.0.0.0")
 	key := []byte("58f364f29b568807ab9cffa22c99b538")
 
@@ -65,5 +65,5 @@ func (s *CryptoSuite) TestAESOps() {
 }
 
 func TestCryptoSuite(t *testing.T) {
-	test.Run(t, new(CryptoSuite))
+	test.Run(t, new(cryptoSuite))
 }

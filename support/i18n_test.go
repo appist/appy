@@ -8,14 +8,14 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type I18nSuite struct {
+type i18nSuite struct {
 	test.Suite
 	asset  *Asset
 	config *Config
 	logger *Logger
 }
 
-func (s *I18nSuite) SetupTest() {
+func (s *i18nSuite) SetupTest() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
@@ -24,21 +24,21 @@ func (s *I18nSuite) SetupTest() {
 	s.logger, _, _ = NewTestLogger()
 }
 
-func (s *I18nSuite) TearDownTest() {
+func (s *i18nSuite) TearDownTest() {
 	os.Unsetenv("APPY_ENV")
 	os.Unsetenv("APPY_MASTER_KEY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
-func (s *I18nSuite) TestMissingLocales() {
+func (s *i18nSuite) TestMissingLocales() {
 	s.asset = NewAsset(nil, "testdata/missing")
 	s.config = NewConfig(s.asset, s.logger)
 
 	s.Panics(func() { NewI18n(s.asset, s.config, s.logger) })
 }
 
-func (s *I18nSuite) TestTWithDebugBuild() {
+func (s *i18nSuite) TestTWithDebugBuild() {
 	s.asset = NewAsset(nil, "testdata/i18n/t_with_debug_build")
 	s.config = NewConfig(s.asset, s.logger)
 	i18n := NewI18n(s.asset, s.config, s.logger)
@@ -58,7 +58,7 @@ func (s *I18nSuite) TestTWithDebugBuild() {
 	s.Equal("嗨, tester! 您有2則訊息。", i18n.T("body.message", 2, H{"Name": "tester"}, "zh-TW"))
 }
 
-func (s *I18nSuite) TestTWithReleaseBuild() {
+func (s *i18nSuite) TestTWithReleaseBuild() {
 	Build = ReleaseBuild
 	defer func() { Build = DebugBuild }()
 
@@ -82,5 +82,5 @@ func (s *I18nSuite) TestTWithReleaseBuild() {
 }
 
 func TestI18nSuite(t *testing.T) {
-	test.Run(t, new(I18nSuite))
+	test.Run(t, new(i18nSuite))
 }
