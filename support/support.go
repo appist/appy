@@ -20,6 +20,11 @@ var (
 	Build = DebugBuild
 )
 
+type (
+	// H is a shortcut for map[string]interface{}.
+	H map[string]interface{}
+)
+
 // IsDebugBuild indicates the current build is debug build which is meant for
 // local development.
 func IsDebugBuild() bool {
