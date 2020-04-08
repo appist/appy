@@ -10,7 +10,7 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type EngineSuite struct {
+type engineSuite struct {
 	test.Suite
 	asset  *support.Asset
 	config *support.Config
@@ -18,7 +18,7 @@ type EngineSuite struct {
 	engine *Engine
 }
 
-func (s *EngineSuite) SetupTest() {
+func (s *engineSuite) SetupTest() {
 	os.Setenv("APPY_ENV", "development")
 	os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
 	os.Setenv("HTTP_CSRF_SECRET", "58f364f29b568807ab9cffa22c99b538")
@@ -30,14 +30,14 @@ func (s *EngineSuite) SetupTest() {
 	s.engine = NewEngine(s.asset, s.config, s.logger)
 }
 
-func (s *EngineSuite) TearDownTest() {
+func (s *engineSuite) TearDownTest() {
 	os.Unsetenv("APPY_ENV")
 	os.Unsetenv("APPY_MASTER_KEY")
 	os.Unsetenv("HTTP_CSRF_SECRET")
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
-func (s *EngineSuite) TestSetGlobalFuncs() {
+func (s *engineSuite) TestSetGlobalFuncs() {
 	customAssetPath := func() string {
 		return "customAssetPath"
 	}
@@ -57,7 +57,7 @@ func (s *EngineSuite) TestSetGlobalFuncs() {
 	s.Equal(true, found)
 }
 
-func (s *EngineSuite) TestAssetPathWithDebugBuild() {
+func (s *engineSuite) TestAssetPathWithDebugBuild() {
 	{
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			s.Equal("/manifest.json", req.URL.String())
@@ -99,7 +99,7 @@ func (s *EngineSuite) TestAssetPathWithDebugBuild() {
 	}
 }
 
-func (s *EngineSuite) TestAssetPathWithReleaseBuild() {
+func (s *engineSuite) TestAssetPathWithReleaseBuild() {
 	support.Build = support.ReleaseBuild
 	defer func() {
 		support.Build = support.DebugBuild
@@ -124,5 +124,5 @@ func (s *EngineSuite) TestAssetPathWithReleaseBuild() {
 }
 
 func TestEngineSuite(t *testing.T) {
-	test.Run(t, new(EngineSuite))
+	test.Run(t, new(engineSuite))
 }

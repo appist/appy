@@ -8,11 +8,11 @@ import (
 	"github.com/appist/appy/test"
 )
 
-type LoaderSuite struct {
+type loaderSuite struct {
 	test.Suite
 }
 
-func (s *LoaderSuite) TestOpenWithDebugBuild() {
+func (s *loaderSuite) TestOpenWithDebugBuild() {
 	asset := support.NewAsset(nil, "testdata/loader/open_with_debug_build")
 	loader := NewLoader(asset)
 	reader, err := loader.Open("pkg/views/home/index.html")
@@ -21,7 +21,7 @@ func (s *LoaderSuite) TestOpenWithDebugBuild() {
 	s.NotNil(reader)
 }
 
-func (s *LoaderSuite) TestOpenWithReleaseBuild() {
+func (s *loaderSuite) TestOpenWithReleaseBuild() {
 	support.Build = support.ReleaseBuild
 	defer func() {
 		support.Build = support.DebugBuild
@@ -35,7 +35,7 @@ func (s *LoaderSuite) TestOpenWithReleaseBuild() {
 	s.NotNil(reader)
 }
 
-func (s *LoaderSuite) TestExistsWithDebugBuild() {
+func (s *loaderSuite) TestExistsWithDebugBuild() {
 	asset := support.NewAsset(nil, "testdata/loader/exists_with_debug_build")
 	loader := NewLoader(asset)
 
@@ -48,7 +48,7 @@ func (s *LoaderSuite) TestExistsWithDebugBuild() {
 	s.Equal(false, exists)
 }
 
-func (s *LoaderSuite) TestExistsWithReleaseBuild() {
+func (s *loaderSuite) TestExistsWithReleaseBuild() {
 	support.Build = support.ReleaseBuild
 	defer func() {
 		support.Build = support.DebugBuild
@@ -67,5 +67,5 @@ func (s *LoaderSuite) TestExistsWithReleaseBuild() {
 }
 
 func TestLoaderSuite(t *testing.T) {
-	test.Run(t, new(LoaderSuite))
+	test.Run(t, new(loaderSuite))
 }
