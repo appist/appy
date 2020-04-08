@@ -1,7 +1,6 @@
 package pack
 
 import (
-	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,11 +18,6 @@ type (
 		Path        string
 		Handler     string
 		HandlerFunc HandlerFunc
-	}
-
-	// RouteGroup is associated with a prefix and an array of handlers.
-	RouteGroup struct {
-		*gin.RouterGroup
 	}
 
 	// Routes defines the array of Route.
@@ -46,13 +40,6 @@ func newRouter() *Router {
 	r.RedirectFixedPath = true
 	r.UnescapePathValues = true
 	r.UseRawPath = false
-
-	// Initialize the error templates.
-	renderer := multitemplate.NewRenderer()
-	renderer.AddFromString("error/404", errorTpl404())
-	renderer.AddFromString("error/500", errorTpl500())
-	renderer.AddFromString("default/welcome", welcomeTpl())
-	r.HTMLRender = renderer
 
 	return r
 }
@@ -122,6 +109,26 @@ func (r *Router) PUT(path string, handlers ...HandlerFunc) {
 // Use attaches a global middleware to the router.
 func (r *Router) Use(handlers ...HandlerFunc) {
 	r.Engine.Use(wrapHandlers(handlers...)...)
+}
+
+func (r *Router) routes() []Route {
+	routes := []Route{}
+
+	for _, route := range r.Routes() {
+		routes = append(routes, Route{
+			Method:      route.Method,
+			Path:        route.Path,
+			Handler:     route.Handler,
+			HandlerFunc: func(c *Context) { route.HandlerFunc(c.Context) },
+		})
+	}
+
+	return routes
+}
+
+// RouteGroup is associated with a prefix and an array of handlers.
+type RouteGroup struct {
+	*gin.RouterGroup
 }
 
 // Handle registers a new request handle with the method, given path and

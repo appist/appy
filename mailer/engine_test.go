@@ -193,8 +193,10 @@ func (s *mailerSuite) TestMailerWithTestAppyEnv() {
 
 	deliveries := mailer.Deliveries()
 	s.Equal(1, len(deliveries))
+	s.Contains(deliveries[0].HTML, "cayter")
 	s.Contains(deliveries[0].HTML, "测试")
 	s.Contains(deliveries[0].HTML, "Hi, John Doe! You have 2 messages.")
+	s.Contains(deliveries[0].Text, "cayter")
 	s.Contains(deliveries[0].Text, "测试")
 	s.Contains(deliveries[0].Text, "Hi, John Doe! You have 2 messages.")
 }

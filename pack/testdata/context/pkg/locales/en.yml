@@ -1,0 +1,26 @@
+title:
+  test: Test
+
+body:
+  message:
+    Zero: Hi, {{.Name}}! You have {{.Count}} message.
+    One: Hi, {{.Name}}! You have {{.Count}} message.
+    Other: Hi, {{.Name}}! You have {{.Count}} messages.
+
+mailers:
+  user:
+    message:
+      Zero: Hi, {{.Name}}! You have {{.Count}} message.
+      One: Hi, {{.Name}}! You have {{.Count}} message.
+      Other: Hi, {{.Name}}! You have {{.Count}} messages.
+
+    verifyAccount:
+      subject: Verify Your Account
+      welcome: Welcome
+      test: Test
+
+    welcome:
+      subject: Welcome
+      greet:
+        html: I'm a mailer html version.
+        txt: I'm a mailer txt version.
