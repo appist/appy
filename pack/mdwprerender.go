@@ -19,7 +19,7 @@ var (
 	xPrerender         = http.CanonicalHeaderKey("x-prerender")
 )
 
-func Prerender(config *support.Config, logger *support.Logger) HandlerFunc {
+func mdwPrerender(config *support.Config, logger *support.Logger) HandlerFunc {
 	scheme := "http"
 	host := config.HTTPHost
 	port := config.HTTPPort

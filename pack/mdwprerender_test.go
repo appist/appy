@@ -51,7 +51,7 @@ func (s *mdwPrerenderSuite) TestRequestWithNonSEOBot() {
 		},
 	}
 	c.Set(mdwPrerenderCtxKey.String(), &crawl{})
-	Prerender(s.config, s.logger)(c)
+	mdwPrerender(s.config, s.logger)(c)
 
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("", c.Writer.Header().Get(xPrerender))
@@ -67,7 +67,7 @@ func (s *mdwPrerenderSuite) TestNonGETRequestWithSEOBot() {
 		},
 	}
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
-	Prerender(s.config, s.logger)(c)
+	mdwPrerender(s.config, s.logger)(c)
 
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("", c.Writer.Header().Get(xPrerender))
@@ -83,7 +83,7 @@ func (s *mdwPrerenderSuite) TestRequestStaticExtWithSEOBot() {
 		},
 	}
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
-	Prerender(s.config, s.logger)(c)
+	mdwPrerender(s.config, s.logger)(c)
 
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("", c.Writer.Header().Get(xPrerender))
@@ -100,13 +100,13 @@ func (s *mdwPrerenderSuite) TestRequestHTTPHostWithSEOBot() {
 		},
 	}
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
-	Prerender(s.config, s.logger)(c)
+	mdwPrerender(s.config, s.logger)(c)
 
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
 
 	c.Set(mdwPrerenderCtxKey.String(), &crawl{})
-	Prerender(s.config, s.logger)(c)
+	mdwPrerender(s.config, s.logger)(c)
 
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
@@ -124,13 +124,13 @@ func (s *mdwPrerenderSuite) TestRequestHTTPSHostWithSEOBot() {
 		},
 	}
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
-	Prerender(s.config, s.logger)(c)
+	mdwPrerender(s.config, s.logger)(c)
 
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
 
 	c.Set(mdwPrerenderCtxKey.String(), &crawl{})
-	Prerender(s.config, s.logger)(c)
+	mdwPrerender(s.config, s.logger)(c)
 
 	s.Equal(http.StatusOK, c.Writer.Status())
 	s.Equal("1", c.Writer.Header().Get(xPrerender))
@@ -148,7 +148,7 @@ func (s *mdwPrerenderSuite) TestRequestFailedWithSEOBot() {
 	}
 	c.Request.Header.Add("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
 	c.Set(mdwPrerenderCtxKey.String(), &mockCrawl{})
-	Prerender(s.config, s.logger)(c)
+	mdwPrerender(s.config, s.logger)(c)
 
 	s.Equal(500, c.Writer.Status())
 	s.Equal("", c.Writer.Header().Get(xPrerender))
