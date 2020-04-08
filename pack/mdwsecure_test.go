@@ -143,6 +143,21 @@ func (s *mdwSecureSuite) TestBadMultipleAllowedHosts() {
 	s.Equal(http.StatusForbidden, w.Code)
 }
 
+func (s *mdwSecureSuite) TestEmptyRequestHost() {
+	s.config.HTTPAllowedHosts = []string{"www.example.com", "sub.example.com"}
+	s.server.Use(func(c *Context) {
+		c.Request.Host = ""
+		c.Next()
+	})
+	s.server.Use(mdwSecure(s.config))
+	s.server.GET("/foo", func(c *Context) {
+		c.String(http.StatusOK, "bar")
+	})
+
+	w := s.server.TestHTTPRequest("GET", "http://www3.example.com/foo", nil, nil)
+	s.Equal(http.StatusForbidden, w.Code)
+}
+
 func (s *mdwSecureSuite) TestBasicSSLWithHost() {
 	s.config.HTTPSSLHost = "secure.example.com"
 	s.config.HTTPSSLRedirect = true
