@@ -44,6 +44,28 @@ func (s *contextSuite) TearDownTest() {
 	os.Unsetenv("HTTP_SESSION_SECRETS")
 }
 
+func (s *contextSuite) TestCSRFTemplateField() {
+	c, _ := NewTestContext(httptest.NewRecorder())
+	c.Set(mdwCSRFTokenCtxKey.String(), "foobar")
+
+	{
+		s.Equal(`<input type="hidden" name="authenticity_token" value="foobar">`, c.CSRFTemplateField())
+	}
+
+	{
+		c.Set(mdwCSRFFieldNameCtxKey.String(), "x_authenticity_token")
+		s.Equal(`<input type="hidden" name="x_authenticity_token" value="foobar">`, c.CSRFTemplateField())
+	}
+}
+
+func (s *contextSuite) TestCSRFToken() {
+	c, _ := NewTestContext(httptest.NewRecorder())
+	s.Equal("", c.CSRFToken())
+
+	c.Set(mdwCSRFTokenCtxKey.String(), "foobar")
+	s.Equal("foobar", c.CSRFToken())
+}
+
 func (s *contextSuite) TestI18n() {
 	c, _ := NewTestContext(httptest.NewRecorder())
 	c.Set(mdwI18nCtxKey.String(), s.i18n)

@@ -25,14 +25,14 @@ type Context struct {
 
 // CSRFTemplateField is a template helper for html/template that provides an <input> field populated with a CSRF token.
 func (c *Context) CSRFTemplateField() string {
-	fieldName := csrfTemplateFieldName(c)
+	fieldName := mdwCSRFTemplateFieldName(c)
 
 	return fmt.Sprintf(`<input type="hidden" name="%s" value="%s">`, fieldName, c.CSRFToken())
 }
 
 // CSRFToken returns the CSRF token for the request.
 func (c *Context) CSRFToken() string {
-	val, exists := c.Get(csrfTokenCtxKey.String())
+	val, exists := c.Get(mdwCSRFTokenCtxKey.String())
 	if exists {
 		if token, ok := val.(string); ok {
 			return token

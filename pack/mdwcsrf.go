@@ -9,49 +9,49 @@ import (
 )
 
 var (
-	csrfSecureCookie    *securecookie.SecureCookie
-	csrfFieldNameCtxKey = ContextKey("csrfFieldName")
-	csrfSkipCheckCtxKey = ContextKey("csrfSkipCheck")
-	csrfTokenCtxKey     = ContextKey("csrfToken")
-	csrfSafeMethods     = []string{"GET", "HEAD", "OPTIONS", "TRACE"}
-	errCsrfNoReferer    = errors.New("the request referer is missing")
-	errCsrfBadReferer   = errors.New("the request referer is invalid")
-	errCsrfNoToken      = errors.New("the CSRF token is missing")
-	errCsrfBadToken     = errors.New("the CSRF token is invalid")
+	mdwCSRFSecureCookie    *securecookie.SecureCookie
+	mdwCSRFFieldNameCtxKey = ContextKey("csrfFieldName")
+	mdwCSRFSkipCheckCtxKey = ContextKey("csrfSkipCheck")
+	mdwCSRFTokenCtxKey     = ContextKey("csrfToken")
+	mdwCSRFSafeMethods     = []string{"GET", "HEAD", "OPTIONS", "TRACE"}
+	errCSRFNoReferer       = errors.New("the request referer is missing")
+	errCSRFBadReferer      = errors.New("the request referer is invalid")
+	errCSRFNoToken         = errors.New("the CSRF token is missing")
+	errCSRFBadToken        = errors.New("the CSRF token is invalid")
 )
 
 func mdwCSRF(config *support.Config, logger *support.Logger) HandlerFunc {
-	csrfSecureCookie = securecookie.New(config.HTTPCSRFSecret, nil)
-	csrfSecureCookie.SetSerializer(securecookie.JSONEncoder{})
-	csrfSecureCookie.MaxAge(config.HTTPCSRFCookieMaxAge)
+	mdwCSRFSecureCookie = securecookie.New(config.HTTPCSRFSecret, nil)
+	mdwCSRFSecureCookie.SetSerializer(securecookie.JSONEncoder{})
+	mdwCSRFSecureCookie.MaxAge(config.HTTPCSRFCookieMaxAge)
 
 	return func(c *Context) {
-		csrfHandler(c, config, logger)
+		mdwCSRFHandler(c, config, logger)
 	}
 }
 
 // CSRFSkipCheck skips the CSRF check for the request.
 func CSRFSkipCheck() HandlerFunc {
 	return func(c *Context) {
-		c.Set(csrfSkipCheckCtxKey.String(), true)
+		c.Set(mdwCSRFSkipCheckCtxKey.String(), true)
 		c.Next()
 	}
 }
 
-func csrfHandler(c *Context, config *support.Config, logger *support.Logger) {
+func mdwCSRFHandler(c *Context, config *support.Config, logger *support.Logger) {
 	if c.IsAPIOnly() {
-		c.Set(csrfSkipCheckCtxKey.String(), true)
+		c.Set(mdwCSRFSkipCheckCtxKey.String(), true)
 	}
 
-	skipCheck, exists := c.Get(csrfSkipCheckCtxKey.String())
+	skipCheck, exists := c.Get(mdwCSRFSkipCheckCtxKey.String())
 	if exists && skipCheck.(bool) {
 		c.Next()
 		return
 	}
 }
 
-func csrfTemplateFieldName(c *Context) string {
-	fieldName, exists := c.Get(csrfFieldNameCtxKey.String())
+func mdwCSRFTemplateFieldName(c *Context) string {
+	fieldName, exists := c.Get(mdwCSRFFieldNameCtxKey.String())
 
 	if fieldName == "" || !exists {
 		fieldName = "authenticity_token"
