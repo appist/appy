@@ -44,7 +44,7 @@ func (s *i18nSuite) TestTWithDebugBuild() {
 	i18n := NewI18n(s.asset, s.config, s.logger)
 
 	s.NotNil(i18n.Bundle())
-	s.Equal([]string{"en", "zh-CN", "zh-TW"}, i18n.Locales())
+	s.ElementsMatch([]string{"en", "zh-TW", "zh-CN"}, i18n.Locales())
 	s.Equal("", i18n.T("title.foo", "en"))
 
 	s.Equal("Test", i18n.T("title.test"))
@@ -67,7 +67,7 @@ func (s *i18nSuite) TestTWithReleaseBuild() {
 	i18n := NewI18n(s.asset, s.config, s.logger)
 
 	s.NotNil(i18n.Bundle())
-	s.Equal([]string{"en", "zh-TW", "zh-CN"}, i18n.Locales())
+	s.ElementsMatch([]string{"en", "zh-TW", "zh-CN"}, i18n.Locales())
 	s.Equal("", i18n.T("title.foo", "en"))
 
 	s.Equal("Test", i18n.T("title.test"))
