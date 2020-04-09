@@ -279,13 +279,14 @@ type Config struct {
 	//   - SameSiteNoneMode    = 4
 	HTTPCSRFCookieSameSite http.SameSite `env:"HTTP_CSRF_COOKIE_SAME_SITE" envDefault:"1"`
 
-	// HTTPCSRFCookieSecure indicates if the session cookie can only be sent with
-	// HTTPS request. By default, it is false.
+	// HTTPCSRFCookieSecure indicates if the session cookie can only be sent
+	// with HTTPS request. By default, it is false.
 	HTTPCSRFCookieSecure bool `env:"HTTP_CSRF_COOKIE_SECURE" envDefault:"false"`
 
-	// HTTPCSRFFieldName indicates the POST form field name that contains the
-	// authenticity token for CSRF check. By default, it is "authenticity_token".
-	HTTPCSRFFieldName string `env:"HTTP_CSRF_FIELD_NAME" envDefault:"authenticity_token"`
+	// HTTPCSRFAuthenticityFieldName indicates the POST form field name that
+	// contains the authenticity token for CSRF check. By default, it is
+	// "authenticity_token".
+	HTTPCSRFAuthenticityFieldName string `env:"HTTP_CSRF_AUTHENTICITY_FIELD_NAME" envDefault:"authenticity_token"`
 
 	// HTTPCSRFRequestHeader indicates the HTTP header that contains the
 	// authenticity token for CSRF check. By default, it is "X-CSRF-Token".

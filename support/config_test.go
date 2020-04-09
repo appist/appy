@@ -77,7 +77,7 @@ func (s *configSuite) TestDefaultValue() {
 		"HTTPCSRFCookiePath":              "/",
 		"HTTPCSRFCookieSameSite":          http.SameSite(1),
 		"HTTPCSRFCookieSecure":            false,
-		"HTTPCSRFFieldName":               "authenticity_token",
+		"HTTPCSRFAuthenticityFieldName":   "authenticity_token",
 		"HTTPCSRFRequestHeader":           "X-CSRF-Token",
 		"HTTPCSRFSecret":                  []byte{},
 		"HTTPSSLRedirect":                 false,

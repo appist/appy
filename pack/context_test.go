@@ -46,24 +46,24 @@ func (s *contextSuite) TearDownTest() {
 
 func (s *contextSuite) TestCSRFTemplateField() {
 	c, _ := NewTestContext(httptest.NewRecorder())
-	c.Set(mdwCSRFTokenCtxKey.String(), "foobar")
+	c.Set(mdwCSRFAuthenticityTokenCtxKey.String(), "foobar")
 
 	{
-		s.Equal(`<input type="hidden" name="authenticity_token" value="foobar">`, c.CSRFTemplateField())
+		s.Equal(`<input type="hidden" name="authenticity_token" value="foobar">`, c.CSRFAuthenticityTemplateField())
 	}
 
 	{
-		c.Set(mdwCSRFFieldNameCtxKey.String(), "x_authenticity_token")
-		s.Equal(`<input type="hidden" name="x_authenticity_token" value="foobar">`, c.CSRFTemplateField())
+		c.Set(mdwCSRFAuthenticityFieldNameCtxKey.String(), "x_authenticity_token")
+		s.Equal(`<input type="hidden" name="x_authenticity_token" value="foobar">`, c.CSRFAuthenticityTemplateField())
 	}
 }
 
 func (s *contextSuite) TestCSRFToken() {
 	c, _ := NewTestContext(httptest.NewRecorder())
-	s.Equal("", c.CSRFToken())
+	s.Equal("", c.CSRFAuthenticityToken())
 
-	c.Set(mdwCSRFTokenCtxKey.String(), "foobar")
-	s.Equal("foobar", c.CSRFToken())
+	c.Set(mdwCSRFAuthenticityTokenCtxKey.String(), "foobar")
+	s.Equal("foobar", c.CSRFAuthenticityToken())
 }
 
 func (s *contextSuite) TestI18n() {

@@ -206,7 +206,6 @@ func (p *securePolicy) checkAllowHosts(c *Context) bool {
 	}
 
 	host := c.Request.Host
-	fmt.Println(host)
 	if len(host) == 0 {
 		host = c.Request.URL.Host
 	}

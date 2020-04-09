@@ -11,7 +11,6 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20200209033844-7e00b02ea7d2
 	github.com/chromedp/chromedp v0.5.3
 	github.com/fatih/camelcase v1.0.0
-	github.com/gin-contrib/multitemplate v0.0.0-20200226145339-3e397ee01bc6
 	github.com/gin-gonic/gin v1.6.2
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/websocket v1.4.2
@@ -23,7 +22,5 @@ require (
 	github.com/vektah/gqlparser/v2 v2.0.1
 	go.uber.org/zap v1.14.1
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20200114235610-7ae403b6b589 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )

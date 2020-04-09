@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	apiOnlyHeader = http.CanonicalHeaderKey("x-api-only")
+	xAPIOnly = http.CanonicalHeaderKey("x-api-only")
 )
 
 // Context contains the request information and is meant to be passed through
@@ -23,16 +23,17 @@ type Context struct {
 	*gin.Context
 }
 
-// CSRFTemplateField is a template helper for html/template that provides an <input> field populated with a CSRF token.
-func (c *Context) CSRFTemplateField() string {
-	fieldName := mdwCSRFTemplateFieldName(c)
+// CSRFAuthenticityTemplateField is a template helper for html/template that
+// provides an <input> field populated with a CSRF authenticity token.
+func (c *Context) CSRFAuthenticityTemplateField() string {
+	fieldName := mdwCSRFAuthenticityTemplateFieldName(c)
 
-	return fmt.Sprintf(`<input type="hidden" name="%s" value="%s">`, fieldName, c.CSRFToken())
+	return fmt.Sprintf(`<input type="hidden" name="%s" value="%s">`, fieldName, c.CSRFAuthenticityToken())
 }
 
-// CSRFToken returns the CSRF token for the request.
-func (c *Context) CSRFToken() string {
-	val, exists := c.Get(mdwCSRFTokenCtxKey.String())
+// CSRFToken returns the CSRF authenticity token for the request.
+func (c *Context) CSRFAuthenticityToken() string {
+	val, exists := c.Get(mdwCSRFAuthenticityTokenCtxKey.String())
 	if exists {
 		if token, ok := val.(string); ok {
 			return token
@@ -87,7 +88,7 @@ func (c *Context) HTML(code int, name string, obj interface{}) {
 
 // IsAPIOnly checks if a request is API only based on `X-API-Only` request header.
 func (c *Context) IsAPIOnly() bool {
-	if c.Request.Header.Get(apiOnlyHeader) == "true" || c.Request.Header.Get(apiOnlyHeader) == "1" {
+	if c.Request.Header.Get(xAPIOnly) == "true" || c.Request.Header.Get(xAPIOnly) == "1" {
 		return true
 	}
 

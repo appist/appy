@@ -114,7 +114,7 @@ func gqlPlaygroundTpl(path string, c *Context) []byte {
 				endpoint: '` + path + `',
 				subscriptionEndpoint: '` + path + `',
 				headers: {
-					'X-CSRF-Token': unescape(getCookie("` + mdwCSRFTemplateFieldName(c) + `"))
+					'X-CSRF-Token': unescape(getCookie("` + mdwCSRFAuthenticityTemplateFieldName(c) + `"))
 				},
 				settings: {
 					'request.credentials': 'include',
