@@ -156,6 +156,20 @@ func (c *Context) T(key string, args ...interface{}) string {
 	return i18n.(*support.I18n).T(key, args...)
 }
 
+// Session returns the session in the request context.
+func (c *Context) Session() Sessioner {
+	s, exists := c.Get(mdwSessionCtxKey.String())
+	if !exists {
+		return nil
+	}
+
+	return s.(Sessioner)
+}
+
+func (c *Context) defaultHTML(code int, name string, obj interface{}) {
+	c.Context.HTML(code, name, obj)
+}
+
 // ContextKey is the context key with appy namespace.
 type ContextKey string
 

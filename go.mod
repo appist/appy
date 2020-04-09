@@ -11,14 +11,19 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20200209033844-7e00b02ea7d2
 	github.com/chromedp/chromedp v0.5.3
 	github.com/fatih/camelcase v1.0.0
+	github.com/gin-contrib/multitemplate v0.0.0-20200226145339-3e397ee01bc6
+	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.2
+	github.com/go-redis/redis/v7 v7.2.0
+	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
+	github.com/gorilla/sessions v1.2.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/joho/godotenv v1.3.0
 	github.com/jordan-wright/email v0.0.0-20200322182553-8eef2508c362
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
 	github.com/satori/go.uuid v1.2.0
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/vektah/gqlparser/v2 v2.0.1
 	go.uber.org/zap v1.14.1
 	golang.org/x/text v0.3.2

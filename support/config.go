@@ -182,36 +182,43 @@ type Config struct {
 	// when using this.
 	HTTPSessionRedisAddr string `env:"HTTP_SESSION_REDIS_ADDR" envDefault:"localhost:6379"`
 
-	// HTTPSessionRedisAuth indicates the password to authenticate with the Redis
+	// HTTPSessionRedisPassword indicates the password to authenticate with the Redis
 	// server. By default, it is "".
-	HTTPSessionRedisAuth string `env:"HTTP_SESSION_REDIS_AUTH" envDefault:""`
+	HTTPSessionRedisPassword string `env:"HTTP_SESSION_REDIS_PASSWORD" envDefault:""`
 
 	// HTTPSessionRedisDB indicates the Redis database to use. By default, it is "0".
-	HTTPSessionRedisDB string `env:"HTTP_SESSION_REDIS_DB" envDefault:"0"`
+	HTTPSessionRedisDB int `env:"HTTP_SESSION_REDIS_DB" envDefault:"0"`
 
-	// HTTPSessionRedisMaxActive indicates how many maximum active connections should
-	// remain in the connection pool at one time. If it is 0, there is no limit.
-	// By default, it is 64.
-	HTTPSessionRedisMaxActive int `env:"HTTP_SESSION_REDIS_MAX_ACTIVE" envDefault:"64"`
+	// HTTPSessionRedisPoolSize indicates how many maximum connections a CPU should
+	// keep in its connections pool. By default, it is 10.
+	HTTPSessionRedisPoolSize int `env:"HTTP_SESSION_REDIS_POOL_SIZE" envDefault:"10"`
 
-	// HTTPSessionRedisMaxIdle indicates how many maximum idle connections should
-	// remain in the connection pool at one time. By default, it is 32.
-	HTTPSessionRedisMaxIdle int `env:"HTTP_SESSION_REDIS_MAX_IDLE" envDefault:"32"`
+	// HTTPSessionRedisPoolTimeout indicates how long to wait for a connection to
+	// be returned from the connection pool before returning an error. By default,
+	// it is "4s".
+	HTTPSessionRedisPoolTimeout time.Duration `env:"HTTP_SESSION_REDIS_POOL_TIMEOUT" envDefault:"4s"`
+
+	// HTTPSessionRedisMaxConnAge indicates how long a connection should be
+	// kept alive. If it is 0, no connections will be closed based on the age.
+	// By default, it is 0.
+	HTTPSessionRedisMaxConnAge time.Duration `env:"HTTP_SESSION_REDIS_MAX_CONN_AGE" envDefault:"0"`
+
+	// HTTPSessionRedisMinIdleConns indicates how many minimum idle connections
+	// should remain in the connection pool at one time. If it is 0, there won't
+	// be minimum idle connections remained in the connection pool. By default,
+	// it is 0.
+	HTTPSessionRedisMinIdleConns int `env:"HTTP_SESSION_REDIS_MIN_IDLE_CONNS" envDefault:"0"`
+
+	// HTTPSessionRedisIdleCheckFrequency indicates how frequent the reaper checks
+	// and closes the idle connections. If it is -1, the idle connections won't be
+	// closed by the reaper. However, it will still be closed by the client if
+	// HTTPSessionRedisIdleTimeout is set. By default, it is "1m".
+	HTTPSessionRedisIdleCheckFrequency time.Duration `env:"HTTP_SESSION_REDIS_IDLE_CHECK_FREQUENCY" envDefault:"1m"`
 
 	// HTTPSessionRedisIdleTimeout indicates how long the idle connection should
 	// be kept around. If it is 0, the idle connections won't be closed. By
-	// default, it is "30s".
-	HTTPSessionRedisIdleTimeout time.Duration `env:"HTTP_SESSION_REDIS_IDLE_TIMEOUT" envDefault:"30s"`
-
-	// HTTPSessionRedisMaxConnLifetime indicates how long a connection should be
-	// kept alive. If it is 0, no connections will be closed based on the age.
-	// By default, it is "30s".
-	HTTPSessionRedisMaxConnLifetime time.Duration `env:"HTTP_SESSION_REDIS_MAX_CONN_LIFETIME" envDefault:"30s"`
-
-	// HTTPSessionRedisWait indicates whether or not to wait for the connection
-	// pool to return a usable connection when it is at its HTTPSessionRedisMaxActive
-	// limit. By default, it is true.
-	HTTPSessionRedisWait bool `env:"HTTP_SESSION_REDIS_WAIT" envDefault:"true"`
+	// default, it is "5m".
+	HTTPSessionRedisIdleTimeout time.Duration `env:"HTTP_SESSION_REDIS_IDLE_TIMEOUT" envDefault:"5m"`
 
 	// HTTPSessionCookieName indicates the cookie name to use to store the session.
 	// By default, it is "_session".

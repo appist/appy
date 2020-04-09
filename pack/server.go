@@ -192,9 +192,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (s *Server) ServeNoRoute() {
 	// TODO: allow custom 404 page with translations.
 	s.router.NoRoute(CSRFSkipCheck(), func(c *Context) {
-		// c.defaultHTML(http.StatusNotFound, "error/404", H{
-		// 	"title": "404 Page Not Found",
-		// })
+		c.defaultHTML(http.StatusNotFound, "error/404", H{
+			"title": "404 Page Not Found",
+		})
 	})
 }
 
@@ -258,7 +258,7 @@ func (s *Server) SetupGraphQL(path string, es graphql.ExecutableSchema, exts []g
 
 	if s.config.GQLPlaygroundEnabled && s.config.GQLPlaygroundPath != "" {
 		s.router.GET(s.config.GQLPlaygroundPath, CSRFSkipCheck(), func(c *Context) {
-			c.Data(http.StatusOK, "text/html", gqlPlaygroundTpl(path, c))
+			c.Data(http.StatusOK, "text/html; charset=utf-8", gqlPlaygroundTpl(path, c))
 		})
 	}
 }
