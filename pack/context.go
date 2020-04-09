@@ -31,7 +31,7 @@ func (c *Context) CSRFAuthenticityTemplateField() string {
 	return fmt.Sprintf(`<input type="hidden" name="%s" value="%s">`, fieldName, c.CSRFAuthenticityToken())
 }
 
-// CSRFToken returns the CSRF authenticity token for the request.
+// CSRFAuthenticityToken returns the CSRF authenticity token for the request.
 func (c *Context) CSRFAuthenticityToken() string {
 	val, exists := c.Get(mdwCSRFAuthenticityTokenCtxKey.String())
 	if exists {
