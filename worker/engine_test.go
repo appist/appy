@@ -146,11 +146,11 @@ func (s *engineSuite) TestOpsWithTestEnv() {
 	s.Equal(len(worker.Jobs()), 1)
 }
 
-func (s *engineSuite) TestFakeHandler() {
+func (s *engineSuite) TestMockedHandler() {
 	ctx := context.Background()
 	job := NewJob("test", nil)
 
-	mockedHandler := newFakeHandler()
+	mockedHandler := NewMockedHandler()
 	mockedHandler.On("ProcessTask", ctx, job).Return(nil)
 
 	s.Nil(mockedHandler.ProcessTask(ctx, job))

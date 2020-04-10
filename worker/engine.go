@@ -203,7 +203,7 @@ func (w *Engine) ProcessTask(ctx context.Context, job *Job) {
 	w.ServeMux.ProcessTask(ctx, job)
 }
 
-// Use appends a WorkerMiddlewareFunc to the chain. Middlewares are executed
+// Use appends a MiddlewareFunc to the chain. Middlewares are executed
 // in the order that they are applied to the ServeMux.
 func (w *Engine) Use(handlers ...MiddlewareFunc) {
 	w.ServeMux.Use(handlers...)
@@ -235,17 +235,19 @@ func (w *Engine) Run() {
 	w.Background.Run(w.ServeMux)
 }
 
-type fakeHandler struct {
+// MockedHandler is used for mocking in unit test.
+type MockedHandler struct {
 	test.Mock
 }
 
-func newFakeHandler() *fakeHandler {
-	return new(fakeHandler)
+// NewMockedHandler initializes a fake Handler instance that is useful for unit test.
+func NewMockedHandler() *MockedHandler {
+	return new(MockedHandler)
 }
 
 // ProcessTask mocks the job processing functionality that is useful for unit
 // test.
-func (h *fakeHandler) ProcessTask(ctx context.Context, job *Job) error {
+func (h *MockedHandler) ProcessTask(ctx context.Context, job *Job) error {
 	args := h.Called(ctx, job)
 
 	return args.Error(0)
