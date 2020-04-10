@@ -41,7 +41,7 @@ func (s *configSuite) TestDefaultValue() {
 		"HTTPGzipCompressLevel":              -1,
 		"HTTPGzipExcludedExts":               []string{},
 		"HTTPLogFilterParameters":            []string{"password"},
-		"HTTPHealthCheckURL":                 "/health_check",
+		"HTTPHealthCheckPath":                "/health_check",
 		"HTTPHost":                           "localhost",
 		"HTTPPort":                           "3000",
 		"HTTPGracefulTimeout":                30 * time.Second,

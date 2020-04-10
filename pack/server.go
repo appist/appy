@@ -47,7 +47,7 @@ type (
 	}
 )
 
-// NewServer initializes Server instance.
+// NewServer initializes Server instance without built-in middleware.
 func NewServer(asset *support.Asset, config *support.Config, logger *support.Logger) *Server {
 	router := newRouter()
 
@@ -73,7 +73,7 @@ func NewServer(asset *support.Asset, config *support.Config, logger *support.Log
 	}
 	hss.ErrorLog = zap.NewStdLog(logger.Desugar())
 
-	server := &Server{
+	return &Server{
 		asset:        asset,
 		config:       config,
 		http:         hs,
@@ -83,6 +83,26 @@ func NewServer(asset *support.Asset, config *support.Config, logger *support.Log
 		router:       router,
 		spaResources: []*spaResource{},
 	}
+}
+
+// NewAppServer initializes Server instance with built-in middleware.
+func NewAppServer(asset *support.Asset, config *support.Config, i18n *support.I18n, ml *mailer.Engine, logger *support.Logger, viewFuncs map[string]interface{}) *Server {
+	server := NewServer(asset, config, logger)
+	server.Use(mdwLogger(logger))
+	server.Use(mdwI18n(i18n))
+	server.Use(mdwMailer(ml, i18n, server))
+	server.Use(mdwViewEngine(asset, config, logger, viewFuncs))
+	server.Use(mdwRealIP())
+	server.Use(mdwReqID())
+	server.Use(mdwReqLogger(config, logger))
+	server.Use(mdwGzip(config))
+	server.Use(mdwHealthCheck(config.HTTPHealthCheckPath))
+	server.Use(mdwPrerender(config, logger))
+	server.Use(mdwCSRF(config, logger))
+	server.Use(mdwSecure(config))
+	server.Use(mdwAPIOnly())
+	server.Use(mdwSession(config))
+	server.Use(mdwRecovery(logger))
 
 	return server
 }
@@ -169,10 +189,10 @@ func (s *Server) Router() *Router {
 func (s *Server) Routes() []Route {
 	routes := s.router.routes()
 
-	if s.config.HTTPHealthCheckURL != "" {
+	if s.config.HTTPHealthCheckPath != "" {
 		routes = append(routes, Route{
 			Method:      "GET",
-			Path:        s.config.HTTPHealthCheckURL,
+			Path:        s.config.HTTPHealthCheckPath,
 			Handler:     "",
 			HandlerFunc: nil,
 		})

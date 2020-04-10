@@ -26,12 +26,12 @@ type Engine struct {
 	viewEngine *view.Engine
 }
 
-// NewEngine initializes Mailer instance.
+// NewEngine initializes the engine instance to manage email template and sending.
 func NewEngine(asset *support.Asset, config *support.Config, i18n *support.I18n, logger *support.Logger, viewFuncs map[string]interface{}) *Engine {
 	ve := view.NewEngine(asset, config, logger)
 	ve.SetGlobalFuncs(viewFuncs)
 
-	mailer := &Engine{
+	return &Engine{
 		config:   config,
 		i18n:     i18n,
 		previews: map[string]*Mail{},
@@ -44,8 +44,6 @@ func NewEngine(asset *support.Asset, config *support.Config, i18n *support.I18n,
 		),
 		viewEngine: ve,
 	}
-
-	return mailer
 }
 
 // AddPreview add the mail HTML/text template preview.

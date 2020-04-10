@@ -83,14 +83,14 @@ type Config struct {
 	// HTTP request log. By default, it is "password".
 	HTTPLogFilterParameters []string `env:"HTTP_LOG_FILTER_PARAMETERS" envDefault:"password"`
 
-	// HTTPHealthCheckURL indicates the path to check if the HTTP server is healthy.
+	// HTTPHealthCheckPath indicates the path to check if the HTTP server is healthy.
 	// This endpoint is a middleware that is designed to avoid redundant computing
 	// resource usage. By default, it is "/health_check".
 	//
 	// In general, if your server is running behind a load balancer, this endpoint
 	// will be served to inform the load balancer that the server is healthy and
 	// ready to receive HTTP requests.
-	HTTPHealthCheckURL string `env:"HTTP_HEALTH_CHECK_URL" envDefault:"/health_check"`
+	HTTPHealthCheckPath string `env:"HTTP_HEALTH_CHECK_PATH" envDefault:"/health_check"`
 
 	// HTTPHost indicates which host the HTTP server should be hosted at. By
 	// default, it is "localhost". If you would like to connect to the HTTP server

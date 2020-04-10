@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/appist/appy/mailer"
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
 	"github.com/gorilla/websocket"
@@ -23,7 +24,9 @@ type serverSuite struct {
 	test.Suite
 	asset  *support.Asset
 	config *support.Config
+	i18n   *support.I18n
 	logger *support.Logger
+	mailer *mailer.Engine
 	buffer *bytes.Buffer
 	writer *bufio.Writer
 }
@@ -34,9 +37,11 @@ func (s *serverSuite) SetupTest() {
 	os.Setenv("HTTP_CSRF_SECRET", "481e5d98a31585148b8b1dfb6a3c0465")
 	os.Setenv("HTTP_SESSION_SECRETS", "481e5d98a31585148b8b1dfb6a3c0465")
 
-	s.asset = support.NewAsset(nil, "")
+	s.asset = support.NewAsset(nil, "testdata/context")
 	s.logger, s.buffer, s.writer = support.NewTestLogger()
 	s.config = support.NewConfig(s.asset, s.logger)
+	s.i18n = support.NewI18n(s.asset, s.config, s.logger)
+	s.mailer = mailer.NewEngine(s.asset, s.config, s.i18n, s.logger, nil)
 }
 
 func (s *serverSuite) TearDownTest() {
@@ -67,6 +72,12 @@ func (s *serverSuite) TestNewServerWithoutSSLEnabled() {
 	s.Equal(0, len(server.Middleware()))
 	s.Equal("localhost:3000", server.HTTP().Addr)
 	s.Equal("localhost:3443", server.HTTPS().Addr)
+}
+
+func (s *serverSuite) TestNewAppServer() {
+	server := NewAppServer(s.asset, s.config, s.i18n, s.mailer, s.logger, nil)
+
+	s.Equal(15, len(server.middleware))
 }
 
 func (s *serverSuite) TestIsSSLCertsExisted() {
