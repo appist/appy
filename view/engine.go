@@ -18,7 +18,8 @@ const (
 
 // Engine renders the view template.
 type Engine struct {
-	*jet.Set
+	htmlSet          *jet.Set
+	txtSet           *jet.Set
 	asset            *support.Asset
 	config           *support.Config
 	logger           *support.Logger
@@ -28,10 +29,12 @@ type Engine struct {
 
 // NewEngine initializes the view engine instance.
 func NewEngine(asset *support.Asset, config *support.Config, logger *support.Logger) *Engine {
-	loader := jet.NewSetLoader(template.HTMLEscape, NewLoader(asset))
+	htmlSet := jet.NewSetLoader(template.HTMLEscape, NewLoader(asset))
+	txtSet := jet.NewSetLoader(nil, NewLoader(asset))
 
 	return &Engine{
-		loader,
+		htmlSet,
+		txtSet,
 		asset,
 		config,
 		logger,
@@ -40,7 +43,20 @@ func NewEngine(asset *support.Asset, config *support.Config, logger *support.Log
 	}
 }
 
-// SetGlobalFuncs set up the global functions by combining built-in and application functions.
+// HTMLSet returns the template set in which the contents are escaped by
+// template.HTMLEscape.
+func (e *Engine) HTMLSet() *jet.Set {
+	return e.htmlSet
+}
+
+// TxtSet returns the template set in which the contents are plain text
+// without being escaped.
+func (e *Engine) TxtSet() *jet.Set {
+	return e.txtSet
+}
+
+// SetGlobalFuncs set up the global functions by combining built-in and
+// application functions.
 func (e *Engine) SetGlobalFuncs(viewFuncs map[string]interface{}) {
 	funcs := map[string]interface{}{
 		"assetPath": e.assetPath,
@@ -55,7 +71,8 @@ func (e *Engine) SetGlobalFuncs(viewFuncs map[string]interface{}) {
 	}
 
 	for name, f := range funcs {
-		e.AddGlobal(name, f)
+		e.htmlSet.AddGlobal(name, f)
+		e.txtSet.AddGlobal(name, f)
 	}
 }
 

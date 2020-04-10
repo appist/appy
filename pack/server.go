@@ -3,6 +3,7 @@ package pack
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"io"
 	"net"
 	"net/http"
@@ -18,7 +19,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	gqlLRU "github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/appist/appy/mailer"
 	"github.com/appist/appy/support"
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gorilla/websocket"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
@@ -256,6 +259,95 @@ func (s *Server) SetupGraphQL(path string, es graphql.ExecutableSchema, exts []g
 			c.Data(http.StatusOK, "text/html; charset=utf-8", gqlPlaygroundTpl(path, c))
 		})
 	}
+}
+
+// SetupMailerPreview sets up the mailer preview for debugging purpose.
+func (s *Server) SetupMailerPreview(m *mailer.Engine, i18n *support.I18n) {
+	if support.IsReleaseBuild() {
+		return
+	}
+
+	s.router.HTMLRender.(multitemplate.Renderer).AddFromString("mailer/preview", mailerPreviewTpl())
+
+	// Serve the preview listing page.
+	s.GET(s.config.MailerPreviewPath, func(c *Context) {
+		name := c.DefaultQuery("name", "")
+		if name == "" && len(m.Previews()) > 0 {
+			for _, preview := range m.Previews() {
+				name = preview.Template
+				break
+			}
+		}
+
+		locale := c.DefaultQuery("locale", s.config.I18nDefaultLocale)
+		preview := &mailer.Mail{}
+
+		if name != "" {
+			preview = m.Previews()[name]
+			preview.Locale = locale
+
+			subject := i18n.T(preview.Subject, preview.Locale)
+			if subject != "" {
+				preview.Subject = subject
+			}
+		}
+
+		c.defaultHTML(http.StatusOK, "mailer/preview", H{
+			"path":          s.config.MailerPreviewPath,
+			"previews":      m.Previews(),
+			"title":         "Mailer Preview",
+			"name":          name,
+			"ext":           c.DefaultQuery("ext", "html"),
+			"locale":        locale,
+			"locales":       i18n.Locales(),
+			"mail":          preview,
+			"liveReloadTpl": template.HTML(liveReloadTpl(c.Request.Host, c.Request.TLS)),
+		})
+	})
+
+	// Serve the preview content.
+	s.GET(s.config.MailerPreviewPath+"/preview", func(c *Context) {
+		name := c.Query("name")
+		preview, exists := m.Previews()[name]
+
+		if !exists {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		var (
+			contentType string
+			content     []byte
+		)
+
+		preview.Locale = c.DefaultQuery("locale", s.config.I18nDefaultLocale)
+		ext := c.DefaultQuery("ext", "html")
+		switch ext {
+		case "html":
+			contentType = "text/html"
+			email, err := m.ComposeEmail(preview)
+			if err != nil {
+				c.Logger().Error(err)
+				c.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
+
+			content = email.HTML
+		case "txt":
+			contentType = "text/plain"
+			email, err := m.ComposeEmail(preview)
+			if err != nil {
+				c.Logger().Error(err)
+				c.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
+
+			content = email.Text
+		}
+
+		c.Writer.Header().Del(http.CanonicalHeaderKey("x-frame-options"))
+		c.Data(http.StatusOK, contentType, content)
+	})
 }
 
 // TestHTTPRequest provides a simple way to fire HTTP request to the server.

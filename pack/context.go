@@ -58,11 +58,11 @@ func (c *Context) Deliver(mail *mailer.Mail) error {
 func (c *Context) HTML(code int, name string, obj interface{}) {
 	viewEngine, _ := c.Get(mdwViewEngineCtxKey.String())
 	ve := viewEngine.(*view.Engine)
-	ve.AddGlobal("t", func(key string, args ...interface{}) string {
+	ve.HTMLSet().AddGlobal("t", func(key string, args ...interface{}) string {
 		return c.T(key, args...)
 	})
 
-	t, err := ve.GetTemplate(name)
+	t, err := ve.HTMLSet().GetTemplate(name)
 	if err != nil {
 		c.Logger().Error(err)
 		c.AbortWithError(http.StatusInternalServerError, err)

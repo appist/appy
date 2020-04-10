@@ -53,32 +53,9 @@ func (e *Engine) AddPreview(mail *Mail) {
 	e.previews[mail.Template] = mail
 }
 
-// Deliveries returns the Mail array which is used for unit test with APPY_ENV=test.
-func (e *Engine) Deliveries() []*Mail {
-	return e.deliveries
-}
-
-// Previews returns all the templates preview.
-func (e *Engine) Previews() map[string]*Mail {
-	return e.previews
-}
-
-// Deliver sends the email via SMTP protocol without TLS.
-func (e *Engine) Deliver(mail *Mail) error {
-	email, err := e.composeEmail(mail)
-	if err != nil {
-		return err
-	}
-
-	if e.config.AppyEnv == "test" {
-		e.deliveries = append(e.deliveries, mail)
-		return nil
-	}
-
-	return email.SendWithTLS(e.smtpAddr, e.smtpAuth, &tls.Config{})
-}
-
-func (e *Engine) composeEmail(mail *Mail) (*email.Email, error) {
+// ComposeEmail constructs the HTML/text content and transforms mailer.Mail
+// into email.Email.
+func (e *Engine) ComposeEmail(mail *Mail) (*email.Email, error) {
 	email := &email.Email{
 		From:        mail.From,
 		To:          mail.To,
@@ -103,14 +80,14 @@ func (e *Engine) composeEmail(mail *Mail) (*email.Email, error) {
 		email.Headers = textproto.MIMEHeader{}
 	}
 
-	html, err := e.content(mail.Locale, mail.Template+".html", mail.TemplateData)
+	html, err := e.content(mail.Locale, mail.Template+".html", "html", mail.TemplateData)
 	if err != nil {
 		return nil, err
 	}
 	mail.HTML = string(html)
 	email.HTML = html
 
-	text, err := e.content(mail.Locale, mail.Template+".txt", mail.TemplateData)
+	text, err := e.content(mail.Locale, mail.Template+".txt", "txt", mail.TemplateData)
 	if err != nil {
 		return nil, err
 	}
@@ -129,8 +106,40 @@ func (e *Engine) composeEmail(mail *Mail) (*email.Email, error) {
 	return email, nil
 }
 
-func (e *Engine) content(locale, name string, obj interface{}) ([]byte, error) {
-	e.viewEngine.AddGlobal("t", func(key string, args ...interface{}) string {
+// Deliver sends the email via SMTP protocol without TLS.
+func (e *Engine) Deliver(mail *Mail) error {
+	email, err := e.ComposeEmail(mail)
+	if err != nil {
+		return err
+	}
+
+	if e.config.AppyEnv == "test" {
+		e.deliveries = append(e.deliveries, mail)
+		return nil
+	}
+
+	return email.SendWithTLS(e.smtpAddr, e.smtpAuth, &tls.Config{})
+}
+
+// Deliveries returns the Mail array which is used for unit test with
+// APPY_ENV=test.
+func (e *Engine) Deliveries() []*Mail {
+	return e.deliveries
+}
+
+// Previews returns all the templates preview.
+func (e *Engine) Previews() map[string]*Mail {
+	return e.previews
+}
+
+func (e *Engine) content(locale, name, ext string, obj interface{}) ([]byte, error) {
+	set := e.viewEngine.HTMLSet()
+
+	if ext == "txt" {
+		set = e.viewEngine.TxtSet()
+	}
+
+	set.AddGlobal("t", func(key string, args ...interface{}) string {
 		var (
 			tplCount  int
 			tplData   support.H
@@ -166,7 +175,7 @@ func (e *Engine) content(locale, name string, obj interface{}) ([]byte, error) {
 		return e.i18n.T(key, args...)
 	})
 
-	t, err := e.viewEngine.GetTemplate(name)
+	t, err := set.GetTemplate(name)
 	if err != nil {
 		return nil, err
 	}

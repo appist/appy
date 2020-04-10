@@ -49,12 +49,23 @@ func (s *engineSuite) TestSetGlobalFuncs() {
 		"assetPath": customAssetPath,
 	})
 
-	assetPath, found := s.engine.LookupGlobal("assetPath")
-	s.NotEqual(&customAssetPath, &assetPath)
-	s.Equal(true, found)
+	{
+		assetPath, found := s.engine.HTMLSet().LookupGlobal("assetPath")
+		s.NotEqual(&customAssetPath, &assetPath)
+		s.Equal(true, found)
 
-	_, found = s.engine.LookupGlobal("test")
-	s.Equal(true, found)
+		_, found = s.engine.HTMLSet().LookupGlobal("test")
+		s.Equal(true, found)
+	}
+
+	{
+		assetPath, found := s.engine.TxtSet().LookupGlobal("assetPath")
+		s.NotEqual(&customAssetPath, &assetPath)
+		s.Equal(true, found)
+
+		_, found = s.engine.TxtSet().LookupGlobal("test")
+		s.Equal(true, found)
+	}
 }
 
 func (s *engineSuite) TestAssetPathWithDebugBuild() {
