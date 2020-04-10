@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/appist/appy/support"
@@ -259,11 +260,10 @@ func saveCSRFTokenIntoCookie(csrfToken []byte, c *Context, config *support.Confi
 // An unmasked token will be returned if a masked token is XOR'ed with the
 // one-time-pad used to mask it.
 func xorToken(a, b []byte) []byte {
-	n := len(a)
-	if len(b) < n {
-		n = len(b)
-	}
+	lens := []int{len(a), len(b)}
+	sort.Ints(lens)
 
+	n := lens[0]
 	res := make([]byte, n)
 
 	for i := 0; i < n; i++ {
