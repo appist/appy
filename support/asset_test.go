@@ -65,6 +65,7 @@ func (s *assetSuite) TestOpsInReleaseBuild() {
 			http.Dir("./testdata/asset/ops_in_release_build"),
 			"",
 		)
+		s.NotNil(asset.Embedded())
 
 		_, err := asset.Open(asset.Layout().view)
 		s.Equal("open testdata/asset/ops_in_release_build/pkg/views: no such file or directory", err.Error())

@@ -40,6 +40,11 @@ func NewAsset(embedded http.FileSystem, root string) *Asset {
 	return asset
 }
 
+// Embedded returns the embedded asset.
+func (a *Asset) Embedded() http.FileSystem {
+	return a.embedded
+}
+
 // Layout keeps the path for project components.
 func (a *Asset) Layout() *AssetLayout {
 	return a.layout
