@@ -11,6 +11,9 @@ const (
 	// VERSION follows semantic versioning to indicate the framework's release
 	// status.
 	VERSION = "0.1.0"
+
+	// DESCRIPTION indicates what the web framework is aiming to provide.
+	DESCRIPTION = "An opinionated productive web framework that helps scaling business easier."
 )
 
 var (
