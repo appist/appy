@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/appist/appy"
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
 	"github.com/gorilla/websocket"
@@ -252,7 +251,7 @@ func (s *serverSuite) TestSetupGraphQL() {
 	w = server.TestHTTPRequest("POST", graphqlPath, nil, nil)
 	s.Equal(403, w.Code)
 
-	w = server.TestHTTPRequest("POST", graphqlPath, appy.H{
+	w = server.TestHTTPRequest("POST", graphqlPath, H{
 		"content-type": "application/json",
 		"x-api-only":   "1",
 	}, nil)

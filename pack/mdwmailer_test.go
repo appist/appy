@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/appist/appy"
 	"github.com/appist/appy/mailer"
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
@@ -60,7 +59,7 @@ func (s *mdwMailerSuite) TestMailerPreviewWithDebugBuild() {
 		Bcc:          []string{"d@appy.org"},
 		Subject:      "mailers.user.welcome.subject",
 		Template:     "mailers/user/welcome",
-		TemplateData: appy.H{},
+		TemplateData: H{},
 	})
 
 	s.mailer.AddPreview(&mailer.Mail{
@@ -71,7 +70,7 @@ func (s *mdwMailerSuite) TestMailerPreviewWithDebugBuild() {
 		Bcc:          []string{"d@appy.org"},
 		Subject:      "mailers.user.welcome.subject",
 		Template:     "mailers/user/error",
-		TemplateData: appy.H{},
+		TemplateData: H{},
 	})
 
 	mdwMailer(s.mailer, s.i18n, s.server)
