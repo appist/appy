@@ -174,7 +174,7 @@ func (s *dbSuite) TestTransaction() {
 	}
 
 	for adapter, query := range tt {
-		s.setupDB(adapter, "test_transaction")
+		s.setupDB(adapter, "test_db_transaction")
 
 		tx, err := s.db.Begin()
 		s.Nil(err)
@@ -217,7 +217,7 @@ func (s *dbSuite) TestMigrateSeedRollback() {
 	oldMigratePath := migratePath
 	defer func() { migratePath = oldMigratePath }()
 
-	database := "test_migrate_seed_rollback"
+	database := "test_db_migrate_seed_rollback"
 	for _, adapter := range supportedAdapters {
 		migratePath = "tmp/" + adapter + "/"
 		s.setupDB(adapter, database)
@@ -314,6 +314,12 @@ func (s *dbSuite) TestMigrateSeedRollback() {
 		s.Equal("up", migrations[1][0])
 
 		// Test db:schema:dump after db:migrate.
+		oldDumper := dumper
+		dumper = map[string]string{"mysql": "mysqldummy", "postgres": "pg_dummy"}
+		err = s.db.DumpSchema(database)
+		s.NotNil(err)
+
+		dumper = oldDumper
 		err = s.db.DumpSchema(database)
 		s.Nil(err)
 
@@ -339,6 +345,17 @@ func (s *dbSuite) TestMigrateSeedRollback() {
 		s.Contains(string(buf), "('20200202165238');")
 
 		// Test db:seed.
+		s.db.RegisterSeedTx(
+			func(tx Txer) error {
+				_, err := tx.Exec(`INSERT INTO orders`)
+
+				return err
+			},
+		)
+
+		err = s.db.Seed()
+		s.NotNil(err)
+
 		insertQuery := `INSERT INTO orders VALUES(?, ?);`
 		if adapter == "postgres" {
 			insertQuery = `INSERT INTO orders VALUES($1, $2);`
@@ -409,6 +426,213 @@ func (s *dbSuite) TestMigrateSeedRollback() {
 
 		err = os.RemoveAll(migratePath)
 		s.Nil(err)
+	}
+}
+
+func (s *dbSuite) TestExec() {
+	var count int
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range supportedAdapters {
+		s.setupDB(adapter, "test_db_exec")
+
+		query := `INSERT INTO users (username) VALUES (?);`
+		if adapter == "postgres" {
+			query = `INSERT INTO users (username) VALUES ($1);`
+		}
+
+		_, err := s.db.Exec(query, "John Doe")
+		s.Nil(err)
+
+		_, err = s.db.ExecContext(ctx, query, "John Doe")
+		s.Equal("context canceled", err.Error())
+
+		err = s.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM users;")
+		s.Equal("context canceled", err.Error())
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+
+		var usernames []string
+		err = s.db.Select(&usernames, "SELECT username FROM users;")
+		s.Nil(err)
+		s.Equal(1, len(usernames))
+
+		usernames = []string{}
+		err = s.db.SelectContext(ctx, &usernames, "SELECT username FROM users;")
+		s.Equal("context canceled", err.Error())
+	}
+}
+
+func (s *dbSuite) TestPrepare() {
+	var count int
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range supportedAdapters {
+		s.setupDB(adapter, "test_db_prepare")
+
+		query := `INSERT INTO users (username) VALUES (?);`
+		if adapter == "postgres" {
+			query = `INSERT INTO users (username) VALUES ($1);`
+		}
+
+		stmt, err := s.db.Prepare(query)
+		s.Nil(err)
+
+		_, err = stmt.Exec("John Doe")
+		s.Nil(err)
+
+		_, err = s.db.PrepareContext(ctx, query)
+		s.Equal("context canceled", err.Error())
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+	}
+}
+
+func (s *dbSuite) TestQuery() {
+	var count int
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range supportedAdapters {
+		s.setupDB(adapter, "test_db_query")
+
+		query := `INSERT INTO users (username) VALUES (?);`
+		if adapter == "postgres" {
+			query = `INSERT INTO users (username) VALUES ($1);`
+		}
+
+		_, err := s.db.Query(query, "John Doe")
+		s.Nil(err)
+
+		_, err = s.db.QueryContext(ctx, query, "John Doe")
+		s.Equal("context canceled", err.Error())
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+	}
+}
+
+func (s *dbSuite) TestQueryRow() {
+	var count int
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range supportedAdapters {
+		s.setupDB(adapter, "test_db_query_row")
+
+		query := `INSERT INTO users (username) VALUES (?);`
+		if adapter == "postgres" {
+			query = `INSERT INTO users (username) VALUES ($1);`
+		}
+
+		_ = s.db.QueryRow(query, "John Doe")
+		_ = s.db.QueryRowContext(ctx, query, "John Doe")
+
+		err := s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+	}
+}
+
+func (s *dbSuite) TestNamedExec() {
+	var count int
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range supportedAdapters {
+		s.setupDB(adapter, "test_db_named_exec")
+
+		_, err := s.db.NamedExec(`INSERT INTO users (username) VALUES (:username);`,
+			map[string]interface{}{
+				"username": "John Doe",
+			},
+		)
+		s.Nil(err)
+
+		_, err = s.db.NamedExecContext(ctx, `INSERT INTO users (username) VALUES (:username);`,
+			map[string]interface{}{
+				"username": "John Doe",
+			},
+		)
+		s.Equal("context canceled", err.Error())
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+	}
+}
+
+func (s *dbSuite) TestNamedQuery() {
+	var count int
+
+	type fakeUser struct {
+		Username string `db:"username"`
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range supportedAdapters {
+		s.setupDB(adapter, "test_db_named_query")
+
+		_, err := s.db.NamedQuery(`INSERT INTO users (username) VALUES (:username);`,
+			map[string]interface{}{
+				"username": "John Doe",
+			},
+		)
+		s.Nil(err)
+
+		_, err = s.db.NamedQueryContext(ctx, `INSERT INTO users (username) VALUES (:username);`,
+			map[string]interface{}{
+				"username": "John Doe",
+			},
+		)
+		s.Equal("context canceled", err.Error())
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+	}
+}
+
+func (s *dbSuite) TestPrepareNamed() {
+	type fakeUser struct {
+		Username string `db:"username"`
+	}
+
+	var count int
+
+	query := `INSERT INTO users (username) VALUES (:username);`
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range supportedAdapters {
+		s.setupDB(adapter, "test_db_prepare_named")
+
+		stmt, err := s.db.PrepareNamed(query)
+		s.Nil(err)
+
+		_, err = stmt.Exec(&fakeUser{"Johne Doe"})
+		s.Nil(err)
+
+		_, err = s.db.PrepareNamedContext(ctx, query)
+		s.Equal("context canceled", err.Error())
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
 	}
 }
 

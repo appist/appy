@@ -20,7 +20,10 @@ type Config struct {
 	// "DB_URI_<DB_NAME>".
 	Adapter string
 
-	// ConnMaxLifetime
+	// ConnMaxLifetime indicates the maximum amount of time a connection may be
+	// reused. Expired connections may be closed lazily before reuse.
+	//
+	// If d <= 0, connections are reused forever.
 	ConnMaxLifetime time.Duration
 
 	// Database indicates the database schema to connect. The value is parsed
@@ -31,10 +34,17 @@ type Config struct {
 	// is parsed from "DB_URI_<DB_NAME>".
 	Host string
 
-	// MaxIdleConns
+	// MaxIdleConns indicates the maximum number of connections in the idle
+	// connection pool. By default, it is 25. Otherwise, the value is parsed
+	// from "DB_MAX_IDLE_CONNS_<DB_NAME>".
+	//
+	// Note: MaxIdleConns will automatically be updated to use the same value
+	// as MaxOpenConns if  MaxIdleConns is greater than MaxOpenConns.
 	MaxIdleConns int
 
-	// MaxOpenConns
+	// MaxOpenConns indicates the maximum number of open connections to the
+	// database. By default, it is 25. Otherwise, the value is parsed
+	// from "DB_MAX_OPEN_CONNS_<DB_NAME>".
 	MaxOpenConns int
 
 	// Password indicates the password to use for connecting to the database.
@@ -143,6 +153,10 @@ func parseDBConfig() (map[string]*Config, []error) {
 			if err != nil {
 				errs = append(errs, err)
 			}
+		}
+
+		if config.MaxIdleConns > config.MaxOpenConns {
+			config.MaxIdleConns = config.MaxOpenConns
 		}
 
 		config.Replica = false

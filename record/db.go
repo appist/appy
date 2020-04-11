@@ -29,6 +29,10 @@ const (
 	loggerDBPrefix = "[DB] "
 )
 
+var (
+	dumper = map[string]string{"mysql": "mysqldump", "postgres": "pg_dump"}
+)
+
 type (
 	// DBer implements all DB methods.
 	DBer interface {
@@ -152,12 +156,7 @@ func (db *DB) Connect() error {
 		return err
 	}
 
-	err = db.setupWrapper(wrapper)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.setupWrapper(wrapper)
 }
 
 // CreateDB creates the database.
@@ -199,12 +198,7 @@ func (db *DB) DropDB(database string) error {
 	}
 
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s;", database))
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // DumpSchema dumps the database schema into "db/migrate/<dbname>/schema.go".
@@ -227,13 +221,14 @@ func (db *DB) DumpSchema(dbname string) error {
 		versions      []string
 	)
 
+	dumpCmd := dumper[db.Config().Adapter]
+	_, err = exec.LookPath(dumpCmd)
+	if err != nil {
+		return err
+	}
+
 	switch db.Config().Adapter {
 	case "mysql":
-		_, err = exec.LookPath("mysqldump")
-		if err != nil {
-			return err
-		}
-
 		dumpArgs := []string{
 			"--no-data",
 			"--routines",
@@ -244,7 +239,7 @@ func (db *DB) DumpSchema(dbname string) error {
 			"--user", db.Config().Username,
 			db.Config().Database,
 		}
-		dumpCmd := exec.Command("mysqldump", dumpArgs...)
+		dumpCmd := exec.Command(dumpCmd, dumpArgs...)
 		dumpCmd.Env = os.Environ()
 		dumpCmd.Env = append(dumpCmd.Env, []string{"MYSQL_PWD=" + db.Config().Password}...)
 		dumpCmd.Stdout = &outBytes
@@ -267,11 +262,6 @@ func (db *DB) DumpSchema(dbname string) error {
 		)
 		database = db.Config().Database
 	case "postgres":
-		_, err = exec.LookPath("pg_dump")
-		if err != nil {
-			return err
-		}
-
 		dumpArgs := []string{
 			"-s", "-x", "-O", "--no-comments",
 			"-d", db.Config().Database,
@@ -280,7 +270,7 @@ func (db *DB) DumpSchema(dbname string) error {
 			"-p", db.Config().Port,
 			"-U", db.Config().Username,
 		}
-		dumpCmd := exec.Command("pg_dump", dumpArgs...)
+		dumpCmd := exec.Command(dumpCmd, dumpArgs...)
 		dumpCmd.Env = os.Environ()
 		dumpCmd.Env = append(dumpCmd.Env, []string{"PGPASSWORD=" + db.Config().Password}...)
 		dumpCmd.Stdout = &outBytes
@@ -344,12 +334,7 @@ func (db *DB) DumpSchema(dbname string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(path+"/schema.go", tpl, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile(path+"/schema.go", tpl, 0644)
 }
 
 // Exec executes a query without returning any rows. The args are for any placeholder parameters
@@ -803,12 +788,7 @@ func (db *DB) connectByAdapter() error {
 		return err
 	}
 
-	err = db.setupWrapper(wrapper)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.setupWrapper(wrapper)
 }
 
 func (db *DB) removeSchemaMigration(tx Txer, migration *Migration) error {

@@ -100,8 +100,8 @@ func (s *configSuite) TestParseDBConfigForMySQL() {
 
 func (s *configSuite) TestParseDBConfigForPostgreSQL() {
 	os.Setenv("DB_CONN_MAX_LIFETIME_PRIMARY", "10m")
-	os.Setenv("DB_MAX_IDLE_CONNS_PRIMARY", "50")
-	os.Setenv("DB_MAX_OPEN_CONNS_PRIMARY", "100")
+	os.Setenv("DB_MAX_IDLE_CONNS_PRIMARY", "100")
+	os.Setenv("DB_MAX_OPEN_CONNS_PRIMARY", "50")
 	os.Setenv("DB_REPLICA_PRIMARY", "true")
 	os.Setenv("DB_SCHEMA_MIGRATIONS_TABLE_PRIMARY", "postgres_migrations")
 	os.Setenv("DB_SCHEMA_SEARCH_PATH_PRIMARY", "public,appy")
@@ -126,7 +126,7 @@ func (s *configSuite) TestParseDBConfigForPostgreSQL() {
 	s.Equal("appy", dbConfig.Database)
 	s.Equal("0.0.0.0", dbConfig.Host)
 	s.Equal(50, dbConfig.MaxIdleConns)
-	s.Equal(100, dbConfig.MaxOpenConns)
+	s.Equal(50, dbConfig.MaxOpenConns)
 	s.Equal("whatever", dbConfig.Password)
 	s.Equal("15432", dbConfig.Port)
 	s.Equal(true, dbConfig.Replica)
