@@ -20,10 +20,10 @@ var (
 type Migration struct {
 	File    string
 	Version string
-	Down    func(*DB) error
-	DownTx  func(*Tx) error
-	Up      func(*DB) error
-	UpTx    func(*Tx) error
+	Down    func(DBer) error
+	DownTx  func(Txer) error
+	Up      func(DBer) error
+	UpTx    func(Txer) error
 }
 
 func migrationFile() string {
@@ -63,27 +63,31 @@ func migrationTpl(dbname string, tx bool) ([]byte, error) {
 		Tx             bool
 	}
 
-	t, err := template.New("migration").Parse(
+	t, _ := template.New("migration").Parse(
 		`package {{.DBName}}
+
 import (
 	"github.com/appist/appy"
 	"{{.Module}}/pkg/app"
 )
+
 func init() {
 	db := app.DB("{{.DBName}}")
+
 	if db != nil {
 		err := db.RegisterMigration{{if .Tx}}Tx{{end}}(
 			// Up migration
-			func(db *appy.DB{{if .Tx}}Tx{{end}}) error {
+			func(db appy.{{if .Tx}}Tx{{else}}DB{{end}}) error {
 				_, err := db.Exec(` + "`" + "`" + `)
 				return err
 			},
 			// Down migration
-			func(db *appy.DB{{if .Tx}}Tx{{end}}) error {
+			func(db appy.{{if .Tx}}Tx{{else}}DB{{end}}) error {
 				_, err := db.Exec(` + "`" + "`" + `)
 				return err
 			},
 		)
+
 		if err != nil {
 			app.Logger.Fatal(err)
 		}
@@ -91,19 +95,15 @@ func init() {
 }
 `)
 
-	if err != nil {
-		return []byte(""), err
-	}
-
 	var tpl bytes.Buffer
-	err = t.Execute(&tpl, data{
+	err := t.Execute(&tpl, data{
 		DBName: dbname,
 		Module: moduleName(),
 		Tx:     tx,
 	})
 
 	if err != nil {
-		return []byte(""), err
+		return nil, err
 	}
 
 	return tpl.Bytes(), err
@@ -130,13 +130,14 @@ func schemaDumpTpl(database, schema string) ([]byte, error) {
 		Database, Module, Schema string
 	}
 
-	t, err := template.New("schemaDump").Parse(
+	t, _ := template.New("schemaDump").Parse(
 		`package {{.Database}}
 import (
 	"{{.Module}}/pkg/app"
 )
 func init() {
 	db := app.DB("{{.Database}}")
+
 	if db != nil {
 		db.SetSchema(` + "`" +
 			"{{.Schema}}" +
@@ -146,19 +147,15 @@ func init() {
 }
 `)
 
-	if err != nil {
-		return []byte(""), err
-	}
-
 	var tpl bytes.Buffer
-	err = t.Execute(&tpl, data{
+	err := t.Execute(&tpl, data{
 		Database: database,
 		Module:   moduleName(),
 		Schema:   "\n" + schema,
 	})
 
 	if err != nil {
-		return []byte(""), err
+		return nil, err
 	}
 
 	return tpl.Bytes(), err
