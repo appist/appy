@@ -79,6 +79,7 @@ func NewAppCommand(asset *support.Asset, config *support.Config, dbManager *reco
 	if support.IsDebugBuild() {
 		cmd.AddCommand(newBuildCommand(asset, logger, server))
 		cmd.AddCommand(newDBSchemaDumpCommand(config, dbManager, logger))
+		cmd.AddCommand(newStartCommand(logger, server))
 	}
 
 	return cmd

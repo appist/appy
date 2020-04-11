@@ -35,6 +35,7 @@ func (s *engineSuite) TestDBManagerWithValidDBConfig() {
 
 	engine := NewEngine(s.logger)
 	s.Equal(0, len(engine.Errors()))
+	s.Equal(2, len(engine.Databases()))
 	s.Nil(engine.DB("foobar"))
 	s.NotNil(engine.DB("primary"))
 	s.NotNil(engine.DB("primaryReplica"))

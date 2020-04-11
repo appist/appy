@@ -240,6 +240,7 @@ func (s *Server) SetupGraphQL(path string, es graphql.ExecutableSchema, exts []g
 		MaxUploadSize: s.Config().GQLMultipartMaxUploadSize,
 	})
 
+	// TODO: Update to allow using Redis as cache.
 	queryCacheSize := 1000
 	if s.Config().GQLQueryCacheSize > 0 {
 		queryCacheSize = s.Config().GQLQueryCacheSize
