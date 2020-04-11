@@ -294,7 +294,7 @@ func (s *configSuite) TestConfigFileParsing() {
 
 	{
 		os.Setenv("APPY_ENV", "decryptable")
-		os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+		os.Setenv("APPY_MASTER_KEY", "5a9f28ee6301fbaee87d27a9af5cbdc73f3e907f0dec11a4f37e361c1e0687da")
 		os.Setenv("HTTP_CSRF_SECRET", "58f364f29b568807ab9cffa22c99b538")
 		os.Setenv("HTTP_SESSION_SECRETS", "58f364f29b568807ab9cffa22c99b538")
 		defer func() {
@@ -313,7 +313,7 @@ func (s *configSuite) TestConfigFileParsing() {
 
 	{
 		os.Setenv("APPY_ENV", "decryptable")
-		os.Setenv("APPY_MASTER_KEY", "58f364f29b568807ab9cffa22c99b538")
+		os.Setenv("APPY_MASTER_KEY", "5a9f28ee6301fbaee87d27a9af5cbdc73f3e907f0dec11a4f37e361c1e0687da")
 		os.Setenv("HTTP_CSRF_SECRET", "58f364f29b568807ab9cffa22c99b538")
 		os.Setenv("HTTP_HOST", "1.2.3.4")
 		os.Setenv("HTTP_SESSION_SECRETS", "58f364f29b568807ab9cffa22c99b538")

@@ -4,12 +4,15 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/hex"
 	"io"
 )
 
-// AESDecrypt decrypts a cipher text into a plain text using the key with AES.
+// AESDecrypt decrypts a cipher text into a plain text using the key with
+// AES-256 algorithm.
 func AESDecrypt(ciphertext []byte, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+	decodedKey, _ := hex.DecodeString(string(key))
+	block, err := aes.NewCipher(decodedKey)
 	if err != nil {
 		return nil, err
 	}
@@ -29,9 +32,11 @@ func AESDecrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-// AESEncrypt encrypts a plaintext into a cipher text using the key with AES.
+// AESEncrypt encrypts a plaintext into a cipher text using the key with
+// AES-256 algorithm.
 func AESEncrypt(plaintext []byte, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+	decodedKey, _ := hex.DecodeString(string(key))
+	block, err := aes.NewCipher(decodedKey)
 	if err != nil {
 		return nil, err
 	}

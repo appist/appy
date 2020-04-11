@@ -14,7 +14,7 @@ func (s *cryptoSuite) TestAESDecrypt() {
 	{
 		decrypted, err := AESDecrypt([]byte("foobar"), []byte("1234"))
 
-		s.Equal("crypto/aes: invalid key size 4", err.Error())
+		s.Equal("crypto/aes: invalid key size 2", err.Error())
 		s.Nil(decrypted)
 	}
 
@@ -37,7 +37,7 @@ func (s *cryptoSuite) TestAESEncrypt() {
 	{
 		encrypted, err := AESEncrypt([]byte("foobar"), []byte("1234"))
 
-		s.Equal("crypto/aes: invalid key size 4", err.Error())
+		s.Equal("crypto/aes: invalid key size 2", err.Error())
 		s.Nil(encrypted)
 	}
 
@@ -51,7 +51,7 @@ func (s *cryptoSuite) TestAESEncrypt() {
 
 func (s *cryptoSuite) TestAESOps() {
 	target := []byte("0.0.0.0")
-	key := []byte("58f364f29b568807ab9cffa22c99b538")
+	key := []byte("5a9f28ee6301fbaee87d27a9af5cbdc73f3e907f0dec11a4f37e361c1e0687da")
 
 	encrypted, err := AESEncrypt(target, key)
 
