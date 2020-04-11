@@ -63,7 +63,15 @@ CREATE TABLE users (
 	s.dbManager = NewEngine(s.logger)
 	s.db = s.dbManager.DB("primary")
 
-	err := s.db.DropDB(database)
+	err := s.db.CreateDB(adapter)
+	switch adapter {
+	case "mysql":
+		s.Equal("Error 3552: Access to system schema 'mysql' is rejected.", err.Error())
+	case "postgres":
+		s.Equal("pq: database \"postgres\" already exists", err.Error())
+	}
+
+	err = s.db.DropDB(database)
 	s.Nil(err)
 
 	err = s.db.CreateDB(database)
