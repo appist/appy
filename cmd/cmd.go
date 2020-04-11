@@ -17,6 +17,31 @@ import (
 // Command is used to build the command line interface.
 type Command = cobra.Command
 
+var (
+	// ExactArgs returns an error if there are not exactly n args.
+	ExactArgs = cobra.ExactArgs
+
+	// ExactValidArgs returns an error if
+	// there are not exactly N positional args OR
+	// there are any positional args that are not in the `ValidArgs` field of `Command`
+	ExactValidArgs = cobra.ExactValidArgs
+
+	// MinimumNArgs returns an error if there is not at least N args.
+	MinimumNArgs = cobra.MinimumNArgs
+
+	// MaximumNArgs returns an error if there are more than N args.
+	MaximumNArgs = cobra.MaximumNArgs
+
+	// NoArgs returns an error if any args are included.
+	NoArgs = cobra.NoArgs
+
+	// OnlyValidArgs returns an error if any args are not in the list of ValidArgs.
+	OnlyValidArgs = cobra.OnlyValidArgs
+
+	// RangeArgs returns an error if the number of args is not within the expected range.
+	RangeArgs = cobra.RangeArgs
+)
+
 // NewCommand initializes Command instance without built-in commands.
 func NewCommand() *Command {
 	return &Command{
@@ -29,6 +54,8 @@ func NewCommand() *Command {
 // NewAppCommand initializes Command instance without built-in commands.
 func NewAppCommand(asset *support.Asset, config *support.Config, dbManager *record.Engine, logger *support.Logger, server *pack.Server, worker *worker.Engine) *Command {
 	cmd := NewCommand()
+	cmd.AddCommand(newConfigDecCommand(config, logger))
+	cmd.AddCommand(newConfigEncCommand(config, logger))
 	cmd.AddCommand(newDBCreateCommand(config, dbManager, logger))
 	cmd.AddCommand(newDBDropCommand(config, dbManager, logger))
 	cmd.AddCommand(newDBMigrateCommand(config, dbManager, logger))
@@ -50,6 +77,7 @@ func NewAppCommand(asset *support.Asset, config *support.Config, dbManager *reco
 	cmd.AddCommand(newWorkCommand(config, dbManager, logger, worker))
 
 	if support.IsDebugBuild() {
+		cmd.AddCommand(newBuildCommand(asset, logger, server))
 		cmd.AddCommand(newDBSchemaDumpCommand(config, dbManager, logger))
 	}
 

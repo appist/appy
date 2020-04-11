@@ -9,13 +9,11 @@ import (
 )
 
 func newSecretCommand(logger *support.Logger) *Command {
-	var length int
-
 	cmd := &Command{
 		Use:   "secret",
-		Short: "Generate a cryptographically secure secret key for encrypting cookie, CSRF token and config (use --length=16)",
+		Short: "Generate a cryptographically secure secret key for encrypting cookie, CSRF token and config",
 		Run: func(cmd *Command, args []string) {
-			bytes := make([]byte, length)
+			bytes := make([]byte, 32)
 
 			if _, err := rand.Read(bytes); err != nil {
 				logger.Fatal(err)
@@ -25,6 +23,5 @@ func newSecretCommand(logger *support.Logger) *Command {
 		},
 	}
 
-	cmd.Flags().IntVar(&length, "length", 64, "The byte length to generate, use 16 if you're generating for config encryption")
 	return cmd
 }
