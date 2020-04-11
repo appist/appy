@@ -33,6 +33,11 @@ func NewEngine(logger *support.Logger) *Engine {
 	return engine
 }
 
+// Databases returns the managed databases.
+func (m *Engine) Databases() map[string]DBer {
+	return m.databases
+}
+
 // DB returns the database handle with the specified name.
 func (m *Engine) DB(name string) DBer {
 	if db, ok := m.databases[name]; ok {
