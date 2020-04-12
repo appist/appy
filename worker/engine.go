@@ -29,12 +29,13 @@ type Engine struct {
 	mu        *sync.Mutex
 }
 
-// Handler processes tasks.
+// Handler processes background jobs.
 //
-// ProcessTask should return nil if the processing of a task is successful.
+// ProcessTask should return nil if the processing of a background job is
+// successful.
 //
-// If ProcessTask return a non-nil error or panics, the task will be retried
-// after delay.
+// If ProcessTask return a non-nil error or panics, the background job will
+// be retried after delay.
 type Handler = asynq.Handler
 
 // HandlerFunc is an adapter to allow the use of ordinary functions as a
@@ -240,7 +241,7 @@ type MockedHandler struct {
 	test.Mock
 }
 
-// NewMockedHandler initializes a fake Handler instance that is useful for unit test.
+// NewMockedHandler initializes a mocked Handler instance that is useful for unit test.
 func NewMockedHandler() *MockedHandler {
 	return new(MockedHandler)
 }

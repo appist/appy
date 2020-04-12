@@ -96,15 +96,13 @@ func init() {
 `)
 
 	var tpl bytes.Buffer
+	tpl.Write([]byte(""))
+
 	err := t.Execute(&tpl, data{
 		DBName: dbname,
 		Module: moduleName(),
 		Tx:     tx,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return tpl.Bytes(), err
 }
@@ -148,15 +146,13 @@ func init() {
 `)
 
 	var tpl bytes.Buffer
+	tpl.Write([]byte(""))
+
 	err := t.Execute(&tpl, data{
 		Database: database,
 		Module:   moduleName(),
 		Schema:   "\n" + schema,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return tpl.Bytes(), err
 }

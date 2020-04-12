@@ -24,7 +24,7 @@ func NewLogger() *Logger {
 	}
 }
 
-// NewTestLogger initializes a fake Logger instance that is useful for testing purpose.
+// NewTestLogger initializes a test Logger instance that is useful for testing purpose.
 func NewTestLogger() (*Logger, *bytes.Buffer, *bufio.Writer) {
 	var buffer bytes.Buffer
 	writer := bufio.NewWriter(&buffer)

@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// I18n manages the translations.
+// I18n manages the application translations.
 type I18n struct {
 	bundle *i18n.Bundle
 	config *Config
