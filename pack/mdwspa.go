@@ -21,7 +21,7 @@ func mdwSPA(server *Server, prefix string, fs http.FileSystem) HandlerFunc {
 	return func(c *Context) {
 		req := c.Request
 
-		if server.isSSRPath(req.URL.Path) ||
+		if !server.isCSRPath(req.URL.Path) ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout().Config()) ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout().Docker()) ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout().Locale()) ||

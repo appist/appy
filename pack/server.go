@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -36,6 +35,7 @@ type (
 		https        *http.Server
 		logger       *support.Logger
 		middleware   []HandlerFunc
+		mdwRoutes    []Route
 		router       *Router
 		spaResources []*spaResource
 	}
@@ -80,6 +80,7 @@ func NewServer(asset *support.Asset, config *support.Config, logger *support.Log
 		https:        hss,
 		logger:       logger,
 		middleware:   []HandlerFunc{},
+		mdwRoutes:    []Route{},
 		router:       router,
 		spaResources: []*spaResource{},
 	}
@@ -96,7 +97,7 @@ func NewAppServer(asset *support.Asset, config *support.Config, i18n *support.I1
 	server.Use(mdwReqID())
 	server.Use(mdwReqLogger(config, logger))
 	server.Use(mdwGzip(config))
-	server.Use(mdwHealthCheck(config.HTTPHealthCheckPath))
+	server.Use(mdwHealthCheck(config.HTTPHealthCheckPath, server))
 	server.Use(mdwPrerender(config, logger))
 	server.Use(mdwCSRF(config, logger))
 	server.Use(mdwSecure(config))
@@ -187,18 +188,7 @@ func (s *Server) Router() *Router {
 
 // Routes returns all the routes including those in middlewares.
 func (s *Server) Routes() []Route {
-	routes := s.router.routes()
-
-	if s.config.HTTPHealthCheckPath != "" {
-		routes = append(routes, Route{
-			Method:      "GET",
-			Path:        s.config.HTTPHealthCheckPath,
-			Handler:     "",
-			HandlerFunc: nil,
-		})
-	}
-
-	return routes
+	return append(s.router.routes(), s.mdwRoutes...)
 }
 
 // ServeHTTP conforms to the http.Handler interface.
@@ -468,9 +458,9 @@ func (s *Server) spaResource(path string) *spaResource {
 	return resource
 }
 
-func (s *Server) isSSRPath(path string) bool {
-	for _, route := range s.Routes() {
-		if filepath.Ext(path) == "" && strings.Contains(path, route.Path) {
+func (s *Server) isCSRPath(path string) bool {
+	for _, spaResource := range s.spaResources {
+		if strings.HasPrefix(path, spaResource.prefix) {
 			return true
 		}
 	}

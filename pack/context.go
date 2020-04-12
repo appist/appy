@@ -181,5 +181,5 @@ func (c ContextKey) String() string {
 func NewTestContext(w http.ResponseWriter) (*Context, *Router) {
 	c, router := gin.CreateTestContext(w)
 
-	return &Context{Context: c}, &Router{router}
+	return &Context{Context: c}, &Router{router, map[string]Route{}}
 }

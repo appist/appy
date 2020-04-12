@@ -120,9 +120,8 @@ func (s *serverSuite) TestRouting() {
 	s.Contains(w.Body.String(), "<title>404 Page Not Found</title>")
 
 	server.Any("/foo", func(c *Context) { c.String(http.StatusOK, "bar") })
-	methods := []string{"CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "PUT", "POST", "TRACE"}
 
-	for _, method := range methods {
+	for _, method := range anyMethods {
 		w := server.TestHTTPRequest(method, "/foo", nil, nil)
 		defer w.Close()
 
@@ -131,6 +130,7 @@ func (s *serverSuite) TestRouting() {
 	}
 
 	server.Handle("CONNECT", "/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
+	server.Handle("TRACE", "/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	server.DELETE("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	server.GET("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	server.HEAD("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
@@ -138,9 +138,8 @@ func (s *serverSuite) TestRouting() {
 	server.PATCH("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	server.PUT("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	server.POST("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
-	methods = []string{"CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "PUT", "POST"}
 
-	for _, method := range methods {
+	for _, method := range anyMethods {
 		w := server.TestHTTPRequest(method, "/bar", nil, nil)
 		defer w.Close()
 
@@ -155,9 +154,11 @@ func (s *serverSuite) TestRouting() {
 		c.Next()
 	})
 	v1.Any("/foo", func(c *Context) { c.String(http.StatusOK, "bar") })
-	methods = []string{"CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "PUT", "POST", "TRACE"}
 
-	for _, method := range methods {
+	adminV1 := v1.Group("/admin")
+	adminV1.GET("/orders", func(c *Context) { c.String(http.StatusOK, "admin") })
+
+	for _, method := range anyMethods {
 		w := server.TestHTTPRequest(method, "/v1/foo", nil, nil)
 		defer w.Close()
 
@@ -167,6 +168,7 @@ func (s *serverSuite) TestRouting() {
 	s.Equal(10, count)
 
 	v1.Handle("CONNECT", "/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
+	v1.Handle("TRACE", "/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	v1.DELETE("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	v1.GET("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	v1.HEAD("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
@@ -174,9 +176,8 @@ func (s *serverSuite) TestRouting() {
 	v1.PATCH("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	v1.PUT("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
 	v1.POST("/bar", func(c *Context) { c.String(http.StatusOK, "foo") })
-	methods = []string{"CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "PUT", "POST"}
 
-	for _, method := range methods {
+	for _, method := range anyMethods {
 		w := server.TestHTTPRequest(method, "/v1/bar", nil, nil)
 		defer w.Close()
 
@@ -185,9 +186,9 @@ func (s *serverSuite) TestRouting() {
 	}
 
 	routes := server.Routes()
-	s.Equal(35, len(routes))
+	s.Equal(37, len(routes))
 
-	route := routes[len(routes)-2]
+	route := routes[len(routes)-12]
 	recorder := httptest.NewRecorder()
 	c, _ := NewTestContext(recorder)
 	s.Equal("/v1/foo", route.Path)
