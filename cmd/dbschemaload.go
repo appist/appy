@@ -21,7 +21,7 @@ func newDBSchemaLoadCommand(config *support.Config, dbManager *record.Engine, lo
 			}
 
 			if len(dbManager.Databases()) < 1 {
-				logger.Fatalf("No database is defined in 'configs/.env.%s'", config.AppyEnv)
+				logger.Fatalf("No database is defined in '%s'", config.Path())
 			}
 
 			runDBSchemaLoad(config, dbManager, logger)

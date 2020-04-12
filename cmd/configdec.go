@@ -22,7 +22,7 @@ func newConfigDecCommand(config *support.Config, logger *support.Logger) *Comman
 
 			key := args[0]
 			if !support.IsSnakeCase(strings.ToLower(key)) {
-				logger.Fatal("invalid key format (e.g. HTTP_HOST)")
+				logger.Fatal("please provide key in upper snake_case, e.g. HTTP_HOST")
 			}
 
 			envMap, err := godotenv.Read(config.Path())

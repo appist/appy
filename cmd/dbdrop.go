@@ -23,7 +23,7 @@ func newDBDropCommand(config *support.Config, dbManager *record.Engine, logger *
 			}
 
 			if len(dbManager.Databases()) < 1 {
-				logger.Fatalf("No database is defined in 'configs/.env.%s'", config.AppyEnv)
+				logger.Fatalf("No database is defined in '%s'", config.Path())
 			}
 
 			runDBDropAll(config, dbManager, logger)

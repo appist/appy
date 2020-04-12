@@ -21,13 +21,13 @@ func newDBMigrateCommand(config *support.Config, dbManager *record.Engine, logge
 			}
 
 			if len(dbManager.Databases()) < 1 {
-				logger.Fatalf("No database is defined in 'configs/.env.%s'", config.AppyEnv)
+				logger.Fatalf("No database is defined in '%s'", config.Path())
 			}
 
 			if target != "" {
 				db := dbManager.DB(target)
 				if db == nil {
-					logger.Fatalf("No database called '%s' defined in 'configs/.env.%s'", target, config.AppyEnv)
+					logger.Fatalf("No database called '%s' defined in '%s'", target, config.Path())
 				}
 
 				if db.Config().Replica {

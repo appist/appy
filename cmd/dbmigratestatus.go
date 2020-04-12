@@ -22,7 +22,7 @@ func newDBMigrateStatusCommand(config *support.Config, dbManager *record.Engine,
 			}
 
 			if len(dbManager.Databases()) < 1 {
-				logger.Fatalf("No database is defined in 'configs/.env.%s'", config.AppyEnv)
+				logger.Fatalf("No database is defined in '%s'", config.Path())
 			}
 
 			for name, db := range dbManager.Databases() {

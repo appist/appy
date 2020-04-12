@@ -23,7 +23,7 @@ var (
 func newBuildCommand(asset *support.Asset, logger *support.Logger, server *pack.Server) *Command {
 	cmd := &Command{
 		Use:   "build",
-		Short: "Compile the static assets into go files and build the release mode binary (only available in debug build)",
+		Short: "Compile the static assets into go files and build the release build binary (only available in debug build)",
 		Run: func(cmd *Command, args []string) {
 			wd, err := os.Getwd()
 			if err != nil {

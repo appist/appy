@@ -16,7 +16,7 @@ import (
 func newConfigEncCommand(config *support.Config, logger *support.Logger) *Command {
 	return &Command{
 		Use:   "config:enc <KEY> <VALUE>",
-		Short: "Encrypt a config value using the secret in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`",
+		Short: "Encrypt a config value using the secret in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY` (only available in debug build)",
 		Args:  ExactArgs(2),
 		Run: func(cmd *Command, args []string) {
 			masterKey := config.MasterKey()
@@ -27,7 +27,7 @@ func newConfigEncCommand(config *support.Config, logger *support.Logger) *Comman
 			key := args[0]
 			value := args[1]
 			if !support.IsSnakeCase(strings.ToLower(key)) {
-				logger.Fatal("invalid key format (e.g. HTTP_HOST)")
+				logger.Fatal("please provide key in upper snake_case, e.g. HTTP_HOST")
 			}
 
 			envMap, err := godotenv.Read(config.Path())
