@@ -61,7 +61,7 @@ func newConfigEncCommand(config *support.Config, logger *support.Logger) *Comman
 			newData := string(data)
 
 			if existed {
-				re := regexp.MustCompile(key + `=.*\n$`)
+				re := regexp.MustCompile(key + `=.*\n`)
 				newData = re.ReplaceAllString(newData, key+"="+encodedVal+"\n")
 			} else {
 				newData += key + "=" + encodedVal + "\n"
