@@ -42,6 +42,7 @@ type (
 		Config() *Config
 		Conn(ctx context.Context) (*sql.Conn, error)
 		Connect() error
+		ConnectDefaultDB() error
 		CreateDB(database string) error
 		Driver() driver.Driver
 		DriverName() string
@@ -161,7 +162,7 @@ func (db *DB) Connect() error {
 
 // CreateDB creates the database.
 func (db *DB) CreateDB(database string) error {
-	err := db.connectByAdapter()
+	err := db.ConnectDefaultDB()
 	defer db.Close()
 
 	if err != nil {
@@ -179,7 +180,7 @@ func (db *DB) CreateDB(database string) error {
 
 // DropDB drops the database.
 func (db *DB) DropDB(database string) error {
-	err := db.connectByAdapter()
+	err := db.ConnectDefaultDB()
 	defer db.Close()
 
 	if err != nil {
@@ -765,7 +766,8 @@ func (db *DB) addSchemaMigration(tx Txer, migration *Migration) error {
 	return err
 }
 
-func (db *DB) connectByAdapter() error {
+// ConnectDefaultDB connects to the default database.
+func (db *DB) ConnectDefaultDB() error {
 	// Both mysql and postgres databases are created by default.
 	database := db.Config().Adapter
 	uri := db.Config().URI

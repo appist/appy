@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"net"
-	"time"
 
 	"github.com/appist/appy/record"
 	"github.com/appist/appy/support"
@@ -36,10 +33,14 @@ func newSetupCommand(asset *support.Asset, config *support.Config, dbManager *re
 			fmt.Println("Waiting for databases to be ready...")
 
 			for _, db := range dbManager.Databases() {
-				err := pingDB(db.Config().Host, db.Config().Port)
-				for err != nil {
-					time.Sleep(5 * time.Second)
-					err = pingDB(db.Config().Host, db.Config().Port)
+				for true {
+					if err := db.ConnectDefaultDB(); err != nil {
+						continue
+					}
+
+					if err := db.Ping(); err == nil {
+						break
+					}
 				}
 			}
 
@@ -50,11 +51,4 @@ func newSetupCommand(asset *support.Asset, config *support.Config, dbManager *re
 			runDBSeedAll(config, dbManager, logger)
 		},
 	}
-}
-
-func pingDB(host, port string) error {
-	conn, _ := net.Dial("tcp", host+":"+port)
-	_, err := bufio.NewReader(conn).ReadString('\n')
-
-	return err
 }
