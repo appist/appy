@@ -9,8 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	// Automatically import mysql driver to make it easier for appy's users.
 	"github.com/appist/appy/support"
+
+	// Automatically import mysql driver to make it easier for appy's users.
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -27,20 +28,20 @@ CREATE TABLE users (
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 `
-	MAX_IDLE_CONNS               = 32
-	MAX_OPEN_CONNS               = 32
-	SQL_INSERT_QUERY_PREFIX      = "INSERT INTO users (name, title, fax, web, age, counter) VALUES"
-	SQL_INSERT_QUERY_PLACEHOLDER = "(?, ?, ?, ?, ?, ?)"
-	SQL_SELECT_QUERY             = "SELECT id, name, title, fax, web, age, counter FROM users WHERE id=?"
-	SQL_SELECT_MULTI_QUERY       = "SELECT id, name, title, fax, web, age, counter FROM users WHERE id > 0 LIMIT 100"
-	SQL_UPDATE_QUERY             = "UPDATE users SET name=?, title=?, fax=?, web=?, age=?, counter=? WHERE id=?"
+	MaxIdleConns              = 32
+	MaxOpenConns              = 32
+	SQLInsertQueryPrefix      = "INSERT INTO users (name, title, fax, web, age, counter) VALUES"
+	SQLInsertQueryPlaceholder = "(?, ?, ?, ?, ?, ?)"
+	SQLSelectQuery            = "SELECT id, name, title, fax, web, age, counter FROM users WHERE id=?"
+	SQLSelectMultiQuery       = "SELECT id, name, title, fax, web, age, counter FROM users WHERE id > 0 LIMIT 100"
+	SQLUpdateQuery            = "UPDATE users SET name=?, title=?, fax=?, web=?, age=?, counter=? WHERE id=?"
 )
 
 func newDB() DBer {
 	database := "benchmarkrecord_appy"
 	os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13306/%s", database))
-	os.Setenv("DB_MAX_IDLE_CONNS_PRIMARY", strconv.Itoa(MAX_IDLE_CONNS))
-	os.Setenv("DB_MAX_OPEN_CONNS_PRIMARY", strconv.Itoa(MAX_OPEN_CONNS))
+	os.Setenv("DB_MAX_IDLE_CONNS_PRIMARY", strconv.Itoa(MaxIdleConns))
+	os.Setenv("DB_MAX_OPEN_CONNS_PRIMARY", strconv.Itoa(MaxOpenConns))
 	defer func() {
 		os.Unsetenv("DB_URI_PRIMARY")
 		os.Unsetenv("DB_MAX_IDLE_CONNS_PRIMARY")
@@ -66,8 +67,8 @@ func newRawDB() *sql.DB {
 		log.Fatal(err)
 	}
 
-	db.SetMaxOpenConns(MAX_OPEN_CONNS)
-	db.SetMaxIdleConns(MAX_IDLE_CONNS)
+	db.SetMaxIdleConns(MaxIdleConns)
+	db.SetMaxOpenConns(MaxOpenConns)
 	db.Exec(fmt.Sprintf("DROP DATABASE %s;", database))
 	db.Exec(fmt.Sprintf("CREATE DATABASE %s;", database))
 	db.Exec(fmt.Sprintf("USE %s;", database))
@@ -81,7 +82,7 @@ func newRawDB() *sql.DB {
 
 func newQueryWithArgs() (string, []interface{}) {
 	size := 100
-	query := SQL_INSERT_QUERY_PREFIX + strings.Repeat(SQL_INSERT_QUERY_PLACEHOLDER+",", size-1) + SQL_INSERT_QUERY_PLACEHOLDER
+	query := SQLInsertQueryPrefix + strings.Repeat(SQLInsertQueryPlaceholder+",", size-1) + SQLInsertQueryPlaceholder
 
 	args := []interface{}{}
 	for i := 0; i < size; i++ {
@@ -97,7 +98,7 @@ func newQueryWithArgs() (string, []interface{}) {
 }
 
 func rawInsert(db *sql.DB, b *testing.B) (int64, error) {
-	result, err := db.Exec(SQL_INSERT_QUERY_PREFIX + "('benchmark', 'just a benchmark', '99991234', 'https://appy.org', 100, 1000)")
+	result, err := db.Exec(SQLInsertQueryPrefix + "('benchmark', 'just a benchmark', '99991234', 'https://appy.org', 100, 1000)")
 	if err != nil {
 		return 0, err
 	}
@@ -111,7 +112,7 @@ func rawInsert(db *sql.DB, b *testing.B) (int64, error) {
 }
 
 func dbInsert(db DBer, b *testing.B) (int64, error) {
-	result, err := db.Exec(SQL_INSERT_QUERY_PREFIX + "('benchmark', 'just a benchmark', '99991234', 'https://appy.org', 100, 1000)")
+	result, err := db.Exec(SQLInsertQueryPrefix + "('benchmark', 'just a benchmark', '99991234', 'https://appy.org', 100, 1000)")
 	if err != nil {
 		return 0, err
 	}
@@ -128,7 +129,7 @@ func BenchmarkRawInsert(b *testing.B) {
 	db := newRawDB()
 	defer db.Close()
 
-	stmt, err := db.Prepare(fmt.Sprintf("%s %s;", SQL_INSERT_QUERY_PREFIX, SQL_INSERT_QUERY_PLACEHOLDER))
+	stmt, err := db.Prepare(fmt.Sprintf("%s %s;", SQLInsertQueryPrefix, SQLInsertQueryPlaceholder))
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
@@ -156,7 +157,7 @@ func BenchmarkDBInsert(b *testing.B) {
 	db := newDB()
 	defer db.Close()
 
-	stmt, err := db.Prepare(fmt.Sprintf("%s %s;", SQL_INSERT_QUERY_PREFIX, SQL_INSERT_QUERY_PLACEHOLDER))
+	stmt, err := db.Prepare(fmt.Sprintf("%s %s;", SQLInsertQueryPrefix, SQLInsertQueryPlaceholder))
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
@@ -234,7 +235,7 @@ func BenchmarkRawUpdate(b *testing.B) {
 		b.FailNow()
 	}
 
-	stmt, err := db.Prepare(SQL_UPDATE_QUERY)
+	stmt, err := db.Prepare(SQLUpdateQuery)
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
@@ -262,7 +263,7 @@ func BenchmarkDBUpdate(b *testing.B) {
 		b.FailNow()
 	}
 
-	stmt, err := db.Prepare(SQL_UPDATE_QUERY)
+	stmt, err := db.Prepare(SQLUpdateQuery)
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
@@ -290,7 +291,7 @@ func BenchmarkRawRead(b *testing.B) {
 		b.FailNow()
 	}
 
-	stmt, err := db.Prepare(SQL_SELECT_QUERY)
+	stmt, err := db.Prepare(SQLSelectQuery)
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
@@ -323,7 +324,7 @@ func BenchmarkDBRead(b *testing.B) {
 		b.FailNow()
 	}
 
-	stmt, err := db.Prepare(SQL_SELECT_QUERY)
+	stmt, err := db.Prepare(SQLSelectQuery)
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
@@ -358,7 +359,7 @@ func BenchmarkRawReadSlice(b *testing.B) {
 		}
 	}
 
-	stmt, err := db.Prepare(SQL_SELECT_MULTI_QUERY)
+	stmt, err := db.Prepare(SQLSelectMultiQuery)
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
@@ -411,7 +412,7 @@ func BenchmarkDBReadSlice(b *testing.B) {
 		}
 	}
 
-	stmt, err := db.Prepare(SQL_SELECT_MULTI_QUERY)
+	stmt, err := db.Prepare(SQLSelectMultiQuery)
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
