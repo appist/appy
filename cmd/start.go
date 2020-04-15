@@ -88,7 +88,6 @@ func execServeCmd(server *pack.Server, term *terminal) {
 	}
 
 	term.serveCmd = exec.Command("go", "run", ".", "serve")
-	term.serveCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	outPipe, _ := term.serveCmd.StdoutPipe()
 	errPipe, _ := term.serveCmd.StderrPipe()
 
@@ -128,7 +127,6 @@ func execWebCmd(server *pack.Server, term *terminal) {
 	term.webCmd.Env = append(term.webCmd.Env, "HTTP_SSL_PORT="+server.Config().HTTPSSLPort)
 	term.webCmd.Env = append(term.webCmd.Env, "HTTP_SSL_ENABLED="+strconv.FormatBool(server.Config().HTTPSSLEnabled))
 	term.webCmd.Env = append(term.webCmd.Env, "HTTP_SSL_CERT_PATH="+server.Config().HTTPSSLCertPath)
-	term.webCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	outPipe, _ := term.webCmd.StdoutPipe()
 	errPipe, _ := term.webCmd.StderrPipe()
 
@@ -148,7 +146,6 @@ func execWorkCmd(term *terminal) {
 	}
 
 	term.workCmd = exec.Command("go", "run", ".", "work")
-	term.workCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	outPipe, _ := term.workCmd.StdoutPipe()
 	errPipe, _ := term.workCmd.StderrPipe()
 
