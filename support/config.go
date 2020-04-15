@@ -565,7 +565,7 @@ func parseMasterKey(asset AssetManager) ([]byte, error) {
 		masterKey = []byte(os.Getenv("APPY_MASTER_KEY"))
 	}
 
-	if len(masterKey) == 0 {
+	if len(masterKey) == 0 && IsDebugBuild() {
 		masterKey, err = asset.ReadFile(asset.Layout().config + "/" + env + ".key")
 		if err != nil {
 			return nil, ErrReadMasterKeyFile

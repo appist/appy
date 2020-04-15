@@ -6,9 +6,8 @@ import (
 
 func newDcDownCommand(asset *support.Asset, logger *support.Logger) *Command {
 	return &Command{
-		Use:     "teardown",
-		Aliases: []string{"dc:down"},
-		Short:   "Tear down the docker compose cluster",
+		Use:   "dc:down",
+		Short: "Tear down the docker compose cluster",
 		Run: func(cmd *Command, args []string) {
 			err := checkDocker()
 			if err != nil {

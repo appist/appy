@@ -12,6 +12,10 @@ func newDBSchemaLoadCommand(config *support.Config, dbManager *record.Engine, lo
 		Use:   "db:schema:load",
 		Short: "Load all the databases schema for the current environment",
 		Run: func(cmd *Command, args []string) {
+			if config.IsProtectedEnv() {
+				logger.Fatal("You are attempting to run a destructive action against your database in '%s' environment.\n", config.AppyEnv)
+			}
+
 			if len(config.Errors()) > 0 {
 				logger.Fatal(config.Errors()[0])
 			}

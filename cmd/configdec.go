@@ -12,7 +12,7 @@ import (
 func newConfigDecCommand(config *support.Config, logger *support.Logger) *Command {
 	return &Command{
 		Use:   "config:dec <KEY>",
-		Short: "Decrypt a config value using the secret in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY`",
+		Short: "Decrypt a config value using the secret in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY` (only available in debug build)",
 		Args:  ExactArgs(1),
 		Run: func(cmd *Command, args []string) {
 			masterKey := config.MasterKey()

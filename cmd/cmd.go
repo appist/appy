@@ -54,7 +54,6 @@ func NewCommand() *Command {
 // NewAppCommand initializes Command instance without built-in commands.
 func NewAppCommand(asset *support.Asset, config *support.Config, dbManager *record.Engine, logger *support.Logger, server *pack.Server, worker *worker.Engine) *Command {
 	cmd := NewCommand()
-	cmd.AddCommand(newConfigDecCommand(config, logger))
 	cmd.AddCommand(newDBCreateCommand(config, dbManager, logger))
 	cmd.AddCommand(newDBDropCommand(config, dbManager, logger))
 	cmd.AddCommand(newDBMigrateCommand(config, dbManager, logger))
@@ -77,6 +76,7 @@ func NewAppCommand(asset *support.Asset, config *support.Config, dbManager *reco
 
 	if support.IsDebugBuild() {
 		cmd.AddCommand(newBuildCommand(asset, logger, server))
+		cmd.AddCommand(newConfigDecCommand(config, logger))
 		cmd.AddCommand(newConfigEncCommand(config, logger))
 		cmd.AddCommand(newDBSchemaDumpCommand(config, dbManager, logger))
 		cmd.AddCommand(newGenMigrationCommand(config, dbManager, logger))
