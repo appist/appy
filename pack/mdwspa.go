@@ -46,6 +46,7 @@ func mdwSPA(server *Server, prefix string, fs http.FileSystem) HandlerFunc {
 			}
 			proxy := &httputil.ReverseProxy{Director: director}
 			proxy.ServeHTTP(c.Writer, req)
+
 			c.Abort()
 			return
 		}
