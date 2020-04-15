@@ -5,7 +5,7 @@
 [![Coverage Status](https://img.shields.io/codecov/c/gh/appist/appy.svg?logo=codecov)](https://codecov.io/gh/appist/appy)
 [![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg)](https://pkg.go.dev/github.com/appist/appy?tab=doc)
 [![Join the chat at https://gitter.im/Appist/appy](https://badges.gitter.im/Appist/appy.svg)](https://gitter.im/Appist/appy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Platform Support](https://img.shields.io/badge/platform-macos%20%7C%20linux-blue)](https://github.com/appist/appy)
+[![Platform Support](https://img.shields.io/badge/platform-macos%20%7C%20linux%20%7C%20windows-blue)](https://github.com/appist/appy)
 
 An opinionated productive web framework that helps scaling business easier.
 
@@ -25,7 +25,7 @@ Please refer to [here](https://appist.gitbook.io/appy/) for more detailed docume
 
 - [asynq](https://github.com/hibiken/asynq) - For processing background jobs
 - [cobra](https://github.com/spf13/cobra) - For building CLI
-- [httptreemux](https://github.com/dimfeld/httptreemux) - For building HTTP router
+- [gin](https://github.com/gin-gonic/gin) - For building HTTP router
 - [gqlgen](https://gqlgen.com/) - For building GraphQL API
 - [sqlx](https://github.com/jmoiron/sqlx) - For interacting with MySQL/PostgreSQL
 - [zap](https://github.com/uber-go/zap) - For blazing fast, structured and leveled logging
