@@ -8,9 +8,15 @@ import (
 )
 
 const (
-	LiveReloadWSPort  = "12450"
+	// LiveReloadWSPort is the websocket port for the SSR live reload server.
+	LiveReloadWSPort = "12450"
+
+	// LiveReloadWSSPort is the websocket SSL port for the SSR live reload
+	// server.
 	LiveReloadWSSPort = "12451"
-	LiveReloadPath    = "/reload"
+
+	// LiveReloadPath is the websocket path for the SSR live reload server.
+	LiveReloadPath = "/reload"
 )
 
 func errorTplUpper() string {
