@@ -116,7 +116,7 @@ func newBuildCommand(asset *support.Asset, logger *support.Logger, server *pack.
 				logger.Fatal(err)
 			}
 
-			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo jsoniter", "-ldflags", "-w -extldflags '-static' -X github.com/appist/support.Build=release", "-o", binaryName, ".")
+			buildBinaryCmd := exec.Command(goPath, "build", "-a", "-tags", "netgo jsoniter", "-ldflags", "-X github.com/appist/appy/support.Build=release -s -w", "-o", binaryName, ".")
 			buildBinaryCmd.Env = os.Environ()
 			buildBinaryCmd.Stderr = os.Stderr
 			if err = buildBinaryCmd.Run(); err != nil {

@@ -199,7 +199,7 @@ func (s *contextSuite) TestViewEngineWithDebugBuild() {
 
 		s.Equal(http.StatusOK, w.Code)
 		s.Contains(w.Body.String(), "This content will be yielded in the layout above. 3")
-		s.Contains(w.Body.String(), `b("ws://:`+liveReloadWSPort+liveReloadPath+`")`)
+		s.Contains(w.Body.String(), `b("ws://:`+LiveReloadWSPort+LiveReloadPath+`")`)
 	}
 
 	{
@@ -210,7 +210,7 @@ func (s *contextSuite) TestViewEngineWithDebugBuild() {
 
 		s.Equal(http.StatusOK, w.Code)
 		s.Contains(w.Body.String(), "This content will be yielded in the layout above. 3")
-		s.Contains(w.Body.String(), `b("wss://:`+liveReloadWSSPort+liveReloadPath+`")`)
+		s.Contains(w.Body.String(), `b("wss://:`+LiveReloadWSSPort+LiveReloadPath+`")`)
 	}
 }
 
@@ -241,7 +241,7 @@ func (s *contextSuite) TestViewEngineWithReleaseBuild() {
 
 	s.Equal(http.StatusOK, w.Code)
 	s.Contains(w.Body.String(), "This content will be yielded in the layout above.")
-	s.NotContains(w.Body.String(), `b("ws://:`+liveReloadWSPort+liveReloadPath+`")`)
+	s.NotContains(w.Body.String(), `b("ws://:`+LiveReloadWSPort+LiveReloadPath+`")`)
 }
 
 func TestContextSuite(t *testing.T) {

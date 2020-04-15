@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	liveReloadWSPort  = "12450"
-	liveReloadWSSPort = "12451"
-	liveReloadPath    = "/reload"
+	LiveReloadWSPort  = "12450"
+	LiveReloadWSSPort = "12451"
+	LiveReloadPath    = "/reload"
 )
 
 func errorTplUpper() string {
@@ -130,15 +130,15 @@ func gqlPlaygroundTpl(path string, c *Context) []byte {
 
 func liveReloadTpl(host string, isTLS *tls.ConnectionState) string {
 	protocol := "ws"
-	port := liveReloadWSPort
+	port := LiveReloadWSPort
 
 	if isTLS != nil {
 		protocol = "wss"
-		port = liveReloadWSSPort
+		port = LiveReloadWSSPort
 	}
 
 	splits := strings.Split(host, ":")
-	url := protocol + `://` + splits[0] + ":" + port + liveReloadPath
+	url := protocol + `://` + splits[0] + ":" + port + LiveReloadPath
 
 	return `<script>function b(a){var c=new WebSocket(a);c.onclose=function(){setTimeout(function(){b(a)},2E3)};` +
 		`c.onmessage=function(){location.reload()}}try{if(window.WebSocket)try{b("` + url + `")}catch(a){console.error(a)}` +
