@@ -1,0 +1,26 @@
+title:
+  test: 测试
+
+body:
+  message:
+    Zero: 嗨, {{.Name}}! 您有{{.Count}}则讯息。
+    One: 嗨, {{.Name}}! 您有{{.Count}}则讯息。
+    Other: 嗨, {{.Name}}! 您有{{.Count}}则讯息。
+
+mailers:
+  user:
+    message:
+      Zero: 嗨, {{.Name}}! 您有{{.Count}}则讯息。
+      One: 嗨, {{.Name}}! 您有{{.Count}}则讯息。
+      Other: 嗨, {{.Name}}! 您有{{.Count}}则讯息。
+
+    verifyAccount:
+      subject: 验证您的账号
+      welcome: 欢迎
+      test: 测试
+
+    welcome:
+      subject: 欢迎
+      greet:
+        html: 我是寄信者网页版。
+        txt: 我是寄信者文字版。

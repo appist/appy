@@ -1,8 +1,8 @@
-benchmarkhttp:
-	go test -run=NONE -bench=Benchmark -tags=benchmarkhttp -benchmem -failfast .
+benchmark\:pack:
+	go test -run=NONE -bench=Benchmark -benchmem -failfast ./pack
 
-benchmarkorm:
-	go test -run=NONE -bench=Benchmark -tags=benchmarkorm -benchmem -failfast .
+benchmark\:record:
+	go test -run=NONE -bench=Benchmark -benchmem -failfast ./record
 
 bootstrap:
 	asdf plugin-add golang || true
@@ -13,8 +13,8 @@ bootstrap:
 	asdf reshim nodejs
 
 codecheck:
-	golint -set_exit_status . || exit 1
-	go vet .
+	golint -set_exit_status ./... || exit 1
+	go vet ./...
 
 down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
@@ -28,7 +28,7 @@ restart:
 
 test:
 	mkdir -p tmp
-	go test -covermode=atomic -coverprofile=tmp/coverage.out -tags=test -race -failfast -v .
+	go test -covermode=atomic -coverprofile=tmp/coverage.out -race -failfast -v ./...
 
 testcov:
 	go tool cover -html=tmp/coverage.out
@@ -36,4 +36,4 @@ testcov:
 up:
 	docker-compose -p appy -f .docker/docker-compose.yml up -d
 
-.PHONY: benchmarkhttp benchmarkorm bootstrap codecheck down install restart test testcov up
+.PHONY: benchmark\:pack benchmark\:record bootstrap codecheck down install restart test testcov up
