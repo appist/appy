@@ -3,13 +3,13 @@ package record
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/appist/appy/support"
 )
 
 var (
@@ -100,27 +100,11 @@ func init() {
 
 	err := t.Execute(&tpl, data{
 		DBName: dbname,
-		Module: moduleName(),
+		Module: support.ModuleName(),
 		Tx:     tx,
 	})
 
 	return tpl.Bytes(), err
-}
-
-func moduleName() string {
-	modulePrefix := "module "
-	wd, _ := os.Getwd()
-	data, _ := ioutil.ReadFile(wd + "/go.mod")
-
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, modulePrefix) {
-			module := strings.TrimPrefix(line, modulePrefix)
-			return strings.Trim(module, "\n")
-		}
-	}
-
-	return ""
 }
 
 func schemaDumpTpl(database, schema string) ([]byte, error) {
@@ -150,7 +134,7 @@ func init() {
 
 	err := t.Execute(&tpl, data{
 		Database: database,
-		Module:   moduleName(),
+		Module:   support.ModuleName(),
 		Schema:   "\n" + schema,
 	})
 
