@@ -12,8 +12,6 @@ import (
 	"github.com/appist/appy/support"
 )
 
-var supportedAdapters = []string{"mysql", "postgres"}
-
 // Config contains database connection configuration.
 type Config struct {
 	// Adapter indicates the database adapter to use. The value is parsed from
@@ -188,7 +186,7 @@ func parseDBConfig() (map[string]*Config, []error) {
 				continue
 			}
 
-			if !support.ArrayContains(supportedAdapters, config.Adapter) {
+			if !support.ArrayContains(support.SupportedDBAdapters, config.Adapter) {
 				errs = append(errs, fmt.Errorf("adapter '%s' for database '%s' is not supported", config.Adapter, support.ToCamelCase(dbName)))
 				continue
 			}

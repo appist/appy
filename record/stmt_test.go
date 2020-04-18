@@ -72,7 +72,7 @@ CREATE TABLE users (
 }
 
 func (s *stmtSuite) TestExec() {
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_stmt_exec")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -103,7 +103,7 @@ func (s *stmtSuite) TestExec() {
 }
 
 func (s *stmtSuite) TestQuery() {
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_stmt_query")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -134,7 +134,7 @@ func (s *stmtSuite) TestQuery() {
 }
 
 func (s *stmtSuite) TestQueryRow() {
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_stmt_query_row")
 
 		query := `INSERT INTO users (username) VALUES (?);`

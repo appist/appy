@@ -226,7 +226,7 @@ func (s *dbSuite) TestMigrateSeedRollback() {
 	defer func() { migratePath = oldMigratePath }()
 
 	database := "test_db_migrate_seed_rollback"
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		migratePath = "tmp/" + adapter + "/"
 		s.setupDB(adapter, database)
 
@@ -443,7 +443,7 @@ func (s *dbSuite) TestExec() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_db_exec")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -481,7 +481,7 @@ func (s *dbSuite) TestPrepare() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_db_prepare")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -510,7 +510,7 @@ func (s *dbSuite) TestQuery() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_db_query")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -536,7 +536,7 @@ func (s *dbSuite) TestQueryRow() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_db_query_row")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -559,7 +559,7 @@ func (s *dbSuite) TestNamedExec() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_db_named_exec")
 
 		_, err := s.db.NamedExec(`INSERT INTO users (username) VALUES (:username);`,
@@ -592,7 +592,7 @@ func (s *dbSuite) TestNamedQuery() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_db_named_query")
 
 		_, err := s.db.NamedQuery(`INSERT INTO users (username) VALUES (:username);`,
@@ -626,7 +626,7 @@ func (s *dbSuite) TestPrepareNamed() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_db_prepare_named")
 
 		stmt, err := s.db.PrepareNamed(query)

@@ -77,7 +77,7 @@ func (s *txSuite) TestExec() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_tx_exec")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -109,7 +109,7 @@ func (s *txSuite) TestPrepare() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_tx_prepare")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -144,7 +144,7 @@ func (s *txSuite) TestQuery() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_tx_query")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -177,7 +177,7 @@ func (s *txSuite) TestQueryRow() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_tx_query_row")
 
 		query := `INSERT INTO users (username) VALUES (?);`
@@ -208,7 +208,7 @@ func (s *txSuite) TestStmt() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for _, adapter := range supportedAdapters {
+	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_tx_stmt")
 
 		query := `INSERT INTO users (username) VALUES (?);`

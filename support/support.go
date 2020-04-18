@@ -21,6 +21,10 @@ var (
 	// "release". Please take note that this value will be updated to "release"
 	// when running "go run . build" command.
 	Build = DebugBuild
+
+	// SupportedDBAdapters indicates the list of database adapters that are
+	// supported.
+	SupportedDBAdapters = []string{"mysql", "postgres"}
 )
 
 type (
