@@ -33,6 +33,7 @@ require (
 	github.com/mum4k/termdash v0.12.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
 	github.com/otiai10/copy v1.1.1
+	github.com/pkg/errors v0.8.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil v2.20.3+incompatible

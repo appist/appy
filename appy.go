@@ -30,6 +30,9 @@ var (
 
 	// RunSuite takes a testing suite and runs all of the tests attached to it.
 	RunSuite = test.Run
+
+	// Scaffold creates a new application.
+	Scaffold = support.Scaffold
 )
 
 type (
@@ -73,6 +76,10 @@ type (
 
 	// Mock is the workhorse used to track activity on another object.
 	Mock = test.Mock
+
+	// ScaffoldOptions contains the information of how a new application should be
+	// created.
+	ScaffoldOptions = support.ScaffoldOptions
 
 	// Server processes the HTTP requests.
 	Server = pack.Server
