@@ -47,3 +47,11 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, error) {
 
 	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
+
+// GenerateRandomBytes generates random bytes of the specific length.
+func GenerateRandomBytes(length int) []byte {
+	bytes := make([]byte, length)
+	_, _ = rand.Read(bytes)
+
+	return bytes
+}

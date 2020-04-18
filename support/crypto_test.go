@@ -64,6 +64,11 @@ func (s *cryptoSuite) TestAESOps() {
 	s.Equal(target, decrypted)
 }
 
+func (s *cryptoSuite) TestGenerateRandomBytes() {
+	s.Empty(GenerateRandomBytes(0))
+	s.NotEmpty(GenerateRandomBytes(24))
+}
+
 func TestCryptoSuite(t *testing.T) {
 	test.Run(t, new(cryptoSuite))
 }
