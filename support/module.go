@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// ModuleName parses go.mod and return the module name.
 func ModuleName() string {
 	modulePrefix := "module "
 	wd, _ := os.Getwd()
