@@ -14,7 +14,7 @@ description: Everything you need to know to install appy and create your first a
 
 ## Quick Start
 
-#### Step 1: Create the project folder with go module and git initialised.
+### Step 1: Create the project folder with go module and git initialised.
 
 ```bash
 $ mkdir <PROJECT_NAME> && cd $_ && go mod init $_ && git init
@@ -24,7 +24,7 @@ $ mkdir <PROJECT_NAME> && cd $_ && go mod init $_ && git init
 The &lt;PROJECT\_NAME&gt; must be an alphanumeric string.
 {% endhint %}
 
-#### Step 2: Create \`main.go\` with the snippet below.
+### Step 2: Create \`main.go\` with the snippet below.
 
 ```go
 package main
@@ -41,38 +41,38 @@ func main() {
 }
 ```
 
-#### Step 3: Initialize the appy's project layout.
+### Step 3: Initialize the appy's project layout.
 
 ```bash
 $ go run .
 ```
 
-#### Step 4: Install project dependencies for backend and frontend.
+### Step 4: Install project dependencies for backend and frontend.
 
 ```bash
 $ make install
 $ npm install
 ```
 
-#### Step 5: Setup your local environment with databases running in docker compose cluster.
+### Step 5: Setup your local environment with databases running in docker compose cluster.
 
 ```bash
 $ go run . setup
 ```
 
-#### Step 6: Start developing your application locally.
+### Step 6: Start developing your application locally.
 
 ```bash
 $ go run . start
 ```
 
-#### Step 7: Build the application binary \(release mode\)
+### Step 7: Build the application binary \(release mode\)
 
 ```text
 $ go run . build
 ```
 
-#### Step 8: Tear down everything once you're done.
+### Step 8: Tear down everything once you're done.
 
 ```bash
 $ go run . teardown

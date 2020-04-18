@@ -45,7 +45,6 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 
 * Built-in HTTP server isn't meant/optimised for pure API server
 * Built-in HTTP server has an [issue](https://github.com/gin-gonic/gin/issues/2016) with wildcard route
-* Built-in tooling only supports macOS and Linux due to limited Go internals support on Windows
 
 ## Demo
 
