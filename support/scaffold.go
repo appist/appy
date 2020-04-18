@@ -21,7 +21,7 @@ type ScaffoldOptions struct {
 	DBAdapter string
 
 	// Description indicates the project description that will be used in HTML's
-	// description meta tag and package.json.
+	// description meta tag, package.json and CLI help.
 	Description string
 }
 
