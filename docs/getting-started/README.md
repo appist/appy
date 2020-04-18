@@ -34,7 +34,10 @@ import (
 )
 
 func main() {
-  appy.Scaffold(<PROJECT_DESCRIPTION>)
+  appy.Scaffold(appy.ScaffoldOptions{
+    DBAdapter: "postgres", // only "mysql" and "postgres" are supported
+    Description: "my first awesome app", // used in HTML's description meta tag, package.json and CLI help
+  })
 }
 ```
 
