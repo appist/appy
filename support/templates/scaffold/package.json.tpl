@@ -14,7 +14,8 @@
     "bootstrap": "^4.4.1",
     "page": "^1.11.5",
     "register-service-worker": "^1.7.1",
-    "svelte": "^3.20.1"
+    "svelte": "^3.20.1",
+    "svelte-i18n": "^3.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
@@ -56,7 +57,6 @@
     "pug": "^2.0.4",
     "sass": "^1.26.3",
     "style-loader": "^1.1.4",
-    "svelte-i18n": "^3.0.3",
     "svelte-jester": "^1.0.5",
     "svelte-loader": "^2.13.6",
     "svelte-preprocess": "^3.7.1",
