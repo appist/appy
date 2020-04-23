@@ -29,7 +29,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.1-0.20200324155115-ee514944af4b
 	github.com/joho/godotenv v1.3.0
 	github.com/jordan-wright/email v0.0.0-20200322182553-8eef2508c362
-	github.com/lib/pq v1.3.0
+	github.com/lib/pq v1.4.0
 	github.com/mum4k/termdash v0.12.0
 	github.com/nicksnyder/go-i18n/v2 v2.0.3
 	github.com/otiai10/copy v1.1.1
