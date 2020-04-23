@@ -30,7 +30,9 @@ const (
 )
 
 var (
-	dumper = map[string]string{"mysql": "mysqldump", "postgres": "pg_dump"}
+	dumper           = map[string]string{"mysql": "mysqldump", "postgres": "pg_dump"}
+	placeholderRegex = regexp.MustCompile(`(\$[0-9]+|\?)`)
+	tabRegex         = regexp.MustCompile(`(\t)`)
 )
 
 type (
@@ -122,9 +124,10 @@ func NewDB(config *Config, logger *support.Logger) DBer {
 
 // Begin starts a transaction. The default isolation level is dependent on the driver.
 func (db *DB) Begin() (Txer, error) {
-	db.logger.Info(formatQuery("BEGIN;"))
-
+	start := time.Now()
 	tx, err := db.DB.Beginx()
+	db.logger.Info(formatQuery("BEGIN;", time.Since(start)))
+
 	return &Tx{tx, db.logger}, err
 }
 
@@ -137,9 +140,10 @@ func (db *DB) Begin() (Txer, error) {
 // The provided TxOptions is optional and may be nil if defaults should be used. If a non-default
 // isolation level is used that the driver doesn't support, an error will be returned.
 func (db *DB) BeginContext(ctx context.Context, opts *sql.TxOptions) (Txer, error) {
-	db.logger.Info(formatQuery("BEGIN;"))
-
+	start := time.Now()
 	tx, err := db.DB.BeginTxx(ctx, opts)
+	db.logger.Info(formatQuery("BEGIN;", time.Since(start)))
+
 	return &Tx{tx, db.logger}, err
 }
 
@@ -341,15 +345,21 @@ func (db *DB) DumpSchema(dbname string) error {
 // Exec executes a query without returning any rows. The args are for any placeholder parameters
 // in the query.
 func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
-	db.logger.Infof(formatQuery(query), args...)
-	return db.DB.Exec(query, args...)
+	start := time.Now()
+	result, err := db.DB.Exec(query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return result, err
 }
 
 // ExecContext executes a query without returning any rows. The args are for any placeholder
 // parameters in the query.
 func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	db.logger.Infof(formatQuery(query), args...)
-	return db.DB.ExecContext(ctx, query, args...)
+	start := time.Now()
+	result, err := db.DB.ExecContext(ctx, query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return result, err
 }
 
 // GenerateMigration generates the migration file for the target database.
@@ -381,15 +391,21 @@ func (db *DB) GenerateMigration(name, target string, tx bool) error {
 // Get using this DB. Any placeholder parameters are replaced with supplied args. An error is
 // returned if the result set is empty.
 func (db *DB) Get(dest interface{}, query string, args ...interface{}) error {
-	db.logger.Infof(formatQuery(query), args...)
-	return db.DB.Get(dest, query, args...)
+	start := time.Now()
+	err := db.DB.Get(dest, query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return err
 }
 
 // GetContext using this DB. Any placeholder parameters are replaced with supplied args. An error
 // is returned if the result set is empty.
 func (db *DB) GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
-	db.logger.Infof(formatQuery(query), args...)
-	return db.DB.GetContext(ctx, dest, query, args...)
+	start := time.Now()
+	err := db.DB.GetContext(ctx, dest, query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return err
 }
 
 // Migrate runs migrations for the current environment that have not run yet.
@@ -482,64 +498,76 @@ func (db *DB) MigrateStatus() ([][]string, error) {
 
 // NamedExec using this DB. Any named placeholder parameters are replaced with fields from arg.
 func (db *DB) NamedExec(query string, arg interface{}) (sql.Result, error) {
-	db.logger.Infof(formatQuery(query), arg)
-	return db.DB.NamedExec(query, arg)
+	start := time.Now()
+	result, err := db.DB.NamedExec(query, arg)
+	db.logger.Infof(formatQuery(query, time.Since(start)), arg)
+
+	return result, err
 }
 
 // NamedExecContext using this DB. Any named placeholder parameters are replaced with fields from
 // arg.
 func (db *DB) NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
-	db.logger.Infof(formatQuery(query), arg)
-	return db.DB.NamedExecContext(ctx, query, arg)
+	start := time.Now()
+	result, err := db.DB.NamedExecContext(ctx, query, arg)
+	db.logger.Infof(formatQuery(query, time.Since(start)), arg)
+
+	return result, err
 }
 
 // NamedQuery using this DB. Any named placeholder parameters are replaced with fields from arg.
 func (db *DB) NamedQuery(query string, arg interface{}) (*Rows, error) {
-	db.logger.Infof(formatQuery(query), arg)
-
+	start := time.Now()
 	rows, err := db.DB.NamedQuery(query, arg)
+	db.logger.Infof(formatQuery(query, time.Since(start)), arg)
+
 	return &Rows{rows}, err
 }
 
 // NamedQueryContext using this DB. Any named placeholder parameters are replaced with fields from arg.
 func (db *DB) NamedQueryContext(ctx context.Context, query string, arg interface{}) (*Rows, error) {
-	db.logger.Infof(formatQuery(query), arg)
-
+	start := time.Now()
 	rows, err := db.DB.NamedQueryContext(ctx, query, arg)
+	db.logger.Infof(formatQuery(query, time.Since(start)), arg)
+
 	return &Rows{rows}, err
 }
 
 // PrepareNamed returns a NamedStmt.
 func (db *DB) PrepareNamed(query string) (*NamedStmt, error) {
-	db.logger.Info(formatQuery(query))
-
+	start := time.Now()
 	namedStmt, err := db.DB.PrepareNamed(query)
+	db.logger.Info(formatQuery(query, time.Since(start)))
+
 	return &NamedStmt{namedStmt}, err
 }
 
 // PrepareNamedContext returns NamedStmt.
 func (db *DB) PrepareNamedContext(ctx context.Context, query string) (*NamedStmt, error) {
-	db.logger.Info(formatQuery(query))
-
+	start := time.Now()
 	namedStmt, err := db.DB.PrepareNamedContext(ctx, query)
+	db.logger.Info(formatQuery(query, time.Since(start)))
+
 	return &NamedStmt{namedStmt}, err
 }
 
 // Query executes a query that returns rows, typically a SELECT. The args are for any placeholder
 // parameters in the query.
 func (db *DB) Query(query string, args ...interface{}) (*Rows, error) {
-	db.logger.Infof(formatQuery(query), args...)
-
+	start := time.Now()
 	rows, err := db.DB.Queryx(query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
 	return &Rows{rows}, err
 }
 
 // QueryContext executes a query that returns rows, typically a SELECT. The args are for any
 // placeholder parameters in the query.
 func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*Rows, error) {
-	db.logger.Infof(formatQuery(query), args...)
-
+	start := time.Now()
 	rows, err := db.DB.QueryxContext(ctx, query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
 	return &Rows{rows}, err
 }
 
@@ -549,9 +577,10 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 // If the query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan
 // scans the first selected row and discards the rest.
 func (db *DB) QueryRow(query string, args ...interface{}) *Row {
-	db.logger.Infof(formatQuery(query), args...)
-
+	start := time.Now()
 	row := db.DB.QueryRowx(query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
 	return &Row{row}
 }
 
@@ -561,9 +590,10 @@ func (db *DB) QueryRow(query string, args ...interface{}) *Row {
 // If the query selects no rows, the *Row's Scan will return ErrNoRows. Otherwise, the *Row's Scan
 // scans the first selected row and discards the rest.
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *Row {
-	db.logger.Infof(formatQuery(query), args...)
-
+	start := time.Now()
 	row := db.DB.QueryRowxContext(ctx, query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
 	return &Row{row}
 }
 
@@ -678,14 +708,20 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 
 // Select using this DB. Any placeholder parameters are replaced with supplied args.
 func (db *DB) Select(dest interface{}, query string, args ...interface{}) error {
-	db.logger.Infof(formatQuery(query), args...)
-	return db.DB.Select(dest, query, args...)
+	start := time.Now()
+	err := db.DB.Select(dest, query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return err
 }
 
 // SelectContext using this DB. Any placeholder parameters are replaced with supplied args.
 func (db *DB) SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
-	db.logger.Infof(formatQuery(query), args...)
-	return db.DB.SelectContext(ctx, dest, query, args...)
+	start := time.Now()
+	err := db.DB.SelectContext(ctx, dest, query, args...)
+	db.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return err
 }
 
 // Schema returns the database schema.
@@ -861,6 +897,7 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 					db.Config().SchemaMigrationsTable,
 				),
 			)
+
 			if err != nil {
 				return err
 			}
@@ -871,6 +908,7 @@ func (db *DB) ensureSchemaMigrationsTable() error {
 					db.Config().SchemaSearchPath,
 				),
 			)
+
 			if err != nil {
 				return err
 			}
@@ -967,13 +1005,14 @@ func (db *DB) setupWrapper(wrapper *sqlx.DB) error {
 	return db.Ping()
 }
 
-func formatQuery(query string) string {
+func formatQuery(query string, duration time.Duration) string {
+	prefix := strings.Repeat(" ", len(loggerDBPrefix))
 	formattedQuery := strings.Trim(query, "\n")
-	formattedQuery = strings.TrimSpace(formattedQuery)
+	formattedQuery = strings.TrimSpace(query)
+	formattedQuery = tabRegex.ReplaceAllString(formattedQuery, "")
+	formattedQuery = strings.ReplaceAll(formattedQuery, "\n", "\n\t\t\t\t\t\t"+prefix)
+	formattedQuery = strings.ReplaceAll(formattedQuery, "\t"+prefix+");", prefix+");")
+	formattedQuery = placeholderRegex.ReplaceAllString(formattedQuery, "%+v")
 
-	if strings.Contains(formattedQuery, "\n") {
-		formattedQuery = strings.ReplaceAll(formattedQuery, "\n", "\n\t\t\t\t\t     ")
-	}
-
-	return loggerDBPrefix + formattedQuery
+	return loggerDBPrefix + formattedQuery + " (" + duration.String() + ") "
 }
