@@ -3,6 +3,7 @@ package record
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/appist/appy/support"
 	"github.com/jmoiron/sqlx"
@@ -41,22 +42,31 @@ type Tx struct {
 
 // Commit commits the transaction.
 func (tx *Tx) Commit() error {
-	tx.logger.Info(formatQuery("COMMIT;"))
-	return tx.Tx.Commit()
+	start := time.Now()
+	err := tx.Tx.Commit()
+	tx.logger.Info(formatQuery("COMMIT;", time.Since(start)))
+
+	return err
 }
 
 // Exec executes a query that doesn't return rows. For example: an INSERT and
 // UPDATE.
 func (tx *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
-	tx.logger.Infof(formatQuery(query), args...)
-	return tx.Tx.Exec(query, args...)
+	start := time.Now()
+	result, err := tx.Tx.Exec(query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return result, err
 }
 
 // ExecContext executes a query that doesn't return rows. For example: an INSERT
 // and UPDATE.
 func (tx *Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	tx.logger.Infof(formatQuery(query), args...)
-	return tx.Tx.ExecContext(ctx, query, args...)
+	start := time.Now()
+	result, err := tx.Tx.ExecContext(ctx, query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return result, err
 }
 
 // Prepare creates a prepared statement for use within a transaction.
@@ -66,7 +76,10 @@ func (tx *Tx) ExecContext(ctx context.Context, query string, args ...interface{}
 //
 // To use an existing prepared statement on this transaction, see Tx.Stmt.
 func (tx *Tx) Prepare(query string) (*Stmt, error) {
+	start := time.Now()
 	stmt, err := tx.Tx.Preparex(query)
+	tx.logger.Infof(formatQuery(query, time.Since(start)))
+
 	return &Stmt{stmt, tx.logger, query}, err
 }
 
@@ -87,17 +100,19 @@ func (tx *Tx) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 
 // Query executes a query that returns rows, typically a SELECT.
 func (tx *Tx) Query(query string, args ...interface{}) (*Rows, error) {
-	tx.logger.Infof(formatQuery(query), args...)
-
+	start := time.Now()
 	rows, err := tx.Tx.Queryx(query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
 	return &Rows{rows}, err
 }
 
 // QueryContext executes a query that returns rows, typically a SELECT.
 func (tx *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*Rows, error) {
-	tx.logger.Infof(formatQuery(query), args...)
-
+	start := time.Now()
 	rows, err := tx.Tx.QueryxContext(ctx, query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
 	return &Rows{rows}, err
 }
 
@@ -107,8 +122,11 @@ func (tx *Tx) QueryContext(ctx context.Context, query string, args ...interface{
 // *sql.Row's Scan will return sql.ErrNoRows. Otherwise, the *sql.Row's
 // Scan scans the first selected row and discards the rest.
 func (tx *Tx) QueryRow(query string, args ...interface{}) *Row {
-	tx.logger.Infof(formatQuery(query), args...)
-	return &Row{tx.Tx.QueryRowx(query, args...)}
+	start := time.Now()
+	row := tx.Tx.QueryRowx(query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return &Row{row}
 }
 
 // QueryRowContext executes a query that is expected to return at most
@@ -117,14 +135,20 @@ func (tx *Tx) QueryRow(query string, args ...interface{}) *Row {
 // *sql.Row's Scan will return sql.ErrNoRows. Otherwise, the *sql.Row's Scan
 // scans the first selected row and discards the rest.
 func (tx *Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *Row {
-	tx.logger.Infof(formatQuery(query), args...)
-	return &Row{tx.Tx.QueryRowxContext(ctx, query, args...)}
+	start := time.Now()
+	row := tx.Tx.QueryRowxContext(ctx, query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return &Row{row}
 }
 
 // Rollback aborts the transaction.
 func (tx *Tx) Rollback() error {
-	tx.logger.Info(formatQuery("ROLLBACK;"))
-	return tx.Tx.Rollback()
+	start := time.Now()
+	err := tx.Tx.Rollback()
+	tx.logger.Info(formatQuery("ROLLBACK;", time.Since(start)))
+
+	return err
 }
 
 // Stmt returns a transaction-specific prepared statement from an existing

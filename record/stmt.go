@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/appist/appy/support"
 	"github.com/jmoiron/sqlx"
@@ -47,32 +48,40 @@ type Stmt struct {
 // Exec executes a prepared statement with the given arguments and returns a
 // sql.Result summarizing the effect of the statement.
 func (s *Stmt) Exec(args ...interface{}) (sql.Result, error) {
-	s.logger.Info(formatQuery(s.query) + formatStmtParams(args...))
-	return s.Stmt.Exec(args...)
+	start := time.Now()
+	result, err := s.Stmt.Exec(args...)
+	s.logger.Info(formatQuery(s.query+formatStmtParams(args...), time.Since(start)))
+
+	return result, err
 }
 
 // ExecContext executes a prepared statement with the given arguments and
 // returns a sql.Result summarizing the effect of the statement.
 func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
-	s.logger.Info(formatQuery(s.query) + formatStmtParams(args...))
-	return s.Stmt.ExecContext(ctx, args...)
+	start := time.Now()
+	result, err := s.Stmt.ExecContext(ctx, args...)
+	s.logger.Info(formatQuery(s.query+formatStmtParams(args...), time.Since(start)))
+
+	return result, err
 }
 
 // Query executes a prepared query statement with the given arguments and
 // returns the query results as a *sql.Rows.
 func (s *Stmt) Query(args ...interface{}) (*Rows, error) {
-	s.logger.Info(formatQuery(s.query) + formatStmtParams(args...))
-
+	start := time.Now()
 	rows, err := s.Stmt.Queryx(args...)
+	s.logger.Info(formatQuery(s.query+formatStmtParams(args...), time.Since(start)))
+
 	return &Rows{rows}, err
 }
 
 // QueryContext executes a prepared query statement with the given arguments
 // and returns the query results as a *sql.Rows.
 func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*Rows, error) {
-	s.logger.Info(formatQuery(s.query) + formatStmtParams(args...))
-
+	start := time.Now()
 	rows, err := s.Stmt.QueryxContext(ctx, args...)
+	s.logger.Info(formatQuery(s.query+formatStmtParams(args...), time.Since(start)))
+
 	return &Rows{rows}, err
 }
 
@@ -88,9 +97,10 @@ func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*Rows, er
 //   var name string
 //   err := nameByUseridStmt.QueryRow(id).Scan(&name)
 func (s *Stmt) QueryRow(args ...interface{}) *Row {
-	s.logger.Info(formatQuery(s.query) + formatStmtParams(args...))
-
+	start := time.Now()
 	row := s.Stmt.QueryRowx(args...)
+	s.logger.Info(formatQuery(s.query+formatStmtParams(args...), time.Since(start)))
+
 	return &Row{row}
 }
 
@@ -101,9 +111,10 @@ func (s *Stmt) QueryRow(args ...interface{}) *Row {
 // return sql.ErrNoRows. Otherwise, the *sql.Row's Scan scans the first selected
 // row and discards the rest.
 func (s *Stmt) QueryRowContext(ctx context.Context, args ...interface{}) *Row {
-	s.logger.Info(formatQuery(s.query) + formatStmtParams(args...))
-
+	start := time.Now()
 	row := s.Stmt.QueryRowxContext(ctx, args...)
+	s.logger.Info(formatQuery(s.query+formatStmtParams(args...), time.Since(start)))
+
 	return &Row{row}
 }
 
