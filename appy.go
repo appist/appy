@@ -13,6 +13,19 @@ import (
 )
 
 var (
+	// Build is the current build type for the application, can be "debug" or
+	// "release". Please take note that this value will be updated to "release"
+	// when running "go run . build" command.
+	Build = support.Build
+
+	// IsDebugBuild indicates the current build is debug build which is meant for
+	// local development.
+	IsDebugBuild = support.IsDebugBuild
+
+	// IsReleaseBuild indicates the current build is release build which is meant
+	// for production deployment.
+	IsReleaseBuild = support.IsReleaseBuild
+
 	// NewMockedWorkerHandler initializes a mocked WorkerHandler instance that is
 	// useful for unit test.
 	NewMockedWorkerHandler = worker.NewMockedHandler
