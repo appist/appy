@@ -16,21 +16,21 @@ Below is the snippet for working with the build mode:
 // 
 // Please take note that this value will be updated to `release` when running
 // `go run . build` command.
-var appy.Build = appy.DebugBuild
+var appy.Build
 
 // IsDebugBuild indicates the current build is debug build which is meant for 
 // local development.
 func appy.IsDebugBuild() bool
 
-// IsReleaseBuild indicates the current build is release build which is meant for 
-// production deployment.
+// IsReleaseBuild indicates the current build is release build which is meant 
+// for production deployment.
 func appy.IsReleaseBuild() bool
 ```
 
 Below are the main differences:
 
 * assets/configs/mailers/translations/views are loaded from the filesystem for rapid development in `debug` mode.
-* commands like `build` , `db:schema:dump` , `gen:migration` , `start` are not available in `debug` mode.
+* commands like `build` , `config:dec`, `config:enc`, `db:schema:dump` , `gen:migration` , `start` are not available in `debug` mode.
 * messages that are logged via `app.Logger.Debug()` and `app.Logger.Debugf()` are only available in `debug` mode.
 * `APPY_MASTER_KEY` can be read from either `configs/<APPY_ENV>.key` or the environment variable in `debug` mode whereas `release` mode strictly requires it to be the environment variable.
 * The PWA is served via `webpack-dev-server` and proxied by the Go HTTP server in `debug` mode.

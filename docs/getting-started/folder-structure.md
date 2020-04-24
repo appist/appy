@@ -34,18 +34,17 @@ description: Covers what each folder is being used for.
 │   └── test.key
 ├── db
 │   ├── migrate
-│   │   └── primary                (for keeping the database migrations for "primary" database)
+│   │   └── primary                (for keeping the "primary" database migrations)
 │   │       └── schema.go
 │   └── seed
-│       └── primary                (for keeping the database seeds for "primary" database)
+│       └── primary                (for keeping the "primary" database seeds)
 │           └── seed.go
-├── go.mod                         (the project dependencies for backend)
-├── go.sum                         (the project dependencies lockdown versions for backend)
+├── go.mod                         (the backend project dependencies)
+├── go.sum                         (the backend project dependencies lockdown versions)
 ├── main.go                        (the application entry point)
-├── nightwatch.conf.js             (the NightwatchJS config for e2e testing)
-├── package-lock.json              (the project dependencies for web)
-├── package.json                   (the project dependencies lockdown versions for web)
-├── pkg                            (the backend logic)
+├── package-lock.json              (the web project dependencies)
+├── package.json                   (the web project dependencies lockdown versions)
+├── pkg                            (the backend codebase)
 │   ├── app                        
 │   │   ├── app.go                 (the application initialization logic)
 │   │   ├── asset.go               (the application embedded asset)
@@ -64,12 +63,12 @@ description: Covers what each folder is being used for.
 │   ├── handler
 │   │   ├── handler.go             (the application HTTP handler entry, used to setup global middleware and routes)
 │   │   ├── ...                    (the application HTTP handler)
-│   │   └── middleware             (the middleware for HTTP handler)
+│   │   └── middleware             (the HTTP handler middleware)
 │   │       └── ...
 │   ├── job
 │   │   ├── job.go                 (the application background job entry, used to setup global middleware)
 │   │   ├── ...                    (the application background job)
-│   │   └── middleware             (the middleware for background job)
+│   │   └── middleware             (the background job middleware)
 │   │       └── ...
 │   ├── locales                    (the backend locales in YAML format)      
 │   │   └── ...
@@ -86,22 +85,13 @@ description: Covers what each folder is being used for.
 │       │   ├── mailer.html        (the application mailer default HTML layout)
 │       │   └── mailer.txt         (the application mailer default TXT layout)
 │       ├── mailers                
-│       │   ├── welcome.html       (the application mailer HTML template for a specific mailer)
-│       │   └── welcome.txt        (the application mailer TXT template for a specific mailer)
+│       │   ├── welcome.html       (the application mailer HTML template)
+│       │   └── welcome.txt        (the application mailer TXT template)
 │       └── welcome
-│           └── index.html         (the application HTML template for a specific handler)
-├── svelte.config.js               (the config file for svelte-preprocess)
-├── tsconfig.json                  (the config file for Typescript)
+│           └── index.html         (the application HTML template)
+├── svelte.config.js               (the svelte-preprocess config file)
+├── tsconfig.json                  (the Typescript config file)
 ├── web                            
-│   ├── e2e                        (the NightwatchJS e2e tests, refer to https://nightwatchjs.org/guide)
-│   │   ├── custom-assertions
-│   │   │   └── ...
-│   │   ├── custom-commands
-│   │   │   └── ...
-│   │   ├── page-objects
-│   │   │   └── ...
-│   │   └── specs
-│   │       └── ...
 │   ├── public                     (the public folder which its files will be served at the root)
 │   │   └── ...
 │   ├── src
@@ -118,8 +108,16 @@ description: Covers what each folder is being used for.
 │   │   │   └── ...
 │   │   └── types                  (the web type definition)
 │   │       └── ...
-│   └── tests                      
-│       └── setup.js               (the web test setup for Jest)
+│   └── tests
+│       ├── e2e
+│       │   ├── codecept.conf.js   (the CodeceptJS config file)  
+│       │   ├── features           (the e2e feature tests)
+│       │   │   └── ...
+│       │   ├── step_definitions
+│       │   │   └── ...
+│       │   └── steps.js
+│       └── unit
+│           └── setup.js           (the Jest unit tests setup file)
 └── webpack.config.js              (the web's webpack config)
 ```
 

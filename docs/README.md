@@ -43,7 +43,6 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 
 ## Caveats
 
-* Built-in HTTP server isn't meant/optimised for pure API server
 * Built-in HTTP server has an [issue](https://github.com/gin-gonic/gin/issues/2016) with wildcard route
 
 ## Demo

@@ -21,30 +21,32 @@ If the codebase needs to run on other environments, such as `staging` or `produc
 $ touch configs/.env.<ENV>
 
 // Generate a new secret for the specific environment.
-$ go run . secret --length 16
-
-// Copy the output value and place it in "configs/<ENV>.key".
-$ echo <SECRET_KEY> > configs/<ENV>.key
+$ echo $(go run . secret) > configs/<ENV>.key
 ```
+
+{% hint style="info" %}
+The `release` build only reads the secret via `APPY_MASTER_KEY` environment variable which should be passed to the built binary when running it, e.g.
+
+**APPY\_ENV=&lt;ENV&gt; APPY\_MASTER\_KEY=&lt;SECRET\_KEY&gt; ./&lt;BINARY&gt; serve**
+{% endhint %}
 
 Now, start adding your encrypted environment variable into the corresponding environment config file. For example, adding `DB_URL` encrypted value is just as simple as doing: 
 
 ```bash
-// Encrypt the config value using the specific environment's secret key.
-// In debug mode, please ensure the secret key is in "configs/<ENV>.key".
-$ APPY_ENV=<ENV> go run . config:enc <VALUE>
+// Encrypt the config value using the secret key for APPY_ENV=<ENV>.
+$ APPY_ENV=<ENV> go run . config:enc <KEY> <VALUE>
 
-// Copy the encrypted value into the config file for the specific environment.
-$ echo DB_URL=<ENCRYPTED_VALUE> >> configs/.env.<ENV>
+// Decrypt the config value using the secret key for APPY_ENV=<ENV>.
+$ APPY_ENV=<ENV> go run . config:dec <KEY>
 ```
 
 After setting up the encrypted values in the config for the new environment, simply do:
 
 ```bash
-// In debug mode, please ensure the secret key is in "configs/<ENV>.key".
+// For running the app in debug mode.
 $ APPY_ENV=<ENV> go run . start
 
-// In release mode, please ensure the secret key from "configs/<ENV>.key" is passed in.
+// For running the app in release mode.
 $ APPY_ENV=<ENV> APPY_MASTER_KEY=<SECRET_KEY> ./<BINARY> serve
 $ APPY_ENV=<ENV> APPY_MASTER_KEY=<SECRET_KEY> ./<BINARY> work
 ```

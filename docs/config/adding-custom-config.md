@@ -24,13 +24,8 @@ type appConfig struct {
 
 ```bash
 // Encrypt the config value using the specific environment's secret key.
-// In debug mode, please ensure the secret key is in "configs/<ENV>.key".
-$ APPY_ENV=<ENV> go run . config:enc <FB_APP_ID>
-$ APPY_ENV=<ENV> go run . config:enc <FB_APP_SECRET>
-
-// Copy the encrypted value into the config file for the specific environment.
-$ echo FB_APP_ID=<ENCRYPTED_VALUE> >> configs/.env.<ENV>
-$ echo FB_APP_SECRET=<ENCRYPTED_VALUE> >> configs/.env.<ENV>
+$ APPY_ENV=<ENV> go run . config:enc FB_APP_ID <FB_APP_ID_VALUE>
+$ APPY_ENV=<ENV> go run . config:enc FB_APP_SECRET <FB_APP_SECRET_VALUE>
 ```
 
 #### Step 3: Access the credentials in the codebase.
