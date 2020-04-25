@@ -27,6 +27,13 @@ func newWorkCommand(config *support.Config, dbManager *record.Engine, logger *su
 			}
 
 			worker.Run()
+
+			for _, db := range dbManager.Databases() {
+				err := db.Close()
+				if err != nil {
+					logger.Fatal(err)
+				}
+			}
 		},
 	}
 }
