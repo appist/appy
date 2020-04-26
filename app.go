@@ -64,6 +64,11 @@ func (a *App) DB(name string) DB {
 	return a.dbManager.DB(name)
 }
 
+// DBManager returns the app instance's DB manager.
+func (a *App) DBManager() *DBManager {
+	return a.dbManager
+}
+
 // I18n returns the app instance's i18n manager.
 func (a *App) I18n() *I18n {
 	return a.i18n

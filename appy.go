@@ -65,6 +65,9 @@ type (
 	// DB is the interface that manages the database config/connection/migrations.
 	DB = record.DBer
 
+	// DBManager manages the databases.
+	DBManager = record.Engine
+
 	// H is a shortcut for map[string]interface{}.
 	H = support.H
 
