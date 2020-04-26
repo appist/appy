@@ -15,13 +15,22 @@ type Txer interface {
 	Commit() error
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	Get(dest interface{}, query string, args ...interface{}) error
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	NamedExec(query string, arg interface{}) (sql.Result, error)
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+	NamedQuery(query string, arg interface{}) (*Rows, error)
 	Prepare(query string) (*Stmt, error)
 	PrepareContext(ctx context.Context, query string) (*Stmt, error)
+	PrepareNamed(query string) (*NamedStmt, error)
+	PrepareNamedContext(ctx context.Context, query string) (*NamedStmt, error)
 	Query(query string, args ...interface{}) (*Rows, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*Rows, error)
 	QueryRow(query string, args ...interface{}) *Row
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *Row
 	Rollback() error
+	Select(dest interface{}, query string, args ...interface{}) error
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	Stmt(stmt *Stmt) *Stmt
 	StmtContext(ctx context.Context, stmt *Stmt) *Stmt
 }
@@ -69,6 +78,57 @@ func (tx *Tx) ExecContext(ctx context.Context, query string, args ...interface{}
 	return result, err
 }
 
+// Get using this transaction. Any placeholder parameters are replaced with
+// supplied args. An error is returned if the result set is empty.
+func (tx *Tx) Get(dest interface{}, query string, args ...interface{}) error {
+	start := time.Now()
+	err := tx.Tx.Get(dest, query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return err
+}
+
+// GetContext using this transaction. Any placeholder parameters are replaced
+// with supplied args. An error is returned if the result set is empty.
+func (tx *Tx) GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+	start := time.Now()
+	err := tx.Tx.GetContext(ctx, dest, query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return err
+}
+
+// NamedExec executes a named query within this transaction. Any named
+// placeholder parameters are replaced with fields from arg.
+func (tx *Tx) NamedExec(query string, arg interface{}) (sql.Result, error) {
+	start := time.Now()
+	result, err := tx.Tx.NamedExec(query, arg)
+	tx.logger.Info(formatQuery(query, time.Since(start), arg))
+
+	return result, err
+}
+
+// NamedExecContext executes a named query within this transaction with the
+// specified context. Any named placeholder parameters are replaced with fields
+// from arg.
+func (tx *Tx) NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
+	start := time.Now()
+	result, err := tx.Tx.NamedExecContext(ctx, query, arg)
+	tx.logger.Info(formatQuery(query, time.Since(start), arg))
+
+	return result, err
+}
+
+// NamedQuery within this transaction. Any named placeholder parameters are
+// replaced with fields from arg.
+func (tx *Tx) NamedQuery(query string, arg interface{}) (*Rows, error) {
+	start := time.Now()
+	rows, err := tx.Tx.NamedQuery(query, arg)
+	tx.logger.Info(formatQuery(query, time.Since(start), arg))
+
+	return &Rows{rows}, err
+}
+
 // Prepare creates a prepared statement for use within a transaction.
 //
 // The returned statement operates within the transaction and can no longer be
@@ -95,7 +155,26 @@ func (tx *Tx) Prepare(query string) (*Stmt, error) {
 // run in the transaction context.
 func (tx *Tx) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 	stmt, err := tx.Tx.PreparexContext(ctx, query)
+
 	return &Stmt{stmt, tx.logger, query}, err
+}
+
+// PrepareNamed returns an NamedStmt.
+func (tx *Tx) PrepareNamed(query string) (*NamedStmt, error) {
+	start := time.Now()
+	stmt, err := tx.Tx.PrepareNamed(query)
+	tx.logger.Infof(formatQuery(query, time.Since(start)))
+
+	return &NamedStmt{stmt}, err
+}
+
+// PrepareNamedContext returns an NamedStmt.
+func (tx *Tx) PrepareNamedContext(ctx context.Context, query string) (*NamedStmt, error) {
+	start := time.Now()
+	stmt, err := tx.Tx.PrepareNamedContext(ctx, query)
+	tx.logger.Infof(formatQuery(query, time.Since(start)))
+
+	return &NamedStmt{stmt}, err
 }
 
 // Query executes a query that returns rows, typically a SELECT.
@@ -147,6 +226,24 @@ func (tx *Tx) Rollback() error {
 	start := time.Now()
 	err := tx.Tx.Rollback()
 	tx.logger.Info(formatQuery("ROLLBACK;", time.Since(start)))
+
+	return err
+}
+
+// Select using this transaction. Any placeholder parameters are replaced with supplied args.
+func (tx *Tx) Select(dest interface{}, query string, args ...interface{}) error {
+	start := time.Now()
+	err := tx.Tx.Select(dest, query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
+
+	return err
+}
+
+// SelectContext using this transaction. Any placeholder parameters are replaced with supplied args.
+func (tx *Tx) SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+	start := time.Now()
+	err := tx.Tx.SelectContext(ctx, dest, query, args...)
+	tx.logger.Infof(formatQuery(query, time.Since(start)), args...)
 
 	return err
 }

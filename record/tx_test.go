@@ -94,6 +94,115 @@ func (s *txSuite) TestExec() {
 		_, err = tx.ExecContext(ctx, query, "John Doe")
 		s.Equal("context canceled", err.Error())
 
+		var usernames []string
+		err = tx.Select(&usernames, "SELECT username FROM users;")
+		s.Nil(err)
+		s.Equal(1, len(usernames))
+
+		usernames = []string{}
+		err = tx.SelectContext(ctx, &usernames, "SELECT username FROM users;")
+		s.Equal("context canceled", err.Error())
+
+		err = tx.Commit()
+		s.Nil(err)
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+	}
+}
+
+func (s *txSuite) TestGet() {
+	var count int
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_tx_get")
+
+		query := `INSERT INTO users (username) VALUES (?);`
+		if adapter == "postgres" {
+			query = `INSERT INTO users (username) VALUES ($1);`
+		}
+
+		tx, err := s.db.Begin()
+		s.Nil(err)
+
+		_, err = tx.Exec(query, "John Doe")
+		s.Nil(err)
+
+		_, err = tx.ExecContext(ctx, query, "John Doe")
+		s.Equal("context canceled", err.Error())
+
+		err = tx.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+
+		err = tx.GetContext(ctx, &count, "SELECT COUNT(*) FROM users;")
+		s.Equal("context canceled", err.Error())
+
+		err = tx.Commit()
+		s.Nil(err)
+	}
+}
+
+func (s *txSuite) TestNamedExec() {
+	var count int
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_tx_named_exec")
+
+		tx, err := s.db.Begin()
+		s.Nil(err)
+
+		_, err = tx.NamedExec(`INSERT INTO users (username) VALUES (:username);`,
+			map[string]interface{}{
+				"username": "John Doe",
+			},
+		)
+		s.Nil(err)
+
+		_, err = tx.NamedExecContext(ctx, `INSERT INTO users (username) VALUES (:username);`,
+			map[string]interface{}{
+				"username": "John Doe",
+			},
+		)
+		s.Equal("context canceled", err.Error())
+
+		err = tx.Commit()
+		s.Nil(err)
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+	}
+}
+
+func (s *txSuite) TestNamedQuery() {
+	var count int
+
+	type fakeUser struct {
+		Username string `db:"username"`
+	}
+
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_tx_named_query")
+
+		tx, err := s.db.Begin()
+		s.Nil(err)
+
+		rows, err := tx.NamedQuery(`INSERT INTO users (username) VALUES (:username);`,
+			map[string]interface{}{
+				"username": "John Doe",
+			},
+		)
+		rows.Close()
+		s.Nil(err)
+
 		err = tx.Commit()
 		s.Nil(err)
 
@@ -127,6 +236,41 @@ func (s *txSuite) TestPrepare() {
 		s.Nil(err)
 
 		_, err = tx.PrepareContext(ctx, query)
+		s.Equal("context canceled", err.Error())
+
+		err = tx.Commit()
+		s.Nil(err)
+
+		err = s.db.Get(&count, "SELECT COUNT(*) FROM users;")
+		s.Nil(err)
+		s.Equal(1, count)
+	}
+}
+
+func (s *txSuite) TestPrepareNamed() {
+	type fakeUser struct {
+		Username string `db:"username"`
+	}
+
+	var count int
+
+	query := `INSERT INTO users (username) VALUES (:username);`
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_tx_prepare_named")
+
+		tx, err := s.db.Begin()
+		s.Nil(err)
+
+		stmt, err := tx.PrepareNamed(query)
+		s.Nil(err)
+
+		_, err = stmt.Exec(&fakeUser{"Johne Doe"})
+		s.Nil(err)
+
+		_, err = tx.PrepareNamedContext(ctx, query)
 		s.Equal("context canceled", err.Error())
 
 		err = tx.Commit()
