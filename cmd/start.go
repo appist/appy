@@ -259,26 +259,28 @@ func initTerminal(term *terminal) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ctn, err := container.New(
 		term.box,
-		container.SplitVertical(
-			container.Left(
+		container.SplitHorizontal(
+			container.Top(
+				container.Border(linestyle.Light),
+				container.BorderTitle(" Backend "),
+				container.PlaceWidget(term.serve),
+			),
+			container.Bottom(
 				container.SplitHorizontal(
 					container.Top(
-						container.Border(linestyle.Light),
-						container.BorderTitle(" Backend "),
-						container.PlaceWidget(term.serve),
-					),
-					container.Bottom(
 						container.Border(linestyle.Light),
 						container.BorderTitle(" Frontend (webpack-dev-server) "),
 						container.PlaceWidget(term.web),
 					),
+					container.Bottom(
+						container.Border(linestyle.Light),
+						container.BorderTitle(" Worker "),
+						container.PlaceWidget(term.work),
+					),
+					container.SplitPercent(50),
 				),
 			),
-			container.Right(
-				container.Border(linestyle.Light),
-				container.BorderTitle(" Worker "),
-				container.PlaceWidget(term.work),
-			),
+			container.SplitPercent(33),
 		),
 	)
 
@@ -603,8 +605,8 @@ func convertText(input string) textWithWriteOption {
 }
 
 func preprocessText(input string) []textWithWriteOption {
-	output := strings.ReplaceAll(input, "\t", " ")
-	output = strings.Trim(output, "\n")
+	output := strings.ReplaceAll(input, "\t", "    ")
+	output = strings.Trim(output, "\n\t")
 	matchIndexes := colorRegex.FindAllSubmatchIndex([]byte(output), -1)
 	results := []textWithWriteOption{
 		{
