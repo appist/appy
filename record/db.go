@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -32,7 +33,6 @@ const (
 var (
 	dumper           = map[string]string{"mysql": "mysqldump", "postgres": "pg_dump"}
 	placeholderRegex = regexp.MustCompile(`(\$[0-9]+|\?)`)
-	tabRegex         = regexp.MustCompile(`(\t)`)
 )
 
 type (
@@ -500,7 +500,7 @@ func (db *DB) MigrateStatus() ([][]string, error) {
 func (db *DB) NamedExec(query string, arg interface{}) (sql.Result, error) {
 	start := time.Now()
 	result, err := db.DB.NamedExec(query, arg)
-	db.logger.Infof(formatQuery(query, time.Since(start)), arg)
+	db.logger.Info(formatQuery(query, time.Since(start), arg))
 
 	return result, err
 }
@@ -510,7 +510,7 @@ func (db *DB) NamedExec(query string, arg interface{}) (sql.Result, error) {
 func (db *DB) NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
 	start := time.Now()
 	result, err := db.DB.NamedExecContext(ctx, query, arg)
-	db.logger.Infof(formatQuery(query, time.Since(start)), arg)
+	db.logger.Info(formatQuery(query, time.Since(start), arg))
 
 	return result, err
 }
@@ -1005,14 +1005,25 @@ func (db *DB) setupWrapper(wrapper *sqlx.DB) error {
 	return db.Ping()
 }
 
-func formatQuery(query string, duration time.Duration) string {
-	prefix := strings.Repeat(" ", len(loggerDBPrefix))
-	formattedQuery := strings.Trim(query, "\n")
-	formattedQuery = strings.TrimSpace(query)
-	formattedQuery = tabRegex.ReplaceAllString(formattedQuery, "")
-	formattedQuery = strings.ReplaceAll(formattedQuery, "\n", "\n\t\t\t\t\t\t"+prefix)
-	formattedQuery = strings.ReplaceAll(formattedQuery, "\t"+prefix+");", prefix+");")
-	formattedQuery = placeholderRegex.ReplaceAllString(formattedQuery, "%+v")
+func formatQuery(query string, duration time.Duration, args ...interface{}) string {
+	var argsBuilder strings.Builder
+	for _, arg := range args {
+		var bytes []byte
+		if support.IsDebugBuild() {
+			bytes, _ = json.MarshalIndent(arg, "", "\t")
+		} else {
+			bytes, _ = json.Marshal(arg)
+		}
 
-	return loggerDBPrefix + formattedQuery + " (" + duration.String() + ") "
+		argsBuilder.WriteString("\n")
+		argsBuilder.Write(bytes)
+	}
+
+	prefix := strings.Repeat(" ", len("2020-04-26T16:29:50.997+0800    INFO    "+loggerDBPrefix))
+	query = placeholderRegex.ReplaceAllString(query, "%+v")
+	formattedQuery := query + " (" + duration.String() + ") " + argsBuilder.String()
+	formattedQuery = strings.Trim(formattedQuery, "\n ")
+	formattedQuery = strings.ReplaceAll(formattedQuery, "\n", "\n"+prefix)
+
+	return loggerDBPrefix + formattedQuery
 }
