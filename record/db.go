@@ -519,7 +519,7 @@ func (db *DB) NamedExecContext(ctx context.Context, query string, arg interface{
 func (db *DB) NamedQuery(query string, arg interface{}) (*Rows, error) {
 	start := time.Now()
 	rows, err := db.DB.NamedQuery(query, arg)
-	db.logger.Infof(formatQuery(query, time.Since(start)), arg)
+	db.logger.Infof(formatQuery(query, time.Since(start), arg))
 
 	return &Rows{rows}, err
 }
@@ -528,7 +528,7 @@ func (db *DB) NamedQuery(query string, arg interface{}) (*Rows, error) {
 func (db *DB) NamedQueryContext(ctx context.Context, query string, arg interface{}) (*Rows, error) {
 	start := time.Now()
 	rows, err := db.DB.NamedQueryContext(ctx, query, arg)
-	db.logger.Infof(formatQuery(query, time.Since(start)), arg)
+	db.logger.Infof(formatQuery(query, time.Since(start), arg))
 
 	return &Rows{rows}, err
 }
