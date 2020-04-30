@@ -2,6 +2,7 @@ package record
 
 import (
 	"context"
+	"database/sql"
 	"math/rand"
 	"reflect"
 	"strconv"
@@ -22,23 +23,24 @@ type (
 
 	// Model is the layer that represents business data and logic.
 	Model struct {
-		adapter      string
-		attrs        map[string]modelAttr
-		ctx          context.Context
-		dest         interface{}
-		destKind     reflect.Kind
-		masters      []DBer
-		replicas     []DBer
-		tableName    string
-		primaryKeys  []string
-		queryBuilder strings.Builder
-		queryType    string
-		tx           Txer
-		selectFields string
-		limit        int
-		offset       int
-		order        string
-		wheres       []string
+		adapter              string
+		attrs                map[string]modelAttr
+		autoIncrementStField string
+		ctx                  context.Context
+		dest                 interface{}
+		destKind             reflect.Kind
+		masters              []DBer
+		replicas             []DBer
+		tableName            string
+		primaryKeys          []string
+		queryBuilder         strings.Builder
+		queryType            string
+		tx                   Txer
+		selectFields         string
+		limit                int
+		offset               int
+		order                string
+		wheres               []string
 	}
 
 	modelAttr struct {
@@ -65,12 +67,16 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 		e = e.Elem()
 	}
 
-	adapter := ""
-	attrs := map[string]modelAttr{}
-	masters := []DBer{}
-	replicas := []DBer{}
-	primaryKeys := []string{}
-	tableName := support.ToSnakeCase(support.Plural(e.Name()))
+	model := &Model{
+		adapter:     "",
+		attrs:       map[string]modelAttr{},
+		dest:        dest,
+		destKind:    destKind,
+		masters:     []DBer{},
+		replicas:    []DBer{},
+		primaryKeys: []string{},
+		tableName:   support.ToSnakeCase(support.Plural(e.Name())),
+	}
 
 	for i := 0; i < e.NumField(); i++ {
 		field := e.Field(i)
@@ -79,32 +85,32 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 		case "record.Modeler":
 			for _, name := range strings.Split(field.Tag.Get("masters"), ",") {
 				if dbManager.DB(name) != nil {
-					masters = append(masters, dbManager.DB(name))
+					model.masters = append(model.masters, dbManager.DB(name))
 				}
 			}
 
-			if len(masters) > 0 {
-				adapter = masters[0].Config().Adapter
+			if len(model.masters) > 0 {
+				model.adapter = model.masters[0].Config().Adapter
 			}
 
 			for _, name := range strings.Split(field.Tag.Get("replicas"), ",") {
 				if dbManager.DB(name) != nil {
-					replicas = append(replicas, dbManager.DB(name))
+					model.replicas = append(model.replicas, dbManager.DB(name))
 				}
 			}
 
-			if adapter == "" && len(replicas) > 0 {
-				adapter = replicas[0].Config().Adapter
+			if model.adapter == "" && len(model.replicas) > 0 {
+				model.adapter = model.replicas[0].Config().Adapter
 			}
 
 			tblName := field.Tag.Get("tableName")
 			if tblName != "" {
-				tableName = tblName
+				model.tableName = tblName
 			}
 
 			pks := field.Tag.Get("primaryKeys")
 			if pks != "" {
-				primaryKeys = strings.Split(pks, ",")
+				model.primaryKeys = strings.Split(pks, ",")
 			}
 		default:
 			dbColumn := support.ToSnakeCase(field.Name)
@@ -138,22 +144,15 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 					}
 
 					attr.autoIncrement = autoIncrement
+
+					if autoIncrement {
+						model.autoIncrementStField = field.Name
+					}
 				}
 			}
 
-			attrs[dbColumn] = attr
+			model.attrs[dbColumn] = attr
 		}
-	}
-
-	model := &Model{
-		adapter:     adapter,
-		attrs:       attrs,
-		dest:        dest,
-		destKind:    destKind,
-		masters:     masters,
-		replicas:    replicas,
-		primaryKeys: primaryKeys,
-		tableName:   tableName,
 	}
 
 	return model
@@ -209,8 +208,9 @@ func (m *Model) Create() *Model {
 
 func (m *Model) Exec() error {
 	var (
-		err  error
-		rows *Rows
+		err    error
+		result sql.Result
+		rows   *Rows
 	)
 
 	switch m.queryType {
@@ -219,64 +219,64 @@ func (m *Model) Exec() error {
 			m.dest = reflect.ValueOf(m.dest).Elem().Interface()
 		}
 
-		if m.tx != nil {
-			rows, err = m.tx.NamedQuery(m.queryBuilder.String(), m.dest)
-		} else {
-			rows, err = m.masters[rand.Intn(len(m.masters))].NamedQuery(m.queryBuilder.String(), m.dest)
-		}
+		switch m.adapter {
+		case "mysql":
+			if m.tx != nil {
+				result, err = m.tx.NamedExec(m.queryBuilder.String(), m.dest)
+			} else {
+				result, err = m.masters[rand.Intn(len(m.masters))].NamedExec(m.queryBuilder.String(), m.dest)
+			}
 
-		if err != nil {
-			return err
-		}
+			if err != nil {
+				return err
+			}
 
-		defer rows.Close()
+			lid, err := result.LastInsertId()
+			if err != nil {
+				return err
+			}
 
-		switch m.destKind {
-		case reflect.Array, reflect.Slice:
-			v := reflect.ValueOf(m.dest)
+			if m.autoIncrementStField != "" {
+				switch m.destKind {
+				case reflect.Array, reflect.Slice:
+					v := reflect.ValueOf(m.dest)
 
-			for i := 0; i < v.Len(); i++ {
-				if rows.Next() {
-					columns, err := rows.Columns()
-					if err != nil {
-						return err
+					for i := 0; i < v.Len(); i++ {
+						v.Index(i).FieldByName(m.autoIncrementStField).SetInt(lid + int64(i))
 					}
-
-					values := make([]interface{}, len(columns))
-					for idx, column := range columns {
-						values[idx] = reflect.New(m.attrs[column].stFieldType).Interface()
-					}
-
-					err = rows.Scan(values...)
-					if err != nil {
-						return err
-					}
-
-					for idx, primaryKey := range m.primaryKeys {
-						v.Index(i).FieldByName(m.attrs[primaryKey].stFieldName).Set(reflect.ValueOf(values[idx]).Elem())
-					}
+				case reflect.Ptr:
+					reflect.ValueOf(m.dest).Elem().FieldByName(m.autoIncrementStField).SetInt(lid)
 				}
 			}
-		case reflect.Ptr:
-			if rows.Next() {
-				columns, err := rows.Columns()
+		case "postgres":
+			if m.tx != nil {
+				rows, err = m.tx.NamedQuery(m.queryBuilder.String(), m.dest)
+			} else {
+				rows, err = m.masters[rand.Intn(len(m.masters))].NamedQuery(m.queryBuilder.String(), m.dest)
+			}
+
+			if err != nil {
+				return err
+			}
+
+			defer rows.Close()
+
+			switch m.destKind {
+			case reflect.Array, reflect.Slice:
+				v := reflect.ValueOf(m.dest)
+
+				for i := 0; i < v.Len(); i++ {
+					err = m.scanPrimaryKeys(rows, v.Index(i))
+
+					if err != nil {
+						return err
+					}
+				}
+			case reflect.Ptr:
+				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
+
 				if err != nil {
 					return err
-				}
-
-				values := make([]interface{}, len(columns))
-				for idx, column := range columns {
-					values[idx] = reflect.New(m.attrs[column].stFieldType).Interface()
-				}
-
-				err = rows.Scan(values...)
-				if err != nil {
-					return err
-				}
-
-				v := reflect.ValueOf(m.dest).Elem()
-				for idx, primaryKey := range m.primaryKeys {
-					v.FieldByName(m.attrs[primaryKey].stFieldName).Set(reflect.ValueOf(values[idx]).Elem())
 				}
 			}
 		}
@@ -321,4 +321,31 @@ func (m *Model) SQL() string {
 
 func (m *Model) Update() *Model {
 	return m
+}
+
+func (m *Model) scanPrimaryKeys(rows *Rows, v reflect.Value) error {
+	if !rows.Next() {
+		return nil
+	}
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+
+	values := make([]interface{}, len(columns))
+	for idx, column := range columns {
+		values[idx] = reflect.New(m.attrs[column].stFieldType).Interface()
+	}
+
+	err = rows.Scan(values...)
+	if err != nil {
+		return err
+	}
+
+	for idx, primaryKey := range m.primaryKeys {
+		v.FieldByName(m.attrs[primaryKey].stFieldName).Set(reflect.ValueOf(values[idx]).Elem())
+	}
+
+	return nil
 }
