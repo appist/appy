@@ -84,6 +84,11 @@ func (a *App) Mailer() *Mailer {
 	return a.mailer
 }
 
+// Model returns the layer that represents business data and logic.
+func (a *App) Model(m interface{}) Model {
+	return NewModel(a.dbManager, m)
+}
+
 // Worker returns the app instance's worker.
 func (a *App) Worker() *Worker {
 	return a.worker

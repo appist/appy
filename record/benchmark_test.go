@@ -37,8 +37,19 @@ CREATE TABLE users (
 	SQLUpdateQuery            = "UPDATE users SET name=?, title=?, fax=?, web=?, age=?, counter=? WHERE id=?"
 )
 
+type BenchmarkUser struct {
+	Modeler `masters:"primary" replicas:"" tableName:"users" primaryKeys:"id"`
+	ID      int64 `db:"id" orm:"auto_increment:true"`
+	Age     int
+	Fax     string
+	Name    string
+	Title   string
+	Web     string
+	Counter int64
+}
+
 func newDB() DBer {
-	database := "benchmarkrecord_appy"
+	database := "benchmarkrecord_db"
 	os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13306/%s", database))
 	os.Setenv("DB_MAX_IDLE_CONNS_PRIMARY", strconv.Itoa(MaxIdleConns))
 	os.Setenv("DB_MAX_OPEN_CONNS_PRIMARY", strconv.Itoa(MaxOpenConns))
@@ -57,6 +68,28 @@ func newDB() DBer {
 	db.Exec(SCHEMA)
 
 	return db
+}
+
+func newOrmDBManager() *Engine {
+	database := "benchmarkrecord_orm"
+	os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13306/%s", database))
+	os.Setenv("DB_MAX_IDLE_CONNS_PRIMARY", strconv.Itoa(MaxIdleConns))
+	os.Setenv("DB_MAX_OPEN_CONNS_PRIMARY", strconv.Itoa(MaxOpenConns))
+	defer func() {
+		os.Unsetenv("DB_URI_PRIMARY")
+		os.Unsetenv("DB_MAX_IDLE_CONNS_PRIMARY")
+		os.Unsetenv("DB_MAX_OPEN_CONNS_PRIMARY")
+	}()
+
+	logger, _, _ := support.NewTestLogger()
+	dbManager := NewEngine(logger)
+	db := dbManager.DB("primary")
+	db.DropDB(database)
+	db.CreateDB(database)
+	db.Connect()
+	db.Exec(SCHEMA)
+
+	return dbManager
 }
 
 func newRawDB() *sql.DB {
@@ -97,55 +130,50 @@ func newQueryWithArgs() (string, []interface{}) {
 	return query, args
 }
 
-func rawInsert(db *sql.DB, b *testing.B) (int64, error) {
-	result, err := db.Exec(SQLInsertQueryPrefix + "('benchmark', 'just a benchmark', '99991234', 'https://appy.org', 100, 1000)")
-	if err != nil {
-		return 0, err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
-}
-
 func dbInsert(db DBer, b *testing.B) (int64, error) {
 	result, err := db.Exec(SQLInsertQueryPrefix + "('benchmark', 'just a benchmark', '99991234', 'https://appy.org', 100, 1000)")
 	if err != nil {
 		return 0, err
 	}
 
-	id, err := result.LastInsertId()
+	return result.LastInsertId()
+}
+
+func ormInsert(dbManager *Engine, b *testing.B) (int64, error) {
+	user := BenchmarkUser{
+		Name:    "benchmark",
+		Title:   "just a benchmark",
+		Fax:     "99991234",
+		Web:     "https://appy.org",
+		Age:     100,
+		Counter: 1000,
+	}
+	model := NewModel(dbManager, &user)
+	err := model.Create().Exec()
 	if err != nil {
 		return 0, err
 	}
 
-	return id, nil
+	return user.ID, nil
+}
+
+func rawInsert(db *sql.DB, b *testing.B) (int64, error) {
+	result, err := db.Exec(SQLInsertQueryPrefix + "('benchmark', 'just a benchmark', '99991234', 'https://appy.org', 100, 1000)")
+	if err != nil {
+		return 0, err
+	}
+
+	return result.LastInsertId()
 }
 
 func BenchmarkRawInsert(b *testing.B) {
 	db := newRawDB()
 	defer db.Close()
 
-	stmt, err := db.Prepare(fmt.Sprintf("%s %s;", SQLInsertQueryPrefix, SQLInsertQueryPlaceholder))
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
-	defer stmt.Close()
-
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		result, err := stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", 100, 1000)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-
-		_, err = result.LastInsertId()
+		_, err := rawInsert(db, b)
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -157,23 +185,25 @@ func BenchmarkDBInsert(b *testing.B) {
 	db := newDB()
 	defer db.Close()
 
-	stmt, err := db.Prepare(fmt.Sprintf("%s %s;", SQLInsertQueryPrefix, SQLInsertQueryPlaceholder))
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
-	defer stmt.Close()
-
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		result, err := stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", 100, 1000)
+		_, err := dbInsert(db, b)
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
 		}
+	}
+}
 
-		_, err = result.LastInsertId()
+func BenchmarkOrmInsert(b *testing.B) {
+	dbManager := newOrmDBManager()
+	defer dbManager.DB("primary").Close()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := ormInsert(dbManager, b)
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -218,6 +248,34 @@ func BenchmarkDBInsertMulti(b *testing.B) {
 		}
 
 		_, err = result.LastInsertId()
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+	}
+}
+
+func BenchmarkOrmInsertMulti(b *testing.B) {
+	dbManager := newOrmDBManager()
+	defer dbManager.DB("primary").Close()
+
+	users := []BenchmarkUser{}
+	for i := 0; i < b.N; i++ {
+		users = append(users, BenchmarkUser{
+			Name:    "benchmark",
+			Title:   "just a benchmark",
+			Fax:     "99991234",
+			Web:     "https://appy.org",
+			Age:     100,
+			Counter: 1000,
+		})
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		model := NewModel(dbManager, &users)
+		err := model.Create().Exec()
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
