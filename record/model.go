@@ -209,10 +209,23 @@ func (m *Model) Create() *Model {
 
 func (m *Model) Exec(ctx context.Context) error {
 	var (
-		err    error
-		result sql.Result
-		rows   *Rows
+		err             error
+		result          sql.Result
+		rows            *Rows
+		master, replica DBer
 	)
+
+	if len(m.masters) > 0 {
+		master = m.masters[rand.Intn(len(m.masters))]
+	}
+
+	if len(m.replicas) > 0 {
+		replica = m.replicas[rand.Intn(len(m.replicas))]
+	}
+
+	if master == nil && replica == nil {
+		return ErrMissingModelDB
+	}
 
 	switch m.queryType {
 	case "insert":
@@ -230,9 +243,9 @@ func (m *Model) Exec(ctx context.Context) error {
 				}
 			} else {
 				if ctx != nil {
-					result, err = m.masters[rand.Intn(len(m.masters))].NamedExecContext(ctx, m.queryBuilder.String(), m.dest)
+					result, err = master.NamedExecContext(ctx, m.queryBuilder.String(), m.dest)
 				} else {
-					result, err = m.masters[rand.Intn(len(m.masters))].NamedExec(m.queryBuilder.String(), m.dest)
+					result, err = master.NamedExec(m.queryBuilder.String(), m.dest)
 				}
 			}
 
@@ -240,7 +253,7 @@ func (m *Model) Exec(ctx context.Context) error {
 				return err
 			}
 
-			lid, err := result.LastInsertId()
+			lastInsertId, err := result.LastInsertId()
 			if err != nil {
 				return err
 			}
@@ -251,10 +264,10 @@ func (m *Model) Exec(ctx context.Context) error {
 					v := reflect.ValueOf(m.dest)
 
 					for i := 0; i < v.Len(); i++ {
-						v.Index(i).FieldByName(m.autoIncrementStField).SetInt(lid + int64(i))
+						v.Index(i).FieldByName(m.autoIncrementStField).SetInt(lastInsertId + int64(i))
 					}
 				case reflect.Ptr:
-					reflect.ValueOf(m.dest).Elem().FieldByName(m.autoIncrementStField).SetInt(lid)
+					reflect.ValueOf(m.dest).Elem().FieldByName(m.autoIncrementStField).SetInt(lastInsertId)
 				}
 			}
 		case "postgres":
@@ -266,9 +279,9 @@ func (m *Model) Exec(ctx context.Context) error {
 				}
 			} else {
 				if ctx != nil {
-					rows, err = m.masters[rand.Intn(len(m.masters))].NamedQueryContext(ctx, m.queryBuilder.String(), m.dest)
+					rows, err = master.NamedQueryContext(ctx, m.queryBuilder.String(), m.dest)
 				} else {
-					rows, err = m.masters[rand.Intn(len(m.masters))].NamedQuery(m.queryBuilder.String(), m.dest)
+					rows, err = master.NamedQuery(m.queryBuilder.String(), m.dest)
 				}
 			}
 
@@ -305,10 +318,16 @@ func (m *Model) Exec(ctx context.Context) error {
 				err = m.tx.Select(m.dest, m.queryBuilder.String())
 			}
 		} else {
+			db := replica
+
+			if db == nil {
+				db = master
+			}
+
 			if ctx != nil {
-				err = m.replicas[rand.Intn(len(m.replicas))].SelectContext(ctx, m.dest, m.queryBuilder.String())
+				err = db.SelectContext(ctx, m.dest, m.queryBuilder.String())
 			} else {
-				err = m.replicas[rand.Intn(len(m.replicas))].Select(m.dest, m.queryBuilder.String())
+				err = db.Select(m.dest, m.queryBuilder.String())
 			}
 		}
 	}

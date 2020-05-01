@@ -1,3 +1,7 @@
 package record
 
-var ()
+import "errors"
+
+var (
+	ErrMissingModelDB = errors.New("model missing master/replica database")
+)

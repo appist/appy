@@ -24,7 +24,7 @@ type (
 	}
 
 	AdminUser struct {
-		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"admins" primaryKeys:"id" faker:"-"`
+		Modeler   `masters:"primary" replicas:"" tableName:"admins" primaryKeys:"id" faker:"-"`
 		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
@@ -36,6 +36,17 @@ type (
 
 	User struct {
 		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" primaryKeys:"id" faker:"-"`
+		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
+		Age       int64      `db:"-"`
+		Email     string     `db:"email" faker:"email,unique"`
+		Username  string     `db:"username" faker:"username,unique"`
+		CreatedAt *time.Time `db:"created_at" faker:"-"`
+		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+	}
+
+	ErrorUser struct {
+		Modeler   `masters:"" replicas:"" tableName:"admins" primaryKeys:"id" faker:"-"`
 		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
@@ -67,9 +78,11 @@ func (s *modelSuite) setupDB(adapter, database string) {
 	case "mysql":
 		os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13306/%s?multiStatements=true", database))
 		os.Setenv("DB_URI_PRIMARY_REPLICA", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13307/%s?multiStatements=true", database))
+		os.Setenv("DB_URI_REPLICA_PRIMARY_REPLICA", "true")
 		defer func() {
 			os.Unsetenv("DB_URI_PRIMARY")
 			os.Unsetenv("DB_URI_PRIMARY_REPLICA")
+			os.Unsetenv("DB_URI_REPLICA_PRIMARY_REPLICA")
 		}()
 
 		query = `
@@ -94,9 +107,11 @@ CREATE TABLE IF NOT EXISTS users (
 	case "postgres":
 		os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("postgresql://postgres:whatever@0.0.0.0:15432/%s?sslmode=disable&connect_timeout=5", database))
 		os.Setenv("DB_URI_PRIMARY_REPLICA", fmt.Sprintf("postgresql://postgres:whatever@0.0.0.0:15433/%s?sslmode=disable&connect_timeout=5", database))
+		os.Setenv("DB_URI_REPLICA_PRIMARY_REPLICA", "true")
 		defer func() {
 			os.Unsetenv("DB_URI_PRIMARY")
 			os.Unsetenv("DB_URI_PRIMARY_REPLICA")
+			os.Unsetenv("DB_URI_REPLICA_PRIMARY_REPLICA")
 		}()
 
 		query = `
@@ -129,11 +144,18 @@ CREATE TABLE IF NOT EXISTS users (
 	err = db.CreateDB(database)
 	s.Nil(err)
 
-	// Wait for database replication to complete.
-	time.Sleep(1 * time.Second)
-
+	// Ensure master replication is completed.
 	for _, database := range s.dbManager.Databases() {
-		s.Nil(database.Connect())
+		for true {
+			if err := database.Connect(); err != nil {
+				continue
+			}
+
+			if err := database.Ping(); err == nil {
+				time.Sleep(100 * time.Millisecond)
+				break
+			}
+		}
 	}
 
 	_, err = db.Exec(query)
@@ -188,19 +210,19 @@ func (s *modelSuite) TestCustomTableName() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_custom_table_name_with_"+adapter)
 
-		newAdminUsers := []AdminUser{}
+		newUsers := []AdminUser{}
 		for i := 0; i < 10; i++ {
-			au := AdminUser{}
-			s.Nil(faker.FakeData(&au))
-			newAdminUsers = append(newAdminUsers, au)
+			u := AdminUser{}
+			s.Nil(faker.FakeData(&u))
+			newUsers = append(newUsers, u)
 		}
-		s.Nil(s.model(&newAdminUsers).Create().Exec(nil))
+		s.Nil(s.model(&newUsers).Create().Exec(nil))
 
-		var adminUsers []AdminUser
-		s.Nil(s.model(&adminUsers).All().Exec(nil))
+		var users []AdminUser
+		s.Nil(s.model(&users).All().Exec(nil))
 
-		for idx, au := range adminUsers {
-			s.Equal(int64(idx+1), au.ID)
+		for idx, u := range users {
+			s.Equal(int64(idx+1), u.ID)
 		}
 	}
 }
@@ -213,6 +235,12 @@ func (s *modelSuite) TestIgnoreTag() {
 		s.Nil(faker.FakeData(&user))
 		s.NotContains(":age", s.model(&user).Create().SQL())
 	}
+}
+
+func (s *modelSuite) TestMissingDB() {
+	var user ErrorUser
+	s.Nil(faker.FakeData(&user))
+	s.Error(ErrMissingModelDB, s.model(&user).Create().Exec(nil))
 }
 
 func TestModelSuite(t *testing.T) {
