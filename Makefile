@@ -1,8 +1,11 @@
+benchmark\:diff:
+	cob --base origin/master --threshold 0.05 --bench-args "test -run=NONE -bench . -benchmem -benchtime 5s -failfast ./..."
+
 benchmark\:pack:
-	go test -run=NONE -bench=Benchmark -benchmem -failfast ./pack
+	go test -run=NONE -bench . -benchmem -benchtime 5s -failfast ./pack
 
 benchmark\:record:
-	go test -run=NONE -bench=Benchmark -benchmem -failfast ./record
+	go test -run=NONE -bench . -benchmem -benchtime 5s -failfast ./record
 
 bootstrap:
 	asdf plugin-add golang || true
@@ -20,7 +23,8 @@ down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
 
 install:
-	GO111MODULE=off go get -u golang.org/x/lint/golint github.com/gojp/goreportcard/cmd/goreportcard-cli github.com/golangci/golangci-lint/cmd/golangci-lint@v1.25.1
+	go get -u golang.org/x/lint/golint github.com/gojp/goreportcard/cmd/goreportcard-cli github.com/golangci/golangci-lint/cmd/golangci-lint@v1.25.1
+	curl -sfL https://raw.githubusercontent.com/knqyf263/cob/master/install.sh | sudo sh -s -- -b /usr/local/bin
 	go mod download
 
 restart:

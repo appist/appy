@@ -1,0 +1,32 @@
+name: Benchmark
+
+on: push
+
+jobs:
+  unit-test:
+    strategy:
+      matrix:
+        go: [1.14.x]
+        platform: [ubuntu-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/setup-go@master
+        with:
+          go-version: ${{ matrix.go }}
+      - uses: actions/checkout@master
+      - name: Install PostgreSQL 12
+        run: |
+          sudo apt-get -y install bash-completion wget
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |sudo tee  /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get -y install mysql-client postgresql-client-12
+      - name: Install Project Dependencies
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          make install
+      - name: Setup Local Data Store
+        run: make up
+      - name: Run Benchmark Diff
+        run: make benchmark:diff
