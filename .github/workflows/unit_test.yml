@@ -28,7 +28,7 @@ jobs:
           make install
       - name: Setup Local Data Store
         run: make up
-      - name: Unit Test
+      - name: Run Unit Test
         run: make test
       - name: Send Code Coverage To CodeCov
         run: bash <(curl -s https://codecov.io/bash)
