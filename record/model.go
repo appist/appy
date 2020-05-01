@@ -125,6 +125,7 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 			dbTag := field.Tag.Get("db")
 			if dbTag == "-" {
 				attr.ignored = true
+				continue
 			}
 
 			if dbTag != "" {
@@ -140,7 +141,7 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 				case "auto_increment":
 					autoIncrement, err := strconv.ParseBool(splits[1])
 					if err != nil {
-						break
+						continue
 					}
 
 					attr.autoIncrement = autoIncrement
@@ -305,9 +306,9 @@ func (m *Model) Exec(ctx context.Context) error {
 			}
 		} else {
 			if ctx != nil {
-				err = m.masters[rand.Intn(len(m.masters))].SelectContext(ctx, m.dest, m.queryBuilder.String())
+				err = m.replicas[rand.Intn(len(m.replicas))].SelectContext(ctx, m.dest, m.queryBuilder.String())
 			} else {
-				err = m.masters[rand.Intn(len(m.masters))].Select(m.dest, m.queryBuilder.String())
+				err = m.replicas[rand.Intn(len(m.replicas))].Select(m.dest, m.queryBuilder.String())
 			}
 		}
 	}
