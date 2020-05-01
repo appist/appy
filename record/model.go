@@ -17,7 +17,8 @@ type (
 	Modeler interface {
 		All() *Model
 		Create() *Model
-		Exec() error
+		Exec(ctx context.Context) error
+		SQL() string
 		Update() *Model
 	}
 
@@ -26,7 +27,6 @@ type (
 		adapter              string
 		attrs                map[string]modelAttr
 		autoIncrementStField string
-		ctx                  context.Context
 		dest                 interface{}
 		destKind             reflect.Kind
 		masters              []DBer
@@ -206,7 +206,7 @@ func (m *Model) Create() *Model {
 	return m
 }
 
-func (m *Model) Exec() error {
+func (m *Model) Exec(ctx context.Context) error {
 	var (
 		err    error
 		result sql.Result
@@ -222,9 +222,17 @@ func (m *Model) Exec() error {
 		switch m.adapter {
 		case "mysql":
 			if m.tx != nil {
-				result, err = m.tx.NamedExec(m.queryBuilder.String(), m.dest)
+				if ctx != nil {
+					result, err = m.tx.NamedExecContext(ctx, m.queryBuilder.String(), m.dest)
+				} else {
+					result, err = m.tx.NamedExec(m.queryBuilder.String(), m.dest)
+				}
 			} else {
-				result, err = m.masters[rand.Intn(len(m.masters))].NamedExec(m.queryBuilder.String(), m.dest)
+				if ctx != nil {
+					result, err = m.masters[rand.Intn(len(m.masters))].NamedExecContext(ctx, m.queryBuilder.String(), m.dest)
+				} else {
+					result, err = m.masters[rand.Intn(len(m.masters))].NamedExec(m.queryBuilder.String(), m.dest)
+				}
 			}
 
 			if err != nil {
@@ -250,9 +258,17 @@ func (m *Model) Exec() error {
 			}
 		case "postgres":
 			if m.tx != nil {
-				rows, err = m.tx.NamedQuery(m.queryBuilder.String(), m.dest)
+				if ctx != nil {
+					rows, err = m.tx.NamedQueryContext(ctx, m.queryBuilder.String(), m.dest)
+				} else {
+					rows, err = m.tx.NamedQuery(m.queryBuilder.String(), m.dest)
+				}
 			} else {
-				rows, err = m.masters[rand.Intn(len(m.masters))].NamedQuery(m.queryBuilder.String(), m.dest)
+				if ctx != nil {
+					rows, err = m.masters[rand.Intn(len(m.masters))].NamedQueryContext(ctx, m.queryBuilder.String(), m.dest)
+				} else {
+					rows, err = m.masters[rand.Intn(len(m.masters))].NamedQuery(m.queryBuilder.String(), m.dest)
+				}
 			}
 
 			if err != nil {
@@ -282,9 +298,17 @@ func (m *Model) Exec() error {
 		}
 	case "select":
 		if m.tx != nil {
-			err = m.tx.Select(m.dest, m.queryBuilder.String())
+			if ctx != nil {
+				err = m.tx.SelectContext(ctx, m.dest, m.queryBuilder.String())
+			} else {
+				err = m.tx.Select(m.dest, m.queryBuilder.String())
+			}
 		} else {
-			err = m.masters[rand.Intn(len(m.masters))].Select(m.dest, m.queryBuilder.String())
+			if ctx != nil {
+				err = m.masters[rand.Intn(len(m.masters))].SelectContext(ctx, m.dest, m.queryBuilder.String())
+			} else {
+				err = m.masters[rand.Intn(len(m.masters))].Select(m.dest, m.queryBuilder.String())
+			}
 		}
 	}
 
