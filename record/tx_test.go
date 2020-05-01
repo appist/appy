@@ -189,6 +189,9 @@ func (s *txSuite) TestNamedQuery() {
 		Username string `db:"username"`
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_tx_named_query")
 
@@ -202,6 +205,13 @@ func (s *txSuite) TestNamedQuery() {
 		)
 		rows.Close()
 		s.Nil(err)
+
+		_, err = tx.NamedQueryContext(ctx, `INSERT INTO users (username) VALUES (:username);`,
+			map[string]interface{}{
+				"username": "John Doe",
+			},
+		)
+		s.Equal("context canceled", err.Error())
 
 		err = tx.Commit()
 		s.Nil(err)

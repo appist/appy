@@ -20,6 +20,7 @@ type Txer interface {
 	NamedExec(query string, arg interface{}) (sql.Result, error)
 	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 	NamedQuery(query string, arg interface{}) (*Rows, error)
+	NamedQueryContext(ctx context.Context, query string, arg interface{}) (*Rows, error)
 	Prepare(query string) (*Stmt, error)
 	PrepareContext(ctx context.Context, query string) (*Stmt, error)
 	PrepareNamed(query string) (*NamedStmt, error)
@@ -124,6 +125,16 @@ func (tx *Tx) NamedExecContext(ctx context.Context, query string, arg interface{
 func (tx *Tx) NamedQuery(query string, arg interface{}) (*Rows, error) {
 	start := time.Now()
 	rows, err := tx.Tx.NamedQuery(query, arg)
+	tx.logger.Info(formatQuery(query, time.Since(start), arg))
+
+	return &Rows{rows}, err
+}
+
+// NamedQueryContext within this transaction with the specified context. Any
+// named placeholder parameters are replaced with fields from arg.
+func (tx *Tx) NamedQueryContext(ctx context.Context, query string, arg interface{}) (*Rows, error) {
+	start := time.Now()
+	rows, err := sqlx.NamedQueryContext(ctx, tx.Tx, query, arg)
 	tx.logger.Info(formatQuery(query, time.Since(start), arg))
 
 	return &Rows{rows}, err
