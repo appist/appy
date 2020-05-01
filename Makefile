@@ -20,7 +20,7 @@ down:
 	docker-compose -p appy -f .docker/docker-compose.yml down --remove-orphans
 
 install:
-	go get -u golang.org/x/lint/golint
+	GO111MODULE=off go get -u golang.org/x/lint/golint github.com/gojp/goreportcard/cmd/goreportcard-cli github.com/golangci/golangci-lint/cmd/golangci-lint@v1.25.1
 	go mod download
 
 restart:
