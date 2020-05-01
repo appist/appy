@@ -99,13 +99,34 @@ CREATE TABLE IF NOT EXISTS users (
 	s.Nil(err)
 }
 
+func (s *modelSuite) TestAll() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_all_with_"+adapter)
+
+		newUsers := []User{}
+		for i := 0; i < 10; i++ {
+			u := User{}
+			s.Nil(faker.FakeData(&u))
+			newUsers = append(newUsers, u)
+		}
+		s.Nil(s.model(&newUsers).Create().Exec(nil))
+
+		var users []User
+		s.Nil(s.model(&users).All().Exec(nil))
+
+		for idx, u := range users {
+			s.Equal(int64(idx+1), u.ID)
+		}
+	}
+}
+
 func (s *modelSuite) TestCreate() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_create_with_"+adapter)
 
 		var user User
 		s.Nil(faker.FakeData(&user))
-		s.Nil(s.model(&user).Create().Exec())
+		s.Nil(s.model(&user).Create().Exec(nil))
 		s.Equal(int64(1), user.ID)
 
 		users := []User{}
@@ -114,8 +135,7 @@ func (s *modelSuite) TestCreate() {
 			s.Nil(faker.FakeData(&u))
 			users = append(users, u)
 		}
-
-		s.Nil(s.model(&users).Create().Exec())
+		s.Nil(s.model(&users).Create().Exec(nil))
 
 		for idx, u := range users {
 			s.Equal(int64(idx+2), u.ID)
