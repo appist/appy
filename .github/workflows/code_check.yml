@@ -1,4 +1,4 @@
-name: Unit Test
+name: Code Check
 
 on: push
 
@@ -26,11 +26,7 @@ jobs:
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           make install
-      - name: Setup Local Data Store
-        run: make up
-      - name: Unit Test
-        run: make test
-      - name: Send Code Coverage To CodeCov
-        run: bash <(curl -s https://codecov.io/bash)
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Check Go Source Code And Style Convention
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          make codecheck
