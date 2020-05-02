@@ -35,7 +35,7 @@ require (
 	github.com/gorilla/sessions v1.2.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gostaticanalysis/analysisutil v0.0.3 // indirect
-	github.com/hibiken/asynq v0.7.1
+	github.com/hibiken/asynq v0.8.1
 	github.com/jirfag/go-printf-func-name v0.0.0-20200119135958-7558a9eaa5af // indirect
 	github.com/jmoiron/sqlx v1.2.1-0.20200324155115-ee514944af4b
 	github.com/joho/godotenv v1.3.0
