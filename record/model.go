@@ -20,6 +20,7 @@ type (
 		Exec(ctx context.Context) error
 		SQL() string
 		Update() *Model
+		Where() *Model
 	}
 
 	// Model is the layer that represents business data and logic.
@@ -36,7 +37,7 @@ type (
 		queryBuilder         strings.Builder
 		queryType            string
 		tx                   Txer
-		selectFields         string
+		selectColumns        string
 		limit                int
 		offset               int
 		order                string
@@ -159,6 +160,8 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 	return model
 }
 
+// All returns all records from the model's table. Note that this can cause
+// performance issue if there are too many data rows in the model's table.
 func (m *Model) All() *Model {
 	m.queryType = "select"
 	m.queryBuilder.WriteString("SELECT * FROM ")
@@ -167,6 +170,7 @@ func (m *Model) All() *Model {
 	return m
 }
 
+// Create inserts the model object(s) into the database.
 func (m *Model) Create() *Model {
 	m.queryType = "insert"
 	m.queryBuilder.WriteString("INSERT INTO ")
@@ -207,6 +211,8 @@ func (m *Model) Create() *Model {
 	return m
 }
 
+// Exec executes the query with/without context and returns error if there is
+// any.
 func (m *Model) Exec(ctx context.Context) error {
 	var (
 		err             error
@@ -253,7 +259,7 @@ func (m *Model) Exec(ctx context.Context) error {
 				return err
 			}
 
-			lastInsertId, err := result.LastInsertId()
+			lastInsertID, err := result.LastInsertId()
 			if err != nil {
 				return err
 			}
@@ -264,10 +270,10 @@ func (m *Model) Exec(ctx context.Context) error {
 					v := reflect.ValueOf(m.dest)
 
 					for i := 0; i < v.Len(); i++ {
-						v.Index(i).FieldByName(m.autoIncrementStField).SetInt(lastInsertId + int64(i))
+						v.Index(i).FieldByName(m.autoIncrementStField).SetInt(lastInsertID + int64(i))
 					}
 				case reflect.Ptr:
-					reflect.ValueOf(m.dest).Elem().FieldByName(m.autoIncrementStField).SetInt(lastInsertId)
+					reflect.ValueOf(m.dest).Elem().FieldByName(m.autoIncrementStField).SetInt(lastInsertID)
 				}
 			}
 		case "postgres":
@@ -335,35 +341,47 @@ func (m *Model) Exec(ctx context.Context) error {
 	return err
 }
 
+// Limit indicates the number of recrods to retrieve from the database.
 func (m *Model) Limit(limit int) *Model {
 	m.limit = limit
 
 	return m
 }
 
+// Offset indicates the number of records to skip before starting to return
+// the records.
 func (m *Model) Offset(offset int) *Model {
 	m.offset = offset
 
 	return m
 }
 
+// Order indicates the specific order to retrieve records from the database.
 func (m *Model) Order(order string) *Model {
 	m.order = order
 
 	return m
 }
 
-func (m *Model) Select(selectFields string) *Model {
-	m.selectFields = selectFields
+// Select selects only a subset of fields from the result set.
+func (m *Model) Select(selectColumns string) *Model {
+	m.selectColumns = selectColumns
 
 	return m
 }
 
+// SQL returns the SQL string.
 func (m *Model) SQL() string {
 	return m.queryBuilder.String()
 }
 
+// Update updates the model object(s) in the database.
 func (m *Model) Update() *Model {
+	return m
+}
+
+// Where indicates the condition of which records to return.
+func (m *Model) Where() *Model {
 	return m
 }
 
