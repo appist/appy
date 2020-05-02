@@ -81,11 +81,7 @@ func newStartCommand(logger *support.Logger, server *pack.Server) *Command {
 }
 
 func execServeCmd(server *pack.Server, term *terminal) {
-	err := killProcess(term.serveCmd)
-	if err != nil {
-		term.error(term.serve, err.Error())
-		return
-	}
+	_ = killProcess(term.serveCmd)
 
 	term.serveCmd = exec.Command("go", "run", ".", "serve")
 	outPipe, _ := term.serveCmd.StdoutPipe()
@@ -95,9 +91,8 @@ func execServeCmd(server *pack.Server, term *terminal) {
 	go term.streamPipe(term.serve, errPipe, true)
 
 	term.info(term.serve, "* Compiling...")
-	if err := term.serveCmd.Start(); err != nil {
-		term.error(term.serve, err.Error())
-	}
+	_ = term.serveCmd.Run()
+	term.isCompiling = false
 }
 
 func execWebCmd(server *pack.Server, term *terminal) {
@@ -106,10 +101,7 @@ func execWebCmd(server *pack.Server, term *terminal) {
 		return
 	}
 
-	if err := killProcess(term.webCmd); err != nil {
-		term.error(term.web, err.Error())
-		return
-	}
+	_ = killProcess(term.webCmd)
 
 	ssrPaths := []string{}
 	for _, route := range server.Routes() {
@@ -133,17 +125,11 @@ func execWebCmd(server *pack.Server, term *terminal) {
 	go term.streamPipe(term.web, outPipe, false)
 	go term.streamPipe(term.web, errPipe, false)
 
-	if err := term.webCmd.Start(); err != nil {
-		term.error(term.web, err.Error())
-	}
+	_ = term.webCmd.Run()
 }
 
 func execWorkCmd(term *terminal) {
-	err := killProcess(term.workCmd)
-	if err != nil {
-		term.error(term.work, err.Error())
-		return
-	}
+	_ = killProcess(term.workCmd)
 
 	term.workCmd = exec.Command("go", "run", ".", "work")
 	outPipe, _ := term.workCmd.StdoutPipe()
@@ -153,9 +139,8 @@ func execWorkCmd(term *terminal) {
 	go term.streamPipe(term.work, errPipe, true)
 
 	term.info(term.work, "* Compiling...")
-	if err := term.workCmd.Start(); err != nil {
-		term.error(term.work, err.Error())
-	}
+	_ = term.workCmd.Run()
+	term.isCompiling = false
 }
 
 func initLiveReloadServer(logger *support.Logger, server *pack.Server, term *terminal) {
