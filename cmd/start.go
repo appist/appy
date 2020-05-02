@@ -415,7 +415,7 @@ func watcherHandler(e watcher.Event, server *pack.Server, term *terminal) {
 
 		err := generateGQL()
 		if err != nil {
-			term.error(term.serve, " "+err.Error())
+			term.error(term.serve, err.Error())
 		}
 
 		term.isGeneratingGQL = false
