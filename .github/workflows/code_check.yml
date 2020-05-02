@@ -3,7 +3,7 @@ name: Code Check
 on: push
 
 jobs:
-  unit-test:
+  code-check:
     strategy:
       matrix:
         go: [1.14.x]

@@ -3,7 +3,7 @@ name: Benchmark
 on: push
 
 jobs:
-  unit-test:
+  benchmark:
     strategy:
       matrix:
         go: [1.14.x]
