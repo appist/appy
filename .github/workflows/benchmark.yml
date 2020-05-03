@@ -32,6 +32,4 @@ jobs:
       - name: Setup Local Data Store
         run: make up
       - name: Run Benchmark Diff
-        run: |
-          git status
-          make benchmark:diff
+        run: make benchmark:diff
