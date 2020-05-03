@@ -2,6 +2,7 @@ package record
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -294,16 +295,16 @@ func BenchmarkRawUpdate(b *testing.B) {
 		b.FailNow()
 	}
 
-	stmt, err := db.Prepare(SQLUpdateQuery)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
-	defer stmt.Close()
-
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		stmt, err := db.Prepare(SQLUpdateQuery)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+		defer stmt.Close()
+
 		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", 100, 1000, id)
 		if err != nil {
 			fmt.Println(err)
@@ -322,16 +323,16 @@ func BenchmarkDBUpdate(b *testing.B) {
 		b.FailNow()
 	}
 
-	stmt, err := db.Prepare(SQLUpdateQuery)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
-	defer stmt.Close()
-
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		stmt, err := db.Prepare(SQLUpdateQuery)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+		defer stmt.Close()
+
 		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", 100, 1000, id)
 		if err != nil {
 			fmt.Println(err)
@@ -350,13 +351,6 @@ func BenchmarkRawRead(b *testing.B) {
 		b.FailNow()
 	}
 
-	stmt, err := db.Prepare(SQLSelectQuery)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
-	defer stmt.Close()
-
 	b.ResetTimer()
 
 	var (
@@ -365,7 +359,14 @@ func BenchmarkRawRead(b *testing.B) {
 	)
 
 	for i := 0; i < b.N; i++ {
-		err := stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
+		stmt, err := db.Prepare(SQLSelectQuery)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+		defer stmt.Close()
+
+		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -383,13 +384,6 @@ func BenchmarkDBRead(b *testing.B) {
 		b.FailNow()
 	}
 
-	stmt, err := db.Prepare(SQLSelectQuery)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
-	defer stmt.Close()
-
 	b.ResetTimer()
 
 	var (
@@ -398,7 +392,42 @@ func BenchmarkDBRead(b *testing.B) {
 	)
 
 	for i := 0; i < b.N; i++ {
-		err := stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
+		stmt, err := db.Prepare(SQLSelectQuery)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+		defer stmt.Close()
+
+		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+	}
+}
+
+func BenchmarkOrmRead(b *testing.B) {
+	dbManager := newOrmDBManager()
+	defer dbManager.DB("primary").Close()
+
+	id, err := ormInsert(dbManager, b)
+	if err != nil {
+		fmt.Println(err)
+		b.FailNow()
+	}
+
+	b.ResetTimer()
+
+	var user BenchmarkUser
+	for i := 0; i < b.N; i++ {
+		model := NewModel(dbManager, &user)
+		count, err := model.Where("id = ?", id).Find().Exec(nil, false)
+		if count != 1 {
+			fmt.Println(errors.New("count should equal to 1"))
+			b.FailNow()
+		}
+
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -418,13 +447,6 @@ func BenchmarkRawReadSlice(b *testing.B) {
 		}
 	}
 
-	stmt, err := db.Prepare(SQLSelectMultiQuery)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
-	defer stmt.Close()
-
 	b.ResetTimer()
 
 	var (
@@ -433,6 +455,13 @@ func BenchmarkRawReadSlice(b *testing.B) {
 	)
 
 	for i := 0; i < b.N; i++ {
+		stmt, err := db.Prepare(SQLSelectMultiQuery)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+		defer stmt.Close()
+
 		rows, err := stmt.Query()
 		if err != nil {
 			fmt.Println(err)
@@ -471,13 +500,6 @@ func BenchmarkDBReadSlice(b *testing.B) {
 		}
 	}
 
-	stmt, err := db.Prepare(SQLSelectMultiQuery)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
-	defer stmt.Close()
-
 	b.ResetTimer()
 
 	var (
@@ -486,6 +508,13 @@ func BenchmarkDBReadSlice(b *testing.B) {
 	)
 
 	for i := 0; i < b.N; i++ {
+		stmt, err := db.Prepare(SQLSelectMultiQuery)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+		defer stmt.Close()
+
 		rows, err := stmt.Query()
 		if err != nil {
 			fmt.Println(err)
@@ -506,6 +535,36 @@ func BenchmarkDBReadSlice(b *testing.B) {
 		}
 
 		if err = rows.Close(); err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+	}
+}
+
+func BenchmarkOrmReadSlice(b *testing.B) {
+	dbManager := newOrmDBManager()
+	defer dbManager.DB("primary").Close()
+
+	for i := 0; i < 100; i++ {
+		_, err := ormInsert(dbManager, b)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+	}
+
+	b.ResetTimer()
+
+	var user BenchmarkUser
+	for i := 0; i < b.N; i++ {
+		model := NewModel(dbManager, &user)
+		count, err := model.Where("id > ?", 0).Limit(100).Find().Exec(nil, false)
+		if count != 1 {
+			fmt.Println(errors.New("count should equal to 1"))
+			b.FailNow()
+		}
+
+		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
 		}
