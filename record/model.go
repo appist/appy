@@ -171,7 +171,7 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 // All returns all records from the model's table. Note that this can cause
 // performance issue if there are too many data rows in the model's table.
 func (m *Model) All() *Model {
-	m.queryType = "select"
+	m.queryType = "all"
 	m.queryBuilder.WriteString("SELECT * FROM ")
 	m.queryBuilder.WriteString(m.tableName)
 	m.queryBuilder.WriteString(";")
@@ -206,7 +206,7 @@ func (m *Model) Count() *Model {
 
 // Create inserts the model object(s) into the database.
 func (m *Model) Create() *Model {
-	m.queryType = "insert"
+	m.queryType = "create"
 	m.queryBuilder.WriteString("INSERT INTO ")
 	m.queryBuilder.WriteString(m.tableName)
 	m.queryBuilder.WriteString(" (")
@@ -298,7 +298,7 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 				err = db.Get(&count, m.queryBuilder.String(), m.whereArgs...)
 			}
 		}
-	case "insert":
+	case "create":
 		if m.destKind == reflect.Array || m.destKind == reflect.Slice {
 			m.dest = reflect.ValueOf(m.dest).Elem().Interface()
 		}
@@ -387,7 +387,7 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 				}
 			}
 		}
-	case "select":
+	case "all", "find":
 		switch m.destKind {
 		case reflect.Array, reflect.Slice:
 			if m.tx != nil {
@@ -436,7 +436,7 @@ func (m *Model) Delete() *Model {
 
 // Find retrieves the records from the database.
 func (m *Model) Find() *Model {
-	m.queryType = "select"
+	m.queryType = "find"
 	m.queryBuilder.WriteString("SELECT ")
 
 	if m.selectColumns != "" {
