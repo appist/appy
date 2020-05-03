@@ -18,11 +18,13 @@ type (
 		All() *Model
 		Count() *Model
 		Create() *Model
+		Delete() *Model
 		Exec(ctx context.Context, useReplica bool) (int64, error)
+		Find() *Model
 		Limit(limit int) *Model
 		Offset(offset int) *Model
 		Order(order string) *Model
-		Select(selectColumns string) *Model
+		Select(columns string) *Model
 		SQL() string
 		Update() *Model
 		Where(condition string, args ...interface{}) *Model
@@ -42,12 +44,12 @@ type (
 		queryBuilder         strings.Builder
 		queryType            string
 		tx                   Txer
-		selectArgs           []interface{}
 		selectColumns        string
 		limit                int
 		offset               int
 		order                string
 		where                string
+		whereArgs            []interface{}
 	}
 
 	modelAttr struct {
@@ -172,6 +174,7 @@ func (m *Model) All() *Model {
 	m.queryType = "select"
 	m.queryBuilder.WriteString("SELECT * FROM ")
 	m.queryBuilder.WriteString(m.tableName)
+	m.queryBuilder.WriteString(";")
 
 	return m
 }
@@ -190,6 +193,13 @@ func (m *Model) Count() *Model {
 
 	m.queryBuilder.WriteString(") FROM ")
 	m.queryBuilder.WriteString(m.tableName)
+
+	if m.where != "" {
+		m.queryBuilder.WriteString(" WHERE ")
+		m.queryBuilder.WriteString(m.where)
+	}
+
+	m.queryBuilder.WriteString(";")
 
 	return m
 }
@@ -231,6 +241,8 @@ func (m *Model) Create() *Model {
 		m.queryBuilder.WriteString(" RETURNING ")
 		m.queryBuilder.WriteString(strings.Join(m.primaryKeys, ", "))
 	}
+
+	m.queryBuilder.WriteString(";")
 
 	return m
 }
@@ -275,15 +287,15 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	case "count":
 		if m.tx != nil {
 			if ctx != nil {
-				err = m.tx.GetContext(ctx, &count, m.queryBuilder.String())
+				err = m.tx.GetContext(ctx, &count, m.queryBuilder.String(), m.whereArgs...)
 			} else {
-				err = m.tx.Get(&count, m.queryBuilder.String())
+				err = m.tx.Get(&count, m.queryBuilder.String(), m.whereArgs...)
 			}
 		} else {
 			if ctx != nil {
-				err = db.GetContext(ctx, &count, m.queryBuilder.String())
+				err = db.GetContext(ctx, &count, m.queryBuilder.String(), m.whereArgs...)
 			} else {
-				err = db.Get(&count, m.queryBuilder.String())
+				err = db.Get(&count, m.queryBuilder.String(), m.whereArgs...)
 			}
 		}
 	case "insert":
@@ -378,15 +390,15 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	case "select":
 		if m.tx != nil {
 			if ctx != nil {
-				err = m.tx.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.selectArgs...)
+				err = m.tx.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.whereArgs...)
 			} else {
-				err = m.tx.Select(m.dest, m.queryBuilder.String(), m.selectArgs...)
+				err = m.tx.Select(m.dest, m.queryBuilder.String(), m.whereArgs...)
 			}
 		} else {
 			if ctx != nil {
-				err = db.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.selectArgs...)
+				err = db.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.whereArgs...)
 			} else {
-				err = db.Select(m.dest, m.queryBuilder.String(), m.selectArgs...)
+				err = db.Select(m.dest, m.queryBuilder.String(), m.whereArgs...)
 			}
 		}
 
@@ -401,13 +413,51 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	return count, err
 }
 
+// Delete deletes the records from the database.
+func (m *Model) Delete() *Model {
+	return m
+}
+
 // Find retrieves the records from the database.
 func (m *Model) Find() *Model {
+	m.queryType = "select"
+	m.queryBuilder.WriteString("SELECT ")
+
+	if m.selectColumns != "" {
+		m.queryBuilder.WriteString(m.selectColumns)
+	} else {
+		m.queryBuilder.WriteString("*")
+	}
+
+	m.queryBuilder.WriteString(" FROM ")
+	m.queryBuilder.WriteString(m.tableName)
+
+	if m.where != "" {
+		m.queryBuilder.WriteString(" WHERE ")
+		m.queryBuilder.WriteString(m.where)
+	}
+
+	if m.order != "" {
+		m.queryBuilder.WriteString(" ORDER BY ")
+		m.queryBuilder.WriteString(m.order)
+	}
+
+	if m.limit != 0 {
+		m.queryBuilder.WriteString(" LIMIT ")
+		m.queryBuilder.WriteString(strconv.Itoa(m.limit))
+	}
+
+	if m.offset != 0 {
+		m.queryBuilder.WriteString(" OFFSET ")
+		m.queryBuilder.WriteString(strconv.Itoa(m.offset))
+	}
+
+	m.queryBuilder.WriteString(";")
 
 	return m
 }
 
-// Limit indicates the number of recrods to retrieve from the database.
+// Limit indicates the number of records to retrieve from the database.
 func (m *Model) Limit(limit int) *Model {
 	m.limit = limit
 
@@ -430,8 +480,8 @@ func (m *Model) Order(order string) *Model {
 }
 
 // Select selects only a subset of fields from the result set.
-func (m *Model) Select(selectColumns string) *Model {
-	m.selectColumns = selectColumns
+func (m *Model) Select(columns string) *Model {
+	m.selectColumns = columns
 
 	return m
 }
@@ -448,6 +498,27 @@ func (m *Model) Update() *Model {
 
 // Where indicates the condition of which records to return.
 func (m *Model) Where(condition string, args ...interface{}) *Model {
+	m.whereArgs = args
+	m.where = condition
+
+	if m.adapter == "postgres" {
+		var builder strings.Builder
+		count := 1
+
+		for _, char := range condition {
+			if char == '?' {
+				builder.WriteString("$")
+				builder.WriteString(strconv.Itoa(count))
+				count++
+				continue
+			}
+
+			builder.WriteString(string(char))
+		}
+
+		m.where = builder.String()
+	}
+
 	return m
 }
 

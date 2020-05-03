@@ -235,6 +235,10 @@ func (s *modelSuite) TestCount() {
 		count, err = s.model(&user).Select("DISTINCT concat(email, username)").Count().Exec(nil, false)
 		s.Equal(int64(10), count)
 		s.Nil(err)
+
+		count, err = s.model(&user).Where("id > ?", 5).Count().Exec(nil, false)
+		s.Equal(int64(5), count)
+		s.Nil(err)
 	}
 }
 
@@ -302,6 +306,50 @@ func (s *modelSuite) TestEmptyQueryBuilder() {
 	count, err := s.model(&user).Exec(nil, false)
 	s.Equal(int64(0), count)
 	s.Error(ErrModelEmptyQueryBuilder, err)
+}
+
+func (s *modelSuite) TestFind() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_find_"+adapter)
+
+		users := []User{}
+		for i := 0; i < 10; i++ {
+			u := User{}
+			s.Nil(faker.FakeData(&u))
+			users = append(users, u)
+		}
+		count, err := s.model(&users).Create().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		users = []User{}
+		count, err = s.model(&users).Where("id > ?", 5).Find().Exec(nil, false)
+		s.Equal(5, len(users))
+		s.Equal(int64(5), count)
+		s.Nil(err)
+
+		users = []User{}
+		count, err = s.model(&users).Select("username").Where("id > ?", 5).Find().Exec(nil, false)
+		s.Equal(5, len(users))
+		s.Equal(int64(5), count)
+		s.Equal("", users[0].Email)
+		s.Nil(err)
+
+		users = []User{}
+		count, err = s.model(&users).Where("id != ?", 0).Order("id DESC").Limit(1).Find().Exec(nil, false)
+		s.Equal(1, len(users))
+		s.Equal(int64(1), count)
+		s.Equal(int64(10), users[0].ID)
+		s.Nil(err)
+
+		users = []User{}
+		count, err = s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(nil, false)
+		s.Equal(1, len(users))
+		s.Equal(int64(1), count)
+		s.Equal(int64(6), users[0].ID)
+		s.Nil(err)
+	}
 }
 
 func (s *modelSuite) TestIgnoreTag() {
