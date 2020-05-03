@@ -303,9 +303,9 @@ func BenchmarkRawUpdate(b *testing.B) {
 			fmt.Println(err)
 			b.FailNow()
 		}
-		defer stmt.Close()
 
 		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", 100, 1000, id)
+		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -331,9 +331,9 @@ func BenchmarkDBUpdate(b *testing.B) {
 			fmt.Println(err)
 			b.FailNow()
 		}
-		defer stmt.Close()
 
 		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", 100, 1000, id)
+		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -364,9 +364,9 @@ func BenchmarkRawRead(b *testing.B) {
 			fmt.Println(err)
 			b.FailNow()
 		}
-		defer stmt.Close()
 
 		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
+		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -397,9 +397,9 @@ func BenchmarkDBRead(b *testing.B) {
 			fmt.Println(err)
 			b.FailNow()
 		}
-		defer stmt.Close()
 
 		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
+		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -460,9 +460,9 @@ func BenchmarkRawReadSlice(b *testing.B) {
 			fmt.Println(err)
 			b.FailNow()
 		}
-		defer stmt.Close()
 
 		rows, err := stmt.Query()
+		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -513,9 +513,9 @@ func BenchmarkDBReadSlice(b *testing.B) {
 			fmt.Println(err)
 			b.FailNow()
 		}
-		defer stmt.Close()
 
 		rows, err := stmt.Query()
+		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
