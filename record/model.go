@@ -388,25 +388,41 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 			}
 		}
 	case "select":
-		if m.tx != nil {
-			if ctx != nil {
-				err = m.tx.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.whereArgs...)
-			} else {
-				err = m.tx.Select(m.dest, m.queryBuilder.String(), m.whereArgs...)
-			}
-		} else {
-			if ctx != nil {
-				err = db.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.whereArgs...)
-			} else {
-				err = db.Select(m.dest, m.queryBuilder.String(), m.whereArgs...)
-			}
-		}
-
 		switch m.destKind {
 		case reflect.Array, reflect.Slice:
+			if m.tx != nil {
+				if ctx != nil {
+					err = m.tx.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.whereArgs...)
+				} else {
+					err = m.tx.Select(m.dest, m.queryBuilder.String(), m.whereArgs...)
+				}
+			} else {
+				if ctx != nil {
+					err = db.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.whereArgs...)
+				} else {
+					err = db.Select(m.dest, m.queryBuilder.String(), m.whereArgs...)
+				}
+			}
+
 			count = int64(reflect.ValueOf(m.dest).Elem().Len())
 		case reflect.Ptr:
-			count = int64(1)
+			if m.tx != nil {
+				if ctx != nil {
+					err = m.tx.GetContext(ctx, m.dest, m.queryBuilder.String(), m.whereArgs...)
+				} else {
+					err = m.tx.Get(m.dest, m.queryBuilder.String(), m.whereArgs...)
+				}
+			} else {
+				if ctx != nil {
+					err = db.GetContext(ctx, m.dest, m.queryBuilder.String(), m.whereArgs...)
+				} else {
+					err = db.Get(m.dest, m.queryBuilder.String(), m.whereArgs...)
+				}
+			}
+
+			if err == nil {
+				count = 1
+			}
 		}
 	}
 
