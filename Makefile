@@ -1,11 +1,11 @@
 benchmark\:diff:
-	cob --base origin/master --threshold 0.2 --bench-args "test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./..."
+	cob --base origin/master --threshold 0.2 --bench-args "test -run=NONE -bench . -benchmem -benchtime 5s -failfast ./..."
 
 benchmark\:pack:
-	go test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./pack
+	go test -run=NONE -bench . -benchmem -benchtime 5s -failfast ./pack
 
 benchmark\:record:
-	go test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./record
+	go test -run=NONE -bench . -benchmem -benchtime 5s -failfast ./record
 
 bootstrap:
 	asdf plugin-add golang || true

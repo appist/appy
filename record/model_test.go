@@ -367,6 +367,21 @@ func (s *modelSuite) TestFind() {
 		s.Nil(err)
 
 		users = []User{}
+		count, err = s.model(&users).Where("id IN (?)", []int64{5, 6, 7}).Order("id ASC").Find().Exec(nil, false)
+		s.Equal(3, len(users))
+		s.Equal(int64(3), count)
+		s.Equal(int64(5), users[0].ID)
+		s.Equal(int64(6), users[1].ID)
+		s.Equal(int64(7), users[2].ID)
+		s.Nil(err)
+
+		users = []User{}
+		count, err = s.model(&users).Where("email = ? AND id IN (?) AND username = ?", "barfoo", []int64{5, 6, 7}, "foobar").Order("id ASC").Find().Exec(nil, false)
+		s.Equal(0, len(users))
+		s.Equal(int64(0), count)
+		s.Nil(err)
+
+		users = []User{}
 		count, err = s.model(&users).Where("id != ?", 0).Order("id DESC").Limit(1).Find().Exec(nil, false)
 		s.Equal(1, len(users))
 		s.Equal(int64(1), count)

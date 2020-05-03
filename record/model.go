@@ -517,14 +517,57 @@ func (m *Model) Where(condition string, args ...interface{}) *Model {
 	m.whereArgs = args
 	m.where = condition
 
-	if m.adapter == "postgres" {
+	if strings.Contains(m.where, " IN (?)") && len(m.whereArgs) > 0 {
 		var builder strings.Builder
-		count := 1
+		newArgs := []interface{}{}
+		count := 0
 
 		for _, char := range condition {
+			var (
+				arg  interface{}
+				kind reflect.Kind
+			)
+
+			if count < len(m.whereArgs) {
+				arg = m.whereArgs[count]
+				kind = reflect.TypeOf(arg).Kind()
+			}
+
+			if char == '?' {
+				if kind == reflect.Array || kind == reflect.Slice {
+					args := reflect.ValueOf(arg)
+					builder.WriteString(strings.Trim(strings.Repeat("?,", args.Len()), ","))
+
+					for i := 0; i < args.Len(); i++ {
+						newArgs = append(newArgs, args.Index(i).Interface())
+					}
+				} else {
+					builder.WriteString(string(char))
+
+					if arg != nil {
+						newArgs = append(newArgs, arg)
+					}
+				}
+
+				count++
+				continue
+			}
+
+			builder.WriteString(string(char))
+		}
+
+		m.whereArgs = newArgs
+		m.where = builder.String()
+	}
+
+	if m.adapter == "postgres" {
+		var builder strings.Builder
+		count := 0
+
+		for _, char := range m.where {
 			if char == '?' {
 				builder.WriteString("$")
-				builder.WriteString(strconv.Itoa(count))
+				builder.WriteString(strconv.Itoa(count + 1))
 				count++
 				continue
 			}
