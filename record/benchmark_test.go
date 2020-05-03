@@ -150,7 +150,7 @@ func ormInsert(dbManager *Engine, b *testing.B) (int64, error) {
 	}
 	model := NewModel(dbManager, &user)
 
-	err := model.Create().Exec(nil)
+	_, err := model.Create().Exec(nil, false)
 	if err != nil {
 		return 0, err
 	}
@@ -276,7 +276,7 @@ func BenchmarkOrmInsertMulti(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		model := NewModel(dbManager, &users)
-		err := model.Create().Exec(nil)
+		_, err := model.Create().Exec(nil, false)
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()

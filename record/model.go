@@ -16,11 +16,16 @@ type (
 	// Modeler implements all Model methods.
 	Modeler interface {
 		All() *Model
+		Count() *Model
 		Create() *Model
-		Exec(ctx context.Context) error
+		Exec(ctx context.Context, useReplica bool) (int64, error)
+		Limit(limit int) *Model
+		Offset(offset int) *Model
+		Order(order string) *Model
+		Select(selectColumns string) *Model
 		SQL() string
 		Update() *Model
-		Where() *Model
+		Where(condition string, args ...interface{}) *Model
 	}
 
 	// Model is the layer that represents business data and logic.
@@ -37,11 +42,12 @@ type (
 		queryBuilder         strings.Builder
 		queryType            string
 		tx                   Txer
+		selectArgs           []interface{}
 		selectColumns        string
 		limit                int
 		offset               int
 		order                string
-		wheres               []string
+		where                string
 	}
 
 	modelAttr struct {
@@ -170,6 +176,24 @@ func (m *Model) All() *Model {
 	return m
 }
 
+// Count returns the total count of matching records. Note that this can cause
+// performance issue if there are too many data rows in the model's table.
+func (m *Model) Count() *Model {
+	m.queryType = "count"
+	m.queryBuilder.WriteString("SELECT COUNT(")
+
+	if m.selectColumns != "" {
+		m.queryBuilder.WriteString(m.selectColumns)
+	} else {
+		m.queryBuilder.WriteString("*")
+	}
+
+	m.queryBuilder.WriteString(") FROM ")
+	m.queryBuilder.WriteString(m.tableName)
+
+	return m
+}
+
 // Create inserts the model object(s) into the database.
 func (m *Model) Create() *Model {
 	m.queryType = "insert"
@@ -211,14 +235,15 @@ func (m *Model) Create() *Model {
 	return m
 }
 
-// Exec executes the query with/without context and returns error if there is
-// any.
-func (m *Model) Exec(ctx context.Context) error {
+// Exec can execute the query with/without context/replica which will return
+// the affected rows and error if there is any.
+func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	var (
-		err             error
-		result          sql.Result
-		rows            *Rows
-		master, replica DBer
+		count               int64
+		err                 error
+		result              sql.Result
+		rows                *Rows
+		db, master, replica DBer
 	)
 
 	if len(m.masters) > 0 {
@@ -229,11 +254,38 @@ func (m *Model) Exec(ctx context.Context) error {
 		replica = m.replicas[rand.Intn(len(m.replicas))]
 	}
 
-	if master == nil && replica == nil {
-		return ErrMissingModelDB
+	if master == nil {
+		return int64(0), ErrModelMissingMasterDB
+	}
+
+	if useReplica && replica == nil {
+		return int64(0), ErrModelMissingReplicaDB
+	}
+
+	if m.queryBuilder.String() == "" {
+		return int64(0), ErrModelEmptyQueryBuilder
+	}
+
+	db = master
+	if useReplica && replica != nil {
+		db = replica
 	}
 
 	switch m.queryType {
+	case "count":
+		if m.tx != nil {
+			if ctx != nil {
+				err = m.tx.GetContext(ctx, &count, m.queryBuilder.String())
+			} else {
+				err = m.tx.Get(&count, m.queryBuilder.String())
+			}
+		} else {
+			if ctx != nil {
+				err = db.GetContext(ctx, &count, m.queryBuilder.String())
+			} else {
+				err = db.Get(&count, m.queryBuilder.String())
+			}
+		}
 	case "insert":
 		if m.destKind == reflect.Array || m.destKind == reflect.Slice {
 			m.dest = reflect.ValueOf(m.dest).Elem().Interface()
@@ -249,19 +301,24 @@ func (m *Model) Exec(ctx context.Context) error {
 				}
 			} else {
 				if ctx != nil {
-					result, err = master.NamedExecContext(ctx, m.queryBuilder.String(), m.dest)
+					result, err = db.NamedExecContext(ctx, m.queryBuilder.String(), m.dest)
 				} else {
-					result, err = master.NamedExec(m.queryBuilder.String(), m.dest)
+					result, err = db.NamedExec(m.queryBuilder.String(), m.dest)
 				}
 			}
 
 			if err != nil {
-				return err
+				return int64(0), err
 			}
 
 			lastInsertID, err := result.LastInsertId()
 			if err != nil {
-				return err
+				return int64(0), err
+			}
+
+			count, err = result.RowsAffected()
+			if err != nil {
+				return int64(0), err
 			}
 
 			if m.autoIncrementStField != "" {
@@ -285,14 +342,14 @@ func (m *Model) Exec(ctx context.Context) error {
 				}
 			} else {
 				if ctx != nil {
-					rows, err = master.NamedQueryContext(ctx, m.queryBuilder.String(), m.dest)
+					rows, err = db.NamedQueryContext(ctx, m.queryBuilder.String(), m.dest)
 				} else {
-					rows, err = master.NamedQuery(m.queryBuilder.String(), m.dest)
+					rows, err = db.NamedQuery(m.queryBuilder.String(), m.dest)
 				}
 			}
 
 			if err != nil {
-				return err
+				return int64(0), err
 			}
 
 			defer rows.Close()
@@ -300,45 +357,54 @@ func (m *Model) Exec(ctx context.Context) error {
 			switch m.destKind {
 			case reflect.Array, reflect.Slice:
 				v := reflect.ValueOf(m.dest)
+				count = int64(v.Len())
 
 				for i := 0; i < v.Len(); i++ {
 					err = m.scanPrimaryKeys(rows, v.Index(i))
 
 					if err != nil {
-						return err
+						return int64(0), err
 					}
 				}
 			case reflect.Ptr:
+				count = int64(1)
 				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
 
 				if err != nil {
-					return err
+					return int64(0), err
 				}
 			}
 		}
 	case "select":
 		if m.tx != nil {
 			if ctx != nil {
-				err = m.tx.SelectContext(ctx, m.dest, m.queryBuilder.String())
+				err = m.tx.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.selectArgs...)
 			} else {
-				err = m.tx.Select(m.dest, m.queryBuilder.String())
+				err = m.tx.Select(m.dest, m.queryBuilder.String(), m.selectArgs...)
 			}
 		} else {
-			db := replica
-
-			if db == nil {
-				db = master
-			}
-
 			if ctx != nil {
-				err = db.SelectContext(ctx, m.dest, m.queryBuilder.String())
+				err = db.SelectContext(ctx, m.dest, m.queryBuilder.String(), m.selectArgs...)
 			} else {
-				err = db.Select(m.dest, m.queryBuilder.String())
+				err = db.Select(m.dest, m.queryBuilder.String(), m.selectArgs...)
 			}
+		}
+
+		switch m.destKind {
+		case reflect.Array, reflect.Slice:
+			count = int64(reflect.ValueOf(m.dest).Elem().Len())
+		case reflect.Ptr:
+			count = int64(1)
 		}
 	}
 
-	return err
+	return count, err
+}
+
+// Find retrieves the records from the database.
+func (m *Model) Find() *Model {
+
+	return m
 }
 
 // Limit indicates the number of recrods to retrieve from the database.
@@ -381,7 +447,7 @@ func (m *Model) Update() *Model {
 }
 
 // Where indicates the condition of which records to return.
-func (m *Model) Where() *Model {
+func (m *Model) Where(condition string, args ...interface{}) *Model {
 	return m
 }
 

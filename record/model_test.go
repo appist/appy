@@ -45,8 +45,19 @@ type (
 		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
 	}
 
-	ErrorUser struct {
-		Modeler   `masters:"" replicas:"" tableName:"admins" primaryKeys:"id" faker:"-"`
+	MasterOnlyUser struct {
+		Modeler   `masters:"primary" replicas:"" tableName:"admins" primaryKeys:"id" faker:"-"`
+		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
+		Age       int64      `db:"-"`
+		Email     string     `db:"email" faker:"email,unique"`
+		Username  string     `db:"username" faker:"username,unique"`
+		CreatedAt *time.Time `db:"created_at" faker:"-"`
+		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+	}
+
+	ReplicaOnlyUser struct {
+		Modeler   `masters:"" replicas:"primaryReplica" tableName:"admins" primaryKeys:"id" faker:"-"`
 		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
@@ -166,20 +177,64 @@ func (s *modelSuite) TestAll() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_all_with_"+adapter)
 
-		newUsers := []User{}
+		users := []User{}
 		for i := 0; i < 10; i++ {
 			u := User{}
 			s.Nil(faker.FakeData(&u))
-			newUsers = append(newUsers, u)
+			users = append(users, u)
 		}
-		s.Nil(s.model(&newUsers).Create().Exec(nil))
+		count, err := s.model(&users).Create().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
 
-		var users []User
-		s.Nil(s.model(&users).All().Exec(nil))
+		users = []User{}
+		count, err = s.model(&users).All().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		// Wait for replication.
+		time.Sleep(500 * time.Millisecond)
+		users = []User{}
+		count, err = s.model(&users).All().Exec(nil, true)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
 
 		for idx, u := range users {
 			s.Equal(int64(idx+1), u.ID)
 		}
+	}
+}
+
+func (s *modelSuite) TestCount() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_count_with_"+adapter)
+
+		users := []User{}
+		for i := 0; i < 10; i++ {
+			u := User{}
+			s.Nil(faker.FakeData(&u))
+			users = append(users, u)
+		}
+
+		count, err := s.model(&users).Create().Exec(nil, false)
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		for idx, u := range users {
+			s.Equal(int64(idx+1), u.ID)
+		}
+
+		var user User
+		count, err = s.model(&user).Count().Exec(nil, false)
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		count, err = s.model(&user).Select("DISTINCT concat(email, username)").Count().Exec(nil, false)
+		s.Equal(int64(10), count)
+		s.Nil(err)
 	}
 }
 
@@ -189,8 +244,11 @@ func (s *modelSuite) TestCreate() {
 
 		var user User
 		s.Nil(faker.FakeData(&user))
-		s.Nil(s.model(&user).Create().Exec(nil))
+
+		count, err := s.model(&user).Create().Exec(nil, false)
+		s.Equal(int64(1), count)
 		s.Equal(int64(1), user.ID)
+		s.Nil(err)
 
 		users := []User{}
 		for i := 0; i < 10; i++ {
@@ -198,7 +256,11 @@ func (s *modelSuite) TestCreate() {
 			s.Nil(faker.FakeData(&u))
 			users = append(users, u)
 		}
-		s.Nil(s.model(&users).Create().Exec(nil))
+
+		count, err = s.model(&users).Create().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
 
 		for idx, u := range users {
 			s.Equal(int64(idx+2), u.ID)
@@ -210,21 +272,36 @@ func (s *modelSuite) TestCustomTableName() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_custom_table_name_with_"+adapter)
 
-		newUsers := []AdminUser{}
+		users := []AdminUser{}
 		for i := 0; i < 10; i++ {
 			u := AdminUser{}
 			s.Nil(faker.FakeData(&u))
-			newUsers = append(newUsers, u)
+			users = append(users, u)
 		}
-		s.Nil(s.model(&newUsers).Create().Exec(nil))
+		count, err := s.model(&users).Create().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
 
-		var users []AdminUser
-		s.Nil(s.model(&users).All().Exec(nil))
+		users = []AdminUser{}
+		count, err = s.model(&users).All().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
 
 		for idx, u := range users {
 			s.Equal(int64(idx+1), u.ID)
 		}
 	}
+}
+
+func (s *modelSuite) TestEmptyQueryBuilder() {
+	var user User
+	s.Nil(faker.FakeData(&user))
+
+	count, err := s.model(&user).Exec(nil, false)
+	s.Equal(int64(0), count)
+	s.Error(ErrModelEmptyQueryBuilder, err)
 }
 
 func (s *modelSuite) TestIgnoreTag() {
@@ -237,10 +314,22 @@ func (s *modelSuite) TestIgnoreTag() {
 	}
 }
 
-func (s *modelSuite) TestMissingDB() {
-	var user ErrorUser
+func (s *modelSuite) TestMissingMasterDB() {
+	var user ReplicaOnlyUser
 	s.Nil(faker.FakeData(&user))
-	s.Error(ErrMissingModelDB, s.model(&user).Create().Exec(nil))
+
+	count, err := s.model(&user).Create().Exec(nil, false)
+	s.Equal(int64(0), count)
+	s.Error(ErrModelMissingMasterDB, err)
+}
+
+func (s *modelSuite) TestMissingReplicaDB() {
+	var user MasterOnlyUser
+	s.Nil(faker.FakeData(&user))
+
+	count, err := s.model(&user).Create().Exec(nil, true)
+	s.Equal(int64(0), count)
+	s.Error(ErrModelMissingReplicaDB, err)
 }
 
 func TestModelSuite(t *testing.T) {
