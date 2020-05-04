@@ -3,6 +3,7 @@ package record
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -10,8 +11,6 @@ import (
 
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
-	"golang.org/x/net/context"
-
 	"github.com/bxcodec/faker/v3"
 )
 
@@ -443,6 +442,53 @@ func (s *modelSuite) TestMissingReplicaDB() {
 	count, err := s.model(&user).Create().Exec(nil, true)
 	s.Equal(int64(0), count)
 	s.Error(ErrModelMissingReplicaDB, err)
+}
+
+func (s *modelSuite) TestScan() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_scan_"+adapter)
+
+		users := []User{}
+		for i := 0; i < 10; i++ {
+			u := User{}
+			s.Nil(faker.FakeData(&u))
+			users = append(users, u)
+		}
+		count, err := s.model(&users).Create().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		type resultWithTotal struct {
+			ID    int64
+			Total int64
+		}
+
+		var (
+			user      User
+			totalRow  resultWithTotal
+			totalRows []resultWithTotal
+		)
+
+		count, err = s.model(&user).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&totalRow).Exec(nil, false)
+		s.Equal(int64(7), totalRow.ID)
+		s.Equal(int64(14), totalRow.Total)
+		s.Equal(int64(1), count)
+		s.Nil(err)
+
+		count, err = s.model(&user).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&totalRows).Exec(nil, false)
+		s.Equal(1, len(totalRows))
+		s.Equal(int64(7), totalRows[0].ID)
+		s.Equal(int64(14), totalRows[0].Total)
+		s.Equal(int64(1), count)
+		s.Nil(err)
+
+		var scanUser User
+		count, err = s.model(&user).Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Scan(&scanUser).Exec(nil, false)
+		s.Equal(int64(6), scanUser.ID)
+		s.Equal(int64(1), count)
+		s.Nil(err)
+	}
 }
 
 func TestModelSuite(t *testing.T) {
