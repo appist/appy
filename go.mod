@@ -41,7 +41,7 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/jordan-wright/email v0.0.0-20200322182553-8eef2508c362
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
-	github.com/lib/pq v1.4.0
+	github.com/lib/pq v1.5.1
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mitchellh/mapstructure v1.3.0 // indirect
 	github.com/mum4k/termdash v0.12.0
