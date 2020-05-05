@@ -9,6 +9,7 @@ jobs:
         platform: [ubuntu-latest]
 
     runs-on: ${{ matrix.platform }}
+
     steps:
       - uses: actions/checkout@master
       - name: Run Snyk to Check For Vulnerabilities
@@ -17,3 +18,4 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: monitor
+          args: --org=appist
