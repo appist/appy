@@ -10,6 +10,7 @@ jobs:
         platform: [ubuntu-latest]
 
     runs-on: ${{ matrix.platform }}
+
     steps:
       - uses: actions/setup-go@master
         with:
