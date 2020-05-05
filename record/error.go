@@ -9,8 +9,10 @@ var (
 	// - All
 	// - Count
 	// - Create
+	// - Delete
 	// - Find
 	// - Update
+	// - Scan
 	ErrModelEmptyQueryBuilder = errors.New("model's query builder is empty")
 
 	// ErrModelMissingMasterDB indicates the model is missing master database.
