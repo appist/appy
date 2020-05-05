@@ -539,7 +539,7 @@ func (m *Model) Order(order string) *Model {
 	return m
 }
 
-// Scan
+// Scan allows custom select result being scanned into the specified dest.
 func (m *Model) Scan(dest interface{}) *Model {
 	m.queryType = "scan"
 	m.scanDest = dest
