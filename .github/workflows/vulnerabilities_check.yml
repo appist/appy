@@ -3,7 +3,7 @@ name: Vulnerabilities Check
 on: push
 
 jobs:
-  code-check:
+  vulnerabilities-check:
     strategy:
       matrix:
         platform: [ubuntu-latest]
