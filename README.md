@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/appist/appy)](https://goreportcard.com/report/github.com/appist/appy)
 [![Coverage Status](https://img.shields.io/codecov/c/gh/appist/appy.svg?logo=codecov)](https://codecov.io/gh/appist/appy)
 [![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg)](https://pkg.go.dev/github.com/appist/appy?tab=doc)
-[![Join the chat at https://gitter.im/Appist/appy](https://badges.gitter.im/Appist/appy.svg)](https://gitter.im/Appist/appy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Known Vulnerabilities](https://snyk.io/test/github/appist/appy/badge.svg)](https://snyk.io/test/github/appist/appy)
 [![Platform Support](https://img.shields.io/badge/platform-macos%20%7C%20linux%20%7C%20windows-blue)](https://github.com/appist/appy)
 
 An opinionated productive web framework that helps scaling business easier.
