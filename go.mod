@@ -22,6 +22,7 @@ require (
 	github.com/go-redis/redis v6.15.7+incompatible
 	github.com/go-redis/redis/v7 v7.2.0
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.0
@@ -42,7 +43,6 @@ require (
 	github.com/otiai10/copy v1.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
-	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil v2.20.4+incompatible
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/spf13/cobra v1.0.0

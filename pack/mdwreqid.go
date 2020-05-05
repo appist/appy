@@ -3,7 +3,7 @@ package pack
 import (
 	"net/http"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 )
 
 var (
@@ -15,7 +15,7 @@ func mdwReqID() HandlerFunc {
 	return func(c *Context) {
 		reqID := c.GetHeader(xReqID)
 		if reqID == "" {
-			uuidV4 := uuid.NewV4()
+			uuidV4, _ := uuid.NewV4()
 			reqID = uuidV4.String()
 		}
 
