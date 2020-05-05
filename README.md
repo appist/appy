@@ -1,10 +1,10 @@
 # appy
 
 [![Build Status](https://github.com/appist/appy/workflows/Unit%20Test/badge.svg)](https://github.com/appist/appy/actions?workflow=Unit+Test)
+[![Vulnerabilities Check](https://github.com/appist/appy/workflows/Vulnerabilities%20Check/badge.svg)](https://github.com/appist/appy/actions?workflow=Vulnerabilities+Check)
 [![Go Report Card](https://goreportcard.com/badge/github.com/appist/appy)](https://goreportcard.com/report/github.com/appist/appy)
 [![Coverage Status](https://img.shields.io/codecov/c/gh/appist/appy.svg?logo=codecov)](https://codecov.io/gh/appist/appy)
 [![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg)](https://pkg.go.dev/github.com/appist/appy?tab=doc)
-[![Known Vulnerabilities](https://snyk.io/test/github/appist/appy/badge.svg)](https://snyk.io/test/github/appist/appy)
 [![Platform Support](https://img.shields.io/badge/platform-macos%20%7C%20linux%20%7C%20windows-blue)](https://github.com/appist/appy)
 
 An opinionated productive web framework that helps scaling business easier.
