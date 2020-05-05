@@ -19,7 +19,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-contrib/multitemplate v0.0.0-20200226145339-3e397ee01bc6
 	github.com/gin-contrib/sessions v0.0.3
-	github.com/gin-gonic/gin v1.6.2
+	github.com/gin-gonic/gin v1.6.3
 	github.com/go-critic/go-critic v0.4.3 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-redis/redis v6.15.7+incompatible
