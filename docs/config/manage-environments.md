@@ -25,7 +25,7 @@ $ echo $(go run . secret) > configs/<ENV>.key
 ```
 
 {% hint style="info" %}
-The `release` build only reads the secret via `APPY_MASTER_KEY` environment variable which should be passed to the built binary when running it, e.g.
+The `release` build only reads the secret via `APPY_MASTER_KEY` environment variable which should be passed to the built binary when running it, i.e.
 
 **APPY\_ENV=&lt;ENV&gt; APPY\_MASTER\_KEY=&lt;SECRET\_KEY&gt; ./&lt;BINARY&gt; serve**
 {% endhint %}

@@ -17,6 +17,11 @@
 * [Getting Started](database/getting-started.md)
 * [Writing Unit Tests](database/writing-unit-tests.md)
 
+## Model
+
+* [Getting Started](model/getting-started.md)
+* [Writing Unit Tests](model/writing-unit-tests.md)
+
 ## GraphQL
 
 * [Getting Started](graphql/getting-started.md)
@@ -31,11 +36,6 @@
 
 * [Getting Started](mailer/getting-started.md)
 * [Writing Unit Tests](mailer/writing-unit-tests.md)
-
-## Model
-
-* [Getting Started](model/getting-started.md)
-* [Writing Unit Tests](model/writing-unit-tests.md)
 
 ## View
 
