@@ -328,6 +328,42 @@ func (s *modelSuite) TestCustomTableName() {
 	}
 }
 
+func (s *modelSuite) TestDelete() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_delete_"+adapter)
+
+		users := []User{}
+		for i := 0; i < 10; i++ {
+			u := User{}
+			s.Nil(faker.FakeData(&u))
+			users = append(users, u)
+		}
+		count, err := s.model(&users).Create().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).Delete().Exec(nil, false)
+		s.Equal(int64(3), count)
+		s.Nil(err)
+
+		count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec(nil, false)
+		s.Equal(int64(0), count)
+		s.Nil(err)
+
+		users = []User{}
+		count, err = s.model(&users).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec(nil, false)
+		s.Equal(int64(0), count)
+		s.Nil(err)
+
+		user := User{}
+		count, err = s.model(&user).Where("id = ?", 5).Find().Exec(nil, false)
+		s.Equal(int64(1), count)
+		s.Equal(int64(5), user.ID)
+		s.Nil(err)
+	}
+}
+
 func (s *modelSuite) TestEmptyQueryBuilder() {
 	var user User
 	s.Nil(faker.FakeData(&user))
@@ -341,13 +377,17 @@ func (s *modelSuite) TestFind() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_find_"+adapter)
 
+		count, err := s.model(&User{}).Where("id > ?", 5).Find().Exec(nil, false)
+		s.Equal(int64(0), count)
+		s.Nil(err)
+
 		users := []User{}
 		for i := 0; i < 10; i++ {
 			u := User{}
 			s.Nil(faker.FakeData(&u))
 			users = append(users, u)
 		}
-		count, err := s.model(&users).Create().Exec(nil, false)
+		count, err = s.model(&users).Create().Exec(nil, false)
 		s.Equal(10, len(users))
 		s.Equal(int64(10), count)
 		s.Nil(err)
@@ -494,7 +534,6 @@ func (s *modelSuite) TestScan() {
 func (s *modelSuite) TestUpdate() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_update_"+adapter)
-		fmt.Println(adapter)
 
 		var user User
 		s.Nil(faker.FakeData(&user))
@@ -504,7 +543,8 @@ func (s *modelSuite) TestUpdate() {
 		s.Equal(int64(1), user.ID)
 		s.Nil(err)
 
-		count, err = s.model(&User{}).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec(nil, false)
+		user = User{}
+		count, err = s.model(&user).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec(nil, false)
 		s.Equal(int64(1), count)
 		s.Nil(err)
 
@@ -519,7 +559,8 @@ func (s *modelSuite) TestUpdate() {
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
-		count, err = s.model(&User{}).Where("id = ?", 10).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec(nil, false)
+		user = User{}
+		count, err = s.model(&user).Where("id = ?", 10).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec(nil, false)
 		s.Equal(int64(1), count)
 		s.Nil(err)
 

@@ -18,7 +18,7 @@ type (
 		All() *Model
 		Count() *Model
 		Create() *Model
-		// Delete() *Model
+		Delete() *Model
 		Exec(ctx context.Context, useReplica bool) (int64, error)
 		Find() *Model
 		Limit(limit int) *Model
@@ -243,9 +243,23 @@ func (m *Model) Create() *Model {
 }
 
 // Delete deletes the records from the database.
-// func (m *Model) Delete() *Model {
-// 	return m
-// }
+func (m *Model) Delete() *Model {
+	m.queryType = "exec"
+	m.args = []interface{}{}
+
+	m.queryBuilder.WriteString("DELETE FROM ")
+	m.queryBuilder.WriteString(m.tableName)
+
+	if m.where != "" {
+		m.queryBuilder.WriteString(" WHERE ")
+		m.queryBuilder.WriteString(m.where)
+		m.args = append(m.args, m.whereArgs...)
+	}
+
+	m.queryBuilder.WriteString(";")
+
+	return m
+}
 
 // Exec can execute the query with/without context/replica which will return
 // the affected rows and error if there is any.
@@ -464,6 +478,10 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 
 			if err == nil {
 				count = 1
+			}
+
+			if err == sql.ErrNoRows {
+				err = nil
 			}
 		}
 	}
