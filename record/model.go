@@ -26,7 +26,7 @@ type (
 		Order(order string) *Model
 		Select(columns string) *Model
 		SQL() string
-		// Update() *Model
+		Update(set string, args ...interface{}) *Model
 		Where(condition string, args ...interface{}) *Model
 	}
 
@@ -76,7 +76,7 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 		destKind:    destKind,
 		masters:     []DBer{},
 		replicas:    []DBer{},
-		primaryKeys: []string{},
+		primaryKeys: []string{"id"},
 		tableName:   support.ToSnakeCase(support.Plural(e.Name())),
 	}
 
@@ -164,7 +164,7 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 // All returns all records from the model's table. Note that this can cause
 // performance issue if there are too many data rows in the model's table.
 func (m *Model) All() *Model {
-	m.queryType = "all"
+	m.queryType = "getOrSelect"
 	m.queryBuilder.WriteString("SELECT * FROM ")
 	m.queryBuilder.WriteString(m.tableName)
 	m.queryBuilder.WriteString(";")
@@ -175,7 +175,7 @@ func (m *Model) All() *Model {
 // Count returns the total count of matching records. Note that this can cause
 // performance issue if there are too many data rows in the model's table.
 func (m *Model) Count() *Model {
-	m.queryType = "count"
+	m.queryType = "getOnly"
 	m.args = []interface{}{}
 	m.queryBuilder.WriteString("SELECT COUNT(")
 
@@ -201,7 +201,7 @@ func (m *Model) Count() *Model {
 
 // Create inserts the model object(s) into the database.
 func (m *Model) Create() *Model {
-	m.queryType = "create"
+	m.queryType = "namedExecOrQuery"
 	m.queryBuilder.WriteString("INSERT INTO ")
 	m.queryBuilder.WriteString(m.tableName)
 	m.queryBuilder.WriteString(" (")
@@ -303,7 +303,30 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	}
 
 	switch m.queryType {
-	case "count":
+	case "exec":
+		if m.tx != nil {
+			if ctx != nil {
+				result, err = m.tx.ExecContext(ctx, query, m.args...)
+			} else {
+				result, err = m.tx.Exec(query, m.args...)
+			}
+		} else {
+			if ctx != nil {
+				result, err = db.ExecContext(ctx, query, m.args...)
+			} else {
+				result, err = db.Exec(query, m.args...)
+			}
+		}
+
+		if err != nil {
+			return int64(0), err
+		}
+
+		count, err = result.RowsAffected()
+		if err != nil {
+			return int64(0), err
+		}
+	case "getOnly":
 		if m.tx != nil {
 			if ctx != nil {
 				err = m.tx.GetContext(ctx, &count, query, m.args...)
@@ -317,7 +340,7 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 				err = db.Get(&count, query, m.args...)
 			}
 		}
-	case "create":
+	case "namedExecOrQuery":
 		if m.destKind == reflect.Array || m.destKind == reflect.Slice {
 			m.dest = reflect.ValueOf(m.dest).Elem().Interface()
 		}
@@ -406,48 +429,36 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 				}
 			}
 		}
-	case "all", "find", "scan":
-		dest := m.dest
-		destKind := m.destKind
-
-		if m.queryType == "scan" {
-			dest = m.scanDest
-			tmpKind := reflect.TypeOf(dest).Elem().Kind()
-
-			if tmpKind == reflect.Array || tmpKind == reflect.Slice {
-				destKind = tmpKind
-			}
-		}
-
-		switch destKind {
+	case "getOrSelect":
+		switch m.destKind {
 		case reflect.Array, reflect.Slice:
 			if m.tx != nil {
 				if ctx != nil {
-					err = m.tx.SelectContext(ctx, dest, query, m.args...)
+					err = m.tx.SelectContext(ctx, m.dest, query, m.args...)
 				} else {
-					err = m.tx.Select(dest, query, m.args...)
+					err = m.tx.Select(m.dest, query, m.args...)
 				}
 			} else {
 				if ctx != nil {
-					err = db.SelectContext(ctx, dest, query, m.args...)
+					err = db.SelectContext(ctx, m.dest, query, m.args...)
 				} else {
-					err = db.Select(dest, query, m.args...)
+					err = db.Select(m.dest, query, m.args...)
 				}
 			}
 
-			count = int64(reflect.ValueOf(dest).Elem().Len())
+			count = int64(reflect.ValueOf(m.dest).Elem().Len())
 		case reflect.Ptr:
 			if m.tx != nil {
 				if ctx != nil {
-					err = m.tx.GetContext(ctx, dest, query, m.args...)
+					err = m.tx.GetContext(ctx, m.dest, query, m.args...)
 				} else {
-					err = m.tx.Get(dest, query, m.args...)
+					err = m.tx.Get(m.dest, query, m.args...)
 				}
 			} else {
 				if ctx != nil {
-					err = db.GetContext(ctx, dest, query, m.args...)
+					err = db.GetContext(ctx, m.dest, query, m.args...)
 				} else {
-					err = db.Get(dest, query, m.args...)
+					err = db.Get(m.dest, query, m.args...)
 				}
 			}
 
@@ -462,7 +473,7 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 
 // Find retrieves the records from the database.
 func (m *Model) Find() *Model {
-	m.queryType = "find"
+	m.queryType = "getOrSelect"
 	m.args = []interface{}{}
 	m.queryBuilder.WriteString("SELECT ")
 
@@ -541,9 +552,14 @@ func (m *Model) Order(order string) *Model {
 
 // Scan allows custom select result being scanned into the specified dest.
 func (m *Model) Scan(dest interface{}) *Model {
-	m.queryType = "scan"
-	m.scanDest = dest
+	m.queryType = "getOrSelect"
 	m.args = []interface{}{}
+
+	m.dest = dest
+	tmpKind := reflect.TypeOf(dest).Elem().Kind()
+	if tmpKind == reflect.Array || tmpKind == reflect.Slice {
+		m.destKind = tmpKind
+	}
 
 	m.queryBuilder.WriteString("SELECT ")
 
@@ -606,59 +622,70 @@ func (m *Model) SQL() string {
 }
 
 // Update updates the model object(s) in the database.
-// func (m *Model) Update() *Model {
-// 	return m
-// }
+func (m *Model) Update(set string, args ...interface{}) *Model {
+	m.queryType = "exec"
+	m.args = []interface{}{}
+
+	m.queryBuilder.WriteString("UPDATE ")
+	m.queryBuilder.WriteString(m.tableName)
+	m.queryBuilder.WriteString(" SET ")
+	m.queryBuilder.WriteString(set)
+	m.args = append(m.args, args...)
+
+	if m.where != "" {
+		m.queryBuilder.WriteString(" WHERE ")
+		m.queryBuilder.WriteString(m.where)
+		m.args = append(m.args, m.whereArgs...)
+	}
+
+	m.queryBuilder.WriteString(";")
+
+	return m
+}
 
 // Where indicates the condition of which records to return.
 func (m *Model) Where(condition string, args ...interface{}) *Model {
-	m.where = condition
-	m.whereArgs = args
-
-	if strings.Contains(m.where, " IN (?)") && len(m.whereArgs) > 0 {
-		var builder strings.Builder
-		newArgs := []interface{}{}
-		count := 0
-
-		for _, char := range condition {
-			var (
-				arg  interface{}
-				kind reflect.Kind
-			)
-
-			if count < len(m.whereArgs) {
-				arg = m.whereArgs[count]
-				kind = reflect.TypeOf(arg).Kind()
-			}
-
-			if char == '?' {
-				if kind == reflect.Array || kind == reflect.Slice {
-					args := reflect.ValueOf(arg)
-					builder.WriteString(strings.Trim(strings.Repeat("?,", args.Len()), ","))
-
-					for i := 0; i < args.Len(); i++ {
-						newArgs = append(newArgs, args.Index(i).Interface())
-					}
-				} else {
-					builder.WriteString(string(char))
-
-					if arg != nil {
-						newArgs = append(newArgs, arg)
-					}
-				}
-
-				count++
-				continue
-			}
-
-			builder.WriteString(string(char))
-		}
-
-		m.where = builder.String()
-		m.whereArgs = newArgs
-	}
+	m.where, m.whereArgs = m.rebind(condition, args...)
 
 	return m
+}
+
+func (m *Model) rebind(query string, args ...interface{}) (string, []interface{}) {
+	var builder strings.Builder
+	newArgs := []interface{}{}
+	count := 0
+
+	for _, char := range query {
+		var kind reflect.Kind
+
+		if count < len(args) {
+			kind = reflect.TypeOf(args[count]).Kind()
+		}
+
+		if char == '?' {
+			if kind == reflect.Array || kind == reflect.Slice {
+				arrayArg := reflect.ValueOf(args[count])
+				builder.WriteString(strings.Trim(strings.Repeat("?,", arrayArg.Len()), ","))
+
+				for i := 0; i < arrayArg.Len(); i++ {
+					newArgs = append(newArgs, arrayArg.Index(i).Interface())
+				}
+			} else {
+				builder.WriteString(string(char))
+
+				if args[count] != nil {
+					newArgs = append(newArgs, args[count])
+				}
+			}
+
+			count++
+			continue
+		}
+
+		builder.WriteString(string(char))
+	}
+
+	return builder.String(), newArgs
 }
 
 func (m *Model) scanPrimaryKeys(rows *Rows, v reflect.Value) error {

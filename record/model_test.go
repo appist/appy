@@ -491,6 +491,48 @@ func (s *modelSuite) TestScan() {
 	}
 }
 
+func (s *modelSuite) TestUpdate() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_update_"+adapter)
+		fmt.Println(adapter)
+
+		var user User
+		s.Nil(faker.FakeData(&user))
+
+		count, err := s.model(&user).Create().Exec(nil, false)
+		s.Equal(int64(1), count)
+		s.Equal(int64(1), user.ID)
+		s.Nil(err)
+
+		count, err = s.model(&User{}).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec(nil, false)
+		s.Equal(int64(1), count)
+		s.Nil(err)
+
+		users := []User{}
+		for i := 0; i < 10; i++ {
+			u := User{}
+			s.Nil(faker.FakeData(&u))
+			users = append(users, u)
+		}
+		count, err = s.model(&users).Create().Exec(nil, false)
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		count, err = s.model(&User{}).Where("id = ?", 10).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec(nil, false)
+		s.Equal(int64(1), count)
+		s.Nil(err)
+
+		user = User{}
+		count, err = s.model(&user).Where("id = ?", 10).Find().Exec(nil, false)
+		s.Equal(int64(1), count)
+		s.Equal(int64(10), user.ID)
+		s.Equal("bar@gmail.com", user.Email)
+		s.Equal("bar", user.Username)
+		s.Nil(err)
+	}
+}
+
 func TestModelSuite(t *testing.T) {
 	test.Run(t, new(modelSuite))
 }
