@@ -320,16 +320,40 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	case "exec":
 		if m.tx != nil {
 			if ctx != nil {
-				result, err = m.tx.ExecContext(ctx, query, m.args...)
+				stmt, err := m.tx.PrepareContext(ctx, query)
+				if err != nil {
+					return int64(0), err
+				}
+
+				result, err = stmt.ExecContext(ctx, m.args...)
 			} else {
-				result, err = m.tx.Exec(query, m.args...)
+				stmt, err := m.tx.PrepareContext(ctx, query)
+				if err != nil {
+					return int64(0), err
+				}
+
+				result, err = stmt.Exec(m.args...)
 			}
 		} else {
 			if ctx != nil {
-				result, err = db.ExecContext(ctx, query, m.args...)
+				stmt, err := db.PrepareContext(ctx, query)
+				if err != nil {
+					return int64(0), err
+				}
+
+				result, err = stmt.ExecContext(ctx, m.args...)
 			} else {
-				result, err = db.Exec(query, m.args...)
+				stmt, err := db.Prepare(query)
+				if err != nil {
+					return int64(0), err
+				}
+
+				result, err = stmt.Exec(m.args...)
 			}
+		}
+
+		if err == sql.ErrNoRows {
+			err = nil
 		}
 
 		if err != nil {
@@ -343,15 +367,35 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	case "getOnly":
 		if m.tx != nil {
 			if ctx != nil {
-				err = m.tx.GetContext(ctx, &count, query, m.args...)
+				stmt, err := m.tx.PrepareContext(ctx, query)
+				if err != nil {
+					return int64(0), err
+				}
+
+				err = stmt.GetContext(ctx, &count, m.args...)
 			} else {
-				err = m.tx.Get(&count, query, m.args...)
+				stmt, err := m.tx.Prepare(query)
+				if err != nil {
+					return int64(0), err
+				}
+
+				err = stmt.Get(&count, m.args...)
 			}
 		} else {
 			if ctx != nil {
-				err = db.GetContext(ctx, &count, query, m.args...)
+				stmt, err := db.PrepareContext(ctx, query)
+				if err != nil {
+					return int64(0), err
+				}
+
+				err = stmt.GetContext(ctx, &count, m.args...)
 			} else {
-				err = db.Get(&count, query, m.args...)
+				stmt, err := db.Prepare(query)
+				if err != nil {
+					return int64(0), err
+				}
+
+				err = stmt.Get(&count, m.args...)
 			}
 		}
 	case "namedExecOrQuery":
@@ -448,15 +492,35 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 		case reflect.Array, reflect.Slice:
 			if m.tx != nil {
 				if ctx != nil {
-					err = m.tx.SelectContext(ctx, m.dest, query, m.args...)
+					stmt, err := m.tx.PrepareContext(ctx, query)
+					if err != nil {
+						return int64(0), err
+					}
+
+					err = stmt.SelectContext(ctx, m.dest, m.args...)
 				} else {
-					err = m.tx.Select(m.dest, query, m.args...)
+					stmt, err := m.tx.Prepare(query)
+					if err != nil {
+						return int64(0), err
+					}
+
+					err = stmt.Select(m.dest, m.args...)
 				}
 			} else {
 				if ctx != nil {
-					err = db.SelectContext(ctx, m.dest, query, m.args...)
+					stmt, err := db.PrepareContext(ctx, query)
+					if err != nil {
+						return int64(0), err
+					}
+
+					err = stmt.SelectContext(ctx, m.dest, m.args...)
 				} else {
-					err = db.Select(m.dest, query, m.args...)
+					stmt, err := db.Prepare(query)
+					if err != nil {
+						return int64(0), err
+					}
+
+					err = stmt.Select(m.dest, m.args...)
 				}
 			}
 
@@ -464,24 +528,47 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 		case reflect.Ptr:
 			if m.tx != nil {
 				if ctx != nil {
-					err = m.tx.GetContext(ctx, m.dest, query, m.args...)
+					stmt, err := m.tx.PrepareContext(ctx, query)
+					if err != nil {
+						return int64(0), err
+					}
+
+					err = stmt.GetContext(ctx, m.dest, m.args...)
 				} else {
-					err = m.tx.Get(m.dest, query, m.args...)
+					stmt, err := m.tx.Prepare(query)
+					if err != nil {
+						return int64(0), err
+					}
+
+					err = stmt.Get(m.dest, m.args...)
 				}
 			} else {
 				if ctx != nil {
-					err = db.GetContext(ctx, m.dest, query, m.args...)
-				} else {
-					err = db.Get(m.dest, query, m.args...)
-				}
-			}
+					stmt, err := db.PrepareContext(ctx, query)
+					if err != nil {
+						return int64(0), err
+					}
 
-			if err == nil {
-				count = 1
+					err = stmt.GetContext(ctx, m.dest, m.args...)
+				} else {
+					stmt, err := db.Prepare(query)
+					if err != nil {
+						return int64(0), err
+					}
+
+					err = stmt.Get(m.dest, m.args...)
+				}
 			}
 
 			if err == sql.ErrNoRows {
 				err = nil
+			}
+
+			for _, pk := range m.primaryKeys {
+				if !reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[pk].stFieldName).IsZero() {
+					count = 1
+					break
+				}
 			}
 		}
 	}

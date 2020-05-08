@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/appist/appy/support"
 
@@ -41,12 +43,16 @@ CREATE TABLE users (
 type BenchmarkUser struct {
 	Modeler `masters:"primary" replicas:"" tableName:"users" primaryKeys:"id"`
 	ID      int64 `db:"id" orm:"auto_increment:true"`
-	Age     int
+	Age     int64
 	Fax     string
 	Name    string
 	Title   string
 	Web     string
 	Counter int64
+}
+
+func init() {
+	rand.Seed(time.Now().Unix())
 }
 
 func newDB() DBer {
@@ -66,7 +72,13 @@ func newDB() DBer {
 	db.DropDB(database)
 	db.CreateDB(database)
 	db.Connect()
-	db.Exec(SCHEMA)
+
+	_, err := db.Exec(SCHEMA)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	time.Sleep(3 * time.Second)
 
 	return db
 }
@@ -88,12 +100,20 @@ func newOrmDBManager() *Engine {
 	db.DropDB(database)
 	db.CreateDB(database)
 	db.Connect()
-	db.Exec(SCHEMA)
+
+	_, err := db.Exec(SCHEMA)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	time.Sleep(3 * time.Second)
 
 	return dbManager
 }
 
 func newRawDB() *sql.DB {
+	time.Sleep(3 * time.Second)
+
 	database := "benchmarkrecord_raw"
 	db, err := sql.Open("mysql", "root:whatever@tcp(:13306)/mysql")
 
@@ -106,10 +126,13 @@ func newRawDB() *sql.DB {
 	db.Exec(fmt.Sprintf("DROP DATABASE %s;", database))
 	db.Exec(fmt.Sprintf("CREATE DATABASE %s;", database))
 	db.Exec(fmt.Sprintf("USE %s;", database))
+
 	_, err = db.Exec(SCHEMA)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	time.Sleep(3 * time.Second)
 
 	return db
 }
@@ -168,7 +191,7 @@ func rawInsert(db *sql.DB, b *testing.B) (int64, error) {
 	return result.LastInsertId()
 }
 
-func BenchmarkRawInsert(b *testing.B) {
+func BenchmarkInsertRaw(b *testing.B) {
 	db := newRawDB()
 	defer db.Close()
 
@@ -183,7 +206,7 @@ func BenchmarkRawInsert(b *testing.B) {
 	}
 }
 
-func BenchmarkDBInsert(b *testing.B) {
+func BenchmarkInsertDB(b *testing.B) {
 	db := newDB()
 	defer db.Close()
 
@@ -198,7 +221,7 @@ func BenchmarkDBInsert(b *testing.B) {
 	}
 }
 
-func BenchmarkOrmInsert(b *testing.B) {
+func BenchmarkInsertORM(b *testing.B) {
 	dbManager := newOrmDBManager()
 	defer dbManager.DB("primary").Close()
 
@@ -213,7 +236,7 @@ func BenchmarkOrmInsert(b *testing.B) {
 	}
 }
 
-func BenchmarkRawInsertMulti(b *testing.B) {
+func BenchmarkInsertMultiRaw(b *testing.B) {
 	db := newRawDB()
 	defer db.Close()
 
@@ -235,7 +258,7 @@ func BenchmarkRawInsertMulti(b *testing.B) {
 	}
 }
 
-func BenchmarkDBInsertMulti(b *testing.B) {
+func BenchmarkInsertMultiDB(b *testing.B) {
 	db := newDB()
 	defer db.Close()
 
@@ -257,12 +280,12 @@ func BenchmarkDBInsertMulti(b *testing.B) {
 	}
 }
 
-func BenchmarkOrmInsertMulti(b *testing.B) {
+func BenchmarkInsertMultiORM(b *testing.B) {
 	dbManager := newOrmDBManager()
 	defer dbManager.DB("primary").Close()
 
 	users := []BenchmarkUser{}
-	for i := 0; i < b.N; i++ {
+	for i := 0; i < 100; i++ {
 		users = append(users, BenchmarkUser{
 			Name:    "benchmark",
 			Title:   "just a benchmark",
@@ -285,7 +308,7 @@ func BenchmarkOrmInsertMulti(b *testing.B) {
 	}
 }
 
-func BenchmarkRawUpdate(b *testing.B) {
+func BenchmarkUpdateRaw(b *testing.B) {
 	db := newRawDB()
 	defer db.Close()
 
@@ -304,7 +327,7 @@ func BenchmarkRawUpdate(b *testing.B) {
 			b.FailNow()
 		}
 
-		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", 100, 1000, id)
+		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Intn(1000000), rand.Intn(1000000), id)
 		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
@@ -313,7 +336,7 @@ func BenchmarkRawUpdate(b *testing.B) {
 	}
 }
 
-func BenchmarkDBUpdate(b *testing.B) {
+func BenchmarkUpdateDB(b *testing.B) {
 	db := newDB()
 	defer db.Close()
 
@@ -332,7 +355,7 @@ func BenchmarkDBUpdate(b *testing.B) {
 			b.FailNow()
 		}
 
-		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", 100, 1000, id)
+		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Intn(1000000), rand.Intn(1000000), id)
 		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
@@ -341,7 +364,36 @@ func BenchmarkDBUpdate(b *testing.B) {
 	}
 }
 
-func BenchmarkRawRead(b *testing.B) {
+func BenchmarkUpdateORM(b *testing.B) {
+	dbManager := newOrmDBManager()
+	defer dbManager.DB("primary").Close()
+
+	id, err := ormInsert(dbManager, b)
+	if err != nil {
+		fmt.Println(err)
+		b.FailNow()
+	}
+
+	b.ResetTimer()
+
+	var user BenchmarkUser
+	for i := 0; i < b.N; i++ {
+		model := NewModel(dbManager, &user)
+		count, err := model.Where("id = ?", id).Update("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Intn(1000000), rand.Intn(1000000)).Exec(nil, false)
+
+		if count != 1 {
+			fmt.Println(errors.New("count should equal to 1"))
+			b.FailNow()
+		}
+
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+	}
+}
+
+func BenchmarkReadRaw(b *testing.B) {
 	db := newRawDB()
 	defer db.Close()
 
@@ -374,7 +426,7 @@ func BenchmarkRawRead(b *testing.B) {
 	}
 }
 
-func BenchmarkDBRead(b *testing.B) {
+func BenchmarkReadDB(b *testing.B) {
 	db := newDB()
 	defer db.Close()
 
@@ -407,7 +459,7 @@ func BenchmarkDBRead(b *testing.B) {
 	}
 }
 
-func BenchmarkOrmRead(b *testing.B) {
+func BenchmarkReadORM(b *testing.B) {
 	dbManager := newOrmDBManager()
 	defer dbManager.DB("primary").Close()
 
@@ -435,7 +487,7 @@ func BenchmarkOrmRead(b *testing.B) {
 	}
 }
 
-func BenchmarkRawReadSlice(b *testing.B) {
+func BenchmarkReadSliceRaw(b *testing.B) {
 	db := newRawDB()
 	defer db.Close()
 
@@ -488,7 +540,7 @@ func BenchmarkRawReadSlice(b *testing.B) {
 	}
 }
 
-func BenchmarkDBReadSlice(b *testing.B) {
+func BenchmarkReadSliceDB(b *testing.B) {
 	db := newDB()
 	defer db.Close()
 
@@ -541,7 +593,7 @@ func BenchmarkDBReadSlice(b *testing.B) {
 	}
 }
 
-func BenchmarkOrmReadSlice(b *testing.B) {
+func BenchmarkReadSliceORM(b *testing.B) {
 	dbManager := newOrmDBManager()
 	defer dbManager.DB("primary").Close()
 

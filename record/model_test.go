@@ -347,7 +347,8 @@ func (s *modelSuite) TestDelete() {
 		s.Equal(int64(3), count)
 		s.Nil(err)
 
-		count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec(nil, false)
+		user := User{}
+		count, err = s.model(&user).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec(nil, false)
 		s.Equal(int64(0), count)
 		s.Nil(err)
 
@@ -356,7 +357,7 @@ func (s *modelSuite) TestDelete() {
 		s.Equal(int64(0), count)
 		s.Nil(err)
 
-		user := User{}
+		user = User{}
 		count, err = s.model(&user).Where("id = ?", 5).Find().Exec(nil, false)
 		s.Equal(int64(1), count)
 		s.Equal(int64(5), user.ID)
@@ -390,6 +391,10 @@ func (s *modelSuite) TestFind() {
 		count, err = s.model(&users).Create().Exec(nil, false)
 		s.Equal(10, len(users))
 		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		count, err = s.model(&User{}).Where("id = ?", 5).Find().Exec(nil, false)
+		s.Equal(int64(1), count)
 		s.Nil(err)
 
 		users = []User{}
