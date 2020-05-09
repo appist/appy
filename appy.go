@@ -93,9 +93,9 @@ type (
 	// Mock is the workhorse used to track activity on another object.
 	Mock = test.Mock
 
-	// ScaffoldOptions contains the information of how a new application should be
+	// ScaffoldOption contains the information of how a new application should be
 	// created.
-	ScaffoldOptions = support.ScaffoldOptions
+	ScaffoldOption = support.ScaffoldOption
 
 	// Server processes the HTTP requests.
 	Server = pack.Server

@@ -13,9 +13,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ScaffoldOptions contains the information of how a new application should be
+// ScaffoldOption contains the information of how a new application should be
 // created.
-type ScaffoldOptions struct {
+type ScaffoldOption struct {
 	// DBAdapter indicates the database adapter to use. By default, it is
 	// "postgres". Possible values are "mysql" and "postgres".
 	DBAdapter string
@@ -26,13 +26,13 @@ type ScaffoldOptions struct {
 }
 
 // Scaffold creates a new application.
-func Scaffold(options ScaffoldOptions) error {
-	if options.DBAdapter == "" {
-		options.DBAdapter = "postgres"
+func Scaffold(opt ScaffoldOption) error {
+	if opt.DBAdapter == "" {
+		opt.DBAdapter = "postgres"
 	}
 
-	if !ArrayContains(SupportedDBAdapters, options.DBAdapter) {
-		return errors.Errorf("DBAdapter '%s' is not supported, only '%s' are supported", options.DBAdapter, SupportedDBAdapters)
+	if !ArrayContains(SupportedDBAdapters, opt.DBAdapter) {
+		return errors.Errorf("DBAdapter '%s' is not supported, only '%s' are supported", opt.DBAdapter, SupportedDBAdapters)
 	}
 
 	moduleName := ModuleName()
@@ -43,7 +43,7 @@ func Scaffold(options ScaffoldOptions) error {
 	masterKeyTest := hex.EncodeToString(GenerateRandomBytes(32))
 
 	var dbURIPrimaryDev, dbURIPrimaryTest string
-	switch options.DBAdapter {
+	switch opt.DBAdapter {
 	case "mysql":
 		dbURIPrimaryDev = getEncryptedValue(fmt.Sprintf("mysql://root:whatever@0.0.0.0:23306/%s", moduleName), masterKeyDev)
 		dbURIPrimaryTest = getEncryptedValue(fmt.Sprintf("mysql://root:whatever@0.0.0.0:23306/%s_test", moduleName), masterKeyTest)
@@ -96,7 +96,7 @@ func Scaffold(options ScaffoldOptions) error {
 				"blockHead":               "{{block head()}}",
 				"blockBody":               "{{block body()}}",
 				"blockEnd":                "{{end}}",
-				"dbAdapter":               options.DBAdapter,
+				"dbAdapter":               opt.DBAdapter,
 				"dbURIPrimaryDev":         dbURIPrimaryDev,
 				"httpCSRFSecretDev":       httpCSRFSecretDev,
 				"httpSessionSecretsDev":   httpSessionSecretsDev,
@@ -107,7 +107,7 @@ func Scaffold(options ScaffoldOptions) error {
 				"workerRedisAddrTest":     workerRedisAddrTest,
 				"extendApplicationLayout": "{{extends \"../layouts/application.html\"}}",
 				"projectName":             moduleName,
-				"projectDesc":             options.Description,
+				"projectDesc":             opt.Description,
 				"masterKeyDev":            masterKeyDev,
 				"masterKeyTest":           masterKeyTest,
 				"translateWelcome":        "{{t(\"welcome\", `{\"Name\": \"John Doe\", \"Title\": \"` + t(\"title\") + `\"}`)}}",

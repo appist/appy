@@ -6,11 +6,11 @@ description: Everything you need to know to install appy and create your first a
 
 ## Prerequisites
 
-* [Docker w/ Docker Compose  &gt;= 19](https://www.docker.com/products/docker-desktop)
-* [Go &gt;= 1.14](https://golang.org/dl/)
-* [NodeJS &gt;= 13](https://nodejs.org/en/download/)
-* [PostgreSQL &gt;= 11](https://www.postgresql.org/download/)
-* [MySQL &gt;= 5.7](https://www.mysql.com/downloads/)
+- [Docker w/ Docker Compose &gt;= 19](https://www.docker.com/products/docker-desktop)
+- [Go &gt;= 1.14](https://golang.org/dl/)
+- [NodeJS &gt;= 13](https://nodejs.org/en/download/)
+- [PostgreSQL &gt;= 11](https://www.postgresql.org/download/)
+- [MySQL &gt;= 5.7](https://www.mysql.com/downloads/)
 
 ## Quick Start
 
@@ -21,7 +21,7 @@ $ mkdir <PROJECT_NAME> && cd $_ && go mod init $_ && git init
 ```
 
 {% hint style="info" %}
-The &lt;PROJECT\_NAME&gt; must be an alphanumeric string.
+The &lt;PROJECT_NAME&gt; must be an alphanumeric string.
 {% endhint %}
 
 ### Step 2: Create \`main.go\` with the snippet below.
@@ -34,7 +34,7 @@ import (
 )
 
 func main() {
-  appy.Scaffold(appy.ScaffoldOptions{
+  appy.Scaffold(appy.ScaffoldOption{
     DBAdapter: "postgres", // only "mysql" and "postgres" are supported
     Description: "my first awesome app", // used in HTML's description meta tag, package.json and CLI help
   })
@@ -81,4 +81,3 @@ $ go run . teardown
 {% hint style="info" %}
 Now, you can execute `go run . --help` to see what `appy` built-in commands are available.
 {% endhint %}
-

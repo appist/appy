@@ -27,14 +27,14 @@ func (s *scaffoldSuite) TestScaffold() {
 	err = ioutil.WriteFile("go.mod", []byte("module appist"), 0777)
 	s.Nil(err)
 
-	opts := ScaffoldOptions{
+	opts := ScaffoldOption{
 		DBAdapter:   "foobar",
 		Description: "scaffold test",
 	}
 	err = Scaffold(opts)
 	s.EqualError(err, "DBAdapter 'foobar' is not supported, only '[mysql postgres]' are supported")
 
-	opts = ScaffoldOptions{
+	opts = ScaffoldOption{
 		Description: "scaffold test",
 	}
 	err = Scaffold(opts)
