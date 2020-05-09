@@ -16,14 +16,18 @@ type (
 	// Modeler implements all Model methods.
 	Modeler interface {
 		All() *Model
+		Begin() error
+		BeginContext(ctx context.Context, opts *sql.TxOptions) error
+		Commit() error
 		Count() *Model
 		Create() *Model
 		Delete() *Model
-		Exec(ctx context.Context, useReplica bool) (int64, error)
+		Exec(opts ...ExecOption) (int64, error)
 		Find() *Model
 		Limit(limit int) *Model
 		Offset(offset int) *Model
 		Order(order string) *Model
+		Rollback() error
 		Select(columns string) *Model
 		SQL() string
 		Tx() Txer
@@ -49,6 +53,17 @@ type (
 	// ModelOption is used to initialise a model with additional configurations.
 	ModelOption struct {
 		tx Txer
+	}
+
+	// ExecOption indicates how a query should be executed.
+	ExecOption struct {
+		// Context can be used to set the query timeout.
+		Context context.Context
+
+		// UseReplica indicates if the query should use replica. Note that there
+		// could be replica lag which won't allow recent inserted/updated data to
+		// be returned correctly.
+		UseReplica bool
 	}
 
 	modelAttr struct {
@@ -171,8 +186,12 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 	return model
 }
 
-// All returns all records from the model's table. Note that this can cause
-// performance issue if there are too many data rows in the model's table.
+// All returns all records from the model's table. Use an array/slice of the
+// struct to scan all the records. Otherwise, only the 1st record will be
+// scanned into the single struct.
+
+// Note that this can cause performance issue if there are too many data rows
+// in the model's table.
 func (m *Model) All() *Model {
 	m.queryType = "getOrSelect"
 	m.queryBuilder.WriteString("SELECT * FROM ")
@@ -183,14 +202,14 @@ func (m *Model) All() *Model {
 }
 
 // Begin starts a transaction. The default isolation level is dependent on the driver.
-func (m *Model) Begin() (*Model, error) {
+func (m *Model) Begin() error {
 	var err error
 
 	if m.tx == nil {
 		m.tx, err = m.masters[rand.Intn(len(m.masters))].Begin()
 	}
 
-	return m, err
+	return err
 }
 
 // BeginContext starts a transaction.
@@ -201,36 +220,36 @@ func (m *Model) Begin() (*Model, error) {
 //
 // The provided TxOptions is optional and may be nil if defaults should be used. If a non-default
 // isolation level is used that the driver doesn't support, an error will be returned.
-func (m *Model) BeginContext(ctx context.Context, opts *sql.TxOptions) (*Model, error) {
+func (m *Model) BeginContext(ctx context.Context, opts *sql.TxOptions) error {
 	var err error
 
 	if m.tx == nil {
 		m.tx, err = m.masters[rand.Intn(len(m.masters))].BeginContext(ctx, opts)
 	}
 
-	return m, err
+	return err
 }
 
 // Commit commits the transaction.
-func (m *Model) Commit() (*Model, error) {
+func (m *Model) Commit() error {
 	var err error
 
 	if m.tx != nil {
 		err = m.tx.Commit()
 	}
 
-	return m, err
+	return err
 }
 
 // Rollback aborts the transaction.
-func (m *Model) Rollback() (*Model, error) {
+func (m *Model) Rollback() error {
 	var err error
 
 	if m.tx != nil {
 		err = m.tx.Rollback()
 	}
 
-	return m, err
+	return err
 }
 
 // Count returns the total count of matching records. Note that this can cause
@@ -324,7 +343,7 @@ func (m *Model) Delete() *Model {
 
 // Exec can execute the query with/without context/replica which will return
 // the affected rows and error if there is any.
-func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
+func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	var (
 		count               int64
 		err                 error
@@ -332,6 +351,11 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 		rows                *Rows
 		db, master, replica DBer
 	)
+
+	opt := ExecOption{}
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
 
 	if len(m.masters) > 0 {
 		master = m.masters[rand.Intn(len(m.masters))]
@@ -345,7 +369,7 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 		return int64(0), ErrModelMissingMasterDB
 	}
 
-	if useReplica && replica == nil {
+	if opt.UseReplica && replica == nil {
 		return int64(0), ErrModelMissingReplicaDB
 	}
 
@@ -354,7 +378,7 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	}
 
 	db = master
-	if useReplica && replica != nil {
+	if opt.UseReplica && replica != nil {
 		db = replica
 	}
 
@@ -380,15 +404,15 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 	switch m.queryType {
 	case "exec":
 		if m.tx != nil {
-			if ctx != nil {
-				stmt, err := m.tx.PrepareContext(ctx, query)
+			if opt.Context != nil {
+				stmt, err := m.tx.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
 
-				result, err = stmt.ExecContext(ctx, m.args...)
+				result, err = stmt.ExecContext(opt.Context, m.args...)
 			} else {
-				stmt, err := m.tx.PrepareContext(ctx, query)
+				stmt, err := m.tx.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
@@ -396,13 +420,13 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 				result, err = stmt.Exec(m.args...)
 			}
 		} else {
-			if ctx != nil {
-				stmt, err := db.PrepareContext(ctx, query)
+			if opt.Context != nil {
+				stmt, err := db.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
 
-				result, err = stmt.ExecContext(ctx, m.args...)
+				result, err = stmt.ExecContext(opt.Context, m.args...)
 			} else {
 				stmt, err := db.Prepare(query)
 				if err != nil {
@@ -423,13 +447,13 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 		}
 	case "getOnly":
 		if m.tx != nil {
-			if ctx != nil {
-				stmt, err := m.tx.PrepareContext(ctx, query)
+			if opt.Context != nil {
+				stmt, err := m.tx.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
 
-				err = stmt.GetContext(ctx, &count, m.args...)
+				err = stmt.GetContext(opt.Context, &count, m.args...)
 			} else {
 				stmt, err := m.tx.Prepare(query)
 				if err != nil {
@@ -439,13 +463,13 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 				err = stmt.Get(&count, m.args...)
 			}
 		} else {
-			if ctx != nil {
-				stmt, err := db.PrepareContext(ctx, query)
+			if opt.Context != nil {
+				stmt, err := db.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
 
-				err = stmt.GetContext(ctx, &count, m.args...)
+				err = stmt.GetContext(opt.Context, &count, m.args...)
 			} else {
 				stmt, err := db.Prepare(query)
 				if err != nil {
@@ -463,14 +487,14 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 		switch m.adapter {
 		case "mysql":
 			if m.tx != nil {
-				if ctx != nil {
-					result, err = m.tx.NamedExecContext(ctx, query, m.dest)
+				if opt.Context != nil {
+					result, err = m.tx.NamedExecContext(opt.Context, query, m.dest)
 				} else {
 					result, err = m.tx.NamedExec(query, m.dest)
 				}
 			} else {
-				if ctx != nil {
-					result, err = db.NamedExecContext(ctx, query, m.dest)
+				if opt.Context != nil {
+					result, err = db.NamedExecContext(opt.Context, query, m.dest)
 				} else {
 					result, err = db.NamedExec(query, m.dest)
 				}
@@ -504,14 +528,14 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 			}
 		case "postgres":
 			if m.tx != nil {
-				if ctx != nil {
-					rows, err = m.tx.NamedQueryContext(ctx, query, m.dest)
+				if opt.Context != nil {
+					rows, err = m.tx.NamedQueryContext(opt.Context, query, m.dest)
 				} else {
 					rows, err = m.tx.NamedQuery(query, m.dest)
 				}
 			} else {
-				if ctx != nil {
-					rows, err = db.NamedQueryContext(ctx, query, m.dest)
+				if opt.Context != nil {
+					rows, err = db.NamedQueryContext(opt.Context, query, m.dest)
 				} else {
 					rows, err = db.NamedQuery(query, m.dest)
 				}
@@ -548,13 +572,13 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 		switch m.destKind {
 		case reflect.Array, reflect.Slice:
 			if m.tx != nil {
-				if ctx != nil {
-					stmt, err := m.tx.PrepareContext(ctx, query)
+				if opt.Context != nil {
+					stmt, err := m.tx.PrepareContext(opt.Context, query)
 					if err != nil {
 						return int64(0), err
 					}
 
-					err = stmt.SelectContext(ctx, m.dest, m.args...)
+					err = stmt.SelectContext(opt.Context, m.dest, m.args...)
 				} else {
 					stmt, err := m.tx.Prepare(query)
 					if err != nil {
@@ -564,13 +588,13 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 					err = stmt.Select(m.dest, m.args...)
 				}
 			} else {
-				if ctx != nil {
-					stmt, err := db.PrepareContext(ctx, query)
+				if opt.Context != nil {
+					stmt, err := db.PrepareContext(opt.Context, query)
 					if err != nil {
 						return int64(0), err
 					}
 
-					err = stmt.SelectContext(ctx, m.dest, m.args...)
+					err = stmt.SelectContext(opt.Context, m.dest, m.args...)
 				} else {
 					stmt, err := db.Prepare(query)
 					if err != nil {
@@ -584,13 +608,13 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 			count = int64(reflect.ValueOf(m.dest).Elem().Len())
 		case reflect.Ptr:
 			if m.tx != nil {
-				if ctx != nil {
-					stmt, err := m.tx.PrepareContext(ctx, query)
+				if opt.Context != nil {
+					stmt, err := m.tx.PrepareContext(opt.Context, query)
 					if err != nil {
 						return int64(0), err
 					}
 
-					err = stmt.GetContext(ctx, m.dest, m.args...)
+					err = stmt.GetContext(opt.Context, m.dest, m.args...)
 				} else {
 					stmt, err := m.tx.Prepare(query)
 					if err != nil {
@@ -600,13 +624,13 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 					err = stmt.Get(m.dest, m.args...)
 				}
 			} else {
-				if ctx != nil {
-					stmt, err := db.PrepareContext(ctx, query)
+				if opt.Context != nil {
+					stmt, err := db.PrepareContext(opt.Context, query)
 					if err != nil {
 						return int64(0), err
 					}
 
-					err = stmt.GetContext(ctx, m.dest, m.args...)
+					err = stmt.GetContext(opt.Context, m.dest, m.args...)
 				} else {
 					stmt, err := db.Prepare(query)
 					if err != nil {

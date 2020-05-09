@@ -174,7 +174,7 @@ func ormInsert(dbManager *Engine, b *testing.B) (int64, error) {
 	}
 	model := NewModel(dbManager, &user)
 
-	_, err := model.Create().Exec(nil, false)
+	_, err := model.Create().Exec()
 	if err != nil {
 		return 0, err
 	}
@@ -300,7 +300,7 @@ func BenchmarkInsertMultiORM(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		model := NewModel(dbManager, &users)
-		_, err := model.Create().Exec(nil, false)
+		_, err := model.Create().Exec()
 		if err != nil {
 			fmt.Println(err)
 			b.FailNow()
@@ -379,7 +379,7 @@ func BenchmarkUpdateORM(b *testing.B) {
 	var user BenchmarkUser
 	for i := 0; i < b.N; i++ {
 		model := NewModel(dbManager, &user)
-		count, err := model.Where("id = ?", id).Update("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Intn(1000000), rand.Intn(1000000)).Exec(nil, false)
+		count, err := model.Where("id = ?", id).Update("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Intn(1000000), rand.Intn(1000000)).Exec()
 
 		if count != 1 {
 			fmt.Println(errors.New("count should equal to 1"))
@@ -474,7 +474,7 @@ func BenchmarkReadORM(b *testing.B) {
 	var user BenchmarkUser
 	for i := 0; i < b.N; i++ {
 		model := NewModel(dbManager, &user)
-		count, err := model.Where("id = ?", id).Find().Exec(nil, false)
+		count, err := model.Where("id = ?", id).Find().Exec()
 		if count != 1 {
 			fmt.Println(errors.New("count should equal to 1"))
 			b.FailNow()
@@ -610,7 +610,7 @@ func BenchmarkReadSliceORM(b *testing.B) {
 	var user BenchmarkUser
 	for i := 0; i < b.N; i++ {
 		model := NewModel(dbManager, &user)
-		count, err := model.Where("id > ?", 0).Limit(100).Find().Exec(nil, false)
+		count, err := model.Where("id > ?", 0).Limit(100).Find().Exec()
 		if count != 1 {
 			fmt.Println(errors.New("count should equal to 1"))
 			b.FailNow()
