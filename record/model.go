@@ -189,7 +189,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 // All returns all records from the model's table. Use an array/slice of the
 // struct to scan all the records. Otherwise, only the 1st record will be
 // scanned into the single struct.
-
+//
 // Note that this can cause performance issue if there are too many data rows
 // in the model's table.
 func (m *Model) All() *Model {
