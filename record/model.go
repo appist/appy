@@ -26,6 +26,7 @@ type (
 		Order(order string) *Model
 		Select(columns string) *Model
 		SQL() string
+		Tx() Txer
 		Update(set string, args ...interface{}) *Model
 		Where(condition string, args ...interface{}) *Model
 	}
@@ -45,6 +46,11 @@ type (
 		args, havingArgs, whereArgs                           []interface{}
 	}
 
+	// ModelOption is used to initialise a model with additional configurations.
+	ModelOption struct {
+		tx Txer
+	}
+
 	modelAttr struct {
 		autoIncrement bool
 		ignored       bool
@@ -59,7 +65,7 @@ func init() {
 }
 
 // NewModel initializes a model that represents business data and logic.
-func NewModel(dbManager *Engine, dest interface{}) Modeler {
+func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler {
 	t := reflect.TypeOf(dest)
 	e := t.Elem()
 	destKind := t.Kind()
@@ -78,6 +84,10 @@ func NewModel(dbManager *Engine, dest interface{}) Modeler {
 		replicas:    []DBer{},
 		primaryKeys: []string{"id"},
 		tableName:   support.ToSnakeCase(support.Plural(e.Name())),
+	}
+
+	if len(opts) > 0 {
+		model.tx = opts[0].tx
 	}
 
 	for i := 0; i < e.NumField(); i++ {
@@ -170,6 +180,57 @@ func (m *Model) All() *Model {
 	m.queryBuilder.WriteString(";")
 
 	return m
+}
+
+// Begin starts a transaction. The default isolation level is dependent on the driver.
+func (m *Model) Begin() (*Model, error) {
+	var err error
+
+	if m.tx == nil {
+		m.tx, err = m.masters[rand.Intn(len(m.masters))].Begin()
+	}
+
+	return m, err
+}
+
+// BeginContext starts a transaction.
+//
+// The provided context is used until the transaction is committed or rolled back. If the context
+// is canceled, the sql package will roll back the transaction. Tx.Commit will return an error if
+// the context provided to BeginContext is canceled.
+//
+// The provided TxOptions is optional and may be nil if defaults should be used. If a non-default
+// isolation level is used that the driver doesn't support, an error will be returned.
+func (m *Model) BeginContext(ctx context.Context, opts *sql.TxOptions) (*Model, error) {
+	var err error
+
+	if m.tx == nil {
+		m.tx, err = m.masters[rand.Intn(len(m.masters))].BeginContext(ctx, opts)
+	}
+
+	return m, err
+}
+
+// Commit commits the transaction.
+func (m *Model) Commit() (*Model, error) {
+	var err error
+
+	if m.tx != nil {
+		err = m.tx.Commit()
+	}
+
+	return m, err
+}
+
+// Rollback aborts the transaction.
+func (m *Model) Rollback() (*Model, error) {
+	var err error
+
+	if m.tx != nil {
+		err = m.tx.Rollback()
+	}
+
+	return m, err
 }
 
 // Count returns the total count of matching records. Note that this can cause
@@ -350,10 +411,6 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 
 				result, err = stmt.Exec(m.args...)
 			}
-		}
-
-		if err == sql.ErrNoRows {
-			err = nil
 		}
 
 		if err != nil {
@@ -560,10 +617,6 @@ func (m *Model) Exec(ctx context.Context, useReplica bool) (int64, error) {
 				}
 			}
 
-			if err == sql.ErrNoRows {
-				err = nil
-			}
-
 			for _, pk := range m.primaryKeys {
 				if !reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[pk].stFieldName).IsZero() {
 					count = 1
@@ -726,6 +779,11 @@ func (m *Model) SQL() string {
 	return m.queryBuilder.String()
 }
 
+// Tx returns the transaction connection.
+func (m *Model) Tx() Txer {
+	return m.tx
+}
+
 // Update updates the model object(s) in the database.
 func (m *Model) Update(set string, args ...interface{}) *Model {
 	m.queryType = "exec"
@@ -778,7 +836,7 @@ func (m *Model) rebind(query string, args ...interface{}) (string, []interface{}
 			} else {
 				builder.WriteString(string(char))
 
-				if args[count] != nil {
+				if len(args) > 0 && args[count] != nil {
 					newArgs = append(newArgs, args[count])
 				}
 			}

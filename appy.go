@@ -99,6 +99,9 @@ type (
 	// Model is the interface that represents business data and logic.
 	Model = record.Modeler
 
+	// ModelOption is used to initialise a model with additional configurations.
+	ModelOption = record.ModelOption
+
 	// ScaffoldOption contains the information of how a new application should be
 	// created.
 	ScaffoldOption = support.ScaffoldOption

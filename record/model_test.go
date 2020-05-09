@@ -219,7 +219,15 @@ func (s *modelSuite) TestCount() {
 			users = append(users, u)
 		}
 
-		count, err := s.model(&users).Create().Exec(nil, false)
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
+
+		user := User{}
+		count, err := s.model(&user).Count().Exec(ctx, false)
+		s.Equal(int64(0), count)
+		s.EqualError(err, "context deadline exceeded")
+
+		count, err = s.model(&users).Create().Exec(nil, false)
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
@@ -227,8 +235,11 @@ func (s *modelSuite) TestCount() {
 			s.Equal(int64(idx+1), u.ID)
 		}
 
-		var user User
-		count, err = s.model(&user).Count().Exec(nil, false)
+		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		user = User{}
+		count, err = s.model(&user).Count().Exec(ctx, false)
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
@@ -236,17 +247,13 @@ func (s *modelSuite) TestCount() {
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
+		count, err = s.model(&user).Where("id ?").Count().Exec(nil, false)
+		s.Equal(int64(0), count)
+		s.NotNil(err)
+
 		count, err = s.model(&user).Where("id > ?", 5).Count().Exec(nil, false)
 		s.Equal(int64(5), count)
 		s.Nil(err)
-
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-		defer cancel()
-
-		user = User{}
-		count, err = s.model(&user).Count().Exec(ctx, false)
-		s.Equal(int64(0), count)
-		s.EqualError(err, "context deadline exceeded")
 	}
 }
 
@@ -343,11 +350,32 @@ func (s *modelSuite) TestDelete() {
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
-		count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).Delete().Exec(nil, false)
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
+
+		user := User{}
+		count, err = s.model(&user).Where("id ?").Delete().Exec(ctx, false)
+		s.Equal(int64(0), count)
+		s.NotNil(err)
+
+		user = User{}
+		count, err = s.model(&user).Where("id ?").Delete().Exec(nil, false)
+		s.Equal(int64(0), count)
+		s.NotNil(err)
+
+		user = User{}
+		count, err = s.model(&user).Where("id = ?", 0).Delete().Exec(nil, false)
+		s.Equal(int64(0), count)
+		s.Nil(err)
+
+		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).Delete().Exec(ctx, false)
 		s.Equal(int64(3), count)
 		s.Nil(err)
 
-		user := User{}
+		user = User{}
 		count, err = s.model(&user).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec(nil, false)
 		s.Equal(int64(0), count)
 		s.Nil(err)
@@ -393,7 +421,34 @@ func (s *modelSuite) TestFind() {
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
-		count, err = s.model(&User{}).Where("id = ?", 5).Find().Exec(nil, false)
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
+
+		users = []User{}
+		count, err = s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ctx, false)
+		s.Equal(0, len(users))
+		s.Equal(int64(0), count)
+		s.EqualError(err, "context deadline exceeded")
+
+		user := User{}
+		count, err = s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ctx, false)
+		s.Equal(int64(0), count)
+		s.EqualError(err, "context deadline exceeded")
+
+		users = []User{}
+		count, err = s.model(&users).Where("id ?").Find().Exec(nil, false)
+		s.Equal(int64(0), count)
+		s.Nil(nil)
+
+		user = User{}
+		count, err = s.model(&user).Where("id ?").Find().Exec(nil, false)
+		s.Equal(int64(0), count)
+		s.Nil(nil)
+
+		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		count, err = s.model(&User{}).Where("id = ?", 5).Find().Exec(ctx, false)
 		s.Equal(int64(1), count)
 		s.Nil(err)
 
@@ -411,7 +466,7 @@ func (s *modelSuite) TestFind() {
 		s.Nil(err)
 
 		users = []User{}
-		count, err = s.model(&users).Where("id IN (?)", []int64{5, 6, 7}).Order("id ASC").Find().Exec(nil, false)
+		count, err = s.model(&users).Where("id IN (?)", []int64{5, 6, 7}).Order("id ASC").Find().Exec(ctx, false)
 		s.Equal(3, len(users))
 		s.Equal(int64(3), count)
 		s.Equal(int64(5), users[0].ID)
@@ -439,25 +494,16 @@ func (s *modelSuite) TestFind() {
 		s.Equal(int64(6), users[0].ID)
 		s.Nil(err)
 
-		user := User{}
+		user = User{}
 		count, err = s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(nil, false)
 		s.Equal(int64(1), count)
 		s.Equal(int64(6), user.ID)
 		s.Nil(err)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-		defer cancel()
-
-		users = []User{}
-		count, err = s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ctx, false)
-		s.Equal(0, len(users))
-		s.Equal(int64(0), count)
-		s.EqualError(err, "context deadline exceeded")
-
 		user = User{}
-		count, err = s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ctx, false)
+		count, err = s.model(&user).Where("id = ?", 0).Find().Exec(nil, false)
 		s.Equal(int64(0), count)
-		s.EqualError(err, "context deadline exceeded")
+		s.Nil(err)
 	}
 }
 
