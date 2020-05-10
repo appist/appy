@@ -69,11 +69,22 @@ func newDB() DBer {
 	logger, _, _ := support.NewTestLogger()
 	dbManager := NewEngine(logger)
 	db := dbManager.DB("primary")
-	db.DropDB(database)
-	db.CreateDB(database)
-	db.Connect()
+	err := db.DropDB(database)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	_, err := db.Exec(SCHEMA)
+	err = db.CreateDB(database)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec(SCHEMA)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -97,11 +108,23 @@ func newOrmDBManager() *Engine {
 	logger, _, _ := support.NewTestLogger()
 	dbManager := NewEngine(logger)
 	db := dbManager.DB("primary")
-	db.DropDB(database)
-	db.CreateDB(database)
-	db.Connect()
 
-	_, err := db.Exec(SCHEMA)
+	err := db.DropDB(database)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.CreateDB(database)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = db.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec(SCHEMA)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -327,7 +350,7 @@ func BenchmarkUpdateRaw(b *testing.B) {
 			b.FailNow()
 		}
 
-		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Intn(1000000), rand.Intn(1000000), id)
+		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000), id)
 		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
@@ -355,7 +378,7 @@ func BenchmarkUpdateDB(b *testing.B) {
 			b.FailNow()
 		}
 
-		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Intn(1000000), rand.Intn(1000000), id)
+		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000), id)
 		stmt.Close()
 		if err != nil {
 			fmt.Println(err)
@@ -376,10 +399,10 @@ func BenchmarkUpdateORM(b *testing.B) {
 
 	b.ResetTimer()
 
-	var user BenchmarkUser
 	for i := 0; i < b.N; i++ {
+		var user BenchmarkUser
 		model := NewModel(dbManager, &user)
-		count, err := model.Where("id = ?", id).Update("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Intn(1000000), rand.Intn(1000000)).Exec()
+		count, err := model.Where("id = ?", id).Update("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000)).Exec()
 
 		if count != 1 {
 			fmt.Println(errors.New("count should equal to 1"))
@@ -471,8 +494,8 @@ func BenchmarkReadORM(b *testing.B) {
 
 	b.ResetTimer()
 
-	var user BenchmarkUser
 	for i := 0; i < b.N; i++ {
+		var user BenchmarkUser
 		model := NewModel(dbManager, &user)
 		count, err := model.Where("id = ?", id).Find().Exec()
 		if count != 1 {
@@ -607,12 +630,13 @@ func BenchmarkReadSliceORM(b *testing.B) {
 
 	b.ResetTimer()
 
-	var user BenchmarkUser
 	for i := 0; i < b.N; i++ {
-		model := NewModel(dbManager, &user)
+		var users []BenchmarkUser
+		model := NewModel(dbManager, &users)
 		count, err := model.Where("id > ?", 0).Limit(100).Find().Exec()
-		if count != 1 {
-			fmt.Println(errors.New("count should equal to 1"))
+
+		if count != 100 {
+			fmt.Println(errors.New("count should equal to 100"))
 			b.FailNow()
 		}
 
