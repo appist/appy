@@ -45,6 +45,17 @@ type (
 		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
 	}
 
+	DuplicateUser struct {
+		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" faker:"-"`
+		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
+		Age       int64      `db:"-"`
+		Email     string     `db:"email" faker:"email,unique"`
+		Username  string     `db:"username" faker:"username,unique"`
+		CreatedAt *time.Time `db:"created_at" faker:"-"`
+		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+	}
+
 	UserWithoutPK struct {
 		Modeler   `masters:"primary" replicas:"primaryReplica" primaryKeys:"" tableName:"" faker:"-"`
 		ID        int64      `db:"id" faker:"-"`
@@ -127,10 +138,19 @@ CREATE TABLE IF NOT EXISTS users (
 	updated_at TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS duplicate_users (
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	email VARCHAR(64) NOT NULL,
+	username VARCHAR(64) NOT NULL,
+	created_at TIMESTAMP,
+	deleted_at TIMESTAMP,
+	updated_at TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE IF NOT EXISTS user_without_pks (
 	id INT,
-	email VARCHAR(64) UNIQUE NOT NULL,
-	username VARCHAR(64) UNIQUE NOT NULL,
+	email VARCHAR(64) NOT NULL,
+	username VARCHAR(64) NOT NULL,
 	created_at TIMESTAMP,
 	deleted_at TIMESTAMP,
 	updated_at TIMESTAMP
@@ -165,10 +185,19 @@ CREATE TABLE IF NOT EXISTS users (
 	updated_at TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS duplicate_users (
+	id SERIAL PRIMARY KEY,
+	email VARCHAR NOT NULL,
+	username VARCHAR NOT NULL,
+	created_at TIMESTAMP,
+	deleted_at TIMESTAMP,
+	updated_at TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS user_without_pks (
 	id SERIAL,
-	email VARCHAR UNIQUE NOT NULL,
-	username VARCHAR UNIQUE NOT NULL,
+	email VARCHAR NOT NULL,
+	username VARCHAR NOT NULL,
 	created_at TIMESTAMP,
 	deleted_at TIMESTAMP,
 	updated_at TIMESTAMP
@@ -1621,52 +1650,62 @@ func (s *modelSuite) TestScanTx() {
 	}
 }
 
-// func (s *modelSuite) TestUpdate() {
-// 	for _, adapter := range support.SupportedDBAdapters {
-// 		s.setupDB(adapter, "test_model_update_"+adapter)
+func (s *modelSuite) TestUpdate() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_update_"+adapter)
 
-// 		var user User
-// 		s.Nil(faker.FakeData(&user))
+		{
+			var user DuplicateUser
+			s.Nil(faker.FakeData(&user))
 
-// 		count, err := s.model(&user).Create().Exec()
-// 		s.Equal(int64(1), count)
-// 		s.Equal(int64(1), user.ID)
-// 		s.Nil(err)
+			count, err := s.model(&user).Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(1), user.ID)
+			s.Nil(err)
 
-// 		{
-// 			user = User{}
-// 			count, err = s.model(&user).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
-// 			s.Equal(int64(1), count)
-// 			s.Nil(err)
-// 		}
+			count, err = s.model(&user).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+			s.Equal("foo@gmail.com", user.Email)
+			s.Equal("foo", user.Username)
+		}
 
-// 		users := []User{}
-// 		for i := 0; i < 10; i++ {
-// 			u := User{}
-// 			s.Nil(faker.FakeData(&u))
-// 			users = append(users, u)
-// 		}
-// 		count, err = s.model(&users).Create().Exec()
-// 		s.Equal(10, len(users))
-// 		s.Equal(int64(10), count)
-// 		s.Nil(err)
+		{
+			users := []DuplicateUser{}
+			for i := 0; i < 10; i++ {
+				user := DuplicateUser{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
 
-// 		{
-// 			user = User{}
-// 			count, err = s.model(&user).Where("id = ?", 10).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
-// 			s.Equal(int64(1), count)
-// 			s.Nil(err)
+			count, err := s.model(&users).Create().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(err)
 
-// 			user = User{}
-// 			count, err = s.model(&user).Where("id = ?", 10).Find().Exec()
-// 			s.Equal(int64(1), count)
-// 			s.Equal(int64(10), user.ID)
-// 			s.Equal("bar@gmail.com", user.Email)
-// 			s.Equal("bar", user.Username)
-// 			s.Nil(err)
-// 		}
-// 	}
-// }
+			users = []DuplicateUser{
+				{ID: 1},
+				{ID: 2},
+			}
+
+			count, err = s.model(&users).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
+			s.Equal(int64(2), count)
+			s.Nil(err)
+			s.Equal(int64(1), users[0].ID)
+			s.Equal("bar@gmail.com", users[0].Email)
+			s.Equal("bar", users[0].Username)
+			s.Equal(int64(2), users[1].ID)
+			s.Equal("bar@gmail.com", users[1].Email)
+			s.Equal("bar", users[1].Username)
+		}
+	}
+}
+
+func (s *modelSuite) TestUpdateTx() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_update_tx_"+adapter)
+	}
+}
 
 func TestModelSuite(t *testing.T) {
 	test.Run(t, new(modelSuite))

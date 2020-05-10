@@ -38,7 +38,7 @@ type (
 	// Model is the layer that represents business data and logic.
 	Model struct {
 		adapter, autoIncrementStField, tableName              string
-		attrs                                                 map[string]modelAttr
+		attrs                                                 map[string]*modelAttr
 		dest, scanDest                                        interface{}
 		destKind                                              reflect.Kind
 		masters, replicas                                     []DBer
@@ -48,6 +48,7 @@ type (
 		limit, offset                                         int
 		group, having, order, queryType, selectColumns, where string
 		args, havingArgs, whereArgs                           []interface{}
+		updateValues                                          map[string]reflect.Value
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
@@ -92,14 +93,15 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 	}
 
 	model := &Model{
-		adapter:     "",
-		attrs:       map[string]modelAttr{},
-		dest:        dest,
-		destKind:    destKind,
-		masters:     []DBer{},
-		replicas:    []DBer{},
-		primaryKeys: []string{"id"},
-		tableName:   support.ToSnakeCase(support.Plural(e.Name())),
+		adapter:      "",
+		attrs:        map[string]*modelAttr{},
+		dest:         dest,
+		destKind:     destKind,
+		masters:      []DBer{},
+		replicas:     []DBer{},
+		primaryKeys:  []string{"id"},
+		tableName:    support.ToSnakeCase(support.Plural(e.Name())),
+		updateValues: map[string]reflect.Value{},
 	}
 
 	if len(opts) > 0 {
@@ -188,7 +190,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 				attr.primaryKey = true
 			}
 
-			model.attrs[dbColumn] = attr
+			model.attrs[dbColumn] = &attr
 		}
 	}
 
@@ -360,6 +362,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		err                 error
 		result              sql.Result
 		rows                *Rows
+		stmt                *Stmt
 		db, master, replica DBer
 	)
 
@@ -420,14 +423,14 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	case "exec":
 		if m.tx != nil {
 			if opt.Context != nil {
-				stmt, err := m.tx.PrepareContext(opt.Context, query)
+				stmt, err = m.tx.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
 
 				result, err = stmt.ExecContext(opt.Context, m.args...)
 			} else {
-				stmt, err := m.tx.Prepare(query)
+				stmt, err = m.tx.Prepare(query)
 				if err != nil {
 					return int64(0), err
 				}
@@ -436,14 +439,14 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 			}
 		} else {
 			if opt.Context != nil {
-				stmt, err := db.PrepareContext(opt.Context, query)
+				stmt, err = db.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
 
 				result, err = stmt.ExecContext(opt.Context, m.args...)
 			} else {
-				stmt, err := db.Prepare(query)
+				stmt, err = db.Prepare(query)
 				if err != nil {
 					return int64(0), err
 				}
@@ -460,17 +463,38 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		if err != nil {
 			return int64(0), err
 		}
+
+		if strings.Contains(query, "UPDATE ") {
+			switch m.destKind {
+			case reflect.Array, reflect.Slice:
+				dest := reflect.ValueOf(m.dest).Elem()
+
+				for i := 0; i < dest.Len(); i++ {
+					for column, val := range m.updateValues {
+						dest.Index(i).FieldByName(m.attrs[column].stFieldName).Set(val)
+					}
+				}
+			case reflect.Ptr:
+				dest := reflect.ValueOf(m.dest).Elem()
+
+				for column, val := range m.updateValues {
+					dest.FieldByName(m.attrs[column].stFieldName).Set(val)
+				}
+			}
+
+			m.updateValues = map[string]reflect.Value{}
+		}
 	case "getOnly":
 		if m.tx != nil {
 			if opt.Context != nil {
-				stmt, err := m.tx.PrepareContext(opt.Context, query)
+				stmt, err = m.tx.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
 
 				err = stmt.GetContext(opt.Context, &count, m.args...)
 			} else {
-				stmt, err := m.tx.Prepare(query)
+				stmt, err = m.tx.Prepare(query)
 				if err != nil {
 					return int64(0), err
 				}
@@ -479,14 +503,14 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 			}
 		} else {
 			if opt.Context != nil {
-				stmt, err := db.PrepareContext(opt.Context, query)
+				stmt, err = db.PrepareContext(opt.Context, query)
 				if err != nil {
 					return int64(0), err
 				}
 
 				err = stmt.GetContext(opt.Context, &count, m.args...)
 			} else {
-				stmt, err := db.Prepare(query)
+				stmt, err = db.Prepare(query)
 				if err != nil {
 					return int64(0), err
 				}
@@ -532,10 +556,10 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 			if m.autoIncrementStField != "" {
 				switch m.destKind {
 				case reflect.Array, reflect.Slice:
-					v := reflect.ValueOf(m.dest)
+					dest := reflect.ValueOf(m.dest)
 
-					for i := 0; i < v.Len(); i++ {
-						v.Index(i).FieldByName(m.autoIncrementStField).SetInt(lastInsertID + int64(i))
+					for i := 0; i < dest.Len(); i++ {
+						dest.Index(i).FieldByName(m.autoIncrementStField).SetInt(lastInsertID + int64(i))
 					}
 				case reflect.Ptr:
 					reflect.ValueOf(m.dest).Elem().FieldByName(m.autoIncrementStField).SetInt(lastInsertID)
@@ -564,11 +588,11 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 
 			switch m.destKind {
 			case reflect.Array, reflect.Slice:
-				v := reflect.ValueOf(m.dest)
-				count = int64(v.Len())
+				dest := reflect.ValueOf(m.dest)
+				count = int64(dest.Len())
 
-				for i := 0; i < v.Len(); i++ {
-					err = m.scanPrimaryKeys(rows, v.Index(i))
+				for i := 0; i < dest.Len(); i++ {
+					err = m.scanPrimaryKeys(rows, dest.Index(i))
 
 					if err != nil {
 						return int64(0), err
@@ -588,14 +612,14 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		case reflect.Array, reflect.Slice:
 			if m.tx != nil {
 				if opt.Context != nil {
-					stmt, err := m.tx.PrepareContext(opt.Context, query)
+					stmt, err = m.tx.PrepareContext(opt.Context, query)
 					if err != nil {
 						return int64(0), err
 					}
 
 					err = stmt.SelectContext(opt.Context, m.dest, m.args...)
 				} else {
-					stmt, err := m.tx.Prepare(query)
+					stmt, err = m.tx.Prepare(query)
 					if err != nil {
 						return int64(0), err
 					}
@@ -604,14 +628,14 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 				}
 			} else {
 				if opt.Context != nil {
-					stmt, err := db.PrepareContext(opt.Context, query)
+					stmt, err = db.PrepareContext(opt.Context, query)
 					if err != nil {
 						return int64(0), err
 					}
 
 					err = stmt.SelectContext(opt.Context, m.dest, m.args...)
 				} else {
-					stmt, err := db.Prepare(query)
+					stmt, err = db.Prepare(query)
 					if err != nil {
 						return int64(0), err
 					}
@@ -624,14 +648,14 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		case reflect.Ptr:
 			if m.tx != nil {
 				if opt.Context != nil {
-					stmt, err := m.tx.PrepareContext(opt.Context, query)
+					stmt, err = m.tx.PrepareContext(opt.Context, query)
 					if err != nil {
 						return int64(0), err
 					}
 
 					err = stmt.GetContext(opt.Context, m.dest, m.args...)
 				} else {
-					stmt, err := m.tx.Prepare(query)
+					stmt, err = m.tx.Prepare(query)
 					if err != nil {
 						return int64(0), err
 					}
@@ -640,20 +664,24 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 				}
 			} else {
 				if opt.Context != nil {
-					stmt, err := db.PrepareContext(opt.Context, query)
+					stmt, err = db.PrepareContext(opt.Context, query)
 					if err != nil {
 						return int64(0), err
 					}
 
 					err = stmt.GetContext(opt.Context, m.dest, m.args...)
 				} else {
-					stmt, err := db.Prepare(query)
+					stmt, err = db.Prepare(query)
 					if err != nil {
 						return int64(0), err
 					}
 
 					err = stmt.Get(m.dest, m.args...)
 				}
+			}
+
+			if err == sql.ErrNoRows {
+				err = nil
 			}
 
 			for _, pk := range m.primaryKeys {
@@ -838,6 +866,13 @@ func (m *Model) Update(set string, args ...interface{}) *Model {
 	m.queryBuilder.WriteString(set)
 	m.args = append(m.args, args...)
 
+	setSplits := strings.Split(set, ",")
+	for idx, ss := range setSplits {
+		ssSplits := strings.Split(ss, "=")
+		ss = strings.Trim(ssSplits[0], " ")
+		m.updateValues[ss] = reflect.ValueOf(args[idx])
+	}
+
 	if m.where == "" {
 		m.buildWhereWithPrimaryKeys()
 	}
@@ -846,6 +881,11 @@ func (m *Model) Update(set string, args ...interface{}) *Model {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
 		m.args = append(m.args, m.whereArgs...)
+	}
+
+	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
+		m.queryBuilder.WriteString(" RETURNING ")
+		m.queryBuilder.WriteString(strings.Join(m.primaryKeys, ", "))
 	}
 
 	m.queryBuilder.WriteString(";")
@@ -871,9 +911,17 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 
 	switch m.destKind {
 	case reflect.Array, reflect.Slice:
-		builder.WriteString("(")
+		if len(m.primaryKeys) > 1 {
+			builder.WriteString("(")
+		}
+
 		builder.WriteString(strings.Join(m.primaryKeys, ", "))
-		builder.WriteString(") IN (")
+
+		if len(m.primaryKeys) > 1 {
+			builder.WriteString(")")
+		}
+
+		builder.WriteString(" IN (")
 
 		dest = dest.Elem()
 		for i := 0; i < dest.Len(); i++ {
@@ -889,7 +937,16 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 			}
 
 			if len(pkValues) == len(m.primaryKeys) {
-				builder.WriteString("(" + strings.Trim(strings.Repeat("?, ", len(m.primaryKeys)), ", ") + ")")
+				if len(m.primaryKeys) > 1 {
+					builder.WriteString("(")
+				}
+
+				builder.WriteString(strings.Trim(strings.Repeat("?, ", len(m.primaryKeys)), ", "))
+
+				if len(m.primaryKeys) > 1 {
+					builder.WriteString(")")
+				}
+
 				args = append(args, pkValues...)
 			}
 
