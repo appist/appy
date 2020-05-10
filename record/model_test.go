@@ -24,7 +24,7 @@ type (
 	}
 
 	AdminUser struct {
-		Modeler   `masters:"primary" replicas:"" tableName:"admins" primaryKeys:"id" faker:"-"`
+		Modeler   `masters:"primary" replicas:"" tableName:"admins" primaryKeys:"id,email" faker:"-"`
 		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
@@ -35,7 +35,7 @@ type (
 	}
 
 	User struct {
-		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" primaryKeys:"id" faker:"-"`
+		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" faker:"-"`
 		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
@@ -45,8 +45,19 @@ type (
 		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
 	}
 
+	UserWithoutPK struct {
+		Modeler   `masters:"primary" replicas:"primaryReplica" primaryKeys:"" tableName:"" faker:"-"`
+		ID        int64      `db:"id" faker:"-"`
+		Age       int64      `db:"-"`
+		Email     string     `db:"email" faker:"email,unique"`
+		Username  string     `db:"username" faker:"username,unique"`
+		CreatedAt *time.Time `db:"created_at" faker:"-"`
+		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+	}
+
 	MasterOnlyUser struct {
-		Modeler   `masters:"primary" replicas:"" tableName:"admins" primaryKeys:"id" faker:"-"`
+		Modeler   `masters:"primary" replicas:"" tableName:"admins" faker:"-"`
 		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
@@ -57,7 +68,7 @@ type (
 	}
 
 	ReplicaOnlyUser struct {
-		Modeler   `masters:"" replicas:"primaryReplica" tableName:"admins" primaryKeys:"id" faker:"-"`
+		Modeler   `masters:"" replicas:"primaryReplica" tableName:"admins" faker:"-"`
 		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
@@ -98,6 +109,16 @@ func (s *modelSuite) setupDB(adapter, database string) {
 
 		query = `
 CREATE TABLE IF NOT EXISTS admins (
+	id INT AUTO_INCREMENT,
+	email VARCHAR(64) UNIQUE NOT NULL,
+	username VARCHAR(64) UNIQUE NOT NULL,
+	created_at TIMESTAMP,
+	deleted_at TIMESTAMP,
+	updated_at TIMESTAMP,
+	PRIMARY KEY (id, email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS users (
 	id INT PRIMARY KEY AUTO_INCREMENT,
 	email VARCHAR(64) UNIQUE NOT NULL,
 	username VARCHAR(64) UNIQUE NOT NULL,
@@ -106,8 +127,8 @@ CREATE TABLE IF NOT EXISTS admins (
 	updated_at TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS users (
-	id INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS user_without_pks (
+	id INT,
 	email VARCHAR(64) UNIQUE NOT NULL,
 	username VARCHAR(64) UNIQUE NOT NULL,
 	created_at TIMESTAMP,
@@ -137,6 +158,15 @@ CREATE TABLE IF NOT EXISTS admins (
 
 CREATE TABLE IF NOT EXISTS users (
 	id SERIAL PRIMARY KEY,
+	email VARCHAR UNIQUE NOT NULL,
+	username VARCHAR UNIQUE NOT NULL,
+	created_at TIMESTAMP,
+	deleted_at TIMESTAMP,
+	updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_without_pks (
+	id SERIAL,
 	email VARCHAR UNIQUE NOT NULL,
 	username VARCHAR UNIQUE NOT NULL,
 	created_at TIMESTAMP,
@@ -173,73 +203,85 @@ CREATE TABLE IF NOT EXISTS users (
 	s.Nil(err)
 }
 
+func (s *modelSuite) insertUsers() {
+	users := []User{}
+	for i := 0; i < 10; i++ {
+		user := User{}
+		s.Nil(faker.FakeData(&user))
+		users = append(users, user)
+	}
+
+	count, err := s.model(&users).Create().Exec()
+	s.Equal(10, len(users))
+	s.Equal(int64(10), count)
+	s.Nil(err)
+}
+
 func (s *modelSuite) TestAll() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_all_with_"+adapter)
-
-		users := []User{}
-		for i := 0; i < 10; i++ {
-			u := User{}
-			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
-		}
-		count, err := s.model(&users).Create().Exec()
-		s.Equal(10, len(users))
-		s.Equal(int64(10), count)
-		s.Nil(err)
+		s.insertUsers()
 
 		{
-			user := User{}
-			count, err = s.model(&user).All().Exec()
-			s.Equal(int64(1), count)
-			s.Nil(err)
-		}
-
-		{
-			user := User{}
-			count, err = s.model(&user).All().Exec()
+			var user User
+			count, err := s.model(&user).All().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
 			s.Nil(err)
 		}
 
 		{
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
-
-			user := User{}
-			count, err = s.model(&user).All().Exec(ExecOption{Context: ctx})
-			s.Equal(int64(1), count)
+			var users []User
+			count, err := s.model(&users).All().Exec()
+			s.Equal(int64(10), count)
+			s.Equal(int64(1), users[0].ID)
 			s.Nil(err)
 		}
 
 		{
 			// Wait for replication.
 			time.Sleep(500 * time.Millisecond)
-			users = []User{}
-			count, err = s.model(&users).All().Exec(ExecOption{UseReplica: true})
+
+			var users []User
+			count, err := s.model(&users).All().Exec(ExecOption{UseReplica: true})
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
 			s.Nil(err)
 		}
 
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
 		{
-			users = []User{}
-			count, err = s.model(&users).All().Exec()
+			var user User
+			count, err := s.model(&user).All().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
 			s.Equal(int64(1), users[0].ID)
 			s.Nil(err)
 		}
 
-		{
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
 
-			users = []User{}
-			count, err = s.model(&users).All().Exec(ExecOption{Context: ctx})
-			s.Equal(int64(10), count)
-			s.Equal(int64(1), users[0].ID)
-			s.Nil(err)
+		{
+			var user User
+			count, err := s.model(&user).All().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).All().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
 		}
 	}
 }
@@ -247,26 +289,16 @@ func (s *modelSuite) TestAll() {
 func (s *modelSuite) TestAllTx() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_all_tx_with_"+adapter)
-
-		users := []User{}
-		for i := 0; i < 10; i++ {
-			u := User{}
-			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
-		}
-		count, err := s.model(&users).Create().Exec()
-		s.Equal(10, len(users))
-		s.Equal(int64(10), count)
-		s.Nil(err)
+		s.insertUsers()
 
 		{
-			user := User{}
+			var user User
 			userModel := s.model(&user)
-			err = userModel.Begin()
+			err := userModel.Begin()
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err = userModel.All().Exec()
+			count, err := userModel.All().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
 			s.Nil(err)
@@ -276,16 +308,51 @@ func (s *modelSuite) TestAllTx() {
 		}
 
 		{
-			user := User{}
-			userModel := s.model(&user)
-			err = userModel.Begin()
+			var users []User
+			userModel := s.model(&users)
+			err := userModel.Begin()
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
+			count, err := userModel.All().Exec()
+			s.Equal(int64(10), count)
+			s.Equal(int64(1), users[0].ID)
+			s.Nil(err)
 
-			count, err = userModel.All().Exec(ExecOption{Context: ctx})
+			err = userModel.Commit()
+			s.Nil(err)
+		}
+
+		{
+			// Wait for replication.
+			time.Sleep(500 * time.Millisecond)
+
+			var users []User
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.All().Exec(ExecOption{UseReplica: true})
+			s.Equal(int64(10), count)
+			s.Equal(int64(1), users[0].ID)
+			s.Nil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		{
+			var user User
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -294,16 +361,32 @@ func (s *modelSuite) TestAllTx() {
 		}
 
 		{
-			user := User{}
+			var users []User
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.All().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(10), count)
+			s.Equal(int64(1), users[0].ID)
+			s.Nil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
+
+		{
+			var user User
 			userModel := s.model(&user)
-			err = userModel.Begin()
+			err := userModel.Begin()
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
-
-			count, err = userModel.All().Exec(ExecOption{Context: ctx})
+			count, err := userModel.All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
 			s.EqualError(err, "context deadline exceeded")
 
@@ -312,69 +395,13 @@ func (s *modelSuite) TestAllTx() {
 		}
 
 		{
-			users = []User{}
+			var users []User
 			userModel := s.model(&users)
-			err = userModel.Begin()
+			err := userModel.Begin()
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err = userModel.All().Exec()
-			s.Equal(int64(10), count)
-			s.Equal(int64(1), users[0].ID)
-			s.Nil(err)
-
-			err = userModel.Commit()
-			s.Nil(err)
-		}
-
-		{
-			users = []User{}
-			userModel := s.model(&users)
-			err = userModel.Begin()
-			s.NotNil(userModel.Tx())
-			s.Nil(err)
-
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
-
-			count, err = userModel.All().Exec(ExecOption{Context: ctx})
-			s.Equal(int64(10), count)
-			s.Equal(int64(1), users[0].ID)
-			s.Nil(err)
-
-			err = userModel.Commit()
-			s.Nil(err)
-		}
-
-		{
-			users = []User{}
-			userModel := s.model(&users)
-			err = userModel.Begin()
-			s.NotNil(userModel.Tx())
-			s.Nil(err)
-
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
-
-			count, err = userModel.All().Exec(ExecOption{Context: ctx})
-			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
-
-			err = userModel.Commit()
-			s.Nil(err)
-		}
-
-		{
-			users = []User{}
-			userModel := s.model(&users)
-			err = userModel.Begin()
-			s.NotNil(userModel.Tx())
-			s.Nil(err)
-
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
-
-			count, err = userModel.All().Exec(ExecOption{Context: ctx})
+			count, err := userModel.All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
 			s.EqualError(err, "context deadline exceeded")
 
@@ -387,21 +414,96 @@ func (s *modelSuite) TestAllTx() {
 func (s *modelSuite) TestCount() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_count_with_"+adapter)
+		s.insertUsers()
 
-		users := []User{}
-		for i := 0; i < 10; i++ {
-			u := User{}
-			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
+		{
+			var user User
+			count, err := s.model(&user).Count().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
 		}
 
-		count, err := s.model(&users).Create().Exec()
-		s.Equal(int64(10), count)
-		s.Equal(int64(1), users[0].ID)
-		s.Nil(err)
+		{
+			var users []User
+			count, err := s.model(&users).Count().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+		}
+
+		{
+			var user User
+			count, err := s.model(&user).Select("DISTINCT concat(email, username)").Count().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+		}
+
+		{
+			var user User
+			count, err := s.model(&user).Where("$?").Count().Exec()
+			s.Equal(int64(0), count)
+			s.NotNil(err)
+		}
 
 		{
 			user := User{}
+			count, err := s.model(&user).Where("id > ?", 5).Count().Exec()
+			s.Equal(int64(5), count)
+			s.Nil(err)
+		}
+
+		{
+			// Wait for replication.
+			time.Sleep(500 * time.Millisecond)
+
+			var user User
+			count, err := s.model(&user).Count().Exec(ExecOption{UseReplica: true})
+			s.Equal(int64(10), count)
+			s.Nil(err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		{
+			var user User
+			count, err := s.model(&user).Count().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(10), count)
+			s.Nil(err)
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).Count().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(10), count)
+			s.Nil(err)
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
+
+		{
+			var user User
+			count, err := s.model(&user).Count().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).Count().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
+		}
+	}
+}
+
+func (s *modelSuite) TestCountTx() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_count_tx_with_"+adapter)
+		s.insertUsers()
+
+		{
+			var user User
 			userModel := s.model(&user)
 			err := userModel.Begin()
 			s.NotNil(userModel.Tx())
@@ -416,73 +518,44 @@ func (s *modelSuite) TestCount() {
 		}
 
 		{
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
+			var users []User
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
 
-			user := User{}
-			count, err := s.model(&user).Count().Exec(ExecOption{Context: ctx})
+			count, err := userModel.Count().Exec()
 			s.Equal(int64(10), count)
 			s.Nil(err)
-		}
 
-		{
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
-
-			user := User{}
-			count, err := s.model(&user).Count().Exec(ExecOption{Context: ctx})
-			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
-		}
-
-		{
-			user := User{}
-			count, err := s.model(&user).Select("DISTINCT concat(email, username)").Count().Exec()
-			s.Equal(int64(10), count)
+			err = userModel.Commit()
 			s.Nil(err)
 		}
 
 		{
-			user := User{}
-			count, err := s.model(&user).Where("id ?").Count().Exec()
-			s.Equal(int64(0), count)
-			s.NotNil(err)
-		}
-
-		{
-			user := User{}
-			count, err := s.model(&user).Where("id > ?", 5).Count().Exec()
-			s.Equal(int64(5), count)
-			s.Nil(err)
-		}
-	}
-}
-
-func (s *modelSuite) TestCountTx() {
-	for _, adapter := range support.SupportedDBAdapters {
-		s.setupDB(adapter, "test_model_count_tx_with_"+adapter)
-
-		users := []User{}
-		for i := 0; i < 10; i++ {
-			u := User{}
-			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
-		}
-
-		count, err := s.model(&users).Create().Exec()
-		s.Equal(int64(10), count)
-		s.Equal(int64(1), users[0].ID)
-		s.Nil(err)
-
-		{
-			user := User{}
+			var user User
 			userModel := s.model(&user)
 			err := userModel.Begin()
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
+			count, err := s.model(&user).Where("$?").Count().Exec()
+			s.Equal(int64(0), count)
+			s.NotNil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		{
+			var user User
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
 
 			count, err := userModel.Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
@@ -493,14 +566,44 @@ func (s *modelSuite) TestCountTx() {
 		}
 
 		{
-			user := User{}
+			var users []User
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Count().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
+
+		{
+			var user User
 			userModel := s.model(&user)
 			err := userModel.Begin()
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
+			count, err := userModel.Count().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
+
+			err = userModel.Commit()
+			s.Nil(err)
+		}
+
+		{
+			var users []User
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
 
 			count, err := userModel.Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
@@ -529,9 +632,9 @@ func (s *modelSuite) TestCreate() {
 		{
 			users := []User{}
 			for i := 0; i < 10; i++ {
-				u := User{}
-				s.Nil(faker.FakeData(&u))
-				users = append(users, u)
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
 			}
 
 			count, err := s.model(&users).Create().Exec()
@@ -539,15 +642,45 @@ func (s *modelSuite) TestCreate() {
 			s.Equal(int64(10), count)
 			s.Nil(err)
 
-			for idx, u := range users {
-				s.Equal(int64(idx+2), u.ID)
+			for idx, user := range users {
+				s.Equal(int64(idx+2), user.ID)
 			}
 		}
 
-		{
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
 
+		{
+			user := User{}
+			s.Nil(faker.FakeData(&user))
+
+			count, err := s.model(&user).Create().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(1), count)
+			s.Equal(int64(12), user.ID)
+			s.Nil(err)
+		}
+
+		{
+			users := []User{}
+			for i := 0; i < 10; i++ {
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			count, err := s.model(&users).Create().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			for idx, user := range users {
+				s.Equal(int64(idx+13), user.ID)
+			}
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
+
+		{
 			user := User{}
 			s.Nil(faker.FakeData(&user))
 
@@ -557,14 +690,11 @@ func (s *modelSuite) TestCreate() {
 		}
 
 		{
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
-
 			users := []User{}
 			for i := 0; i < 10; i++ {
-				u := User{}
-				s.Nil(faker.FakeData(&u))
-				users = append(users, u)
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
 			}
 
 			count, err := s.model(&users).Create().Exec(ExecOption{Context: ctx})
@@ -623,9 +753,63 @@ func (s *modelSuite) TestCreateTx() {
 		}
 
 		{
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
+			users := []User{}
+			for i := 0; i < 10; i++ {
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
 
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Create().Exec()
+			s.Equal(int64(10), count)
+			s.Equal(int64(3), users[0].ID)
+			s.Nil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&users).Count().Exec()
+			s.Equal(int64(11), count)
+			s.Equal(int64(3), users[0].ID)
+			s.Nil(err)
+		}
+
+		{
+			users := []User{}
+			for i := 0; i < 10; i++ {
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Create().Exec()
+			s.Equal(int64(10), count)
+			s.Equal(int64(13), users[0].ID)
+			s.Nil(err)
+
+			err = userModel.Rollback()
+			s.Nil(err)
+
+			count, err = s.model(&users).Count().Exec()
+			s.Equal(int64(11), count)
+			s.Equal(int64(13), users[0].ID)
+			s.Nil(err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		{
 			var user User
 			s.Nil(faker.FakeData(&user))
 
@@ -636,21 +820,21 @@ func (s *modelSuite) TestCreateTx() {
 
 			count, err := userModel.Create().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
-			s.Equal(int64(3), user.ID)
+			s.Equal(int64(23), user.ID)
 			s.Nil(err)
 
 			err = userModel.Commit()
 			s.Nil(err)
 
 			count, err = s.model(&user).Count().Exec()
-			s.Equal(int64(2), count)
+			s.Equal(int64(12), count)
 			s.Nil(err)
 		}
 
-		{
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
 
+		{
 			var user User
 			s.Nil(faker.FakeData(&user))
 
@@ -667,16 +851,16 @@ func (s *modelSuite) TestCreateTx() {
 			s.Nil(err)
 
 			count, err = s.model(&user).Count().Exec()
-			s.Equal(int64(2), count)
+			s.Equal(int64(12), count)
 			s.Nil(err)
 		}
 
 		{
 			users := []User{}
 			for i := 0; i < 10; i++ {
-				u := User{}
-				s.Nil(faker.FakeData(&u))
-				users = append(users, u)
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
 			}
 
 			userModel := s.model(&users)
@@ -684,45 +868,26 @@ func (s *modelSuite) TestCreateTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
-			s.Equal(int64(10), count)
-			s.Equal(int64(4), users[0].ID)
-			s.Nil(err)
+			count, err := userModel.Create().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
 
 			err = userModel.Commit()
 			s.Nil(err)
 
 			count, err = s.model(&users).Count().Exec()
 			s.Equal(int64(12), count)
-			s.Equal(int64(4), users[0].ID)
 			s.Nil(err)
 		}
 
 		{
-			users := []User{}
-			for i := 0; i < 10; i++ {
-				u := User{}
-				s.Nil(faker.FakeData(&u))
-				users = append(users, u)
-			}
+			var user User
+			s.Nil(faker.FakeData(&user))
 
-			userModel := s.model(&users)
-			err := userModel.Begin()
+			userModel := s.model(&user)
+			err := userModel.BeginContext(ctx, nil)
 			s.NotNil(userModel.Tx())
-			s.Nil(err)
-
-			count, err := userModel.Create().Exec()
-			s.Equal(int64(10), count)
-			s.Equal(int64(14), users[0].ID)
-			s.Nil(err)
-
-			err = userModel.Rollback()
-			s.Nil(err)
-
-			count, err = s.model(&users).Count().Exec()
-			s.Equal(int64(12), count)
-			s.Equal(int64(14), users[0].ID)
-			s.Nil(err)
+			s.EqualError(err, "context deadline exceeded")
 		}
 	}
 }
@@ -731,25 +896,26 @@ func (s *modelSuite) TestCustomTableName() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_custom_table_name_with_"+adapter)
 
-		users := []AdminUser{}
+		adminUsers := []AdminUser{}
 		for i := 0; i < 10; i++ {
-			u := AdminUser{}
-			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
+			adminUser := AdminUser{}
+			s.Nil(faker.FakeData(&adminUser))
+			adminUsers = append(adminUsers, adminUser)
 		}
-		count, err := s.model(&users).Create().Exec()
-		s.Equal(10, len(users))
+
+		count, err := s.model(&adminUsers).Create().Exec()
+		s.Equal(10, len(adminUsers))
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
-		users = []AdminUser{}
-		count, err = s.model(&users).All().Exec()
-		s.Equal(10, len(users))
+		adminUsers = []AdminUser{}
+		count, err = s.model(&adminUsers).All().Exec()
+		s.Equal(10, len(adminUsers))
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
-		for idx, u := range users {
-			s.Equal(int64(idx+1), u.ID)
+		for idx, adminUser := range adminUsers {
+			s.Equal(int64(idx+1), adminUser.ID)
 		}
 	}
 }
@@ -757,58 +923,254 @@ func (s *modelSuite) TestCustomTableName() {
 func (s *modelSuite) TestDelete() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_delete_"+adapter)
+		s.insertUsers()
 
-		users := []User{}
+		usersWithoutPK := []UserWithoutPK{}
 		for i := 0; i < 10; i++ {
-			u := User{}
+			u := UserWithoutPK{}
 			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
+			usersWithoutPK = append(usersWithoutPK, u)
 		}
-		count, err := s.model(&users).Create().Exec()
-		s.Equal(10, len(users))
+		count, err := s.model(&usersWithoutPK).Create().Exec()
+		s.Equal(10, len(usersWithoutPK))
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		admins := []AdminUser{}
+		for i := 0; i < 10; i++ {
+			u := AdminUser{}
+			s.Nil(faker.FakeData(&u))
+			admins = append(admins, u)
+		}
+		count, err = s.model(&admins).Create().Exec()
+		s.Equal(10, len(admins))
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		{
+			user := User{}
+			count, err = s.model(&user).Where("id ?").Delete().Exec()
+			s.Equal(int64(0), count)
+			s.NotNil(err)
+		}
+
+		{
+			user := User{}
+			count, err = s.model(&user).Where("id = ?", 0).Delete().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
+		}
+
+		{
+			user := User{ID: 9}
+			count, err = s.model(&user).Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			count, err = s.model(&User{}).Count().Exec()
+			s.Equal(int64(9), count)
+			s.Nil(err)
+		}
+
+		{
+			admin := AdminUser{ID: 9}
+			count, err = s.model(&admin).Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			count, err = s.model(&AdminUser{}).Count().Exec()
+			s.Equal(int64(9), count)
+			s.Nil(err)
+		}
+
+		{
+			admin := AdminUser{ID: 8, Email: "foo", Username: "bar"}
+			count, err = s.model(&admin).Delete().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
+
+			count, err = s.model(&AdminUser{}).Count().Exec()
+			s.Equal(int64(9), count)
+			s.Nil(err)
+
+			admin = AdminUser{ID: 8, Email: admins[7].Email, Username: "bar"}
+			count, err = s.model(&admin).Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			count, err = s.model(&AdminUser{}).Count().Exec()
+			s.Equal(int64(8), count)
+			s.Nil(err)
+		}
+
+		{
+			admins := []AdminUser{
+				{ID: 7, Email: admins[6].Email, Username: "bar"},
+				{ID: 6, Email: admins[5].Email, Username: "bar"},
+			}
+
+			count, err = s.model(&admins).Delete().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(err)
+
+			count, err = s.model(&AdminUser{}).Count().Exec()
+			s.Equal(int64(6), count)
+			s.Nil(err)
+		}
+
+		{
+			usersWithoutPK = []UserWithoutPK{}
+			count, err = s.model(&usersWithoutPK).Delete().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			count, err = s.model(&UserWithoutPK{}).Count().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		user := User{}
-		count, err = s.model(&user).Where("id ?").Delete().Exec(ExecOption{Context: ctx})
-		s.Equal(int64(0), count)
-		s.NotNil(err)
+		{
+			count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).Delete().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(3), count)
+			s.Nil(err)
 
-		user = User{}
-		count, err = s.model(&user).Where("id ?").Delete().Exec()
-		s.Equal(int64(0), count)
-		s.NotNil(err)
+			user := User{}
+			count, err = s.model(&user).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
 
-		user = User{}
-		count, err = s.model(&user).Where("id = ?", 0).Delete().Exec()
-		s.Equal(int64(0), count)
-		s.Nil(err)
+			users := []User{}
+			count, err = s.model(&users).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
 
-		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+			user = User{}
+			count, err = s.model(&user).Where("id = ?", 5).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(5), user.ID)
+			s.Nil(err)
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
 		defer cancel()
 
-		count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).Delete().Exec(ExecOption{Context: ctx})
-		s.Equal(int64(3), count)
-		s.Nil(err)
+		{
+			user := User{}
+			count, err = s.model(&user).Where("id ?").Delete().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.NotNil(err)
+		}
+	}
+}
 
-		user = User{}
-		count, err = s.model(&user).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec()
-		s.Equal(int64(0), count)
-		s.Nil(err)
+func (s *modelSuite) TestDeleteTx() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_delete_tx_"+adapter)
+		s.insertUsers()
 
-		users = []User{}
-		count, err = s.model(&users).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec()
-		s.Equal(int64(0), count)
-		s.Nil(err)
+		{
+			user := User{ID: 1}
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
 
-		user = User{}
-		count, err = s.model(&user).Where("id = ?", 5).Find().Exec()
-		s.Equal(int64(1), count)
-		s.Equal(int64(5), user.ID)
-		s.Nil(err)
+			count, err := userModel.Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&user).Count().Exec()
+			s.Equal(int64(9), count)
+			s.Nil(err)
+		}
+
+		{
+			user := User{ID: 2}
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = userModel.Rollback()
+			s.Nil(err)
+
+			count, err = s.model(&user).Count().Exec()
+			s.Equal(int64(9), count)
+			s.Nil(err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		{
+			user := User{ID: 2}
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Delete().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&user).Count().Exec()
+			s.Equal(int64(8), count)
+			s.Nil(err)
+		}
+
+		{
+			user := User{ID: 3}
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Delete().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = userModel.Rollback()
+			s.Nil(err)
+
+			count, err = s.model(&user).Count().Exec()
+			s.Equal(int64(8), count)
+			s.Nil(err)
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		defer cancel()
+
+		{
+			user := User{ID: 3}
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Delete().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
+
+			err = userModel.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&user).Count().Exec()
+			s.Equal(int64(8), count)
+			s.Nil(err)
+		}
 	}
 }
 
@@ -824,105 +1186,188 @@ func (s *modelSuite) TestEmptyQueryBuilder() {
 func (s *modelSuite) TestFind() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_find_"+adapter)
+		s.insertUsers()
 
-		count, err := s.model(&User{}).Where("id > ?", 5).Find().Exec()
-		s.Equal(int64(0), count)
-		s.Nil(err)
-
-		users := []User{}
-		for i := 0; i < 10; i++ {
-			u := User{}
-			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
+		{
+			count, err := s.model(&User{}).Where("id > ?", 50).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
 		}
-		count, err = s.model(&users).Create().Exec()
-		s.Equal(10, len(users))
-		s.Equal(int64(10), count)
-		s.Nil(err)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
+		{
+			user := User{ID: 1}
+			count, err := s.model(&user).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			var user User
+			count, err := s.model(&user).Where("id ?").Find().Exec()
+			s.Equal(int64(0), count)
+			s.NotNil(err)
+		}
+
+		{
+			var user User
+			count, err := s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(6), user.ID)
+			s.Nil(err)
+		}
+
+		{
+			var user User
+			count, err := s.model(&user).Where("id = ?", 0).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).Where("id ?").Find().Exec()
+			s.Equal(int64(0), count)
+			s.NotNil(err)
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).Where("id > ?", 5).Find().Exec()
+			s.Equal(5, len(users))
+			s.Equal(int64(5), count)
+			s.Nil(err)
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).Select("username").Where("id > ?", 5).Find().Exec()
+			s.Equal(5, len(users))
+			s.Equal(int64(5), count)
+			s.Equal("", users[0].Email)
+			s.Nil(err)
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).Where("email = ? AND id IN (?) AND username = ?", "barfoo", []int64{5, 6, 7}, "foobar").Order("id ASC").Find().Exec()
+			s.Equal(0, len(users))
+			s.Equal(int64(0), count)
+			s.Nil(err)
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).Where("id != ?", 0).Order("id DESC").Limit(1).Find().Exec()
+			s.Equal(1, len(users))
+			s.Equal(int64(1), count)
+			s.Equal(int64(10), users[0].ID)
+			s.Nil(err)
+		}
+
+		{
+			var users []User
+			count, err := s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec()
+			s.Equal(1, len(users))
+			s.Equal(int64(1), count)
+			s.Equal(int64(6), users[0].ID)
+			s.Nil(err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		users = []User{}
-		count, err = s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ExecOption{Context: ctx})
-		s.Equal(0, len(users))
-		s.Equal(int64(0), count)
-		s.EqualError(err, "context deadline exceeded")
+		{
+			count, err := s.model(&User{}).Where("id = ?", 5).Find().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
 
-		user := User{}
-		count, err = s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ExecOption{Context: ctx})
-		s.Equal(int64(0), count)
-		s.EqualError(err, "context deadline exceeded")
+		{
+			var users []User
+			count, err := s.model(&users).Where("id IN (?)", []int64{5, 6, 7}).Order("id ASC").Find().Exec(ExecOption{Context: ctx})
+			s.Equal(3, len(users))
+			s.Equal(int64(3), count)
+			s.Equal(int64(5), users[0].ID)
+			s.Equal(int64(6), users[1].ID)
+			s.Equal(int64(7), users[2].ID)
+			s.Nil(err)
+		}
 
-		users = []User{}
-		count, err = s.model(&users).Where("id ?").Find().Exec()
-		s.Equal(int64(0), count)
-		s.Nil(nil)
-
-		user = User{}
-		count, err = s.model(&user).Where("id ?").Find().Exec()
-		s.Equal(int64(0), count)
-		s.Nil(nil)
-
-		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
 		defer cancel()
 
-		count, err = s.model(&User{}).Where("id = ?", 5).Find().Exec(ExecOption{Context: ctx})
-		s.Equal(int64(1), count)
-		s.Nil(err)
+		{
+			var user User
+			count, err := s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ExecOption{Context: ctx})
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
+		}
 
-		users = []User{}
-		count, err = s.model(&users).Where("id > ?", 5).Find().Exec()
-		s.Equal(5, len(users))
-		s.Equal(int64(5), count)
-		s.Nil(err)
+		{
+			var users []User
+			count, err := s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ExecOption{Context: ctx})
+			s.Equal(0, len(users))
+			s.Equal(int64(0), count)
+			s.EqualError(err, "context deadline exceeded")
+		}
+	}
+}
 
-		users = []User{}
-		count, err = s.model(&users).Select("username").Where("id > ?", 5).Find().Exec()
-		s.Equal(5, len(users))
-		s.Equal(int64(5), count)
-		s.Equal("", users[0].Email)
-		s.Nil(err)
+func (s *modelSuite) TestFindTx() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_find_tx_"+adapter)
 
-		users = []User{}
-		count, err = s.model(&users).Where("id IN (?)", []int64{5, 6, 7}).Order("id ASC").Find().Exec(ExecOption{Context: ctx})
-		s.Equal(3, len(users))
-		s.Equal(int64(3), count)
-		s.Equal(int64(5), users[0].ID)
-		s.Equal(int64(6), users[1].ID)
-		s.Equal(int64(7), users[2].ID)
-		s.Nil(err)
+		{
+			var user User
+			s.Nil(faker.FakeData(&user))
 
-		users = []User{}
-		count, err = s.model(&users).Where("email = ? AND id IN (?) AND username = ?", "barfoo", []int64{5, 6, 7}, "foobar").Order("id ASC").Find().Exec()
-		s.Equal(0, len(users))
-		s.Equal(int64(0), count)
-		s.Nil(err)
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
 
-		users = []User{}
-		count, err = s.model(&users).Where("id != ?", 0).Order("id DESC").Limit(1).Find().Exec()
-		s.Equal(1, len(users))
-		s.Equal(int64(1), count)
-		s.Equal(int64(10), users[0].ID)
-		s.Nil(err)
+			count, err := model.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(1), user.ID)
+			s.Nil(err)
 
-		users = []User{}
-		count, err = s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec()
-		s.Equal(1, len(users))
-		s.Equal(int64(1), count)
-		s.Equal(int64(6), users[0].ID)
-		s.Nil(err)
+			count, err = model.Count().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
 
-		user = User{}
-		count, err = s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec()
-		s.Equal(int64(1), count)
-		s.Equal(int64(6), user.ID)
-		s.Nil(err)
+			err = model.Commit()
+			s.Nil(err)
 
-		user = User{}
-		count, err = s.model(&user).Where("id = ?", 0).Find().Exec()
-		s.Equal(int64(0), count)
-		s.Nil(err)
+			count, err = model.Count().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			var user User
+			s.Nil(faker.FakeData(&user))
+
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(2), user.ID)
+			s.Nil(err)
+
+			count, err = model.Count().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(err)
+
+			count, err = model.Count().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
 	}
 }
 
@@ -957,92 +1402,271 @@ func (s *modelSuite) TestMissingReplicaDB() {
 func (s *modelSuite) TestScan() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_scan_"+adapter)
+		s.insertUsers()
 
-		users := []User{}
-		for i := 0; i < 10; i++ {
-			u := User{}
-			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
-		}
-		count, err := s.model(&users).Create().Exec()
-		s.Equal(10, len(users))
-		s.Equal(int64(10), count)
-		s.Nil(err)
-
-		type resultWithTotal struct {
+		type customResult struct {
 			ID    int64
 			Total int64
 		}
 
-		var (
-			user      User
-			totalRow  resultWithTotal
-			totalRows []resultWithTotal
-		)
+		{
+			var (
+				user   User
+				result customResult
+			)
 
-		count, err = s.model(&user).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&totalRow).Exec()
-		s.Equal(int64(7), totalRow.ID)
-		s.Equal(int64(14), totalRow.Total)
-		s.Equal(int64(1), count)
-		s.Nil(err)
-
-		count, err = s.model(&user).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&totalRows).Exec()
-		s.Equal(1, len(totalRows))
-		s.Equal(int64(7), totalRows[0].ID)
-		s.Equal(int64(14), totalRows[0].Total)
-		s.Equal(int64(1), count)
-		s.Nil(err)
-
-		var scanUser User
-		count, err = s.model(&user).Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Scan(&scanUser).Exec()
-		s.Equal(int64(6), scanUser.ID)
-		s.Equal(int64(1), count)
-		s.Nil(err)
-	}
-}
-
-func (s *modelSuite) TestUpdate() {
-	for _, adapter := range support.SupportedDBAdapters {
-		s.setupDB(adapter, "test_model_update_"+adapter)
-
-		var user User
-		s.Nil(faker.FakeData(&user))
-
-		count, err := s.model(&user).Create().Exec()
-		s.Equal(int64(1), count)
-		s.Equal(int64(1), user.ID)
-		s.Nil(err)
-
-		user = User{}
-		count, err = s.model(&user).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
-		s.Equal(int64(1), count)
-		s.Nil(err)
-
-		users := []User{}
-		for i := 0; i < 10; i++ {
-			u := User{}
-			s.Nil(faker.FakeData(&u))
-			users = append(users, u)
+			count, err := s.model(&user).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&result).Exec()
+			s.Equal(int64(7), result.ID)
+			s.Equal(int64(14), result.Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
 		}
-		count, err = s.model(&users).Create().Exec()
-		s.Equal(10, len(users))
-		s.Equal(int64(10), count)
-		s.Nil(err)
 
-		user = User{}
-		count, err = s.model(&user).Where("id = ?", 10).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
-		s.Equal(int64(1), count)
-		s.Nil(err)
+		{
+			var (
+				users   []User
+				results []customResult
+			)
 
-		user = User{}
-		count, err = s.model(&user).Where("id = ?", 10).Find().Exec()
-		s.Equal(int64(1), count)
-		s.Equal(int64(10), user.ID)
-		s.Equal("bar@gmail.com", user.Email)
-		s.Equal("bar", user.Username)
-		s.Nil(err)
+			count, err := s.model(&users).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&results).Exec()
+			s.Equal(1, len(results))
+			s.Equal(int64(7), results[0].ID)
+			s.Equal(int64(14), results[0].Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			var user, scanUser User
+			count, err := s.model(&user).Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Scan(&scanUser).Exec()
+			s.Equal(int64(6), scanUser.ID)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
 	}
 }
+
+func (s *modelSuite) TestScanTx() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_scan_tx_"+adapter)
+
+		type customResult struct {
+			ID    int64
+			Total int64
+		}
+
+		{
+			var user User
+			s.Nil(faker.FakeData(&user))
+
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(1), user.ID)
+			s.Nil(err)
+
+			var result customResult
+			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id ASC").Limit(1).Offset(0).Scan(&result).Exec()
+			s.Equal(int64(1), result.ID)
+			s.Equal(int64(2), result.Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(err)
+
+			result = customResult{}
+			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id ASC").Limit(1).Offset(0).Scan(&result).Exec()
+			s.Equal(int64(1), result.ID)
+			s.Equal(int64(2), result.Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			var user User
+			s.Nil(faker.FakeData(&user))
+
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(2), user.ID)
+			s.Nil(err)
+
+			var result customResult
+			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&result).Exec()
+			s.Equal(int64(2), result.ID)
+			s.Equal(int64(4), result.Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(err)
+
+			result = customResult{}
+			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&result).Exec()
+			s.Equal(int64(1), result.ID)
+			s.Equal(int64(2), result.Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			users := []User{}
+			for i := 0; i < 10; i++ {
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			model := s.model(&users)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			var results []customResult
+			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
+			s.Equal(1, len(results))
+			s.Equal(int64(12), results[0].ID)
+			s.Equal(int64(24), results[0].Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(err)
+
+			results = []customResult{}
+			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
+			s.Equal(1, len(results))
+			s.Equal(int64(12), results[0].ID)
+			s.Equal(int64(24), results[0].Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			users := []User{}
+			for i := 0; i < 10; i++ {
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			model := s.model(&users)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			var results []customResult
+			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
+			s.Equal(1, len(results))
+			s.Equal(int64(22), results[0].ID)
+			s.Equal(int64(44), results[0].Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(err)
+
+			results = []customResult{}
+			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
+			s.Equal(1, len(results))
+			s.Equal(int64(12), results[0].ID)
+			s.Equal(int64(24), results[0].Total)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			var user, scanUser User
+			s.Nil(faker.FakeData(&user))
+
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id DESC").Scan(&scanUser).Exec()
+			s.Equal(int64(12), scanUser.ID)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(err)
+
+			scanUser = User{}
+			count, err = model.Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id DESC").Scan(&scanUser).Exec()
+			s.Equal(int64(12), scanUser.ID)
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+	}
+}
+
+// func (s *modelSuite) TestUpdate() {
+// 	for _, adapter := range support.SupportedDBAdapters {
+// 		s.setupDB(adapter, "test_model_update_"+adapter)
+
+// 		var user User
+// 		s.Nil(faker.FakeData(&user))
+
+// 		count, err := s.model(&user).Create().Exec()
+// 		s.Equal(int64(1), count)
+// 		s.Equal(int64(1), user.ID)
+// 		s.Nil(err)
+
+// 		{
+// 			user = User{}
+// 			count, err = s.model(&user).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+// 			s.Equal(int64(1), count)
+// 			s.Nil(err)
+// 		}
+
+// 		users := []User{}
+// 		for i := 0; i < 10; i++ {
+// 			u := User{}
+// 			s.Nil(faker.FakeData(&u))
+// 			users = append(users, u)
+// 		}
+// 		count, err = s.model(&users).Create().Exec()
+// 		s.Equal(10, len(users))
+// 		s.Equal(int64(10), count)
+// 		s.Nil(err)
+
+// 		{
+// 			user = User{}
+// 			count, err = s.model(&user).Where("id = ?", 10).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
+// 			s.Equal(int64(1), count)
+// 			s.Nil(err)
+
+// 			user = User{}
+// 			count, err = s.model(&user).Where("id = ?", 10).Find().Exec()
+// 			s.Equal(int64(1), count)
+// 			s.Equal(int64(10), user.ID)
+// 			s.Equal("bar@gmail.com", user.Email)
+// 			s.Equal("bar", user.Username)
+// 			s.Nil(err)
+// 		}
+// 	}
+// }
 
 func TestModelSuite(t *testing.T) {
 	test.Run(t, new(modelSuite))

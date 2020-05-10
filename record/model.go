@@ -69,6 +69,7 @@ type (
 	modelAttr struct {
 		autoIncrement bool
 		ignored       bool
+		primaryKey    bool
 		stFieldName   string
 		stFieldType   reflect.Type
 	}
@@ -135,7 +136,11 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 				model.tableName = tblName
 			}
 
-			pks := field.Tag.Get("primaryKeys")
+			pks, ok := field.Tag.Lookup("primaryKeys")
+			if ok && pks == "" {
+				model.primaryKeys = []string{}
+			}
+
 			if pks != "" {
 				model.primaryKeys = strings.Split(pks, ",")
 			}
@@ -177,6 +182,10 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 						model.autoIncrementStField = field.Name
 					}
 				}
+			}
+
+			if support.ArrayContains(model.primaryKeys, dbColumn) {
+				attr.primaryKey = true
 			}
 
 			model.attrs[dbColumn] = attr
@@ -236,6 +245,10 @@ func (m *Model) Commit() error {
 
 	if m.tx != nil {
 		err = m.tx.Commit()
+
+		if err == nil {
+			m.tx = nil
+		}
 	}
 
 	return err
@@ -247,6 +260,10 @@ func (m *Model) Rollback() error {
 
 	if m.tx != nil {
 		err = m.tx.Rollback()
+
+		if err == nil {
+			m.tx = nil
+		}
 	}
 
 	return err
@@ -286,30 +303,20 @@ func (m *Model) Create() *Model {
 	m.queryBuilder.WriteString(m.tableName)
 	m.queryBuilder.WriteString(" (")
 
-	var (
-		count  = 0
-		values strings.Builder
-	)
-
-	for dbColumn, attr := range m.attrs {
+	columns := []string{}
+	values := []string{}
+	for column, attr := range m.attrs {
 		if attr.ignored || attr.autoIncrement {
 			continue
 		}
 
-		values.WriteString(":")
-		values.WriteString(dbColumn)
-		m.queryBuilder.WriteString(dbColumn)
-
-		if count < len(m.attrs)-2 {
-			values.WriteString(", ")
-			m.queryBuilder.WriteString(", ")
-		}
-
-		count++
+		columns = append(columns, column)
+		values = append(values, ":"+column)
 	}
 
+	m.queryBuilder.WriteString(strings.Join(columns, ", "))
 	m.queryBuilder.WriteString(") VALUES (")
-	m.queryBuilder.WriteString(values.String())
+	m.queryBuilder.WriteString(strings.Join(values, ", "))
 	m.queryBuilder.WriteString(")")
 
 	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
@@ -329,6 +336,10 @@ func (m *Model) Delete() *Model {
 
 	m.queryBuilder.WriteString("DELETE FROM ")
 	m.queryBuilder.WriteString(m.tableName)
+
+	if m.where == "" {
+		m.buildWhereWithPrimaryKeys()
+	}
 
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
@@ -401,6 +412,10 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		query = builder.String()
 	}
 
+	// Reset the buffer so that the model instance can be re-used to execute
+	// another query.
+	m.queryBuilder.Reset()
+
 	switch m.queryType {
 	case "exec":
 		if m.tx != nil {
@@ -412,7 +427,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 
 				result, err = stmt.ExecContext(opt.Context, m.args...)
 			} else {
-				stmt, err := m.tx.PrepareContext(opt.Context, query)
+				stmt, err := m.tx.Prepare(query)
 				if err != nil {
 					return int64(0), err
 				}
@@ -668,6 +683,10 @@ func (m *Model) Find() *Model {
 	m.queryBuilder.WriteString(" FROM ")
 	m.queryBuilder.WriteString(m.tableName)
 
+	if m.where == "" {
+		m.buildWhereWithPrimaryKeys()
+	}
+
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
@@ -819,6 +838,10 @@ func (m *Model) Update(set string, args ...interface{}) *Model {
 	m.queryBuilder.WriteString(set)
 	m.args = append(m.args, args...)
 
+	if m.where == "" {
+		m.buildWhereWithPrimaryKeys()
+	}
+
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
@@ -837,6 +860,64 @@ func (m *Model) Where(condition string, args ...interface{}) *Model {
 	return m
 }
 
+func (m *Model) buildWhereWithPrimaryKeys() {
+	if len(m.primaryKeys) < 1 {
+		return
+	}
+
+	var builder strings.Builder
+	args := []interface{}{}
+	dest := reflect.ValueOf(m.dest)
+
+	switch m.destKind {
+	case reflect.Array, reflect.Slice:
+		builder.WriteString("(")
+		builder.WriteString(strings.Join(m.primaryKeys, ", "))
+		builder.WriteString(") IN (")
+
+		dest = dest.Elem()
+		for i := 0; i < dest.Len(); i++ {
+			elem := dest.Index(i)
+			pkValues := []interface{}{}
+
+			for _, pk := range m.primaryKeys {
+				pkValue := elem.FieldByName(m.attrs[pk].stFieldName)
+
+				if !pkValue.IsZero() {
+					pkValues = append(pkValues, pkValue.Interface())
+				}
+			}
+
+			if len(pkValues) == len(m.primaryKeys) {
+				builder.WriteString("(" + strings.Trim(strings.Repeat("?, ", len(m.primaryKeys)), ", ") + ")")
+				args = append(args, pkValues...)
+			}
+
+			if i < dest.Len()-1 {
+				builder.WriteString(", ")
+			}
+		}
+
+		builder.WriteString(")")
+
+		m.where = builder.String()
+		m.whereArgs = args
+	case reflect.Ptr:
+		dest = dest.Elem()
+		wheres := []string{}
+
+		for _, pk := range m.primaryKeys {
+			if !dest.FieldByName(m.attrs[pk].stFieldName).IsZero() {
+				wheres = append(wheres, pk+" = ?")
+				args = append(args, dest.FieldByName(m.attrs[pk].stFieldName).Interface())
+			}
+		}
+
+		builder.WriteString(strings.Join(wheres, " AND "))
+		m.where, m.whereArgs = m.rebind(builder.String(), args...)
+	}
+}
+
 func (m *Model) rebind(query string, args ...interface{}) (string, []interface{}) {
 	var builder strings.Builder
 	newArgs := []interface{}{}
@@ -852,7 +933,7 @@ func (m *Model) rebind(query string, args ...interface{}) (string, []interface{}
 		if char == '?' {
 			if kind == reflect.Array || kind == reflect.Slice {
 				arrayArg := reflect.ValueOf(args[count])
-				builder.WriteString(strings.Trim(strings.Repeat("?,", arrayArg.Len()), ","))
+				builder.WriteString(strings.Trim(strings.Repeat("?, ", arrayArg.Len()), ", "))
 
 				for i := 0; i < arrayArg.Len(); i++ {
 					newArgs = append(newArgs, arrayArg.Index(i).Interface())
