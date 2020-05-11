@@ -100,8 +100,8 @@ func (s *modelSuite) TearDownTest() {
 	}
 }
 
-func (s *modelSuite) model(v interface{}) Modeler {
-	return NewModel(s.dbManager, v)
+func (s *modelSuite) model(v interface{}, opts ...ModelOption) Modeler {
+	return NewModel(s.dbManager, v, opts...)
 }
 
 func (s *modelSuite) setupDB(adapter, database string) {
@@ -1646,6 +1646,86 @@ func (s *modelSuite) TestScanTx() {
 			s.Equal(int64(12), scanUser.ID)
 			s.Equal(int64(1), count)
 			s.Nil(err)
+		}
+	}
+}
+
+func (s *modelSuite) TestShareTx() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_share_tx_"+adapter)
+
+		{
+			var du DuplicateUser
+			s.Nil(faker.FakeData(&du))
+
+			duModel := s.model(&du)
+			err := duModel.Begin()
+			s.Nil(err)
+
+			count, err := duModel.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(1), du.ID)
+			s.Nil(err)
+
+			var u User
+			s.Nil(faker.FakeData(&u))
+
+			uModel := s.model(&u, ModelOption{duModel.Tx()})
+			count, err = uModel.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(1), u.ID)
+			s.Nil(err)
+
+			err = duModel.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&du).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+			s.Equal(int64(1), du.ID)
+
+			count, err = s.model(&u).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+			s.Equal(int64(1), u.ID)
+		}
+
+		{
+			var du DuplicateUser
+			s.Nil(faker.FakeData(&du))
+
+			duModel := s.model(&du)
+			err := duModel.Begin()
+			s.Nil(err)
+
+			count, err := duModel.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(2), du.ID)
+			s.Nil(err)
+
+			var u User
+			s.Nil(faker.FakeData(&u))
+
+			uModel := s.model(&u, ModelOption{duModel.Tx()})
+			count, err = uModel.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(2), u.ID)
+			s.Nil(err)
+
+			err = duModel.Rollback()
+			s.Nil(err)
+
+			du = DuplicateUser{}
+			count, err = s.model(&du).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+			s.Equal(int64(1), du.ID)
+
+			u = User{}
+			count, err = s.model(&u).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+			s.Equal(int64(1), u.ID)
 		}
 	}
 }
