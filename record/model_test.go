@@ -1666,6 +1666,10 @@ func (s *modelSuite) TestUpdate() {
 			count, err = s.model(&user).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
+
+			count, err = s.model(&user).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
 			s.Equal("foo@gmail.com", user.Email)
 			s.Equal("foo", user.Username)
 		}
@@ -1687,10 +1691,14 @@ func (s *modelSuite) TestUpdate() {
 				{ID: 1},
 				{ID: 2},
 			}
-
 			count, err = s.model(&users).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
 			s.Equal(int64(2), count)
 			s.Nil(err)
+
+			count, err = s.model(&users).Find().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(err)
+
 			s.Equal(int64(1), users[0].ID)
 			s.Equal("bar@gmail.com", users[0].Email)
 			s.Equal("bar", users[0].Username)
@@ -1704,6 +1712,127 @@ func (s *modelSuite) TestUpdate() {
 func (s *modelSuite) TestUpdateTx() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_update_tx_"+adapter)
+
+		{
+			var user DuplicateUser
+			s.Nil(faker.FakeData(&user))
+
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(1), user.ID)
+			s.Nil(err)
+
+			count, err = userModel.Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&user).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+			s.Equal("foo@gmail.com", user.Email)
+			s.Equal("foo", user.Username)
+		}
+
+		{
+			var user DuplicateUser
+			s.Nil(faker.FakeData(&user))
+
+			userModel := s.model(&user)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(2), user.ID)
+			s.Nil(err)
+
+			count, err = userModel.Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = userModel.Rollback()
+			s.Nil(err)
+
+			count, err = s.model(&user).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
+			s.NotEqual("foo@gmail.com", user.Email)
+			s.NotEqual("foo", user.Username)
+		}
+
+		{
+			users := []DuplicateUser{}
+			for i := 0; i < 10; i++ {
+				user := DuplicateUser{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Create().Exec()
+			s.Equal(int64(10), count)
+			s.Equal(int64(3), users[0].ID)
+			s.Nil(err)
+
+			count, err = userModel.Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			err = userModel.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&users).Find().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			for i := 0; i < 10; i++ {
+				s.Equal("foo@gmail.com", users[i].Email)
+				s.Equal("foo", users[i].Username)
+			}
+		}
+
+		{
+			users := []DuplicateUser{}
+			for i := 0; i < 10; i++ {
+				user := DuplicateUser{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			userModel := s.model(&users)
+			err := userModel.Begin()
+			s.NotNil(userModel.Tx())
+			s.Nil(err)
+
+			count, err := userModel.Create().Exec()
+			s.Equal(int64(10), count)
+			s.Equal(int64(13), users[0].ID)
+			s.Nil(err)
+
+			count, err = userModel.Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			err = userModel.Rollback()
+			s.Nil(err)
+
+			count, err = s.model(&users).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
+		}
 	}
 }
 
