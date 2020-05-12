@@ -449,7 +449,7 @@ type terminal struct {
 func (t *terminal) error(container *text.Text, msg string) {
 	container.Write(time.Now().Format("2006-01-02T15:04:05.000-0700") + "    ")
 	container.Write("ERROR", text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
-	container.Write("    " + msg + "\n")
+	container.Write("   " + msg + "\n")
 }
 
 func (t *terminal) info(container *text.Text, msg string) {
@@ -590,7 +590,13 @@ func convertText(input string) textWithWriteOption {
 }
 
 func preprocessText(input string) []textWithWriteOption {
-	output := strings.ReplaceAll(input, "\t", "    ")
+	output := strings.Replace(input, "\t", "    ", 1)
+
+	if strings.Contains(output, "DEBUG") || strings.Contains(output, "ERROR") || strings.Contains(output, "FATAL") {
+		output = strings.Replace(output, "\t", "   ", 1)
+	}
+
+	output = strings.ReplaceAll(output, "\t", "    ")
 	output = strings.Trim(output, "\n\t")
 	matchIndexes := colorRegex.FindAllSubmatchIndex([]byte(output), -1)
 	results := []textWithWriteOption{
