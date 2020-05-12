@@ -2,7 +2,6 @@ package record
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -41,8 +40,8 @@ CREATE TABLE users (
 )
 
 type BenchmarkUser struct {
-	Modeler `masters:"primary" replicas:"" tableName:"users" primaryKeys:"id"`
-	ID      int64 `db:"id" orm:"auto_increment:true"`
+	Modeler `masters:"primary" replicas:"" tableName:"users" autoIncrement:"id" primaryKeys:"id"`
+	ID      int64
 	Age     int64
 	Fax     string
 	Name    string
@@ -404,13 +403,13 @@ func BenchmarkUpdateORM(b *testing.B) {
 		model := NewModel(dbManager, &user)
 		count, err := model.Where("id = ?", id).Update("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000)).Exec()
 
-		if count != 1 {
-			fmt.Println(errors.New("count should equal to 1"))
+		if err != nil {
+			fmt.Println(err)
 			b.FailNow()
 		}
 
-		if err != nil {
-			fmt.Println(err)
+		if count != 1 {
+			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
 			b.FailNow()
 		}
 	}
@@ -499,7 +498,7 @@ func BenchmarkReadORM(b *testing.B) {
 		model := NewModel(dbManager, &user)
 		count, err := model.Where("id = ?", id).Find().Exec()
 		if count != 1 {
-			fmt.Println(errors.New("count should equal to 1"))
+			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
 			b.FailNow()
 		}
 
@@ -636,7 +635,7 @@ func BenchmarkReadSliceORM(b *testing.B) {
 		count, err := model.Where("id > ?", 0).Limit(100).Find().Exec()
 
 		if count != 100 {
-			fmt.Println(errors.New("count should equal to 100"))
+			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 100, count))
 			b.FailNow()
 		}
 

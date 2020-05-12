@@ -37,7 +37,7 @@ type (
 
 	// Model is the layer that represents business data and logic.
 	Model struct {
-		adapter, autoIncrementStField, tableName              string
+		adapter, autoIncrement, tableName                     string
 		attrs                                                 map[string]*modelAttr
 		dest, scanDest                                        interface{}
 		destKind                                              reflect.Kind
@@ -82,32 +82,33 @@ func init() {
 
 // NewModel initializes a model that represents business data and logic.
 func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler {
-	t := reflect.TypeOf(dest)
-	e := t.Elem()
-	destKind := t.Kind()
+	destType := reflect.TypeOf(dest)
+	destKind := destType.Kind()
+	destElem := destType.Elem()
 
-	if e.Kind() == reflect.Array || e.Kind() == reflect.Slice {
-		destKind = e.Kind()
-		e = e.Elem()
+	if destElem.Kind() == reflect.Array || destElem.Kind() == reflect.Slice {
+		destKind = destElem.Kind()
+		destElem = destElem.Elem()
 	}
 
 	model := &Model{
-		adapter:     "",
-		attrs:       map[string]*modelAttr{},
-		dest:        dest,
-		destKind:    destKind,
-		masters:     []DBer{},
-		replicas:    []DBer{},
-		primaryKeys: []string{"id"},
-		tableName:   support.ToSnakeCase(support.Plural(e.Name())),
+		adapter:       "",
+		attrs:         map[string]*modelAttr{},
+		dest:          dest,
+		destKind:      destKind,
+		masters:       []DBer{},
+		replicas:      []DBer{},
+		autoIncrement: "",
+		primaryKeys:   []string{"id"},
+		tableName:     support.ToSnakeCase(support.Plural(destElem.Name())),
 	}
 
 	if len(opts) > 0 {
 		model.tx = opts[0].tx
 	}
 
-	for i := 0; i < e.NumField(); i++ {
-		field := e.Field(i)
+	for i := 0; i < destElem.NumField(); i++ {
+		field := destElem.Field(i)
 
 		switch field.Type.String() {
 		case "record.Modeler":
@@ -134,6 +135,11 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 			tblName := field.Tag.Get("tableName")
 			if tblName != "" {
 				model.tableName = tblName
+			}
+
+			autoIncrement := field.Tag.Get("autoIncrement")
+			if autoIncrement != "" {
+				model.autoIncrement = autoIncrement
 			}
 
 			pks, ok := field.Tag.Lookup("primaryKeys")
@@ -164,24 +170,8 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 				dbColumn = dbTag
 			}
 
-			ormTag := field.Tag.Get("orm")
-			ormAttrs := strings.Split(ormTag, ";")
-			for _, ormAttr := range ormAttrs {
-				splits := strings.Split(ormAttr, ":")
-
-				switch splits[0] {
-				case "auto_increment":
-					autoIncrement, err := strconv.ParseBool(splits[1])
-					if err != nil {
-						continue
-					}
-
-					attr.autoIncrement = autoIncrement
-
-					if autoIncrement {
-						model.autoIncrementStField = field.Name
-					}
-				}
+			if dbColumn == model.autoIncrement {
+				attr.autoIncrement = true
 			}
 
 			if support.ArrayContains(model.primaryKeys, dbColumn) {
@@ -532,16 +522,16 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 				return int64(0), err
 			}
 
-			if m.autoIncrementStField != "" {
+			if m.autoIncrement != "" {
 				switch m.destKind {
 				case reflect.Array, reflect.Slice:
 					v := reflect.ValueOf(m.dest).Elem()
 
 					for i := 0; i < v.Len(); i++ {
-						v.Index(i).FieldByName(m.autoIncrementStField).SetInt(lastInsertID + int64(i))
+						v.Index(i).FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID + int64(i))
 					}
 				case reflect.Ptr:
-					reflect.ValueOf(m.dest).Elem().FieldByName(m.autoIncrementStField).SetInt(lastInsertID)
+					reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID)
 				}
 			}
 		case "postgres":

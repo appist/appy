@@ -24,8 +24,8 @@ type (
 	}
 
 	AdminUser struct {
-		Modeler   `masters:"primary" replicas:"" tableName:"admins" primaryKeys:"id,email" faker:"-"`
-		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
+		Modeler   `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" primaryKeys:"id,email" faker:"-"`
+		ID        int64      `db:"id" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
 		Username  string     `db:"username" faker:"username,unique"`
@@ -35,8 +35,8 @@ type (
 	}
 
 	User struct {
-		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" faker:"-"`
-		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
+		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
+		ID        int64      `db:"id" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
 		Username  string     `db:"username" faker:"username,unique"`
@@ -46,8 +46,8 @@ type (
 	}
 
 	DuplicateUser struct {
-		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" faker:"-"`
-		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
+		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
+		ID        int64      `db:"id" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
 		Username  string     `db:"username" faker:"username,unique"`
@@ -68,8 +68,8 @@ type (
 	}
 
 	MasterOnlyUser struct {
-		Modeler   `masters:"primary" replicas:"" tableName:"admins" faker:"-"`
-		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
+		Modeler   `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" faker:"-"`
+		ID        int64      `db:"id" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
 		Username  string     `db:"username" faker:"username,unique"`
@@ -80,7 +80,7 @@ type (
 
 	ReplicaOnlyUser struct {
 		Modeler   `masters:"" replicas:"primaryReplica" tableName:"admins" faker:"-"`
-		ID        int64      `db:"id" orm:"auto_increment:true" faker:"-"`
+		ID        int64      `db:"id" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
 		Username  string     `db:"username" faker:"username,unique"`
