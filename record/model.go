@@ -24,6 +24,8 @@ type (
 		Delete() *Model
 		Exec(opts ...ExecOption) (int64, error)
 		Find() *Model
+		Group(group string) *Model
+		Having(having string, args ...interface{}) *Model
 		Limit(limit int) *Model
 		Offset(offset int) *Model
 		Order(order string) *Model
