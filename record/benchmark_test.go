@@ -401,7 +401,7 @@ func BenchmarkUpdateORM(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var user BenchmarkUser
 		model := NewModel(dbManager, &user)
-		count, err := model.Where("id = ?", id).Update("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000)).Exec()
+		count, err := model.Where("id = ?", id).UpdateAll("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000)).Exec()
 
 		if err != nil {
 			fmt.Println(err)

@@ -35,7 +35,7 @@ type (
 	}
 
 	User struct {
-		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
+		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
 		ID        int64      `db:"id" faker:"-"`
 		Age       int64      `db:"-"`
 		Email     string     `db:"email" faker:"email,unique"`
@@ -109,8 +109,8 @@ func (s *modelSuite) setupDB(adapter, database string) {
 
 	switch adapter {
 	case "mysql":
-		os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13306/%s?multiStatements=true", database))
-		os.Setenv("DB_URI_PRIMARY_REPLICA", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13307/%s?multiStatements=true", database))
+		os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13306/%s?multiStatements=true&parseTime=true", database))
+		os.Setenv("DB_URI_PRIMARY_REPLICA", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13307/%s?multiStatements=true&parseTime=true", database))
 		os.Setenv("DB_URI_REPLICA_PRIMARY_REPLICA", "true")
 		defer func() {
 			os.Unsetenv("DB_URI_PRIMARY")
@@ -1730,9 +1730,39 @@ func (s *modelSuite) TestShareTx() {
 	}
 }
 
-func (s *modelSuite) TestUpdate() {
+// func (s *modelSuite) TestUpdate() {
+// 	for _, adapter := range support.SupportedDBAdapters {
+// 		s.setupDB(adapter, "test_model_update_"+adapter)
+
+// 		{
+// 			var user User
+// 			s.Nil(faker.FakeData(&user))
+
+// 			count, err := s.model(&user).Create().Exec()
+// 			s.Equal(int64(1), count)
+// 			s.Equal(int64(1), user.ID)
+// 			s.Nil(err)
+
+// 			user.Email = "foo"
+// 			user.Username = "foo@gmail.com"
+
+// 			fmt.Println(s.model(&user).Update().SQL())
+// 			count, err = s.model(&user).Update().Exec()
+// 			s.Equal(int64(1), count)
+// 			s.Nil(err)
+
+// 			count, err = s.model(&user).Find().Exec()
+// 			s.Equal(int64(1), count)
+// 			s.Nil(err)
+// 			s.Equal("foo@gmail.com", user.Email)
+// 			s.Equal("foo", user.Username)
+// 		}
+// 	}
+// }
+
+func (s *modelSuite) TestUpdateAll() {
 	for _, adapter := range support.SupportedDBAdapters {
-		s.setupDB(adapter, "test_model_update_"+adapter)
+		s.setupDB(adapter, "test_model_update_all_"+adapter)
 
 		{
 			var user DuplicateUser
@@ -1743,7 +1773,7 @@ func (s *modelSuite) TestUpdate() {
 			s.Equal(int64(1), user.ID)
 			s.Nil(err)
 
-			count, err = s.model(&user).Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, err = s.model(&user).UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1771,7 +1801,7 @@ func (s *modelSuite) TestUpdate() {
 				{ID: 1},
 				{ID: 2},
 			}
-			count, err = s.model(&users).Update("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
+			count, err = s.model(&users).UpdateAll("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
 			s.Equal(int64(2), count)
 			s.Nil(err)
 
@@ -1789,9 +1819,9 @@ func (s *modelSuite) TestUpdate() {
 	}
 }
 
-func (s *modelSuite) TestUpdateTx() {
+func (s *modelSuite) TestUpdateAllTx() {
 	for _, adapter := range support.SupportedDBAdapters {
-		s.setupDB(adapter, "test_model_update_tx_"+adapter)
+		s.setupDB(adapter, "test_model_update_all_tx_"+adapter)
 
 		{
 			var user DuplicateUser
@@ -1807,7 +1837,7 @@ func (s *modelSuite) TestUpdateTx() {
 			s.Equal(int64(1), user.ID)
 			s.Nil(err)
 
-			count, err = userModel.Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, err = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1835,7 +1865,7 @@ func (s *modelSuite) TestUpdateTx() {
 			s.Equal(int64(2), user.ID)
 			s.Nil(err)
 
-			count, err = userModel.Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, err = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1867,7 +1897,7 @@ func (s *modelSuite) TestUpdateTx() {
 			s.Equal(int64(3), users[0].ID)
 			s.Nil(err)
 
-			count, err = userModel.Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, err = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(10), count)
 			s.Nil(err)
 
@@ -1902,7 +1932,7 @@ func (s *modelSuite) TestUpdateTx() {
 			s.Equal(int64(13), users[0].ID)
 			s.Nil(err)
 
-			count, err = userModel.Update("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, err = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(10), count)
 			s.Nil(err)
 

@@ -31,23 +31,24 @@ type (
 		Select(columns string) *Model
 		SQL() string
 		Tx() Txer
-		Update(set string, args ...interface{}) *Model
+		Update() *Model
+		UpdateAll(set string, args ...interface{}) *Model
 		Where(condition string, args ...interface{}) *Model
 	}
 
 	// Model is the layer that represents business data and logic.
 	Model struct {
-		adapter, autoIncrement, tableName                     string
-		attrs                                                 map[string]*modelAttr
-		dest, scanDest                                        interface{}
-		destKind                                              reflect.Kind
-		masters, replicas                                     []DBer
-		primaryKeys                                           []string
-		queryBuilder                                          strings.Builder
-		tx                                                    Txer
-		limit, offset                                         int
-		group, having, order, queryType, selectColumns, where string
-		args, havingArgs, whereArgs                           []interface{}
+		adapter, autoIncrement, tableName                            string
+		attrs                                                        map[string]*modelAttr
+		dest, scanDest                                               interface{}
+		destKind                                                     reflect.Kind
+		masters, replicas                                            []DBer
+		primaryKeys                                                  []string
+		queryBuilder                                                 strings.Builder
+		tx                                                           Txer
+		limit, offset                                                int
+		action, group, having, order, selectColumns, timezone, where string
+		args, havingArgs, whereArgs                                  []interface{}
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
@@ -101,6 +102,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 		autoIncrement: "",
 		primaryKeys:   []string{"id"},
 		tableName:     support.ToSnakeCase(support.Plural(destElem.Name())),
+		timezone:      "utc",
 	}
 
 	if len(opts) > 0 {
@@ -135,6 +137,11 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 			tblName := field.Tag.Get("tableName")
 			if tblName != "" {
 				model.tableName = tblName
+			}
+
+			tz := field.Tag.Get("timezone")
+			if tz != "" {
+				model.timezone = tz
 			}
 
 			autoIncrement := field.Tag.Get("autoIncrement")
@@ -192,7 +199,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 // Note that this can cause performance issue if there are too many data rows
 // in the model's table.
 func (m *Model) All() *Model {
-	m.queryType = "getOrSelect"
+	m.action = "all"
 	m.queryBuilder.WriteString("SELECT * FROM ")
 	m.queryBuilder.WriteString(m.tableName)
 	m.queryBuilder.WriteString(";")
@@ -200,7 +207,8 @@ func (m *Model) All() *Model {
 	return m
 }
 
-// Begin starts a transaction. The default isolation level is dependent on the driver.
+// Begin starts a transaction. The default isolation level is dependent on the
+// driver.
 func (m *Model) Begin() error {
 	var err error
 
@@ -213,12 +221,14 @@ func (m *Model) Begin() error {
 
 // BeginContext starts a transaction.
 //
-// The provided context is used until the transaction is committed or rolled back. If the context
-// is canceled, the sql package will roll back the transaction. Tx.Commit will return an error if
-// the context provided to BeginContext is canceled.
+// The provided context is used until the transaction is committed or rolled
+// back. If the context is canceled, the sql package will roll back the
+// transaction. Tx.Commit will return an error if the context provided to
+// BeginContext is canceled.
 //
-// The provided TxOptions is optional and may be nil if defaults should be used. If a non-default
-// isolation level is used that the driver doesn't support, an error will be returned.
+// The provided TxOptions is optional and may be nil if defaults should be used.
+// If a non-default isolation level is used that the driver doesn't support, an
+// error will be returned.
 func (m *Model) BeginContext(ctx context.Context, opts *sql.TxOptions) error {
 	var err error
 
@@ -262,7 +272,7 @@ func (m *Model) Rollback() error {
 // Count returns the total count of matching records. Note that this can cause
 // performance issue if there are too many data rows in the model's table.
 func (m *Model) Count() *Model {
-	m.queryType = "getOnly"
+	m.action = "count"
 	m.args = []interface{}{}
 	m.queryBuilder.WriteString("SELECT COUNT(")
 
@@ -288,7 +298,7 @@ func (m *Model) Count() *Model {
 
 // Create inserts the model object(s) into the database.
 func (m *Model) Create() *Model {
-	m.queryType = "namedExecOrQuery"
+	m.action = "create"
 	m.queryBuilder.WriteString("INSERT INTO ")
 	m.queryBuilder.WriteString(m.tableName)
 	m.queryBuilder.WriteString(" (")
@@ -321,7 +331,7 @@ func (m *Model) Create() *Model {
 
 // Delete deletes the records from the database.
 func (m *Model) Delete() *Model {
-	m.queryType = "exec"
+	m.action = "delete"
 	m.args = []interface{}{}
 
 	m.queryBuilder.WriteString("DELETE FROM ")
@@ -407,8 +417,16 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	// another query.
 	m.queryBuilder.Reset()
 
-	switch m.queryType {
-	case "exec":
+	now := time.Now()
+	switch m.timezone {
+	case "local":
+		now = now.Local()
+	default:
+		now = now.UTC()
+	}
+
+	switch m.action {
+	case "delete", "update_all":
 		if m.tx != nil {
 			if opt.Context != nil {
 				stmt, err = m.tx.PrepareContext(opt.Context, query)
@@ -451,7 +469,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		if err != nil {
 			return int64(0), err
 		}
-	case "getOnly":
+	case "count":
 		if m.tx != nil {
 			if opt.Context != nil {
 				stmt, err = m.tx.PrepareContext(opt.Context, query)
@@ -485,11 +503,29 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 				err = stmt.Get(&count, m.args...)
 			}
 		}
-	case "namedExecOrQuery":
+	case "create":
 		dest := m.dest
 
-		if m.destKind == reflect.Array || m.destKind == reflect.Slice {
+		switch m.destKind {
+		case reflect.Array, reflect.Slice:
+			v := reflect.ValueOf(dest).Elem()
+
+			for i := 0; i < v.Len(); i++ {
+				field := v.Index(i).FieldByName("CreatedAt")
+
+				if field.IsValid() {
+					field.Set(reflect.ValueOf(&now))
+				}
+			}
+
 			dest = reflect.ValueOf(dest).Elem().Interface()
+		case reflect.Ptr:
+			v := reflect.ValueOf(dest).Elem()
+			field := v.FieldByName("CreatedAt")
+
+			if field.IsValid() {
+				field.Set(reflect.ValueOf(&now))
+			}
 		}
 
 		switch m.adapter {
@@ -576,7 +612,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 				}
 			}
 		}
-	case "getOrSelect":
+	case "all", "find", "scan":
 		switch m.destKind {
 		case reflect.Array, reflect.Slice:
 			if m.tx != nil {
@@ -667,7 +703,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 
 // Find retrieves the records from the database.
 func (m *Model) Find() *Model {
-	m.queryType = "getOrSelect"
+	m.action = "find"
 	m.args = []interface{}{}
 	m.queryBuilder.WriteString("SELECT ")
 
@@ -751,7 +787,7 @@ func (m *Model) Order(order string) *Model {
 
 // Scan allows custom select result being scanned into the specified dest.
 func (m *Model) Scan(dest interface{}) *Model {
-	m.queryType = "getOrSelect"
+	m.action = "scan"
 	m.args = []interface{}{}
 
 	m.dest = dest
@@ -825,9 +861,37 @@ func (m *Model) Tx() Txer {
 	return m.tx
 }
 
-// Update updates the model object(s) in the database.
-func (m *Model) Update(set string, args ...interface{}) *Model {
-	m.queryType = "exec"
+// Update updates the model object(s) into the database.
+func (m *Model) Update() *Model {
+	m.action = "update"
+	m.queryBuilder.WriteString("UPDATE ")
+	m.queryBuilder.WriteString(m.tableName)
+	m.queryBuilder.WriteString(" SET ")
+
+	sets := []string{}
+	for column, attr := range m.attrs {
+		if attr.ignored || attr.autoIncrement {
+			continue
+		}
+
+		sets = append(sets, column+" = :"+column)
+	}
+
+	m.queryBuilder.WriteString(strings.Join(sets, ", "))
+
+	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
+		m.queryBuilder.WriteString(" RETURNING ")
+		m.queryBuilder.WriteString(strings.Join(m.primaryKeys, ", "))
+	}
+
+	m.queryBuilder.WriteString(";")
+
+	return m
+}
+
+// UpdateAll updates all the records that match where condition.
+func (m *Model) UpdateAll(set string, args ...interface{}) *Model {
+	m.action = "update_all"
 	m.args = []interface{}{}
 
 	m.queryBuilder.WriteString("UPDATE ")
