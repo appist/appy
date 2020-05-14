@@ -1918,6 +1918,41 @@ func (s *modelSuite) TestUpdateTx() {
 			s.Equal("foobar@gmail.com", users[10].Email)
 			s.Equal("foobar", users[10].Username)
 		}
+
+		{
+			users := []User{}
+			for i := 0; i < 10; i++ {
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			model := s.model(&users)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			users[0].Email = "barfoo@gmail.com"
+			users[0].Username = "barfoo"
+			users[0].LoginCount = nil
+
+			count, err = model.Update().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(err)
+
+			users = []User{}
+			count, err = s.model(&users).All().Exec()
+			s.Equal(int64(11), count)
+			s.Nil(err)
+		}
 	}
 }
 
