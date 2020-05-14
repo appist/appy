@@ -51,6 +51,7 @@ type (
 		limit, offset                                                int
 		action, group, having, order, selectColumns, timezone, where string
 		args, havingArgs, whereArgs                                  []interface{}
+		updates                                                      []modelUpdate
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
@@ -76,6 +77,16 @@ type (
 		stFieldName   string
 		stFieldType   reflect.Type
 	}
+
+	modelUpdate struct {
+		query string
+		model interface{}
+	}
+)
+
+const (
+	createdAtField = "CreatedAt"
+	updatedAtField = "UpdatedAt"
 )
 
 func init() {
@@ -105,6 +116,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 		primaryKeys:   []string{"id"},
 		tableName:     support.ToSnakeCase(support.Plural(destElem.Name())),
 		timezone:      "utc",
+		updates:       []modelUpdate{},
 	}
 
 	if len(opts) > 0 {
@@ -328,6 +340,27 @@ func (m *Model) Create() *Model {
 
 	m.queryBuilder.WriteString(";")
 
+	now := m.timeNow()
+	switch m.destKind {
+	case reflect.Array, reflect.Slice:
+		v := reflect.ValueOf(m.dest).Elem()
+
+		for i := 0; i < v.Len(); i++ {
+			field := v.Index(i).FieldByName(createdAtField)
+
+			if field.IsValid() {
+				field.Set(reflect.ValueOf(&now))
+			}
+		}
+	case reflect.Ptr:
+		v := reflect.ValueOf(m.dest).Elem()
+		field := v.FieldByName(createdAtField)
+
+		if field.IsValid() {
+			field.Set(reflect.ValueOf(&now))
+		}
+	}
+
 	return m
 }
 
@@ -361,7 +394,6 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		count               int64
 		err                 error
 		result              sql.Result
-		rows                *Rows
 		stmt                *Stmt
 		db, master, replica DBer
 	)
@@ -387,7 +419,8 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		return int64(0), ErrModelMissingReplicaDB
 	}
 
-	if m.queryBuilder.String() == "" {
+	// Note: m.action = "update" is using m.updates to store the queries.
+	if m.action != "update" && m.queryBuilder.String() == "" {
 		return int64(0), ErrModelEmptyQueryBuilder
 	}
 
@@ -418,14 +451,6 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	// Reset the buffer so that the model instance can be re-used to execute
 	// another query.
 	m.queryBuilder.Reset()
-
-	now := time.Now()
-	switch m.timezone {
-	case "local":
-		now = now.Local()
-	default:
-		now = now.UTC()
-	}
 
 	switch m.action {
 	case "delete", "update_all":
@@ -508,112 +533,24 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	case "create":
 		dest := m.dest
 
-		switch m.destKind {
-		case reflect.Array, reflect.Slice:
-			v := reflect.ValueOf(dest).Elem()
-
-			for i := 0; i < v.Len(); i++ {
-				field := v.Index(i).FieldByName("CreatedAt")
-
-				if field.IsValid() {
-					field.Set(reflect.ValueOf(&now))
-				}
-			}
-
+		if m.destKind == reflect.Array || m.destKind == reflect.Slice {
 			dest = reflect.ValueOf(dest).Elem().Interface()
-		case reflect.Ptr:
-			v := reflect.ValueOf(dest).Elem()
-			field := v.FieldByName("CreatedAt")
+		}
 
-			if field.IsValid() {
-				field.Set(reflect.ValueOf(&now))
+		count, err = m.namedExecOrQuery(db, dest, query, opt)
+		if err != nil {
+			return int64(0), err
+		}
+	case "update":
+		for _, update := range m.updates {
+			count, err = m.namedExecOrQuery(db, update.model, update.query, opt)
+			if err != nil {
+				return int64(0), err
 			}
 		}
 
-		switch m.adapter {
-		case "mysql":
-			if m.tx != nil {
-				if opt.Context != nil {
-					result, err = m.tx.NamedExecContext(opt.Context, query, dest)
-				} else {
-					result, err = m.tx.NamedExec(query, dest)
-				}
-			} else {
-				if opt.Context != nil {
-					result, err = db.NamedExecContext(opt.Context, query, dest)
-				} else {
-					result, err = db.NamedExec(query, dest)
-				}
-			}
-
-			if err != nil {
-				return int64(0), err
-			}
-
-			lastInsertID, err := result.LastInsertId()
-			if err != nil {
-				return int64(0), err
-			}
-
-			count, err = result.RowsAffected()
-			if err != nil {
-				return int64(0), err
-			}
-
-			if m.autoIncrement != "" {
-				switch m.destKind {
-				case reflect.Array, reflect.Slice:
-					v := reflect.ValueOf(m.dest).Elem()
-
-					for i := 0; i < v.Len(); i++ {
-						v.Index(i).FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID + int64(i))
-					}
-				case reflect.Ptr:
-					reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID)
-				}
-			}
-		case "postgres":
-			if m.tx != nil {
-				if opt.Context != nil {
-					rows, err = m.tx.NamedQueryContext(opt.Context, query, dest)
-				} else {
-					rows, err = m.tx.NamedQuery(query, dest)
-				}
-			} else {
-				if opt.Context != nil {
-					rows, err = db.NamedQueryContext(opt.Context, query, dest)
-				} else {
-					rows, err = db.NamedQuery(query, dest)
-				}
-			}
-
-			if err != nil {
-				return int64(0), err
-			}
-
-			defer rows.Close()
-
-			switch m.destKind {
-			case reflect.Array, reflect.Slice:
-				v := reflect.ValueOf(m.dest).Elem()
-				count = int64(v.Len())
-
-				for i := 0; i < v.Len(); i++ {
-					err = m.scanPrimaryKeys(rows, v.Index(i))
-
-					if err != nil {
-						return int64(0), err
-					}
-				}
-			case reflect.Ptr:
-				count = int64(1)
-				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
-
-				if err != nil {
-					return int64(0), err
-				}
-			}
-		}
+		count = int64(len(m.updates))
+		m.updates = []modelUpdate{}
 	case "all", "find", "scan":
 		switch m.destKind {
 		case reflect.Array, reflect.Slice:
@@ -866,27 +803,31 @@ func (m *Model) Tx() Txer {
 // Update updates the model object(s) into the database.
 func (m *Model) Update() *Model {
 	m.action = "update"
-	m.queryBuilder.WriteString("UPDATE ")
-	m.queryBuilder.WriteString(m.tableName)
-	m.queryBuilder.WriteString(" SET ")
 
-	sets := []string{}
-	for column, attr := range m.attrs {
-		if attr.ignored || attr.autoIncrement {
-			continue
+	now := m.timeNow()
+	switch m.destKind {
+	case reflect.Array, reflect.Slice:
+		v := reflect.ValueOf(m.dest).Elem()
+
+		for i := 0; i < v.Len(); i++ {
+			field := v.Index(i).FieldByName(updatedAtField)
+
+			if field.IsValid() {
+				field.Set(reflect.ValueOf(&now))
+			}
+
+			m.appendModelUpdate(v.Index(i))
+		}
+	case reflect.Ptr:
+		v := reflect.ValueOf(m.dest).Elem()
+		field := v.FieldByName(updatedAtField)
+
+		if field.IsValid() {
+			field.Set(reflect.ValueOf(&now))
 		}
 
-		sets = append(sets, column+" = :"+column)
+		m.appendModelUpdate(v)
 	}
-
-	m.queryBuilder.WriteString(strings.Join(sets, ", "))
-
-	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
-		m.queryBuilder.WriteString(" RETURNING ")
-		m.queryBuilder.WriteString(strings.Join(m.primaryKeys, ", "))
-	}
-
-	m.queryBuilder.WriteString(";")
 
 	return m
 }
@@ -927,6 +868,45 @@ func (m *Model) Where(condition string, args ...interface{}) *Model {
 	m.where, m.whereArgs = m.rebind(condition, args...)
 
 	return m
+}
+
+func (m *Model) appendModelUpdate(v reflect.Value) {
+	var builder strings.Builder
+	builder.WriteString("UPDATE ")
+	builder.WriteString(m.tableName)
+	builder.WriteString(" SET ")
+
+	sets := []string{}
+	for column, attr := range m.attrs {
+		if attr.ignored || attr.autoIncrement {
+			continue
+		}
+
+		sets = append(sets, column+" = :"+column)
+	}
+
+	wheres := []string{}
+	for _, pk := range m.primaryKeys {
+		if !v.FieldByName(m.attrs[pk].stFieldName).IsZero() {
+			wheres = append(wheres, pk+" = :"+pk)
+		}
+	}
+
+	builder.WriteString(strings.Join(sets, ", "))
+	builder.WriteString(" WHERE ")
+	builder.WriteString(strings.Join(wheres, " AND "))
+
+	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
+		builder.WriteString(" RETURNING ")
+		builder.WriteString(strings.Join(m.primaryKeys, ", "))
+	}
+
+	builder.WriteString(";")
+
+	m.updates = append(m.updates, modelUpdate{
+		query: builder.String(),
+		model: v.Interface(),
+	})
 }
 
 func (m *Model) buildWhereWithPrimaryKeys() {
@@ -1004,6 +984,102 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 	}
 }
 
+func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt ExecOption) (int64, error) {
+	var (
+		count  int64
+		err    error
+		result sql.Result
+		rows   *Rows
+	)
+
+	switch m.adapter {
+	case "mysql":
+		if m.tx != nil {
+			if opt.Context != nil {
+				result, err = m.tx.NamedExecContext(opt.Context, query, dest)
+			} else {
+				result, err = m.tx.NamedExec(query, dest)
+			}
+		} else {
+			if opt.Context != nil {
+				result, err = db.NamedExecContext(opt.Context, query, dest)
+			} else {
+				result, err = db.NamedExec(query, dest)
+			}
+		}
+
+		if err != nil {
+			return int64(0), err
+		}
+
+		lastInsertID, err := result.LastInsertId()
+		if err != nil {
+			return int64(0), err
+		}
+
+		count, err = result.RowsAffected()
+		if err != nil {
+			return int64(0), err
+		}
+
+		if m.autoIncrement != "" {
+			switch m.destKind {
+			case reflect.Array, reflect.Slice:
+				v := reflect.ValueOf(m.dest).Elem()
+
+				for i := 0; i < v.Len(); i++ {
+					v.Index(i).FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID + int64(i))
+				}
+			case reflect.Ptr:
+				reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID)
+			}
+		}
+	case "postgres":
+		if m.tx != nil {
+			if opt.Context != nil {
+				rows, err = m.tx.NamedQueryContext(opt.Context, query, dest)
+			} else {
+				rows, err = m.tx.NamedQuery(query, dest)
+			}
+		} else {
+			if opt.Context != nil {
+				rows, err = db.NamedQueryContext(opt.Context, query, dest)
+			} else {
+				rows, err = db.NamedQuery(query, dest)
+			}
+		}
+
+		if err != nil {
+			return int64(0), err
+		}
+
+		defer rows.Close()
+
+		switch m.destKind {
+		case reflect.Array, reflect.Slice:
+			v := reflect.ValueOf(m.dest).Elem()
+			count = int64(v.Len())
+
+			for i := 0; i < v.Len(); i++ {
+				err = m.scanPrimaryKeys(rows, v.Index(i))
+
+				if err != nil {
+					return int64(0), err
+				}
+			}
+		case reflect.Ptr:
+			count = int64(1)
+			err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
+
+			if err != nil {
+				return int64(0), err
+			}
+		}
+	}
+
+	return count, nil
+}
+
 func (m *Model) rebind(query string, args ...interface{}) (string, []interface{}) {
 	var builder strings.Builder
 	newArgs := []interface{}{}
@@ -1078,4 +1154,16 @@ func (m *Model) scanPrimaryKeys(rows *Rows, v reflect.Value) error {
 	}
 
 	return nil
+}
+
+func (m *Model) timeNow() time.Time {
+	now := time.Now()
+	switch m.timezone {
+	case "local":
+		now = now.Local()
+	default:
+		now = now.UTC()
+	}
+
+	return now
 }

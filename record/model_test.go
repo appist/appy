@@ -24,69 +24,75 @@ type (
 	}
 
 	AdminUser struct {
-		Modeler   `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" primaryKeys:"id,email" faker:"-"`
-		ID        int64      `db:"id" faker:"-"`
-		Age       int64      `db:"-"`
-		Email     string     `db:"email" faker:"email,unique"`
-		Username  string     `db:"username" faker:"username,unique"`
-		CreatedAt *time.Time `db:"created_at" faker:"-"`
-		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+		Modeler    `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" primaryKeys:"id,email" faker:"-"`
+		ID         int64      `db:"id" faker:"-"`
+		Age        int64      `db:"-"`
+		LoginCount *int64     `db:"login_count"`
+		Email      string     `db:"email" faker:"email,unique"`
+		Username   string     `db:"username" faker:"username,unique"`
+		CreatedAt  *time.Time `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 
 	User struct {
-		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
-		ID        int64      `db:"id" faker:"-"`
-		Age       int64      `db:"-"`
-		Email     string     `db:"email" faker:"email,unique"`
-		Username  string     `db:"username" faker:"username,unique"`
-		CreatedAt *time.Time `db:"created_at" faker:"-"`
-		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
+		ID         int64      `db:"id" faker:"-"`
+		Age        int64      `db:"-"`
+		LoginCount *int64     `db:"login_count"`
+		Email      string     `db:"email" faker:"email,unique"`
+		Username   string     `db:"username" faker:"username,unique"`
+		CreatedAt  *time.Time `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 
 	DuplicateUser struct {
-		Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
-		ID        int64      `db:"id" faker:"-"`
-		Age       int64      `db:"-"`
-		Email     string     `db:"email" faker:"email,unique"`
-		Username  string     `db:"username" faker:"username,unique"`
-		CreatedAt *time.Time `db:"created_at" faker:"-"`
-		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
+		ID         int64      `db:"id" faker:"-"`
+		Age        int64      `db:"-"`
+		LoginCount *int64     `db:"login_count"`
+		Email      string     `db:"email" faker:"email,unique"`
+		Username   string     `db:"username" faker:"username,unique"`
+		CreatedAt  *time.Time `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 
 	UserWithoutPK struct {
-		Modeler   `masters:"primary" replicas:"primaryReplica" primaryKeys:"" tableName:"" faker:"-"`
-		ID        int64      `db:"id" faker:"-"`
-		Age       int64      `db:"-"`
-		Email     string     `db:"email" faker:"email,unique"`
-		Username  string     `db:"username" faker:"username,unique"`
-		CreatedAt *time.Time `db:"created_at" faker:"-"`
-		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+		Modeler    `masters:"primary" replicas:"primaryReplica" primaryKeys:"" tableName:"" faker:"-"`
+		ID         int64      `db:"id" faker:"-"`
+		Age        int64      `db:"-"`
+		LoginCount *int64     `db:"login_count"`
+		Email      string     `db:"email" faker:"email,unique"`
+		Username   string     `db:"username" faker:"username,unique"`
+		CreatedAt  *time.Time `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 
 	MasterOnlyUser struct {
-		Modeler   `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" faker:"-"`
-		ID        int64      `db:"id" faker:"-"`
-		Age       int64      `db:"-"`
-		Email     string     `db:"email" faker:"email,unique"`
-		Username  string     `db:"username" faker:"username,unique"`
-		CreatedAt *time.Time `db:"created_at" faker:"-"`
-		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+		Modeler    `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" faker:"-"`
+		ID         int64      `db:"id" faker:"-"`
+		Age        int64      `db:"-"`
+		LoginCount *int64     `db:"login_count"`
+		Email      string     `db:"email" faker:"email,unique"`
+		Username   string     `db:"username" faker:"username,unique"`
+		CreatedAt  *time.Time `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 
 	ReplicaOnlyUser struct {
-		Modeler   `masters:"" replicas:"primaryReplica" tableName:"admins" faker:"-"`
-		ID        int64      `db:"id" faker:"-"`
-		Age       int64      `db:"-"`
-		Email     string     `db:"email" faker:"email,unique"`
-		Username  string     `db:"username" faker:"username,unique"`
-		CreatedAt *time.Time `db:"created_at" faker:"-"`
-		DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+		Modeler    `masters:"" replicas:"primaryReplica" tableName:"admins" faker:"-"`
+		ID         int64      `db:"id" faker:"-"`
+		Age        int64      `db:"-"`
+		LoginCount *int64     `db:"login_count"`
+		Email      string     `db:"email" faker:"email,unique"`
+		Username   string     `db:"username" faker:"username,unique"`
+		CreatedAt  *time.Time `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 )
 
@@ -121,6 +127,7 @@ func (s *modelSuite) setupDB(adapter, database string) {
 		query = `
 CREATE TABLE IF NOT EXISTS admins (
 	id INT AUTO_INCREMENT,
+	login_count INT,
 	email VARCHAR(64) UNIQUE NOT NULL,
 	username VARCHAR(64) UNIQUE NOT NULL,
 	created_at TIMESTAMP,
@@ -131,6 +138,7 @@ CREATE TABLE IF NOT EXISTS admins (
 
 CREATE TABLE IF NOT EXISTS users (
 	id INT PRIMARY KEY AUTO_INCREMENT,
+	login_count INT,
 	email VARCHAR(64) UNIQUE NOT NULL,
 	username VARCHAR(64) UNIQUE NOT NULL,
 	created_at TIMESTAMP,
@@ -140,6 +148,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS duplicate_users (
 	id INT PRIMARY KEY AUTO_INCREMENT,
+	login_count INT,
 	email VARCHAR(64) NOT NULL,
 	username VARCHAR(64) NOT NULL,
 	created_at TIMESTAMP,
@@ -149,6 +158,7 @@ CREATE TABLE IF NOT EXISTS duplicate_users (
 
 CREATE TABLE IF NOT EXISTS user_without_pks (
 	id INT,
+	login_count INT,
 	email VARCHAR(64) NOT NULL,
 	username VARCHAR(64) NOT NULL,
 	created_at TIMESTAMP,
@@ -169,6 +179,7 @@ CREATE TABLE IF NOT EXISTS user_without_pks (
 		query = `
 CREATE TABLE IF NOT EXISTS admins (
 	id SERIAL PRIMARY KEY,
+	login_count INT,
 	email VARCHAR UNIQUE NOT NULL,
 	username VARCHAR UNIQUE NOT NULL,
 	created_at TIMESTAMP,
@@ -178,6 +189,7 @@ CREATE TABLE IF NOT EXISTS admins (
 
 CREATE TABLE IF NOT EXISTS users (
 	id SERIAL PRIMARY KEY,
+	login_count INT,
 	email VARCHAR UNIQUE NOT NULL,
 	username VARCHAR UNIQUE NOT NULL,
 	created_at TIMESTAMP,
@@ -187,6 +199,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS duplicate_users (
 	id SERIAL PRIMARY KEY,
+	login_count INT,
 	email VARCHAR NOT NULL,
 	username VARCHAR NOT NULL,
 	created_at TIMESTAMP,
@@ -196,6 +209,7 @@ CREATE TABLE IF NOT EXISTS duplicate_users (
 
 CREATE TABLE IF NOT EXISTS user_without_pks (
 	id SERIAL,
+	login_count INT,
 	email VARCHAR NOT NULL,
 	username VARCHAR NOT NULL,
 	created_at TIMESTAMP,
@@ -1730,35 +1744,182 @@ func (s *modelSuite) TestShareTx() {
 	}
 }
 
-// func (s *modelSuite) TestUpdate() {
-// 	for _, adapter := range support.SupportedDBAdapters {
-// 		s.setupDB(adapter, "test_model_update_"+adapter)
+func (s *modelSuite) TestUpdate() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_update_"+adapter)
 
-// 		{
-// 			var user User
-// 			s.Nil(faker.FakeData(&user))
+		{
+			var user User
+			s.Nil(faker.FakeData(&user))
 
-// 			count, err := s.model(&user).Create().Exec()
-// 			s.Equal(int64(1), count)
-// 			s.Equal(int64(1), user.ID)
-// 			s.Nil(err)
+			count, err := s.model(&user).Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(1), user.ID)
+			s.Nil(err)
 
-// 			user.Email = "foo"
-// 			user.Username = "foo@gmail.com"
+			user.Email = "foo@gmail.com"
+			user.Username = "foo"
+			user.LoginCount = nil
 
-// 			fmt.Println(s.model(&user).Update().SQL())
-// 			count, err = s.model(&user).Update().Exec()
-// 			s.Equal(int64(1), count)
-// 			s.Nil(err)
+			count, err = s.model(&user).Update().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
 
-// 			count, err = s.model(&user).Find().Exec()
-// 			s.Equal(int64(1), count)
-// 			s.Nil(err)
-// 			s.Equal("foo@gmail.com", user.Email)
-// 			s.Equal("foo", user.Username)
-// 		}
-// 	}
-// }
+			user = User{}
+			count, err = s.model(&user).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+			s.Equal("foo@gmail.com", user.Email)
+			s.Equal("foo", user.Username)
+		}
+
+		{
+			users := []User{}
+			for i := 0; i < 10; i++ {
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			count, err := s.model(&users).Create().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			users[0].Email = "bar@gmail.com"
+			users[0].Username = "bar"
+			users[0].LoginCount = nil
+			users[9].Email = "foobar@gmail.com"
+			users[9].Username = "foobar"
+			users[9].LoginCount = nil
+
+			count, err = s.model(&users).Update().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			users = []User{}
+			count, err = s.model(&users).All().Exec()
+			s.Equal(int64(11), count)
+			s.Nil(err)
+			s.Equal("bar@gmail.com", users[1].Email)
+			s.Equal("bar", users[1].Username)
+			s.Equal("foobar@gmail.com", users[10].Email)
+			s.Equal("foobar", users[10].Username)
+		}
+	}
+}
+
+func (s *modelSuite) TestUpdateTx() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_update_tx_"+adapter)
+
+		{
+			var user User
+			s.Nil(faker.FakeData(&user))
+
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(1), user.ID)
+			s.Nil(err)
+
+			user.Email = "foo@gmail.com"
+			user.Username = "foo"
+			user.LoginCount = nil
+
+			count, err = model.Update().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(err)
+
+			user = User{}
+			count, err = s.model(&user).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+			s.Equal("foo@gmail.com", user.Email)
+			s.Equal("foo", user.Username)
+		}
+
+		{
+			var user User
+			s.Nil(faker.FakeData(&user))
+
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Equal(int64(2), user.ID)
+			s.Nil(err)
+
+			user.Email = "foo1@gmail.com"
+			user.Username = "foo1"
+			user.LoginCount = nil
+
+			count, err = model.Update().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(err)
+
+			user = User{}
+			count, err = s.model(&user).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			users := []User{}
+			for i := 0; i < 10; i++ {
+				user := User{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			model := s.model(&users)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			users[0].Email = "bar@gmail.com"
+			users[0].Username = "bar"
+			users[0].LoginCount = nil
+			users[9].Email = "foobar@gmail.com"
+			users[9].Username = "foobar"
+			users[9].LoginCount = nil
+
+			count, err = model.Update().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(err)
+
+			users = []User{}
+			count, err = s.model(&users).All().Exec()
+			s.Equal(int64(11), count)
+			s.Nil(err)
+			s.Equal("bar@gmail.com", users[1].Email)
+			s.Equal("bar", users[1].Username)
+			s.Equal("foobar@gmail.com", users[10].Email)
+			s.Equal("foobar", users[10].Username)
+		}
+	}
+}
 
 func (s *modelSuite) TestUpdateAll() {
 	for _, adapter := range support.SupportedDBAdapters {
