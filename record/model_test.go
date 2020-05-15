@@ -35,18 +35,6 @@ type (
 		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 
-	User struct {
-		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
-		ID         int64      `db:"id" faker:"-"`
-		Age        int64      `db:"-"`
-		LoginCount *int64     `db:"login_count"`
-		Email      string     `db:"email" faker:"email,unique"`
-		Username   string     `db:"username" faker:"username,unique"`
-		CreatedAt  *time.Time `db:"created_at" faker:"-"`
-		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
-	}
-
 	DuplicateUser struct {
 		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
@@ -95,6 +83,50 @@ type (
 		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 )
+
+type User struct {
+	Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
+	ID         int64      `db:"id" faker:"-"`
+	Age        int64      `db:"-"`
+	LoginCount *int64     `db:"login_count"`
+	Email      string     `db:"email" faker:"email,unique"`
+	Username   string     `db:"username" faker:"username,unique"`
+	CreatedAt  *time.Time `db:"created_at" faker:"-"`
+	DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
+	UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
+}
+
+func (u *User) BeforeValidate() {
+
+}
+
+func (u *User) AfterValidate() {
+
+}
+
+func (u *User) BeforeCreate() {
+
+}
+
+func (u *User) AfterCreate() {
+
+}
+
+func (u *User) BeforeFind() {
+
+}
+
+func (u *User) AfterFind() {
+
+}
+
+func (u *User) BeforeUpdate() {
+
+}
+
+func (u *User) AfterUpdate() {
+
+}
 
 func (s *modelSuite) SetupTest() {
 	s.logger, s.buffer, s.writer = support.NewTestLogger()
