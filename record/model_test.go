@@ -94,38 +94,57 @@ type User struct {
 	CreatedAt  *time.Time `db:"created_at" faker:"-"`
 	DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
 	UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
+	Callbacks  []string   `db:"-" faker:"-"`
+	Tainted    bool       `db:"-" faker:"-"`
 }
 
-func (u *User) BeforeValidate() {
+func (u *User) BeforeValidate() error {
+	u.Callbacks = append(u.Callbacks, "BeforeValidate")
 
+	return nil
 }
 
-func (u *User) AfterValidate() {
+func (u *User) AfterValidate() error {
+	u.Callbacks = append(u.Callbacks, "AfterValidate")
 
+	return nil
 }
 
-func (u *User) BeforeCreate() {
+func (u *User) BeforeCreate() error {
+	u.Callbacks = append(u.Callbacks, "BeforeCreate")
 
+	return nil
 }
 
-func (u *User) AfterCreate() {
+func (u *User) AfterCreate() error {
+	u.Callbacks = append(u.Callbacks, "AfterCreate")
 
+	return nil
 }
 
-func (u *User) BeforeFind() {
+func (u *User) BeforeFind() error {
+	u.Callbacks = append(u.Callbacks, "BeforeFind")
 
+	return nil
 }
 
-func (u *User) AfterFind() {
+func (u *User) AfterFind() error {
+	u.Callbacks = append(u.Callbacks, "AfterFind")
 
+	return nil
 }
 
-func (u *User) BeforeUpdate() {
+func (u *User) BeforeUpdate() error {
+	u.Callbacks = append(u.Callbacks, "BeforeUpdate")
+	u.Tainted = true
 
+	return nil
 }
 
-func (u *User) AfterUpdate() {
+func (u *User) AfterUpdate() error {
+	u.Callbacks = append(u.Callbacks, "AfterUpdate")
 
+	return nil
 }
 
 func (s *modelSuite) SetupTest() {

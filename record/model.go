@@ -476,12 +476,16 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 			return int64(0), err
 		}
 	case "update":
+		successfulCount := 0
+
 		for _, update := range m.updates {
 			count, err = m.namedExecOrQuery(db, update.model, update.query, opt)
 
 			if err != nil {
-				return int64(0), err
+				return int64(successfulCount), err
 			}
+
+			successfulCount++
 		}
 
 		count = int64(len(m.updates))
@@ -759,10 +763,9 @@ func (m *Model) appendModelUpdate(v reflect.Value) {
 	}
 
 	builder.WriteString(";")
-
 	m.updates = append(m.updates, modelUpdate{
 		query: builder.String(),
-		model: v.Interface(),
+		model: v.Addr().Interface(),
 	})
 }
 
@@ -1041,6 +1044,44 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		rows   *Rows
 	)
 
+	v := reflect.ValueOf(dest)
+	switch v.Kind() {
+	case reflect.Array, reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			elem := v.Index(i)
+
+			if elem.Addr().MethodByName("BeforeValidate").IsValid() {
+				elem.Addr().MethodByName("BeforeValidate").Call([]reflect.Value{})
+			}
+
+			// TODO: implement Validate()
+
+			if elem.Addr().MethodByName("AfterValidate").IsValid() {
+				elem.Addr().MethodByName("AfterValidate").Call([]reflect.Value{})
+			}
+
+			if elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).IsValid() {
+				elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).Call([]reflect.Value{})
+			}
+		}
+	case reflect.Ptr:
+		elem := v.Elem()
+
+		if elem.Addr().MethodByName("BeforeValidate").IsValid() {
+			elem.Addr().MethodByName("BeforeValidate").Call([]reflect.Value{})
+		}
+
+		// TODO: implement Validate()
+
+		if elem.Addr().MethodByName("AfterValidate").IsValid() {
+			elem.Addr().MethodByName("AfterValidate").Call([]reflect.Value{})
+		}
+
+		if elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).IsValid() {
+			elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).Call([]reflect.Value{})
+		}
+	}
+
 	switch m.adapter {
 	case "mysql":
 		if m.tx != nil {
@@ -1061,26 +1102,28 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			return int64(0), err
 		}
 
-		lastInsertID, err := result.LastInsertId()
-		if err != nil {
-			return int64(0), err
-		}
+		if m.action == "create" {
+			lastInsertID, err := result.LastInsertId()
+			if err != nil {
+				return int64(0), err
+			}
 
-		count, err = result.RowsAffected()
-		if err != nil {
-			return int64(0), err
-		}
+			count, err = result.RowsAffected()
+			if err != nil {
+				return int64(0), err
+			}
 
-		if m.autoIncrement != "" {
-			switch m.destKind {
-			case reflect.Array, reflect.Slice:
-				v := reflect.ValueOf(m.dest).Elem()
+			if m.autoIncrement != "" {
+				switch m.destKind {
+				case reflect.Array, reflect.Slice:
+					v := reflect.ValueOf(m.dest).Elem()
 
-				for i := 0; i < v.Len(); i++ {
-					v.Index(i).FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID + int64(i))
+					for i := 0; i < v.Len(); i++ {
+						v.Index(i).FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID + int64(i))
+					}
+				case reflect.Ptr:
+					reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID)
 				}
-			case reflect.Ptr:
-				reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID)
 			}
 		}
 	case "postgres":
@@ -1104,25 +1147,44 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 
 		defer rows.Close()
 
-		switch m.destKind {
-		case reflect.Array, reflect.Slice:
-			v := reflect.ValueOf(m.dest).Elem()
-			count = int64(v.Len())
+		if m.action == "create" {
+			switch m.destKind {
+			case reflect.Array, reflect.Slice:
+				v := reflect.ValueOf(m.dest).Elem()
+				count = int64(v.Len())
 
-			for i := 0; i < v.Len(); i++ {
-				err = m.scanPrimaryKeys(rows, v.Index(i))
+				for i := 0; i < v.Len(); i++ {
+					err = m.scanPrimaryKeys(rows, v.Index(i))
+
+					if err != nil {
+						return int64(0), err
+					}
+				}
+			case reflect.Ptr:
+				count = int64(1)
+				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
 
 				if err != nil {
 					return int64(0), err
 				}
 			}
-		case reflect.Ptr:
-			count = int64(1)
-			err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
+		}
+	}
 
-			if err != nil {
-				return int64(0), err
+	switch v.Kind() {
+	case reflect.Array, reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			elem := v.Index(i)
+
+			if elem.Addr().MethodByName("After" + support.ToPascalCase(m.action)).IsValid() {
+				elem.Addr().MethodByName("After" + support.ToPascalCase(m.action)).Call([]reflect.Value{})
 			}
+		}
+	case reflect.Ptr:
+		elem := v.Elem()
+
+		if elem.Addr().MethodByName("After" + support.ToPascalCase(m.action)).IsValid() {
+			elem.Addr().MethodByName("After" + support.ToPascalCase(m.action)).Call([]reflect.Value{})
 		}
 	}
 
