@@ -34,6 +34,9 @@ var (
 	// background job processing.
 	NewJob = worker.NewJob
 
+	// NewModel initializes a model that represents business data and logic.
+	NewModel = record.NewModel
+
 	// NewTestContext returns a fresh router w/ context for testing purposes.
 	NewTestContext = pack.NewTestContext
 
@@ -92,6 +95,12 @@ type (
 
 	// Mock is the workhorse used to track activity on another object.
 	Mock = test.Mock
+
+	// Model is the interface that represents business data and logic.
+	Model = record.Modeler
+
+	// ModelOption is used to initialise a model with additional configurations.
+	ModelOption = record.ModelOption
 
 	// ScaffoldOption contains the information of how a new application should be
 	// created.
