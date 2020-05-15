@@ -1,5 +1,5 @@
 # The base image to install OS dependencies
-FROM golang:1.14.1-alpine AS base
+FROM golang:1.14.3-alpine AS base
 
 RUN apk update && \
   apk upgrade && \
