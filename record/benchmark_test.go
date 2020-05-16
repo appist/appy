@@ -486,6 +486,11 @@ func BenchmarkReadORM(b *testing.B) {
 	defer dbManager.DB("primary").Close()
 
 	id, err := ormInsert(dbManager, b)
+	if id < 1 {
+		fmt.Println(fmt.Errorf("expect id to be greater than %d but got %d", 0, id))
+		b.FailNow()
+	}
+
 	if err != nil {
 		fmt.Println(err)
 		b.FailNow()
