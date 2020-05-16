@@ -22,6 +22,7 @@ type (
 		Count() *Model
 		Create() *Model
 		Delete() *Model
+		DeleteAll() *Model
 		Exec(opts ...ExecOption) (int64, error)
 		Find() *Model
 		Group(group string) *Model
@@ -51,7 +52,7 @@ type (
 		limit, offset                                                int
 		action, group, having, order, selectColumns, timezone, where string
 		args, havingArgs, whereArgs                                  []interface{}
-		updates                                                      []modelUpdate
+		individuals                                                  []modelIndividual
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
@@ -78,9 +79,9 @@ type (
 		stFieldType   reflect.Type
 	}
 
-	modelUpdate struct {
+	modelIndividual struct {
+		dest  interface{}
 		query string
-		model interface{}
 	}
 )
 
@@ -116,7 +117,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 		primaryKeys:   []string{"id"},
 		tableName:     support.ToSnakeCase(support.Plural(destElem.Name())),
 		timezone:      "utc",
-		updates:       []modelUpdate{},
+		individuals:   []modelIndividual{},
 	}
 
 	if len(opts) > 0 {
@@ -367,6 +368,26 @@ func (m *Model) Create() *Model {
 // Delete deletes the records from the database.
 func (m *Model) Delete() *Model {
 	m.action = "delete"
+
+	switch m.destKind {
+	case reflect.Array, reflect.Slice:
+		v := reflect.ValueOf(m.dest).Elem()
+
+		for i := 0; i < v.Len(); i++ {
+			m.appendModelIndividual(v.Index(i))
+		}
+	case reflect.Ptr:
+		v := reflect.ValueOf(m.dest).Elem()
+
+		m.appendModelIndividual(v)
+	}
+
+	return m
+}
+
+// DeleteAll deletes all the records that match where condition.
+func (m *Model) DeleteAll() *Model {
+	m.action = "delete_all"
 	m.args = []interface{}{}
 
 	m.queryBuilder.WriteString("DELETE FROM ")
@@ -417,8 +438,8 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		return int64(0), ErrModelMissingReplicaDB
 	}
 
-	// Note: m.action = "update" is using m.updates to store the queries.
-	if m.action != "update" && m.queryBuilder.String() == "" {
+	// Note: m.action = "delete|update" is using m.individuals to store the queries.
+	if !support.ArrayContains([]string{"delete", "update"}, m.action) && m.queryBuilder.String() == "" {
 		return int64(0), ErrModelEmptyQueryBuilder
 	}
 
@@ -451,7 +472,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	m.queryBuilder.Reset()
 
 	switch m.action {
-	case "delete", "update_all":
+	case "delete_all", "update_all":
 		count, err = m.exec(db, query, opt)
 
 		if err != nil {
@@ -475,11 +496,11 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		if err != nil {
 			return int64(0), err
 		}
-	case "update":
+	case "delete", "update":
 		successfulCount := 0
 
-		for _, update := range m.updates {
-			count, err = m.namedExecOrQuery(db, update.model, update.query, opt)
+		for _, individual := range m.individuals {
+			count, err = m.namedExecOrQuery(db, individual.dest, individual.query, opt)
 
 			if err != nil {
 				return int64(successfulCount), err
@@ -488,8 +509,8 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 			successfulCount++
 		}
 
-		count = int64(len(m.updates))
-		m.updates = []modelUpdate{}
+		count = int64(len(m.individuals))
+		m.individuals = []modelIndividual{}
 	case "all", "find", "scan":
 		count, err = m.getOrSelect(db, query, opt)
 
@@ -653,7 +674,21 @@ func (m *Model) Select(columns string) *Model {
 
 // SQL returns the SQL string.
 func (m *Model) SQL() string {
-	return m.queryBuilder.String()
+	query := m.queryBuilder.String()
+
+	if query != "" {
+		return query
+	}
+
+	var builder strings.Builder
+	if len(m.individuals) > 0 {
+		for _, individual := range m.individuals {
+			builder.WriteString(individual.query)
+			builder.WriteString("\n")
+		}
+	}
+
+	return builder.String()
 }
 
 // Tx returns the transaction connection.
@@ -677,7 +712,7 @@ func (m *Model) Update() *Model {
 				field.Set(reflect.ValueOf(&now))
 			}
 
-			m.appendModelUpdate(v.Index(i))
+			m.appendModelIndividual(v.Index(i))
 		}
 	case reflect.Ptr:
 		v := reflect.ValueOf(m.dest).Elem()
@@ -687,7 +722,7 @@ func (m *Model) Update() *Model {
 			field.Set(reflect.ValueOf(&now))
 		}
 
-		m.appendModelUpdate(v)
+		m.appendModelIndividual(v)
 	}
 
 	return m
@@ -731,19 +766,29 @@ func (m *Model) Where(condition string, args ...interface{}) *Model {
 	return m
 }
 
-func (m *Model) appendModelUpdate(v reflect.Value) {
+func (m *Model) appendModelIndividual(v reflect.Value) {
 	var builder strings.Builder
-	builder.WriteString("UPDATE ")
-	builder.WriteString(m.tableName)
-	builder.WriteString(" SET ")
 
-	sets := []string{}
-	for column, attr := range m.attrs {
-		if attr.ignored || attr.autoIncrement {
-			continue
+	switch m.action {
+	case "delete":
+		builder.WriteString("DELETE FROM ")
+		builder.WriteString(m.tableName)
+	case "update":
+		builder.WriteString("UPDATE ")
+		builder.WriteString(m.tableName)
+		builder.WriteString(" SET ")
+
+		sets := []string{}
+
+		for column, attr := range m.attrs {
+			if attr.ignored || attr.autoIncrement {
+				continue
+			}
+
+			sets = append(sets, column+" = :"+column)
 		}
 
-		sets = append(sets, column+" = :"+column)
+		builder.WriteString(strings.Join(sets, ", "))
 	}
 
 	wheres := []string{}
@@ -753,19 +798,19 @@ func (m *Model) appendModelUpdate(v reflect.Value) {
 		}
 	}
 
-	builder.WriteString(strings.Join(sets, ", "))
 	builder.WriteString(" WHERE ")
 	builder.WriteString(strings.Join(wheres, " AND "))
 
-	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
+	if len(m.primaryKeys) > 0 && m.adapter == "postgres" && m.action == "update" {
 		builder.WriteString(" RETURNING ")
 		builder.WriteString(strings.Join(m.primaryKeys, ", "))
 	}
 
 	builder.WriteString(";")
-	m.updates = append(m.updates, modelUpdate{
+
+	m.individuals = append(m.individuals, modelIndividual{
+		dest:  v.Addr().Interface(),
 		query: builder.String(),
-		model: v.Addr().Interface(),
 	})
 }
 
@@ -1023,12 +1068,12 @@ func (m *Model) getOrSelect(db DBer, query string, opt ExecOption) (int64, error
 
 		if err == sql.ErrNoRows {
 			err = nil
-		}
-
-		for _, pk := range m.primaryKeys {
-			if !reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[pk].stFieldName).IsZero() {
-				count = 1
-				break
+		} else {
+			for _, pk := range m.primaryKeys {
+				if !reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[pk].stFieldName).IsZero() {
+					count = 1
+					break
+				}
 			}
 		}
 	}
@@ -1044,20 +1089,24 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		rows   *Rows
 	)
 
+	validateActions := []string{"create", "update"}
+
 	v := reflect.ValueOf(dest)
 	switch v.Kind() {
 	case reflect.Array, reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
 			elem := v.Index(i)
 
-			if elem.Addr().MethodByName("BeforeValidate").IsValid() {
-				elem.Addr().MethodByName("BeforeValidate").Call([]reflect.Value{})
-			}
+			if support.ArrayContains(validateActions, m.action) {
+				if elem.Addr().MethodByName("BeforeValidate").IsValid() {
+					elem.Addr().MethodByName("BeforeValidate").Call([]reflect.Value{})
+				}
 
-			// TODO: implement Validate()
+				// TODO: implement Validate()
 
-			if elem.Addr().MethodByName("AfterValidate").IsValid() {
-				elem.Addr().MethodByName("AfterValidate").Call([]reflect.Value{})
+				if elem.Addr().MethodByName("AfterValidate").IsValid() {
+					elem.Addr().MethodByName("AfterValidate").Call([]reflect.Value{})
+				}
 			}
 
 			if elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).IsValid() {
@@ -1067,14 +1116,16 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 	case reflect.Ptr:
 		elem := v.Elem()
 
-		if elem.Addr().MethodByName("BeforeValidate").IsValid() {
-			elem.Addr().MethodByName("BeforeValidate").Call([]reflect.Value{})
-		}
+		if support.ArrayContains(validateActions, m.action) {
+			if elem.Addr().MethodByName("BeforeValidate").IsValid() {
+				elem.Addr().MethodByName("BeforeValidate").Call([]reflect.Value{})
+			}
 
-		// TODO: implement Validate()
+			// TODO: implement Validate()
 
-		if elem.Addr().MethodByName("AfterValidate").IsValid() {
-			elem.Addr().MethodByName("AfterValidate").Call([]reflect.Value{})
+			if elem.Addr().MethodByName("AfterValidate").IsValid() {
+				elem.Addr().MethodByName("AfterValidate").Call([]reflect.Value{})
+			}
 		}
 
 		if elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).IsValid() {
