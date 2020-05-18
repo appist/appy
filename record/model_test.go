@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,6 +22,18 @@ type (
 		dbManager *Engine
 		logger    *support.Logger
 		writer    *bufio.Writer
+	}
+
+	User struct {
+		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
+		ID         int64      `db:"id" faker:"-"`
+		Age        int64      `db:"-"`
+		LoginCount *int64     `db:"login_count"`
+		Email      string     `db:"email" faker:"email,unique"`
+		Username   string     `db:"username" faker:"username,unique"`
+		CreatedAt  *time.Time `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
+		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 
 	AdminUser struct {
@@ -84,50 +97,6 @@ type (
 	}
 )
 
-type User struct {
-	Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
-	ID         int64      `db:"id" faker:"-"`
-	Age        int64      `db:"-"`
-	LoginCount *int64     `db:"login_count"`
-	Email      string     `db:"email" faker:"email,unique"`
-	Username   string     `db:"username" faker:"username,unique"`
-	CreatedAt  *time.Time `db:"created_at" faker:"-"`
-	DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
-	UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
-}
-
-func (u *User) BeforeValidate() {
-
-}
-
-func (u *User) AfterValidate() {
-
-}
-
-func (u *User) BeforeCreate() {
-
-}
-
-func (u *User) AfterCreate() {
-
-}
-
-func (u *User) BeforeFind() {
-
-}
-
-func (u *User) AfterFind() {
-
-}
-
-func (u *User) BeforeUpdate() {
-
-}
-
-func (u *User) AfterUpdate() {
-
-}
-
 func (s *modelSuite) SetupTest() {
 	s.logger, s.buffer, s.writer = support.NewTestLogger()
 }
@@ -173,6 +142,14 @@ CREATE TABLE IF NOT EXISTS users (
 	login_count INT,
 	email VARCHAR(64) UNIQUE NOT NULL,
 	username VARCHAR(64) UNIQUE NOT NULL,
+	created_at TIMESTAMP,
+	deleted_at TIMESTAMP,
+	updated_at TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS callback_users (
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	username VARCHAR(64) NOT NULL,
 	created_at TIMESTAMP,
 	deleted_at TIMESTAMP,
 	updated_at TIMESTAMP
@@ -224,6 +201,14 @@ CREATE TABLE IF NOT EXISTS users (
 	login_count INT,
 	email VARCHAR UNIQUE NOT NULL,
 	username VARCHAR UNIQUE NOT NULL,
+	created_at TIMESTAMP,
+	deleted_at TIMESTAMP,
+	updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS callback_users (
+	id SERIAL PRIMARY KEY,
+	username VARCHAR NOT NULL,
 	created_at TIMESTAMP,
 	deleted_at TIMESTAMP,
 	updated_at TIMESTAMP
@@ -1000,6 +985,123 @@ func (s *modelSuite) TestDelete() {
 		s.setupDB(adapter, "test_model_delete_"+adapter)
 		s.insertUsers()
 
+		var users []User
+		count, err := s.model(&users).All().Exec()
+		s.Equal(10, len(users))
+		s.Equal(int64(10), count)
+		s.Nil(err)
+
+		splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
+		s.Equal(11, len(splits))
+
+		count, err = s.model(&users[5]).Delete().Exec()
+		s.Equal(int64(1), count)
+		s.Nil(err)
+
+		count, err = s.model(&users[5]).Find().Exec()
+		s.Equal(int64(0), count)
+		s.Nil(err)
+
+		users = []User{users[0], users[1]}
+		count, err = s.model(&users).Delete().Exec()
+		s.Equal(int64(2), count)
+		s.Nil(err)
+
+		users = []User{}
+		count, err = s.model(&users).All().Exec()
+		s.Equal(int64(7), count)
+		s.Nil(err)
+	}
+}
+
+func (s *modelSuite) TestDeleteTx() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_delete_tx_"+adapter)
+		s.insertUsers()
+
+		{
+			user := User{ID: 1}
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&User{ID: 1}).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
+		}
+
+		{
+			user := User{ID: 2}
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(err)
+
+			count, err = s.model(&User{ID: 2}).Find().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+		}
+
+		{
+			users := []User{{ID: 2}, {ID: 3}}
+			model := s.model(&users)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Delete().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(err)
+
+			count, err = s.model(&[]User{{ID: 2}, {ID: 3}}).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(err)
+		}
+
+		{
+			users := []User{{ID: 4}, {ID: 5}}
+			model := s.model(&users)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Delete().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(err)
+
+			count, err = s.model(&[]User{{ID: 4}, {ID: 5}}).Find().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(err)
+		}
+	}
+}
+
+func (s *modelSuite) TestDeleteAll() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_delete_all_"+adapter)
+		s.insertUsers()
+
 		usersWithoutPK := []UserWithoutPK{}
 		for i := 0; i < 10; i++ {
 			u := UserWithoutPK{}
@@ -1024,21 +1126,21 @@ func (s *modelSuite) TestDelete() {
 
 		{
 			user := User{}
-			count, err = s.model(&user).Where("id ?").Delete().Exec()
+			count, err = s.model(&user).Where("id ?").DeleteAll().Exec()
 			s.Equal(int64(0), count)
 			s.NotNil(err)
 		}
 
 		{
 			user := User{}
-			count, err = s.model(&user).Where("id = ?", 0).Delete().Exec()
+			count, err = s.model(&user).Where("id = ?", 0).DeleteAll().Exec()
 			s.Equal(int64(0), count)
 			s.Nil(err)
 		}
 
 		{
 			user := User{ID: 9}
-			count, err = s.model(&user).Delete().Exec()
+			count, err = s.model(&user).DeleteAll().Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1049,7 +1151,7 @@ func (s *modelSuite) TestDelete() {
 
 		{
 			admin := AdminUser{ID: 9}
-			count, err = s.model(&admin).Delete().Exec()
+			count, err = s.model(&admin).DeleteAll().Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1060,7 +1162,7 @@ func (s *modelSuite) TestDelete() {
 
 		{
 			admin := AdminUser{ID: 8, Email: "foo", Username: "bar"}
-			count, err = s.model(&admin).Delete().Exec()
+			count, err = s.model(&admin).DeleteAll().Exec()
 			s.Equal(int64(0), count)
 			s.Nil(err)
 
@@ -1069,7 +1171,7 @@ func (s *modelSuite) TestDelete() {
 			s.Nil(err)
 
 			admin = AdminUser{ID: 8, Email: admins[7].Email, Username: "bar"}
-			count, err = s.model(&admin).Delete().Exec()
+			count, err = s.model(&admin).DeleteAll().Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1084,7 +1186,7 @@ func (s *modelSuite) TestDelete() {
 				{ID: 6, Email: admins[5].Email, Username: "bar"},
 			}
 
-			count, err = s.model(&admins).Delete().Exec()
+			count, err = s.model(&admins).DeleteAll().Exec()
 			s.Equal(int64(2), count)
 			s.Nil(err)
 
@@ -1095,7 +1197,7 @@ func (s *modelSuite) TestDelete() {
 
 		{
 			usersWithoutPK = []UserWithoutPK{}
-			count, err = s.model(&usersWithoutPK).Delete().Exec()
+			count, err = s.model(&usersWithoutPK).DeleteAll().Exec()
 			s.Equal(int64(10), count)
 			s.Nil(err)
 
@@ -1108,7 +1210,7 @@ func (s *modelSuite) TestDelete() {
 		defer cancel()
 
 		{
-			count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).Delete().Exec(ExecOption{Context: ctx})
+			count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(3), count)
 			s.Nil(err)
 
@@ -1134,16 +1236,16 @@ func (s *modelSuite) TestDelete() {
 
 		{
 			user := User{}
-			count, err = s.model(&user).Where("id ?").Delete().Exec(ExecOption{Context: ctx})
+			count, err = s.model(&user).Where("id ?").DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
 			s.NotNil(err)
 		}
 	}
 }
 
-func (s *modelSuite) TestDeleteTx() {
+func (s *modelSuite) TestDeleteAllTx() {
 	for _, adapter := range support.SupportedDBAdapters {
-		s.setupDB(adapter, "test_model_delete_tx_"+adapter)
+		s.setupDB(adapter, "test_model_delete_all_tx_"+adapter)
 		s.insertUsers()
 
 		{
@@ -1153,7 +1255,7 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Delete().Exec()
+			count, err := userModel.DeleteAll().Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1172,7 +1274,7 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Delete().Exec()
+			count, err := userModel.DeleteAll().Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1194,7 +1296,7 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Delete().Exec(ExecOption{Context: ctx})
+			count, err := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1213,7 +1315,7 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Delete().Exec(ExecOption{Context: ctx})
+			count, err := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
@@ -1235,7 +1337,7 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Delete().Exec(ExecOption{Context: ctx})
+			count, err := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
 			s.EqualError(err, "context deadline exceeded")
 
@@ -1824,6 +1926,9 @@ func (s *modelSuite) TestUpdate() {
 			users[9].Email = "foobar@gmail.com"
 			users[9].Username = "foobar"
 			users[9].LoginCount = nil
+
+			splits := strings.Split(s.model(&users).Update().SQL(), "\n")
+			s.Equal(11, len(splits))
 
 			count, err = s.model(&users).Update().Exec()
 			s.Equal(int64(10), count)

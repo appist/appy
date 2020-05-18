@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/appist/appy/support"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 )
 
 type (
@@ -22,6 +24,7 @@ type (
 		Count() *Model
 		Create() *Model
 		Delete() *Model
+		DeleteAll() *Model
 		Exec(opts ...ExecOption) (int64, error)
 		Find() *Model
 		Group(group string) *Model
@@ -51,12 +54,12 @@ type (
 		limit, offset                                                int
 		action, group, having, order, selectColumns, timezone, where string
 		args, havingArgs, whereArgs                                  []interface{}
-		updates                                                      []modelUpdate
+		individuals                                                  []modelIndividual
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
 	ModelOption struct {
-		tx Txer
+		Tx Txer
 	}
 
 	// ExecOption indicates how a query should be executed.
@@ -78,9 +81,9 @@ type (
 		stFieldType   reflect.Type
 	}
 
-	modelUpdate struct {
+	modelIndividual struct {
+		dest  interface{}
 		query string
-		model interface{}
 	}
 )
 
@@ -116,11 +119,11 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 		primaryKeys:   []string{"id"},
 		tableName:     support.ToSnakeCase(support.Plural(destElem.Name())),
 		timezone:      "utc",
-		updates:       []modelUpdate{},
+		individuals:   []modelIndividual{},
 	}
 
 	if len(opts) > 0 {
-		model.tx = opts[0].tx
+		model.tx = opts[0].Tx
 	}
 
 	for i := 0; i < destElem.NumField(); i++ {
@@ -263,6 +266,27 @@ func (m *Model) Commit() error {
 		if err == nil {
 			m.tx = nil
 		}
+
+		afterCommitActions := []string{"create", "update", "delete"}
+		if support.ArrayContains(afterCommitActions, m.action) {
+			v := reflect.ValueOf(m.dest)
+			switch m.destKind {
+			case reflect.Array, reflect.Slice:
+				elem := v.Elem()
+
+				for i := 0; i < elem.Len(); i++ {
+					err = m.handleCallback(elem.Index(i), "After"+support.ToPascalCase(m.action)+"Commit")
+					if err != nil {
+						return err
+					}
+				}
+			case reflect.Ptr:
+				err = m.handleCallback(v.Elem(), "After"+support.ToPascalCase(m.action)+"Commit")
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return err
@@ -277,6 +301,24 @@ func (m *Model) Rollback() error {
 
 		if err == nil {
 			m.tx = nil
+		}
+
+		v := reflect.ValueOf(m.dest)
+		switch m.destKind {
+		case reflect.Array, reflect.Slice:
+			elem := v.Elem()
+
+			for i := 0; i < elem.Len(); i++ {
+				err = m.handleCallback(elem.Index(i), "AfterRollback")
+				if err != nil {
+					return err
+				}
+			}
+		case reflect.Ptr:
+			err = m.handleCallback(v.Elem(), "AfterRollback")
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -367,6 +409,26 @@ func (m *Model) Create() *Model {
 // Delete deletes the records from the database.
 func (m *Model) Delete() *Model {
 	m.action = "delete"
+
+	switch m.destKind {
+	case reflect.Array, reflect.Slice:
+		v := reflect.ValueOf(m.dest).Elem()
+
+		for i := 0; i < v.Len(); i++ {
+			m.appendModelIndividual(v.Index(i))
+		}
+	case reflect.Ptr:
+		v := reflect.ValueOf(m.dest).Elem()
+
+		m.appendModelIndividual(v)
+	}
+
+	return m
+}
+
+// DeleteAll deletes all the records that match where condition.
+func (m *Model) DeleteAll() *Model {
+	m.action = "delete_all"
 	m.args = []interface{}{}
 
 	m.queryBuilder.WriteString("DELETE FROM ")
@@ -380,6 +442,11 @@ func (m *Model) Delete() *Model {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
 		m.args = append(m.args, m.whereArgs...)
+	}
+
+	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
+		m.queryBuilder.WriteString(" RETURNING ")
+		m.queryBuilder.WriteString(strings.Join(m.primaryKeys, ", "))
 	}
 
 	m.queryBuilder.WriteString(";")
@@ -417,8 +484,8 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		return int64(0), ErrModelMissingReplicaDB
 	}
 
-	// Note: m.action = "update" is using m.updates to store the queries.
-	if m.action != "update" && m.queryBuilder.String() == "" {
+	// Note: m.action = "delete|update" is using m.individuals to store the queries.
+	if !support.ArrayContains([]string{"delete", "update"}, m.action) && m.queryBuilder.String() == "" {
 		return int64(0), ErrModelEmptyQueryBuilder
 	}
 
@@ -451,18 +518,10 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	m.queryBuilder.Reset()
 
 	switch m.action {
-	case "delete", "update_all":
+	case "delete_all", "update_all":
 		count, err = m.exec(db, query, opt)
-
-		if err != nil {
-			return int64(0), err
-		}
 	case "count":
 		count, err = m.get(db, query, opt)
-
-		if err != nil {
-			return int64(0), err
-		}
 	case "create":
 		dest := m.dest
 
@@ -471,27 +530,25 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		}
 
 		count, err = m.namedExecOrQuery(db, dest, query, opt)
+	case "delete", "update":
+		errs := []error{}
 
-		if err != nil {
-			return int64(0), err
-		}
-	case "update":
-		for _, update := range m.updates {
-			count, err = m.namedExecOrQuery(db, update.model, update.query, opt)
+		for _, individual := range m.individuals {
+			individualCount, err := m.namedExecOrQuery(db, individual.dest, individual.query, opt)
+			count += individualCount
 
 			if err != nil {
-				return int64(0), err
+				errs = append(errs, err)
 			}
 		}
 
-		count = int64(len(m.updates))
-		m.updates = []modelUpdate{}
+		if len(errs) > 0 {
+			return count, errs[0]
+		}
+
+		m.individuals = []modelIndividual{}
 	case "all", "find", "scan":
 		count, err = m.getOrSelect(db, query, opt)
-
-		if err != nil {
-			return int64(0), err
-		}
 	}
 
 	return count, err
@@ -649,7 +706,21 @@ func (m *Model) Select(columns string) *Model {
 
 // SQL returns the SQL string.
 func (m *Model) SQL() string {
-	return m.queryBuilder.String()
+	query := m.queryBuilder.String()
+
+	if query != "" {
+		return query
+	}
+
+	var builder strings.Builder
+	if len(m.individuals) > 0 {
+		for _, individual := range m.individuals {
+			builder.WriteString(individual.query)
+			builder.WriteString("\n")
+		}
+	}
+
+	return builder.String()
 }
 
 // Tx returns the transaction connection.
@@ -673,7 +744,7 @@ func (m *Model) Update() *Model {
 				field.Set(reflect.ValueOf(&now))
 			}
 
-			m.appendModelUpdate(v.Index(i))
+			m.appendModelIndividual(v.Index(i))
 		}
 	case reflect.Ptr:
 		v := reflect.ValueOf(m.dest).Elem()
@@ -683,7 +754,7 @@ func (m *Model) Update() *Model {
 			field.Set(reflect.ValueOf(&now))
 		}
 
-		m.appendModelUpdate(v)
+		m.appendModelIndividual(v)
 	}
 
 	return m
@@ -727,19 +798,29 @@ func (m *Model) Where(condition string, args ...interface{}) *Model {
 	return m
 }
 
-func (m *Model) appendModelUpdate(v reflect.Value) {
+func (m *Model) appendModelIndividual(v reflect.Value) {
 	var builder strings.Builder
-	builder.WriteString("UPDATE ")
-	builder.WriteString(m.tableName)
-	builder.WriteString(" SET ")
 
-	sets := []string{}
-	for column, attr := range m.attrs {
-		if attr.ignored || attr.autoIncrement {
-			continue
+	switch m.action {
+	case "delete":
+		builder.WriteString("DELETE FROM ")
+		builder.WriteString(m.tableName)
+	case "update":
+		builder.WriteString("UPDATE ")
+		builder.WriteString(m.tableName)
+		builder.WriteString(" SET ")
+
+		sets := []string{}
+
+		for column, attr := range m.attrs {
+			if attr.ignored || attr.autoIncrement {
+				continue
+			}
+
+			sets = append(sets, column+" = :"+column)
 		}
 
-		sets = append(sets, column+" = :"+column)
+		builder.WriteString(strings.Join(sets, ", "))
 	}
 
 	wheres := []string{}
@@ -749,7 +830,6 @@ func (m *Model) appendModelUpdate(v reflect.Value) {
 		}
 	}
 
-	builder.WriteString(strings.Join(sets, ", "))
 	builder.WriteString(" WHERE ")
 	builder.WriteString(strings.Join(wheres, " AND "))
 
@@ -760,9 +840,9 @@ func (m *Model) appendModelUpdate(v reflect.Value) {
 
 	builder.WriteString(";")
 
-	m.updates = append(m.updates, modelUpdate{
+	m.individuals = append(m.individuals, modelIndividual{
+		dest:  v.Addr().Interface(),
 		query: builder.String(),
-		model: v.Interface(),
 	})
 }
 
@@ -1020,17 +1100,42 @@ func (m *Model) getOrSelect(db DBer, query string, opt ExecOption) (int64, error
 
 		if err == sql.ErrNoRows {
 			err = nil
-		}
-
-		for _, pk := range m.primaryKeys {
-			if !reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[pk].stFieldName).IsZero() {
-				count = 1
-				break
+		} else {
+			for _, pk := range m.primaryKeys {
+				if !reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[pk].stFieldName).IsZero() {
+					count = 1
+					break
+				}
 			}
 		}
 	}
 
 	return count, err
+}
+
+func (m *Model) handleCallback(elem reflect.Value, callback string) error {
+	callbackMethod := elem.Addr().MethodByName(callback)
+
+	if callbackMethod.IsValid() {
+		values := callbackMethod.Call([]reflect.Value{})
+
+		if len(values) > 0 {
+			if values[0].Type().Implements(reflect.TypeOf((*error)(nil)).Elem()) && !values[0].IsNil() {
+				if m.tx != nil {
+					err := m.tx.Rollback()
+					if err != nil {
+						return err
+					}
+
+					m.tx = nil
+				}
+
+				return values[0].Interface().(error)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt ExecOption) (int64, error) {
@@ -1040,6 +1145,63 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		result sql.Result
 		rows   *Rows
 	)
+
+	validateActions := []string{"create", "update"}
+	ginValidator, _ := binding.Validator.Engine().(*validator.Validate)
+
+	v := reflect.ValueOf(dest)
+	switch v.Kind() {
+	case reflect.Array, reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			elem := v.Index(i)
+
+			if support.ArrayContains(validateActions, m.action) {
+				err = m.handleCallback(elem, "BeforeValidate")
+				if err != nil {
+					return int64(0), err
+				}
+
+				err = ginValidator.Struct(elem.Interface())
+				if err != nil {
+					return int64(0), err
+				}
+
+				err = m.handleCallback(elem, "AfterValidate")
+				if err != nil {
+					return int64(0), err
+				}
+			}
+
+			err = m.handleCallback(elem, "Before"+support.ToPascalCase(m.action))
+			if err != nil {
+				return int64(0), err
+			}
+		}
+	case reflect.Ptr:
+		elem := v.Elem()
+
+		if support.ArrayContains(validateActions, m.action) {
+			err = m.handleCallback(elem, "BeforeValidate")
+			if err != nil {
+				return int64(0), err
+			}
+
+			err = ginValidator.Struct(elem.Interface())
+			if err != nil {
+				return int64(0), err
+			}
+
+			err = m.handleCallback(elem, "AfterValidate")
+			if err != nil {
+				return int64(0), err
+			}
+		}
+
+		err = m.handleCallback(elem, "Before"+support.ToPascalCase(m.action))
+		if err != nil {
+			return int64(0), err
+		}
+	}
 
 	switch m.adapter {
 	case "mysql":
@@ -1061,26 +1223,28 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			return int64(0), err
 		}
 
-		lastInsertID, err := result.LastInsertId()
-		if err != nil {
-			return int64(0), err
-		}
-
 		count, err = result.RowsAffected()
 		if err != nil {
 			return int64(0), err
 		}
 
-		if m.autoIncrement != "" {
-			switch m.destKind {
-			case reflect.Array, reflect.Slice:
-				v := reflect.ValueOf(m.dest).Elem()
+		if m.action == "create" {
+			lastInsertID, err := result.LastInsertId()
+			if err != nil {
+				return int64(0), err
+			}
 
-				for i := 0; i < v.Len(); i++ {
-					v.Index(i).FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID + int64(i))
+			if m.autoIncrement != "" {
+				switch m.destKind {
+				case reflect.Array, reflect.Slice:
+					v := reflect.ValueOf(m.dest).Elem()
+
+					for i := 0; i < v.Len(); i++ {
+						v.Index(i).FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID + int64(i))
+					}
+				case reflect.Ptr:
+					reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID)
 				}
-			case reflect.Ptr:
-				reflect.ValueOf(m.dest).Elem().FieldByName(m.attrs[m.autoIncrement].stFieldName).SetInt(lastInsertID)
 			}
 		}
 	case "postgres":
@@ -1102,27 +1266,50 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			return int64(0), err
 		}
 
-		defer rows.Close()
+		if m.action == "create" {
+			switch m.destKind {
+			case reflect.Array, reflect.Slice:
+				v := reflect.ValueOf(m.dest).Elem()
 
-		switch m.destKind {
-		case reflect.Array, reflect.Slice:
-			v := reflect.ValueOf(m.dest).Elem()
-			count = int64(v.Len())
+				for i := 0; i < v.Len(); i++ {
+					err = m.scanPrimaryKeys(rows, v.Index(i))
 
-			for i := 0; i < v.Len(); i++ {
-				err = m.scanPrimaryKeys(rows, v.Index(i))
+					if err != nil {
+						return count, err
+					}
+
+					count++
+				}
+			case reflect.Ptr:
+				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
 
 				if err != nil {
-					return int64(0), err
+					return count, err
 				}
-			}
-		case reflect.Ptr:
-			count = int64(1)
-			err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
 
-			if err != nil {
-				return int64(0), err
+				count++
 			}
+		} else {
+			for rows.Next() {
+				count++
+			}
+		}
+
+		rows.Close()
+	}
+
+	switch v.Kind() {
+	case reflect.Array, reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			err = m.handleCallback(v.Index(i), "After"+support.ToPascalCase(m.action))
+			if err != nil {
+				return count, err
+			}
+		}
+	case reflect.Ptr:
+		err = m.handleCallback(v.Elem(), "After"+support.ToPascalCase(m.action))
+		if err != nil {
+			return count, err
 		}
 	}
 
