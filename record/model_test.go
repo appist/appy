@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -990,6 +991,9 @@ func (s *modelSuite) TestDelete() {
 		s.Equal(int64(10), count)
 		s.Nil(err)
 
+		splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
+		s.Equal(11, len(splits))
+
 		count, err = s.model(&users[5]).Delete().Exec()
 		s.Equal(int64(1), count)
 		s.Nil(err)
@@ -1922,6 +1926,9 @@ func (s *modelSuite) TestUpdate() {
 			users[9].Email = "foobar@gmail.com"
 			users[9].Username = "foobar"
 			users[9].LoginCount = nil
+
+			splits := strings.Split(s.model(&users).Update().SQL(), "\n")
+			s.Equal(11, len(splits))
 
 			count, err = s.model(&users).Update().Exec()
 			s.Equal(int64(10), count)

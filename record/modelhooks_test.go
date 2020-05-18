@@ -112,6 +112,20 @@ func (u *UserWithAfterDeleteError) AfterDelete() error {
 	return errors.New("after delete error")
 }
 
+type UserWithAfterCreateCommitError struct {
+	Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	ID        int64      `db:"id" faker:"-"`
+	Message   string     `db:"-" faker:"-"`
+	Username  string     `db:"username" faker:"username,unique"`
+	CreatedAt *time.Time `db:"created_at" faker:"-"`
+	DeletedAt *time.Time `db:"deleted_at" faker:"-"`
+	UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+}
+
+func (u *UserWithAfterCreateCommitError) AfterCreateCommit() error {
+	return errors.New("after create commit error")
+}
+
 type UserWithAfterCreateCommit struct {
 	Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
@@ -158,6 +172,20 @@ func (u *UserWithAfterUpdateCommit) AfterUpdateCommit() error {
 	u.Message = "after update commit"
 
 	return nil
+}
+
+type UserWithAfterRollbackError struct {
+	Modeler   `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	ID        int64      `db:"id" faker:"-"`
+	Message   string     `db:"-" faker:"-"`
+	Username  string     `db:"username" faker:"username,unique"`
+	CreatedAt *time.Time `db:"created_at" faker:"-"`
+	DeletedAt *time.Time `db:"deleted_at" faker:"-"`
+	UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+}
+
+func (u *UserWithAfterRollbackError) AfterRollback() error {
+	return errors.New("after rollback error")
 }
 
 type UserWithAfterRollback struct {
@@ -709,6 +737,46 @@ func (s *modelSuite) TestCallbackTx() {
 		}
 
 		{
+			var user UserWithAfterCreateCommitError
+			s.Nil(faker.FakeData(&user))
+
+			model := s.model(&user)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(model.Tx())
+			s.EqualError(err, "after create commit error")
+		}
+
+		{
+			var users []UserWithAfterCreateCommitError
+			for i := 0; i < 10; i++ {
+				user := UserWithAfterCreateCommitError{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			model := s.model(&users)
+			err := model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err := model.Create().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			err = model.Commit()
+			s.Nil(model.Tx())
+			s.EqualError(err, "after create commit error")
+		}
+
+		{
 			var user UserWithAfterCreateCommit
 			s.Nil(faker.FakeData(&user))
 
@@ -748,7 +816,7 @@ func (s *modelSuite) TestCallbackTx() {
 			s.Nil(model.Tx())
 			s.Nil(err)
 
-			for i := 0; i < 2; i++ {
+			for i := 0; i < 10; i++ {
 				s.Equal("after create commit", users[i].Message)
 			}
 		}
@@ -857,6 +925,53 @@ func (s *modelSuite) TestCallbackTx() {
 			for i := 0; i < 10; i++ {
 				s.Equal("after delete commit", users[i].Message)
 			}
+		}
+
+		{
+			var user UserWithAfterRollbackError
+			s.Nil(faker.FakeData(&user))
+			count, err := s.model(&user).Create().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			model := s.model(&user)
+			err = model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err = model.Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(model.Tx())
+			s.EqualError(err, "after rollback error")
+		}
+
+		{
+			var users []UserWithAfterRollbackError
+			for i := 0; i < 10; i++ {
+				user := UserWithAfterRollbackError{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			count, err := s.model(&users).Create().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			model := s.model(&users)
+			err = model.Begin()
+			s.NotNil(model.Tx())
+			s.Nil(err)
+
+			count, err = model.Delete().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(err)
+
+			err = model.Rollback()
+			s.Nil(model.Tx())
+			s.EqualError(err, "after rollback error")
 		}
 
 		{
