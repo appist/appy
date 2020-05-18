@@ -501,8 +501,7 @@ func BenchmarkReadORM(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var user BenchmarkUser
 		model := NewModel(dbManager, &user)
-		// TODO: find out why id doesn't equal to 1 on Github Action
-		count, err := model.Where("id = ?", 1).Find().Exec()
+		count, err := model.Where("id = ?", id).Find().Exec()
 		if count != 1 {
 			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
 			b.FailNow()
