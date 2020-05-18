@@ -270,10 +270,12 @@ func (m *Model) Commit() error {
 		afterCommitActions := []string{"create", "update", "delete"}
 		if support.ArrayContains(afterCommitActions, m.action) {
 			v := reflect.ValueOf(m.dest)
-			switch v.Kind() {
+			switch m.destKind {
 			case reflect.Array, reflect.Slice:
-				for i := 0; i < v.Len(); i++ {
-					err = m.handleCallback(v.Index(i), "After"+support.ToPascalCase(m.action)+"Commit")
+				elem := v.Elem()
+
+				for i := 0; i < elem.Len(); i++ {
+					err = m.handleCallback(elem.Index(i), "After"+support.ToPascalCase(m.action)+"Commit")
 					if err != nil {
 						return err
 					}
@@ -299,6 +301,24 @@ func (m *Model) Rollback() error {
 
 		if err == nil {
 			m.tx = nil
+		}
+
+		v := reflect.ValueOf(m.dest)
+		switch m.destKind {
+		case reflect.Array, reflect.Slice:
+			elem := v.Elem()
+
+			for i := 0; i < elem.Len(); i++ {
+				err = m.handleCallback(elem.Index(i), "AfterRollback")
+				if err != nil {
+					return err
+				}
+			}
+		case reflect.Ptr:
+			err = m.handleCallback(v.Elem(), "AfterRollback")
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -1100,7 +1120,7 @@ func (m *Model) handleCallback(elem reflect.Value, callback string) error {
 		values := callbackMethod.Call([]reflect.Value{})
 
 		if len(values) > 0 {
-			if values[0].Type().Implements(reflect.TypeOf((*error)(nil)).Elem()) {
+			if values[0].Type().Implements(reflect.TypeOf((*error)(nil)).Elem()) && !values[0].IsNil() {
 				if m.tx != nil {
 					err := m.tx.Rollback()
 					if err != nil {
