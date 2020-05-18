@@ -50,28 +50,28 @@ func (s *loggerSuite) TearDownTest() {
 }
 
 func (s *loggerSuite) TestDebug() {
-	s.logger.Debug("test %s", "foo")
+	s.logger.Debug("test foo")
 	s.writer.Flush()
 	s.Contains(s.buffer.String(), "DEBUG")
 	s.Contains(s.buffer.String(), "test foo")
 }
 
 func (s *loggerSuite) TestInfo() {
-	s.logger.Info("test %s", "foo")
+	s.logger.Info("test foo")
 	s.writer.Flush()
 	s.Contains(s.buffer.String(), "INFO")
 	s.Contains(s.buffer.String(), "test foo")
 }
 
 func (s *loggerSuite) TestWarn() {
-	s.logger.Warn("test %s", "foo")
+	s.logger.Warn("test foo")
 	s.writer.Flush()
 	s.Contains(s.buffer.String(), "WARN")
 	s.Contains(s.buffer.String(), "test foo")
 }
 
 func (s *loggerSuite) TestError() {
-	s.logger.Error("test %s", "foo")
+	s.logger.Error("test foo")
 	s.writer.Flush()
 	s.Contains(s.buffer.String(), "ERROR")
 	s.Contains(s.buffer.String(), "test foo")

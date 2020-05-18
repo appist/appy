@@ -17,7 +17,7 @@ import (
 
 // Engine processes the background jobs.
 type Engine struct {
-	*asynq.Background
+	*asynq.Server
 	*asynq.Client
 	*asynq.ServeMux
 	asynq.RedisConnOpt
@@ -56,7 +56,7 @@ func NewEngine(asset *support.Asset, config *support.Config, dbManager *record.E
 		nil,
 	}
 
-	workerConfig := &asynq.Config{
+	workerConfig := asynq.Config{
 		Concurrency:    config.WorkerConcurrency,
 		Logger:         workerLogger,
 		Queues:         config.WorkerQueues,
@@ -82,7 +82,7 @@ func NewEngine(asset *support.Asset, config *support.Config, dbManager *record.E
 	}
 
 	worker := &Engine{
-		asynq.NewBackground(redisConnOpt, workerConfig),
+		asynq.NewServer(redisConnOpt, workerConfig),
 		asynq.NewClient(redisConnOpt),
 		asynq.NewServeMux(),
 		redisConnOpt,
@@ -104,7 +104,7 @@ func NewEngine(asset *support.Asset, config *support.Config, dbManager *record.E
 		}
 
 		worker = &Engine{
-			asynq.NewBackground(redisConnOpt, workerConfig),
+			asynq.NewServer(redisConnOpt, workerConfig),
 			asynq.NewClient(redisConnOpt),
 			asynq.NewServeMux(),
 			redisConnOpt,
@@ -233,7 +233,7 @@ func (w *Engine) Info() []string {
 
 // Run starts running the worker to process background jobs.
 func (w *Engine) Run() {
-	w.Background.Run(w.ServeMux)
+	w.Server.Run(w.ServeMux)
 }
 
 // MockedHandler is used for mocking in unit test.
