@@ -47,18 +47,6 @@ type (
 		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 
-	CallbackUser struct {
-		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
-		ID         int64      `db:"id" faker:"-"`
-		Age        int64      `db:"-"`
-		LoginCount *int64     `db:"login_count"`
-		Email      string     `db:"email" faker:"email,unique"`
-		Username   string     `db:"username" faker:"username,unique"`
-		CreatedAt  *time.Time `db:"created_at" faker:"-"`
-		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
-	}
-
 	DuplicateUser struct {
 		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
@@ -107,54 +95,6 @@ type (
 		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
 	}
 )
-
-func (u *CallbackUser) BeforeValidate() error {
-	return nil
-}
-
-func (u *CallbackUser) AfterValidate() error {
-	return nil
-}
-
-func (u *CallbackUser) BeforeCreate() error {
-	return nil
-}
-
-func (u *CallbackUser) AfterCreate() error {
-	return nil
-}
-
-func (u *CallbackUser) BeforeDelete() error {
-	return nil
-}
-
-func (u *CallbackUser) AfterDelete() error {
-	return nil
-}
-
-func (u *CallbackUser) BeforeFind() error {
-	return nil
-}
-
-func (u *CallbackUser) AfterFind() error {
-	return nil
-}
-
-func (u *CallbackUser) BeforeUpdate() error {
-	return nil
-}
-
-func (u *CallbackUser) AfterUpdate() error {
-	return nil
-}
-
-func (u *CallbackUser) AfterCommit() error {
-	return nil
-}
-
-func (u *CallbackUser) AfterRollback() error {
-	return nil
-}
 
 func (s *modelSuite) SetupTest() {
 	s.logger, s.buffer, s.writer = support.NewTestLogger()
@@ -208,8 +148,6 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS callback_users (
 	id INT PRIMARY KEY AUTO_INCREMENT,
-	login_count INT,
-	email VARCHAR(64) NOT NULL,
 	username VARCHAR(64) NOT NULL,
 	created_at TIMESTAMP,
 	deleted_at TIMESTAMP,
@@ -269,8 +207,6 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS callback_users (
 	id SERIAL PRIMARY KEY,
-	login_count INT,
-	email VARCHAR NOT NULL,
 	username VARCHAR NOT NULL,
 	created_at TIMESTAMP,
 	deleted_at TIMESTAMP,

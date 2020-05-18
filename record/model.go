@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/appist/appy/support"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 )
 
 type (
@@ -57,7 +59,7 @@ type (
 
 	// ModelOption is used to initialise a model with additional configurations.
 	ModelOption struct {
-		tx Txer
+		Tx Txer
 	}
 
 	// ExecOption indicates how a query should be executed.
@@ -121,7 +123,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 	}
 
 	if len(opts) > 0 {
-		model.tx = opts[0].tx
+		model.tx = opts[0].Tx
 	}
 
 	for i := 0; i < destElem.NumField(); i++ {
@@ -264,6 +266,25 @@ func (m *Model) Commit() error {
 		if err == nil {
 			m.tx = nil
 		}
+
+		afterCommitActions := []string{"create", "update", "delete"}
+		if support.ArrayContains(afterCommitActions, m.action) {
+			v := reflect.ValueOf(m.dest)
+			switch v.Kind() {
+			case reflect.Array, reflect.Slice:
+				for i := 0; i < v.Len(); i++ {
+					err = m.handleCallback(v.Index(i), "After"+support.ToPascalCase(m.action)+"Commit")
+					if err != nil {
+						return err
+					}
+				}
+			case reflect.Ptr:
+				err = m.handleCallback(v.Elem(), "After"+support.ToPascalCase(m.action)+"Commit")
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return err
@@ -403,6 +424,11 @@ func (m *Model) DeleteAll() *Model {
 		m.args = append(m.args, m.whereArgs...)
 	}
 
+	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
+		m.queryBuilder.WriteString(" RETURNING ")
+		m.queryBuilder.WriteString(strings.Join(m.primaryKeys, ", "))
+	}
+
 	m.queryBuilder.WriteString(";")
 
 	return m
@@ -474,16 +500,8 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	switch m.action {
 	case "delete_all", "update_all":
 		count, err = m.exec(db, query, opt)
-
-		if err != nil {
-			return int64(0), err
-		}
 	case "count":
 		count, err = m.get(db, query, opt)
-
-		if err != nil {
-			return int64(0), err
-		}
 	case "create":
 		dest := m.dest
 
@@ -492,31 +510,25 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		}
 
 		count, err = m.namedExecOrQuery(db, dest, query, opt)
-
-		if err != nil {
-			return int64(0), err
-		}
 	case "delete", "update":
-		successfulCount := 0
+		errs := []error{}
 
 		for _, individual := range m.individuals {
-			count, err = m.namedExecOrQuery(db, individual.dest, individual.query, opt)
+			individualCount, err := m.namedExecOrQuery(db, individual.dest, individual.query, opt)
+			count += individualCount
 
 			if err != nil {
-				return int64(successfulCount), err
+				errs = append(errs, err)
 			}
-
-			successfulCount++
 		}
 
-		count = int64(len(m.individuals))
+		if len(errs) > 0 {
+			return count, errs[0]
+		}
+
 		m.individuals = []modelIndividual{}
 	case "all", "find", "scan":
 		count, err = m.getOrSelect(db, query, opt)
-
-		if err != nil {
-			return int64(0), err
-		}
 	}
 
 	return count, err
@@ -801,7 +813,7 @@ func (m *Model) appendModelIndividual(v reflect.Value) {
 	builder.WriteString(" WHERE ")
 	builder.WriteString(strings.Join(wheres, " AND "))
 
-	if len(m.primaryKeys) > 0 && m.adapter == "postgres" && m.action == "update" {
+	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
 		builder.WriteString(" RETURNING ")
 		builder.WriteString(strings.Join(m.primaryKeys, ", "))
 	}
@@ -1081,6 +1093,31 @@ func (m *Model) getOrSelect(db DBer, query string, opt ExecOption) (int64, error
 	return count, err
 }
 
+func (m *Model) handleCallback(elem reflect.Value, callback string) error {
+	callbackMethod := elem.Addr().MethodByName(callback)
+
+	if callbackMethod.IsValid() {
+		values := callbackMethod.Call([]reflect.Value{})
+
+		if len(values) > 0 {
+			if values[0].Type().Implements(reflect.TypeOf((*error)(nil)).Elem()) {
+				if m.tx != nil {
+					err := m.tx.Rollback()
+					if err != nil {
+						return err
+					}
+
+					m.tx = nil
+				}
+
+				return values[0].Interface().(error)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt ExecOption) (int64, error) {
 	var (
 		count  int64
@@ -1090,6 +1127,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 	)
 
 	validateActions := []string{"create", "update"}
+	ginValidator, _ := binding.Validator.Engine().(*validator.Validate)
 
 	v := reflect.ValueOf(dest)
 	switch v.Kind() {
@@ -1098,38 +1136,50 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			elem := v.Index(i)
 
 			if support.ArrayContains(validateActions, m.action) {
-				if elem.Addr().MethodByName("BeforeValidate").IsValid() {
-					elem.Addr().MethodByName("BeforeValidate").Call([]reflect.Value{})
+				err = m.handleCallback(elem, "BeforeValidate")
+				if err != nil {
+					return int64(0), err
 				}
 
-				// TODO: implement Validate()
+				err = ginValidator.Struct(elem.Interface())
+				if err != nil {
+					return int64(0), err
+				}
 
-				if elem.Addr().MethodByName("AfterValidate").IsValid() {
-					elem.Addr().MethodByName("AfterValidate").Call([]reflect.Value{})
+				err = m.handleCallback(elem, "AfterValidate")
+				if err != nil {
+					return int64(0), err
 				}
 			}
 
-			if elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).IsValid() {
-				elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).Call([]reflect.Value{})
+			err = m.handleCallback(elem, "Before"+support.ToPascalCase(m.action))
+			if err != nil {
+				return int64(0), err
 			}
 		}
 	case reflect.Ptr:
 		elem := v.Elem()
 
 		if support.ArrayContains(validateActions, m.action) {
-			if elem.Addr().MethodByName("BeforeValidate").IsValid() {
-				elem.Addr().MethodByName("BeforeValidate").Call([]reflect.Value{})
+			err = m.handleCallback(elem, "BeforeValidate")
+			if err != nil {
+				return int64(0), err
 			}
 
-			// TODO: implement Validate()
+			err = ginValidator.Struct(elem.Interface())
+			if err != nil {
+				return int64(0), err
+			}
 
-			if elem.Addr().MethodByName("AfterValidate").IsValid() {
-				elem.Addr().MethodByName("AfterValidate").Call([]reflect.Value{})
+			err = m.handleCallback(elem, "AfterValidate")
+			if err != nil {
+				return int64(0), err
 			}
 		}
 
-		if elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).IsValid() {
-			elem.Addr().MethodByName("Before" + support.ToPascalCase(m.action)).Call([]reflect.Value{})
+		err = m.handleCallback(elem, "Before"+support.ToPascalCase(m.action))
+		if err != nil {
+			return int64(0), err
 		}
 	}
 
@@ -1153,13 +1203,13 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			return int64(0), err
 		}
 
+		count, err = result.RowsAffected()
+		if err != nil {
+			return int64(0), err
+		}
+
 		if m.action == "create" {
 			lastInsertID, err := result.LastInsertId()
-			if err != nil {
-				return int64(0), err
-			}
-
-			count, err = result.RowsAffected()
 			if err != nil {
 				return int64(0), err
 			}
@@ -1196,46 +1246,50 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			return int64(0), err
 		}
 
-		defer rows.Close()
-
 		if m.action == "create" {
 			switch m.destKind {
 			case reflect.Array, reflect.Slice:
 				v := reflect.ValueOf(m.dest).Elem()
-				count = int64(v.Len())
 
 				for i := 0; i < v.Len(); i++ {
 					err = m.scanPrimaryKeys(rows, v.Index(i))
 
 					if err != nil {
-						return int64(0), err
+						return count, err
 					}
+
+					count++
 				}
 			case reflect.Ptr:
-				count = int64(1)
 				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
 
 				if err != nil {
-					return int64(0), err
+					return count, err
 				}
+
+				count++
+			}
+		} else {
+			for rows.Next() {
+				count++
 			}
 		}
+
+		rows.Close()
 	}
 
 	switch v.Kind() {
 	case reflect.Array, reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			elem := v.Index(i)
-
-			if elem.Addr().MethodByName("After" + support.ToPascalCase(m.action)).IsValid() {
-				elem.Addr().MethodByName("After" + support.ToPascalCase(m.action)).Call([]reflect.Value{})
+			err = m.handleCallback(v.Index(i), "After"+support.ToPascalCase(m.action))
+			if err != nil {
+				return count, err
 			}
 		}
 	case reflect.Ptr:
-		elem := v.Elem()
-
-		if elem.Addr().MethodByName("After" + support.ToPascalCase(m.action)).IsValid() {
-			elem.Addr().MethodByName("After" + support.ToPascalCase(m.action)).Call([]reflect.Value{})
+		err = m.handleCallback(v.Elem(), "After"+support.ToPascalCase(m.action))
+		if err != nil {
+			return count, err
 		}
 	}
 
