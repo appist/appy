@@ -146,23 +146,6 @@ func (s *engineSuite) TestOpsWithTestEnv() {
 	s.Equal(len(worker.Jobs()), 1)
 }
 
-func (s *engineSuite) TestRun() {
-	s.config = support.NewConfig(s.asset, s.logger)
-	worker := NewEngine(s.asset, s.config, s.dbManager, s.logger)
-	go worker.Run()
-
-	time.Sleep(1000 * time.Millisecond)
-	worker.Stop()
-	time.Sleep(1000 * time.Millisecond)
-
-	s.Nil(s.writer.Flush())
-	s.Contains(s.buffer.String(), "* appy 0.1.0 (go1.14.3), build: debug, environment: development, config: configs/.env.development")
-	s.Contains(s.buffer.String(), "* DBs: primary")
-	s.Contains(s.buffer.String(), "* Concurrency: 25, queues: default=10")
-	s.Contains(s.buffer.String(), "* Worker is now ready to process jobs...")
-	s.Contains(s.buffer.String(), "* Gracefully shutting down the worker...")
-}
-
 func (s *engineSuite) TestMockedHandler() {
 	ctx := context.Background()
 	job := NewJob("test", nil)
