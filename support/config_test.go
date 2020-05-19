@@ -44,7 +44,7 @@ func (s *configSuite) TestDefaultValue() {
 		"HTTPHealthCheckPath":                "/health_check",
 		"HTTPHost":                           "localhost",
 		"HTTPPort":                           "3000",
-		"HTTPGracefulTimeout":                30 * time.Second,
+		"HTTPGracefulShutdownTimeout":        30 * time.Second,
 		"HTTPIdleTimeout":                    75 * time.Second,
 		"HTTPMaxHeaderBytes":                 0,
 		"HTTPReadTimeout":                    60 * time.Second,
@@ -114,6 +114,7 @@ func (s *configSuite) TestDefaultValue() {
 		"WorkerConcurrency":                  25,
 		"WorkerQueues":                       "default:10",
 		"WorkerStrictPriority":               false,
+		"WorkerGracefulShutdownTimeout":      30 * time.Second,
 	}
 
 	asset := NewAsset(nil, "")

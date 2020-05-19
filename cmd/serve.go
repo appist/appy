@@ -43,7 +43,7 @@ func serve(dbManager *record.Engine, logger *support.Logger, server *pack.Server
 
 	go func() {
 		<-httpQuit
-		logger.Infof("* Gracefully shutting down the server within %s...", server.Config().HTTPGracefulTimeout)
+		logger.Infof("* Gracefully shutting down the server within %s...", server.Config().HTTPGracefulShutdownTimeout)
 
 		for _, db := range dbManager.Databases() {
 			err := db.Close()
@@ -54,7 +54,7 @@ func serve(dbManager *record.Engine, logger *support.Logger, server *pack.Server
 
 		// TODO: Allow graceful handling from the app.
 
-		ctx, cancel := context.WithTimeout(context.Background(), server.Config().HTTPGracefulTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), server.Config().HTTPGracefulShutdownTimeout)
 		defer cancel()
 
 		if err := server.HTTP().Shutdown(ctx); err != nil {
