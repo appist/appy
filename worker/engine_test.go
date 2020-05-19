@@ -151,8 +151,9 @@ func (s *engineSuite) TestRun() {
 	worker := NewEngine(s.asset, s.config, s.dbManager, s.logger)
 	go worker.Run()
 
-	time.Sleep(1500 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	worker.Stop()
+	time.Sleep(1000 * time.Millisecond)
 
 	s.Nil(s.writer.Flush())
 	s.Contains(s.buffer.String(), "* appy 0.1.0 (go1.14.3), build: debug, environment: development, config: configs/.env.development")
