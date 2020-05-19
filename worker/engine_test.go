@@ -151,7 +151,7 @@ func (s *engineSuite) TestRun() {
 	worker := NewEngine(s.asset, s.config, s.dbManager, s.logger)
 	go worker.Run()
 
-	time.Sleep(1000 * time.Millisecond)
+	time.Sleep(1500 * time.Millisecond)
 	worker.Stop()
 
 	s.Nil(s.writer.Flush())
