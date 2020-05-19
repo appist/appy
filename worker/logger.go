@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	skipMessageRegex  = regexp.MustCompile(`(?i)(bye!| done| shutting down...|waiting for all workers to finish...|all workers have finished|send signal tstp|starting processing)`)
+	skipMessageRegex  = regexp.MustCompile(`(?i)(bye!| done|Exiting| shutting down...|waiting for all workers to finish...|all workers have finished|send signal tstp|starting processing)`)
 	startMessageRegex = regexp.MustCompile(`(?i)(send signal term)`)
 )
 

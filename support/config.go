@@ -101,10 +101,10 @@ type Config struct {
 	// default, it is "3000".
 	HTTPPort string `env:"HTTP_PORT" envDefault:"3000"`
 
-	// HTTPGracefulTimeout indicates how long to wait for the HTTP server to shut
-	// down so that any active connection is not interrupted by SIGTERM/SIGINT.
-	// By default, it is "30s".
-	HTTPGracefulTimeout time.Duration `env:"HTTP_GRACEFUL_TIMEOUT" envDefault:"30s"`
+	// HTTPGracefulShutdownTimeout indicates how long to wait for the HTTP server
+	// to shut down so that any active connection is not interrupted by
+	// SIGTERM/SIGINT. By default, it is "30s".
+	HTTPGracefulShutdownTimeout time.Duration `env:"HTTP_GRACEFUL_SHUTDOWN_TIMEOUT" envDefault:"30s"`
 
 	// HTTPIdleTimeout is the maximum amount of time to wait for the next request
 	// when keep-alives are enabled. If HTTPIdleTimeout is zero, the value of
@@ -453,6 +453,11 @@ type Config struct {
 	// first, and queues with lower priority is processed only if all the other
 	// queues with higher priorities are empty.
 	WorkerStrictPriority bool `env:"WORKER_STRICT_PRIORITY" envDefault:"false"`
+
+	// WorkerGracefulShutdownTimeout indicates how long to wait for the worker
+	// to shut down so that any active job processing is not interrupted by
+	// SIGTERM/SIGINT. By default, it is "30s".
+	WorkerGracefulShutdownTimeout time.Duration `env:"WORKER_GRACEFUL_SHUTDOWN_TIMEOUT" envDefault:"30s"`
 
 	asset     AssetManager
 	errors    []error

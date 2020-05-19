@@ -57,10 +57,11 @@ func NewEngine(asset *support.Asset, config *support.Config, dbManager *record.E
 	}
 
 	workerConfig := asynq.Config{
-		Concurrency:    config.WorkerConcurrency,
-		Logger:         workerLogger,
-		Queues:         config.WorkerQueues,
-		StrictPriority: config.WorkerStrictPriority,
+		Concurrency:     config.WorkerConcurrency,
+		Logger:          workerLogger,
+		Queues:          config.WorkerQueues,
+		StrictPriority:  config.WorkerStrictPriority,
+		ShutdownTimeout: config.WorkerGracefulShutdownTimeout,
 	}
 
 	redisConnOpt := &asynq.RedisClientOpt{
