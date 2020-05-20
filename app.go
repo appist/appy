@@ -2,6 +2,7 @@ package appy
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/appist/appy/cmd"
 	"github.com/appist/appy/mailer"
@@ -13,15 +14,21 @@ import (
 
 // App is the framework core that drives the application.
 type App struct {
-	asset     *Asset
-	cmd       *Command
-	config    *Config
+	asset     *support.Asset
+	cmd       *cmd.Command
+	config    *support.Config
 	dbManager *record.Engine
-	i18n      *I18n
-	logger    *Logger
-	mailer    *Mailer
-	server    *Server
-	worker    *Worker
+	i18n      *support.I18n
+	logger    *support.Logger
+	mailer    *mailer.Engine
+	server    *pack.Server
+	worker    *worker.Engine
+}
+
+func init() {
+	if os.Getenv("APPY_ENV") == "" {
+		os.Setenv("APPY_ENV", "development")
+	}
 }
 
 // NewApp initializes an app instance.
@@ -50,47 +57,47 @@ func NewApp(assetFS http.FileSystem, appRoot string, viewFuncs map[string]interf
 }
 
 // Command returns the app instance's root command.
-func (a *App) Command() *Command {
+func (a *App) Command() *cmd.Command {
 	return a.cmd
 }
 
 // Config returns the app instance's config.
-func (a *App) Config() *Config {
+func (a *App) Config() *support.Config {
 	return a.config
 }
 
 // DB returns the app instance's specific DB.
-func (a *App) DB(name string) DB {
+func (a *App) DB(name string) record.DBer {
 	return a.dbManager.DB(name)
 }
 
 // DBManager returns the app instance's DB manager.
-func (a *App) DBManager() *DBManager {
+func (a *App) DBManager() *record.Engine {
 	return a.dbManager
 }
 
 // I18n returns the app instance's i18n manager.
-func (a *App) I18n() *I18n {
+func (a *App) I18n() *support.I18n {
 	return a.i18n
 }
 
 // Logger returns the app instance's logger.
-func (a *App) Logger() *Logger {
+func (a *App) Logger() *support.Logger {
 	return a.logger
 }
 
 // Mailer returns the app instance's mailer.
-func (a *App) Mailer() *Mailer {
+func (a *App) Mailer() *mailer.Engine {
 	return a.mailer
 }
 
 // Model returns the layer that represents business data and logic.
-func (a *App) Model(m interface{}, opts ...ModelOption) Model {
-	return NewModel(a.dbManager, m, opts...)
+func (a *App) Model(m interface{}, opts ...record.ModelOption) record.Modeler {
+	return record.NewModel(a.dbManager, m, opts...)
 }
 
 // Worker returns the app instance's worker.
-func (a *App) Worker() *Worker {
+func (a *App) Worker() *worker.Engine {
 	return a.worker
 }
 
@@ -103,6 +110,6 @@ func (a *App) Run() error {
 }
 
 // Server returns the app instance's server.
-func (a *App) Server() *Server {
+func (a *App) Server() *pack.Server {
 	return a.server
 }
