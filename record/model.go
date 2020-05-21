@@ -210,6 +210,15 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 	return model
 }
 
+// NewTestModel initializes a test model that is useful for testing purpose.
+func NewTestModel() (func(dest interface{}, opts ...ModelOption) Modeler, *MockedModel) {
+	mockedModel := &MockedModel{}
+
+	return func(dest interface{}, opts ...ModelOption) Modeler {
+		return mockedModel
+	}, mockedModel
+}
+
 // All returns all records from the model's table. Use an array/slice of the
 // struct to scan all the records. Otherwise, only the 1st record will be
 // scanned into the single struct.

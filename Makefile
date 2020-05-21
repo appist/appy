@@ -14,6 +14,7 @@ bootstrap:
 	asdf install
 	asdf reshim golang
 	asdf reshim nodejs
+	brew install vektra/tap/mockery && brew upgrade mockery
 
 codecheck:
 	golint -set_exit_status ./... || exit 1
@@ -26,6 +27,12 @@ install:
 	GO111MODULE=off go get -u golang.org/x/lint/golint
 	(which cob >/dev/null) || (curl -sfL https://raw.githubusercontent.com/knqyf263/cob/master/install.sh | sudo sh -s -- -b /usr/local/bin)
 	go mod download
+
+genmock:
+	mockery -name DBer -structname MockedDB -filename dbmock.go -inpkg -dir ./record
+	mockery -name Modeler -structname MockedModel -filename modelmock.go -inpkg -dir ./record
+	mockery -name Stmter -structname MockedStmt -filename stmtmock.go -inpkg -dir ./record
+	mockery -name Txer -structname MockedTx -filename txmock.go -inpkg -dir ./record
 
 restart:
 	docker-compose -p appy -f .docker/docker-compose.yml restart

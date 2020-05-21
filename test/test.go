@@ -27,4 +27,7 @@ type (
 var (
 	// Run takes a testing suite and runs all of the tests attached to it.
 	Run = suite.Run
+
+	// NewAssert makes a new Assertions object for the specified TestingT.
+	NewAssert = assert.New
 )
