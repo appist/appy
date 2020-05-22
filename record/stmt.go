@@ -45,6 +45,15 @@ type Stmt struct {
 	query  string
 }
 
+// Close closes the statement.
+func (s *Stmt) Close() error {
+	if s.Stmt != nil {
+		return s.Stmt.Close()
+	}
+
+	return nil
+}
+
 // Exec executes a prepared statement with the given arguments and returns a
 // sql.Result summarizing the effect of the statement.
 func (s *Stmt) Exec(args ...interface{}) (sql.Result, error) {
