@@ -67,6 +67,19 @@ func newDB() DBer {
 
 	logger, _, _ := support.NewTestLogger()
 	dbManager := NewEngine(logger)
+
+	for _, db := range dbManager.Databases() {
+		for true {
+			if err := db.ConnectDefaultDB(); err != nil {
+				continue
+			}
+
+			if err := db.Ping(); err == nil {
+				break
+			}
+		}
+	}
+
 	db := dbManager.DB("primary")
 	err := db.DropDB(database)
 	if err != nil {
@@ -87,8 +100,6 @@ func newDB() DBer {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	time.Sleep(3 * time.Second)
 
 	return db
 }
@@ -106,8 +117,20 @@ func newOrmDBManager() *Engine {
 
 	logger, _, _ := support.NewTestLogger()
 	dbManager := NewEngine(logger)
-	db := dbManager.DB("primary")
 
+	for _, db := range dbManager.Databases() {
+		for true {
+			if err := db.ConnectDefaultDB(); err != nil {
+				continue
+			}
+
+			if err := db.Ping(); err == nil {
+				break
+			}
+		}
+	}
+
+	db := dbManager.DB("primary")
 	err := db.DropDB(database)
 	if err != nil {
 		log.Fatal(err)
@@ -127,8 +150,6 @@ func newOrmDBManager() *Engine {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	time.Sleep(3 * time.Second)
 
 	return dbManager
 }
@@ -448,38 +469,38 @@ func rawInsert(db *sql.DB, b *testing.B) (int64, error) {
 // 	}
 // }
 
-// func BenchmarkReadDB(b *testing.B) {
-// 	db := newDB()
-// 	defer db.Close()
+func BenchmarkReadDB(b *testing.B) {
+	db := newDB()
+	defer db.Close()
 
-// 	id, err := dbInsert(db, b)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		b.FailNow()
-// 	}
+	id, err := dbInsert(db, b)
+	if err != nil {
+		fmt.Println(err)
+		b.FailNow()
+	}
 
-// 	b.ResetTimer()
+	b.ResetTimer()
 
-// 	var (
-// 		age, counter          int
-// 		name, title, fax, web string
-// 	)
+	var (
+		age, counter          int
+		name, title, fax, web string
+	)
 
-// 	for i := 0; i < b.N; i++ {
-// 		stmt, err := db.Prepare(SQLSelectQuery)
-// 		if err != nil {
-// 			fmt.Println(err)
-// 			b.FailNow()
-// 		}
+	for i := 0; i < b.N; i++ {
+		stmt, err := db.Prepare(SQLSelectQuery)
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
 
-// 		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
-// 		stmt.Close()
-// 		if err != nil {
-// 			fmt.Println(err)
-// 			b.FailNow()
-// 		}
-// 	}
-// }
+		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
+		stmt.Close()
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
+	}
+}
 
 func BenchmarkReadORM(b *testing.B) {
 	dbManager := newOrmDBManager()
