@@ -501,7 +501,13 @@ func BenchmarkReadORM(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var user BenchmarkUser
 		model := NewModel(dbManager, &user)
+
+		fmt.Println(model.Where("id = ?", id).Find().SQL())
+
 		count, err := model.Where("id = ?", id).Find().Exec()
+
+		fmt.Println(count, err)
+
 		if count != 1 {
 			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
 			b.FailNow()
