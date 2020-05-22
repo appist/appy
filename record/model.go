@@ -929,6 +929,12 @@ func (m *Model) exec(db DBer, query string, opt ExecOption) (int64, error) {
 		stmt   *Stmt
 	)
 
+	defer func() {
+		if stmt != nil {
+			stmt.Close()
+		}
+	}()
+
 	if m.tx != nil {
 		if opt.Context != nil {
 			stmt, err = m.tx.PrepareContext(opt.Context, query)
@@ -982,6 +988,12 @@ func (m *Model) get(db DBer, query string, opt ExecOption) (int64, error) {
 		stmt  *Stmt
 	)
 
+	defer func() {
+		if stmt != nil {
+			stmt.Close()
+		}
+	}()
+
 	if m.tx != nil {
 		if opt.Context != nil {
 			stmt, err = m.tx.PrepareContext(opt.Context, query)
@@ -1025,6 +1037,12 @@ func (m *Model) getOrSelect(db DBer, query string, opt ExecOption) (int64, error
 		err   error
 		stmt  *Stmt
 	)
+
+	defer func() {
+		if stmt != nil {
+			stmt.Close()
+		}
+	}()
 
 	switch m.destKind {
 	case reflect.Array, reflect.Slice:
