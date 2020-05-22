@@ -17,28 +17,29 @@ import (
 type (
 	// Modeler implements all Model methods.
 	Modeler interface {
-		All() *Model
+		All() Modeler
 		Begin() error
 		BeginContext(ctx context.Context, opts *sql.TxOptions) error
 		Commit() error
-		Count() *Model
-		Create() *Model
-		Delete() *Model
-		DeleteAll() *Model
+		Count() Modeler
+		Create() Modeler
+		Delete() Modeler
+		DeleteAll() Modeler
 		Exec(opts ...ExecOption) (int64, error)
-		Find() *Model
-		Group(group string) *Model
-		Having(having string, args ...interface{}) *Model
-		Limit(limit int) *Model
-		Offset(offset int) *Model
-		Order(order string) *Model
+		Find() Modeler
+		Group(group string) Modeler
+		Having(having string, args ...interface{}) Modeler
+		Limit(limit int) Modeler
+		Offset(offset int) Modeler
+		Order(order string) Modeler
 		Rollback() error
-		Select(columns string) *Model
+		Scan(dest interface{}) Modeler
+		Select(columns string) Modeler
 		SQL() string
 		Tx() Txer
-		Update() *Model
-		UpdateAll(set string, args ...interface{}) *Model
-		Where(condition string, args ...interface{}) *Model
+		Update() Modeler
+		UpdateAll(set string, args ...interface{}) Modeler
+		Where(condition string, args ...interface{}) Modeler
 	}
 
 	// Model is the layer that represents business data and logic.
@@ -130,7 +131,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 		field := destElem.Field(i)
 
 		switch field.Type.String() {
-		case "record.Modeler":
+		case "record.Model":
 			for _, name := range strings.Split(field.Tag.Get("masters"), ",") {
 				if dbManager.DB(name) != nil {
 					model.masters = append(model.masters, dbManager.DB(name))
@@ -215,7 +216,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 //
 // Note that this can cause performance issue if there are too many data rows
 // in the model's table.
-func (m *Model) All() *Model {
+func (m *Model) All() Modeler {
 	m.action = "all"
 	m.queryBuilder.WriteString("SELECT * FROM ")
 	m.queryBuilder.WriteString(m.tableName)
@@ -327,7 +328,7 @@ func (m *Model) Rollback() error {
 
 // Count returns the total count of matching records. Note that this can cause
 // performance issue if there are too many data rows in the model's table.
-func (m *Model) Count() *Model {
+func (m *Model) Count() Modeler {
 	m.action = "count"
 	m.args = []interface{}{}
 	m.queryBuilder.WriteString("SELECT COUNT(")
@@ -353,7 +354,7 @@ func (m *Model) Count() *Model {
 }
 
 // Create inserts the model object(s) into the database.
-func (m *Model) Create() *Model {
+func (m *Model) Create() Modeler {
 	m.action = "create"
 	m.queryBuilder.WriteString("INSERT INTO ")
 	m.queryBuilder.WriteString(m.tableName)
@@ -407,7 +408,7 @@ func (m *Model) Create() *Model {
 }
 
 // Delete deletes the records from the database.
-func (m *Model) Delete() *Model {
+func (m *Model) Delete() Modeler {
 	m.action = "delete"
 
 	switch m.destKind {
@@ -427,7 +428,7 @@ func (m *Model) Delete() *Model {
 }
 
 // DeleteAll deletes all the records that match where condition.
-func (m *Model) DeleteAll() *Model {
+func (m *Model) DeleteAll() Modeler {
 	m.action = "delete_all"
 	m.args = []interface{}{}
 
@@ -555,7 +556,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 }
 
 // Find retrieves the records from the database.
-func (m *Model) Find() *Model {
+func (m *Model) Find() Modeler {
 	m.action = "find"
 	m.args = []interface{}{}
 	m.queryBuilder.WriteString("SELECT ")
@@ -602,14 +603,14 @@ func (m *Model) Find() *Model {
 
 // Group indicates how to group rows into subgroups based on values of columns
 // or expressions.
-func (m *Model) Group(group string) *Model {
+func (m *Model) Group(group string) Modeler {
 	m.group = group
 
 	return m
 }
 
 // Having indicates the filter conditions for a group of rows.
-func (m *Model) Having(having string, args ...interface{}) *Model {
+func (m *Model) Having(having string, args ...interface{}) Modeler {
 	m.having = having
 	m.havingArgs = args
 
@@ -617,7 +618,7 @@ func (m *Model) Having(having string, args ...interface{}) *Model {
 }
 
 // Limit indicates the number limit of records to retrieve from the database.
-func (m *Model) Limit(limit int) *Model {
+func (m *Model) Limit(limit int) Modeler {
 	m.limit = limit
 
 	return m
@@ -625,21 +626,21 @@ func (m *Model) Limit(limit int) *Model {
 
 // Offset indicates the number of records to skip before starting to return
 // the records.
-func (m *Model) Offset(offset int) *Model {
+func (m *Model) Offset(offset int) Modeler {
 	m.offset = offset
 
 	return m
 }
 
 // Order indicates the specific order to retrieve records from the database.
-func (m *Model) Order(order string) *Model {
+func (m *Model) Order(order string) Modeler {
 	m.order = order
 
 	return m
 }
 
 // Scan allows custom select result being scanned into the specified dest.
-func (m *Model) Scan(dest interface{}) *Model {
+func (m *Model) Scan(dest interface{}) Modeler {
 	m.action = "scan"
 	m.args = []interface{}{}
 
@@ -698,7 +699,7 @@ func (m *Model) Scan(dest interface{}) *Model {
 }
 
 // Select selects only a subset of fields from the result set.
-func (m *Model) Select(columns string) *Model {
+func (m *Model) Select(columns string) Modeler {
 	m.selectColumns = columns
 
 	return m
@@ -729,7 +730,7 @@ func (m *Model) Tx() Txer {
 }
 
 // Update updates the model object(s) into the database.
-func (m *Model) Update() *Model {
+func (m *Model) Update() Modeler {
 	m.action = "update"
 
 	now := m.timeNow()
@@ -761,7 +762,7 @@ func (m *Model) Update() *Model {
 }
 
 // UpdateAll updates all the records that match where condition.
-func (m *Model) UpdateAll(set string, args ...interface{}) *Model {
+func (m *Model) UpdateAll(set string, args ...interface{}) Modeler {
 	m.action = "update_all"
 	m.args = []interface{}{}
 
@@ -792,7 +793,7 @@ func (m *Model) UpdateAll(set string, args ...interface{}) *Model {
 }
 
 // Where indicates the condition of which records to return.
-func (m *Model) Where(condition string, args ...interface{}) *Model {
+func (m *Model) Where(condition string, args ...interface{}) Modeler {
 	m.where, m.whereArgs = m.rebind(condition, args...)
 
 	return m

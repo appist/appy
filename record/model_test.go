@@ -25,7 +25,7 @@ type (
 	}
 
 	User struct {
-		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
 		Age        int64      `db:"-"`
 		LoginCount *int64     `db:"login_count"`
@@ -37,7 +37,7 @@ type (
 	}
 
 	AdminUser struct {
-		Modeler    `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" primaryKeys:"id,email" faker:"-"`
+		Model      `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" primaryKeys:"id,email" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
 		Age        int64      `db:"-"`
 		LoginCount *int64     `db:"login_count"`
@@ -49,7 +49,7 @@ type (
 	}
 
 	DuplicateUser struct {
-		Modeler    `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
 		Age        int64      `db:"-"`
 		LoginCount *int64     `db:"login_count"`
@@ -61,7 +61,7 @@ type (
 	}
 
 	UserWithoutPK struct {
-		Modeler    `masters:"primary" replicas:"primaryReplica" primaryKeys:"" tableName:"" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" primaryKeys:"" tableName:"" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
 		Age        int64      `db:"-"`
 		LoginCount *int64     `db:"login_count"`
@@ -73,7 +73,7 @@ type (
 	}
 
 	MasterOnlyUser struct {
-		Modeler    `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" faker:"-"`
+		Model      `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
 		Age        int64      `db:"-"`
 		LoginCount *int64     `db:"login_count"`
@@ -85,7 +85,7 @@ type (
 	}
 
 	ReplicaOnlyUser struct {
-		Modeler    `masters:"" replicas:"primaryReplica" tableName:"admins" faker:"-"`
+		Model      `masters:"" replicas:"primaryReplica" tableName:"admins" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
 		Age        int64      `db:"-"`
 		LoginCount *int64     `db:"login_count"`
