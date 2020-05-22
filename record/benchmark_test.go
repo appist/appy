@@ -67,6 +67,19 @@ func newDB() DBer {
 
 	logger, _, _ := support.NewTestLogger()
 	dbManager := NewEngine(logger)
+
+	for _, db := range dbManager.Databases() {
+		for true {
+			if err := db.ConnectDefaultDB(); err != nil {
+				continue
+			}
+
+			if err := db.Ping(); err == nil {
+				break
+			}
+		}
+	}
+
 	db := dbManager.DB("primary")
 	err := db.DropDB(database)
 	if err != nil {
@@ -87,8 +100,6 @@ func newDB() DBer {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	time.Sleep(3 * time.Second)
 
 	return db
 }
@@ -106,8 +117,20 @@ func newOrmDBManager() *Engine {
 
 	logger, _, _ := support.NewTestLogger()
 	dbManager := NewEngine(logger)
-	db := dbManager.DB("primary")
 
+	for _, db := range dbManager.Databases() {
+		for true {
+			if err := db.ConnectDefaultDB(); err != nil {
+				continue
+			}
+
+			if err := db.Ping(); err == nil {
+				break
+			}
+		}
+	}
+
+	db := dbManager.DB("primary")
 	err := db.DropDB(database)
 	if err != nil {
 		log.Fatal(err)
@@ -127,8 +150,6 @@ func newOrmDBManager() *Engine {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	time.Sleep(3 * time.Second)
 
 	return dbManager
 }
@@ -486,13 +507,14 @@ func BenchmarkReadORM(b *testing.B) {
 	defer dbManager.DB("primary").Close()
 
 	id, err := ormInsert(dbManager, b)
-	if id < 1 {
-		fmt.Println(fmt.Errorf("expect id to be greater than %d but got %d", 0, id))
-		b.FailNow()
-	}
 
 	if err != nil {
 		fmt.Println(err)
+		b.FailNow()
+	}
+
+	if id < 1 {
+		fmt.Println(fmt.Errorf("expect id to be greater than %d but got %d", 0, id))
 		b.FailNow()
 	}
 
@@ -501,14 +523,15 @@ func BenchmarkReadORM(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var user BenchmarkUser
 		model := NewModel(dbManager, &user)
+
 		count, err := model.Where("id = ?", id).Find().Exec()
-		if count != 1 {
-			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
+		if err != nil {
+			fmt.Println(err)
 			b.FailNow()
 		}
 
-		if err != nil {
-			fmt.Println(err)
+		if count != 1 {
+			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
 			b.FailNow()
 		}
 	}

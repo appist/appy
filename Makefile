@@ -1,5 +1,5 @@
 benchmark\:diff:
-	cob --base origin/master --threshold 0.2 --bench-args "test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./..."
+	cob --base origin/master --threshold 0.1 --bench-args "test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./..."
 
 benchmark\:pack:
 	go test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./pack
