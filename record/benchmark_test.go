@@ -40,7 +40,7 @@ CREATE TABLE users (
 )
 
 type BenchmarkUser struct {
-	Modeler `masters:"primary" replicas:"" tableName:"users" autoIncrement:"id" primaryKeys:"id"`
+	Model   `masters:"primary" replicas:"" tableName:"users" autoIncrement:"id" primaryKeys:"id"`
 	ID      int64
 	Age     int64
 	Fax     string
