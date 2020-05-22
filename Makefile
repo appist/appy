@@ -5,7 +5,7 @@ benchmark\:pack:
 	go test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./pack
 
 benchmark\:record:
-	go test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./record
+	go test -run=NONE -bench . -benchmem -benchtime 1s -failfast ./record
 
 bootstrap:
 	asdf plugin-add golang || true

@@ -213,286 +213,287 @@ func rawInsert(db *sql.DB, b *testing.B) (int64, error) {
 	return result.LastInsertId()
 }
 
-func BenchmarkInsertRaw(b *testing.B) {
-	db := newRawDB()
-	defer db.Close()
+// func BenchmarkInsertRaw(b *testing.B) {
+// 	db := newRawDB()
+// 	defer db.Close()
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		_, err := rawInsert(db, b)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 	for i := 0; i < b.N; i++ {
+// 		_, err := rawInsert(db, b)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkInsertDB(b *testing.B) {
-	db := newDB()
-	defer db.Close()
+// func BenchmarkInsertDB(b *testing.B) {
+// 	db := newDB()
+// 	defer db.Close()
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		_, err := dbInsert(db, b)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 	for i := 0; i < b.N; i++ {
+// 		_, err := dbInsert(db, b)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkInsertORM(b *testing.B) {
-	dbManager := newOrmDBManager()
-	defer dbManager.DB("primary").Close()
+// func BenchmarkInsertORM(b *testing.B) {
+// 	dbManager := newOrmDBManager()
+// 	defer dbManager.DB("primary").Close()
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		_, err := ormInsert(dbManager, b)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 	for i := 0; i < b.N; i++ {
+// 		_, err := ormInsert(dbManager, b)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkInsertMultiRaw(b *testing.B) {
-	db := newRawDB()
-	defer db.Close()
+// func BenchmarkInsertMultiRaw(b *testing.B) {
+// 	db := newRawDB()
+// 	defer db.Close()
 
-	query, args := newQueryWithArgs()
-	b.ResetTimer()
+// 	query, args := newQueryWithArgs()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		result, err := db.Exec(query, args...)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 	for i := 0; i < b.N; i++ {
+// 		result, err := db.Exec(query, args...)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		_, err = result.LastInsertId()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		_, err = result.LastInsertId()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkInsertMultiDB(b *testing.B) {
-	db := newDB()
-	defer db.Close()
+// func BenchmarkInsertMultiDB(b *testing.B) {
+// 	db := newDB()
+// 	defer db.Close()
 
-	query, args := newQueryWithArgs()
-	b.ResetTimer()
+// 	query, args := newQueryWithArgs()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		result, err := db.Exec(query, args...)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 	for i := 0; i < b.N; i++ {
+// 		result, err := db.Exec(query, args...)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		_, err = result.LastInsertId()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		_, err = result.LastInsertId()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkInsertMultiORM(b *testing.B) {
-	dbManager := newOrmDBManager()
-	defer dbManager.DB("primary").Close()
+// func BenchmarkInsertMultiORM(b *testing.B) {
+// 	dbManager := newOrmDBManager()
+// 	defer dbManager.DB("primary").Close()
 
-	users := []BenchmarkUser{}
-	for i := 0; i < 100; i++ {
-		users = append(users, BenchmarkUser{
-			Name:    "benchmark",
-			Title:   "just a benchmark",
-			Fax:     "99991234",
-			Web:     "https://appy.org",
-			Age:     100,
-			Counter: 1000,
-		})
-	}
+// 	users := []BenchmarkUser{}
+// 	for i := 0; i < 100; i++ {
+// 		users = append(users, BenchmarkUser{
+// 			Name:    "benchmark",
+// 			Title:   "just a benchmark",
+// 			Fax:     "99991234",
+// 			Web:     "https://appy.org",
+// 			Age:     100,
+// 			Counter: 1000,
+// 		})
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		model := NewModel(dbManager, &users)
-		_, err := model.Create().Exec()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 	for i := 0; i < b.N; i++ {
+// 		model := NewModel(dbManager, &users)
+// 		_, err := model.Create().Exec()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkUpdateRaw(b *testing.B) {
-	db := newRawDB()
-	defer db.Close()
+// func BenchmarkUpdateRaw(b *testing.B) {
+// 	db := newRawDB()
+// 	defer db.Close()
 
-	id, err := rawInsert(db, b)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
+// 	id, err := rawInsert(db, b)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		b.FailNow()
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		stmt, err := db.Prepare(SQLUpdateQuery)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 	for i := 0; i < b.N; i++ {
+// 		stmt, err := db.Prepare(SQLUpdateQuery)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000), id)
-		stmt.Close()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000), id)
+// 		stmt.Close()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkUpdateDB(b *testing.B) {
-	db := newDB()
-	defer db.Close()
+// func BenchmarkUpdateDB(b *testing.B) {
+// 	db := newDB()
+// 	defer db.Close()
 
-	id, err := dbInsert(db, b)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
+// 	id, err := dbInsert(db, b)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		b.FailNow()
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		stmt, err := db.Prepare(SQLUpdateQuery)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 	for i := 0; i < b.N; i++ {
+// 		stmt, err := db.Prepare(SQLUpdateQuery)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000), id)
-		stmt.Close()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		_, err = stmt.Exec("benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000), id)
+// 		stmt.Close()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkUpdateORM(b *testing.B) {
-	dbManager := newOrmDBManager()
-	defer dbManager.DB("primary").Close()
+// func BenchmarkUpdateORM(b *testing.B) {
+// 	dbManager := newOrmDBManager()
+// 	defer dbManager.DB("primary").Close()
 
-	id, err := ormInsert(dbManager, b)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
+// 	id, err := ormInsert(dbManager, b)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		b.FailNow()
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		var user BenchmarkUser
-		model := NewModel(dbManager, &user)
-		count, err := model.Where("id = ?", id).UpdateAll("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000)).Exec()
+// 	for i := 0; i < b.N; i++ {
+// 		var user BenchmarkUser
+// 		model := NewModel(dbManager, &user)
+// 		count, err := model.Where("id = ?", id).UpdateAll("name=?, title=?, fax=?, web=?, age=?, counter=?", "benchmark", "just a benchmark", "99991234", "https://appy.org", rand.Int63n(1000000), rand.Int63n(1000000)).Exec()
 
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		if count != 1 {
-			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
-			b.FailNow()
-		}
-	}
-}
+// 		if count != 1 {
+// 			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadRaw(b *testing.B) {
-	db := newRawDB()
-	defer db.Close()
+// func BenchmarkReadRaw(b *testing.B) {
+// 	db := newRawDB()
+// 	defer db.Close()
 
-	id, err := rawInsert(db, b)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
+// 	id, err := rawInsert(db, b)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		b.FailNow()
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	var (
-		age, counter          int
-		name, title, fax, web string
-	)
+// 	var (
+// 		age, counter          int
+// 		name, title, fax, web string
+// 	)
 
-	for i := 0; i < b.N; i++ {
-		stmt, err := db.Prepare(SQLSelectQuery)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 	for i := 0; i < b.N; i++ {
+// 		stmt, err := db.Prepare(SQLSelectQuery)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
-		stmt.Close()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
+// 		stmt.Close()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadDB(b *testing.B) {
-	db := newDB()
-	defer db.Close()
+// func BenchmarkReadDB(b *testing.B) {
+// 	db := newDB()
+// 	defer db.Close()
 
-	id, err := dbInsert(db, b)
-	if err != nil {
-		fmt.Println(err)
-		b.FailNow()
-	}
+// 	id, err := dbInsert(db, b)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		b.FailNow()
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	var (
-		age, counter          int
-		name, title, fax, web string
-	)
+// 	var (
+// 		age, counter          int
+// 		name, title, fax, web string
+// 	)
 
-	for i := 0; i < b.N; i++ {
-		stmt, err := db.Prepare(SQLSelectQuery)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 	for i := 0; i < b.N; i++ {
+// 		stmt, err := db.Prepare(SQLSelectQuery)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
-		stmt.Close()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		err = stmt.QueryRow(id).Scan(&id, &name, &title, &fax, &web, &age, &counter)
+// 		stmt.Close()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
 func BenchmarkReadORM(b *testing.B) {
 	dbManager := newOrmDBManager()
 	defer dbManager.DB("primary").Close()
 
 	id, err := ormInsert(dbManager, b)
-	if id < 1 {
-		fmt.Println(fmt.Errorf("expect id to be greater than %d but got %d", 0, id))
-		b.FailNow()
-	}
 
 	if err != nil {
 		fmt.Println(err)
+		b.FailNow()
+	}
+
+	if id < 1 {
+		fmt.Println(fmt.Errorf("expect id to be greater than %d but got %d", 0, id))
 		b.FailNow()
 	}
 
@@ -501,158 +502,156 @@ func BenchmarkReadORM(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var user BenchmarkUser
 		model := NewModel(dbManager, &user)
-
-		fmt.Println(model.Where("id = ?", id).Find().SQL())
-
 		count, err := model.Where("id = ?", id).Find().Exec()
 
-		fmt.Println(count, err)
+		fmt.Println(id, count, err)
+		fmt.Println(user)
+
+		if err != nil {
+			fmt.Println(err)
+			b.FailNow()
+		}
 
 		if count != 1 {
 			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 1, count))
 			b.FailNow()
 		}
-
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
 	}
 }
 
-func BenchmarkReadSliceRaw(b *testing.B) {
-	db := newRawDB()
-	defer db.Close()
+// func BenchmarkReadSliceRaw(b *testing.B) {
+// 	db := newRawDB()
+// 	defer db.Close()
 
-	for i := 0; i < 100; i++ {
-		_, err := rawInsert(db, b)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
+// 	for i := 0; i < 100; i++ {
+// 		_, err := rawInsert(db, b)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	var (
-		id, age, counter      int
-		name, title, fax, web string
-	)
+// 	var (
+// 		id, age, counter      int
+// 		name, title, fax, web string
+// 	)
 
-	for i := 0; i < b.N; i++ {
-		stmt, err := db.Prepare(SQLSelectMultiQuery)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 	for i := 0; i < b.N; i++ {
+// 		stmt, err := db.Prepare(SQLSelectMultiQuery)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		rows, err := stmt.Query()
-		stmt.Close()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 		rows, err := stmt.Query()
+// 		stmt.Close()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		for j := 0; rows.Next() && j < 100; j++ {
-			err = rows.Scan(&id, &name, &title, &fax, &web, &age, &counter)
-			if err != nil {
-				fmt.Println(err)
-				b.FailNow()
-			}
-		}
+// 		for j := 0; rows.Next() && j < 100; j++ {
+// 			err = rows.Scan(&id, &name, &title, &fax, &web, &age, &counter)
+// 			if err != nil {
+// 				fmt.Println(err)
+// 				b.FailNow()
+// 			}
+// 		}
 
-		if err = rows.Err(); err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 		if err = rows.Err(); err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		if err = rows.Close(); err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		if err = rows.Close(); err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadSliceDB(b *testing.B) {
-	db := newDB()
-	defer db.Close()
+// func BenchmarkReadSliceDB(b *testing.B) {
+// 	db := newDB()
+// 	defer db.Close()
 
-	for i := 0; i < 100; i++ {
-		_, err := dbInsert(db, b)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
+// 	for i := 0; i < 100; i++ {
+// 		_, err := dbInsert(db, b)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	var (
-		id, age, counter      int
-		name, title, fax, web string
-	)
+// 	var (
+// 		id, age, counter      int
+// 		name, title, fax, web string
+// 	)
 
-	for i := 0; i < b.N; i++ {
-		stmt, err := db.Prepare(SQLSelectMultiQuery)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 	for i := 0; i < b.N; i++ {
+// 		stmt, err := db.Prepare(SQLSelectMultiQuery)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		rows, err := stmt.Query()
-		stmt.Close()
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 		rows, err := stmt.Query()
+// 		stmt.Close()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		for j := 0; rows.Next() && j < 100; j++ {
-			err = rows.Scan(&id, &name, &title, &fax, &web, &age, &counter)
-			if err != nil {
-				fmt.Println(err)
-				b.FailNow()
-			}
-		}
+// 		for j := 0; rows.Next() && j < 100; j++ {
+// 			err = rows.Scan(&id, &name, &title, &fax, &web, &age, &counter)
+// 			if err != nil {
+// 				fmt.Println(err)
+// 				b.FailNow()
+// 			}
+// 		}
 
-		if err = rows.Err(); err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
+// 		if err = rows.Err(); err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
 
-		if err = rows.Close(); err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		if err = rows.Close(); err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }
 
-func BenchmarkReadSliceORM(b *testing.B) {
-	dbManager := newOrmDBManager()
-	defer dbManager.DB("primary").Close()
+// func BenchmarkReadSliceORM(b *testing.B) {
+// 	dbManager := newOrmDBManager()
+// 	defer dbManager.DB("primary").Close()
 
-	for i := 0; i < 100; i++ {
-		_, err := ormInsert(dbManager, b)
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
+// 	for i := 0; i < 100; i++ {
+// 		_, err := ormInsert(dbManager, b)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
 
-	b.ResetTimer()
+// 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		var users []BenchmarkUser
-		model := NewModel(dbManager, &users)
-		count, err := model.Where("id > ?", 0).Limit(100).Find().Exec()
+// 	for i := 0; i < b.N; i++ {
+// 		var users []BenchmarkUser
+// 		model := NewModel(dbManager, &users)
+// 		count, err := model.Where("id > ?", 0).Limit(100).Find().Exec()
 
-		if count != 100 {
-			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 100, count))
-			b.FailNow()
-		}
+// 		if count != 100 {
+// 			fmt.Println(fmt.Errorf("expect count to be %d but got %d", 100, count))
+// 			b.FailNow()
+// 		}
 
-		if err != nil {
-			fmt.Println(err)
-			b.FailNow()
-		}
-	}
-}
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			b.FailNow()
+// 		}
+// 	}
+// }

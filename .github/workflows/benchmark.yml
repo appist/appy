@@ -32,4 +32,4 @@ jobs:
       - name: Setup Local Data Store
         run: make up
       - name: Run Benchmark Diff
-        run: make benchmark:diff
+        run: make benchmark:record
