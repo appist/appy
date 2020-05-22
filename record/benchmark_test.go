@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	// Automatically import mysql driver to make it easier for appy's users.
-
 	"github.com/appist/appy/support"
+
+	// Automatically import mysql driver to make it easier for appy's users.
 	_ "github.com/go-sql-driver/mysql"
 )
 
