@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/appist/appy/mock"
 	"github.com/appist/appy/record"
 	"github.com/appist/appy/support"
-	"github.com/appist/appy/test"
 	"github.com/go-redis/redis"
 	"github.com/hibiken/asynq"
 )
@@ -239,7 +239,7 @@ func (w *Engine) Run() {
 
 // MockedHandler is used for mocking in unit test.
 type MockedHandler struct {
-	test.Mock
+	mock.Mock
 }
 
 // NewMockedHandler initializes a mocked Handler instance that is useful for unit test.
