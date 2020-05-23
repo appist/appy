@@ -29,10 +29,10 @@ install:
 	go mod download
 
 genmock:
-	mockery -name DBer -structname DB -filename db.go -dir ./record
-	mockery -name Modeler -structname Model -filename model.go -dir ./record
-	mockery -name Stmter -structname Stmt -filename stmt.go -dir ./record
-	mockery -name Txer -structname Tx -filename tx.go -dir ./record
+	mockery -name DBer -structname DB -filename db.go -outpkg mock -output ./mock -dir ./record
+	mockery -name Modeler -structname Model -filename model.go -outpkg mock -output ./mock -dir ./record
+	mockery -name Stmter -structname Stmt -filename stmt.go -outpkg mock -output ./mock -dir ./record
+	mockery -name Txer -structname Tx -filename tx.go -outpkg mock -output ./mock -dir ./record
 
 restart:
 	docker-compose -p appy -f .docker/docker-compose.yml restart
