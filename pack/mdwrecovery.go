@@ -1,6 +1,7 @@
 package pack
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -34,10 +35,12 @@ func recoveryErrorHandler(c *Context, logger *support.Logger, err interface{}) {
 		sessionVars = "None"
 	}
 
-	switch e := err.(type) {
-	case error:
-		c.Error(e)
+	switch err.(type) {
+	case string:
+		err = errors.New(err.(string))
 	}
+
+	c.Error(err.(error))
 
 	tplErrors := []template.HTML{}
 	for _, err := range c.Errors {
