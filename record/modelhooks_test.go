@@ -10,11 +10,11 @@ import (
 
 type UserWithBeforeValidateError struct {
 	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
-	ID        int64      `db:"id" faker:"-"`
-	Username  string     `db:"username" faker:"username,unique"`
-	CreatedAt *time.Time `db:"created_at" faker:"-"`
-	DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-	UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+	ID        int64         `db:"id" faker:"-"`
+	Username  string        `db:"username" faker:"username,unique"`
+	CreatedAt support.ZTime `db:"created_at" faker:"-"`
+	DeletedAt *time.Time    `db:"deleted_at" faker:"-"`
+	UpdatedAt *time.Time    `db:"updated_at" faker:"-"`
 }
 
 func (u *UserWithBeforeValidateError) BeforeValidate() error {
@@ -49,11 +49,11 @@ func (u *UserWithBeforeCreateError) BeforeCreate() error {
 
 type UserWithAfterCreateError struct {
 	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
-	ID        int64      `db:"id" faker:"-"`
-	Username  string     `db:"username" faker:"username,unique"`
-	CreatedAt *time.Time `db:"created_at" faker:"-"`
-	DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-	UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+	ID        int64         `db:"id" faker:"-"`
+	Username  string        `db:"username" faker:"username,unique"`
+	CreatedAt support.NTime `db:"created_at" faker:"-"`
+	DeletedAt *time.Time    `db:"deleted_at" faker:"-"`
+	UpdatedAt *time.Time    `db:"updated_at" faker:"-"`
 }
 
 func (u *UserWithAfterCreateError) AfterCreate() error {
@@ -79,7 +79,7 @@ type UserWithAfterUpdateError struct {
 	Username  string     `db:"username" faker:"username,unique"`
 	CreatedAt *time.Time `db:"created_at" faker:"-"`
 	DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-	UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+	UpdatedAt time.Time  `db:"updated_at" faker:"-"`
 }
 
 func (u *UserWithAfterUpdateError) AfterUpdate() error {
@@ -160,12 +160,12 @@ func (u *UserWithAfterDeleteCommit) AfterDeleteCommit() error {
 
 type UserWithAfterUpdateCommit struct {
 	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
-	ID        int64      `db:"id" faker:"-"`
-	Message   string     `db:"-" faker:"-"`
-	Username  string     `db:"username" faker:"username,unique"`
-	CreatedAt *time.Time `db:"created_at" faker:"-"`
-	DeletedAt *time.Time `db:"deleted_at" faker:"-"`
-	UpdatedAt *time.Time `db:"updated_at" faker:"-"`
+	ID        int64         `db:"id" faker:"-"`
+	Message   string        `db:"-" faker:"-"`
+	Username  string        `db:"username" faker:"username,unique"`
+	CreatedAt *time.Time    `db:"created_at" faker:"-"`
+	DeletedAt *time.Time    `db:"deleted_at" faker:"-"`
+	UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
 }
 
 func (u *UserWithAfterUpdateCommit) AfterUpdateCommit() error {
@@ -331,22 +331,27 @@ func (s *modelSuite) TestCallback() {
 		{
 			var user UserWithAfterUpdateError
 			s.Nil(faker.FakeData(&user))
+			user.UpdatedAt = time.Now()
 
 			count, err := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
 			user.Username = "foo"
+
+			time.Sleep(1 * time.Second)
 			count, err = s.model(&user).Update().Exec()
 			s.Equal(int64(1), count)
 			s.EqualError(err, "after update error")
 		}
 
 		{
+			now := time.Now()
 			var users []UserWithAfterUpdateError
 			for i := 0; i < 10; i++ {
 				user := UserWithAfterUpdateError{}
 				s.Nil(faker.FakeData(&user))
+				user.UpdatedAt = now
 				users = append(users, user)
 			}
 
@@ -356,6 +361,7 @@ func (s *modelSuite) TestCallback() {
 
 			users[0].Username = "bar"
 
+			time.Sleep(1 * time.Second)
 			count, err = s.model(&users).Update().Exec()
 			s.Equal(int64(10), count)
 			s.EqualError(err, "after update error")
@@ -611,6 +617,7 @@ func (s *modelSuite) TestCallbackTx() {
 		{
 			var user UserWithAfterUpdateError
 			s.Nil(faker.FakeData(&user))
+			user.UpdatedAt = time.Now()
 
 			model := s.model(&user)
 			err := model.Begin()
@@ -621,6 +628,8 @@ func (s *modelSuite) TestCallbackTx() {
 			s.Equal(int64(1), count)
 
 			user.Username = "foo"
+
+			time.Sleep(1 * time.Second)
 			count, err = model.Update().Exec()
 			s.Equal(int64(1), count)
 			s.EqualError(err, "after update error")
@@ -628,10 +637,12 @@ func (s *modelSuite) TestCallbackTx() {
 		}
 
 		{
+			now := time.Now()
 			var users []UserWithAfterUpdateError
 			for i := 0; i < 10; i++ {
 				user := UserWithAfterUpdateError{}
 				s.Nil(faker.FakeData(&user))
+				user.UpdatedAt = now
 				users = append(users, user)
 			}
 
@@ -645,6 +656,8 @@ func (s *modelSuite) TestCallbackTx() {
 			s.Nil(err)
 
 			users[0].Username = "bar"
+
+			time.Sleep(1 * time.Second)
 			count, err = model.Update().Exec()
 			s.Equal(int64(10), count)
 			s.EqualError(err, "after update error")

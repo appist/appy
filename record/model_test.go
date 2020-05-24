@@ -26,38 +26,38 @@ type (
 
 	User struct {
 		Model      `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
-		ID         int64      `db:"id" faker:"-"`
-		Age        int64      `db:"-"`
-		LoginCount *int64     `db:"login_count"`
-		Email      string     `db:"email" faker:"email,unique"`
-		Username   string     `db:"username" faker:"username,unique"`
-		CreatedAt  *time.Time `db:"created_at" faker:"-"`
-		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
+		ID         int64         `db:"id" faker:"-"`
+		Age        int64         `db:"-"`
+		LoginCount *int64        `db:"login_count"`
+		Email      string        `db:"email" faker:"email,unique"`
+		Username   string        `db:"username" faker:"username,unique"`
+		CreatedAt  time.Time     `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time    `db:"deleted_at" faker:"-"`
+		UpdatedAt  support.NTime `db:"updated_at" faker:"-"`
 	}
 
 	AdminUser struct {
 		Model      `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" primaryKeys:"id,email" faker:"-"`
-		ID         int64      `db:"id" faker:"-"`
-		Age        int64      `db:"-"`
-		LoginCount *int64     `db:"login_count"`
-		Email      string     `db:"email" faker:"email,unique"`
-		Username   string     `db:"username" faker:"username,unique"`
-		CreatedAt  *time.Time `db:"created_at" faker:"-"`
-		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
+		ID         int64         `db:"id" faker:"-"`
+		Age        int64         `db:"-"`
+		LoginCount *int64        `db:"login_count"`
+		Email      string        `db:"email" faker:"email,unique"`
+		Username   string        `db:"username" faker:"username,unique"`
+		CreatedAt  support.NTime `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time    `db:"deleted_at" faker:"-"`
+		UpdatedAt  support.ZTime `db:"updated_at" faker:"-"`
 	}
 
 	DuplicateUser struct {
 		Model      `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
-		ID         int64      `db:"id" faker:"-"`
-		Age        int64      `db:"-"`
-		LoginCount *int64     `db:"login_count"`
-		Email      string     `db:"email" faker:"email,unique"`
-		Username   string     `db:"username" faker:"username,unique"`
-		CreatedAt  *time.Time `db:"created_at" faker:"-"`
-		DeletedAt  *time.Time `db:"deleted_at" faker:"-"`
-		UpdatedAt  *time.Time `db:"updated_at" faker:"-"`
+		ID         int64         `db:"id" faker:"-"`
+		Age        int64         `db:"-"`
+		LoginCount *int64        `db:"login_count"`
+		Email      string        `db:"email" faker:"email,unique"`
+		Username   string        `db:"username" faker:"username,unique"`
+		CreatedAt  support.ZTime `db:"created_at" faker:"-"`
+		DeletedAt  *time.Time    `db:"deleted_at" faker:"-"`
+		UpdatedAt  support.NTime `db:"updated_at" faker:"-"`
 	}
 
 	UserWithoutPK struct {
