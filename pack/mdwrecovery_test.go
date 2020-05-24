@@ -98,6 +98,18 @@ func (s *mdwRecoverySuite) TestBrokenPipeErrorHandling() {
 	s.Contains(s.recorder.Body.String(), "broken pipe")
 }
 
+func (s *mdwRecoverySuite) TestPanicStringErrorHandling() {
+	s.server.Use(mdwRecovery(s.logger))
+	s.server.GET("/test", func(c *Context) {
+		panic("error string")
+	})
+
+	req, _ := http.NewRequest("GET", "/test", nil)
+	s.server.ServeHTTP(s.recorder, req)
+
+	s.Contains(s.recorder.Body.String(), "error string")
+}
+
 func TestMdwRecoverySuite(t *testing.T) {
 	test.Run(t, new(mdwRecoverySuite))
 }
