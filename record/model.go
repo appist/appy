@@ -31,6 +31,7 @@ type (
 		Find() Modeler
 		Group(group string) Modeler
 		Having(having string, args ...interface{}) Modeler
+		Join(join string, args ...interface{}) Modeler
 		Limit(limit int) Modeler
 		Offset(offset int) Modeler
 		Order(order string) Modeler
@@ -46,18 +47,18 @@ type (
 
 	// Model is the layer that represents business data and logic.
 	Model struct {
-		adapter, autoIncrement, tableName                            string
-		attrs                                                        map[string]*modelAttr
-		dest, scanDest                                               interface{}
-		destKind                                                     reflect.Kind
-		masters, replicas                                            []DBer
-		primaryKeys                                                  []string
-		queryBuilder                                                 strings.Builder
-		tx                                                           Txer
-		limit, offset                                                int
-		action, group, having, order, selectColumns, timezone, where string
-		args, havingArgs, whereArgs                                  []interface{}
-		individuals                                                  []modelIndividual
+		adapter, autoIncrement, tableName                                  string
+		attrs                                                              map[string]*modelAttr
+		dest, scanDest                                                     interface{}
+		destKind                                                           reflect.Kind
+		masters, replicas                                                  []DBer
+		primaryKeys                                                        []string
+		queryBuilder                                                       strings.Builder
+		tx                                                                 Txer
+		limit, offset                                                      int
+		action, group, having, join, order, selectColumns, timezone, where string
+		args, havingArgs, joinArgs, whereArgs                              []interface{}
+		individuals                                                        []modelIndividual
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
@@ -344,6 +345,12 @@ func (m *Model) Count() Modeler {
 	m.queryBuilder.WriteString(") FROM ")
 	m.queryBuilder.WriteString(m.tableName)
 
+	if m.join != "" {
+		m.queryBuilder.WriteString(" ")
+		m.queryBuilder.WriteString(m.join)
+		m.args = append(m.args, m.joinArgs...)
+	}
+
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
@@ -586,11 +593,22 @@ func (m *Model) Find() Modeler {
 	if m.selectColumns != "" {
 		m.queryBuilder.WriteString(m.selectColumns)
 	} else {
+		if m.join != "" {
+			m.queryBuilder.WriteString(m.tableName)
+			m.queryBuilder.WriteString(".")
+		}
+
 		m.queryBuilder.WriteString("*")
 	}
 
 	m.queryBuilder.WriteString(" FROM ")
 	m.queryBuilder.WriteString(m.tableName)
+
+	if m.join != "" {
+		m.queryBuilder.WriteString(" ")
+		m.queryBuilder.WriteString(m.join)
+		m.args = append(m.args, m.joinArgs...)
+	}
 
 	if m.where == "" {
 		m.buildWhereWithPrimaryKeys()
@@ -639,6 +657,14 @@ func (m *Model) Having(having string, args ...interface{}) Modeler {
 	return m
 }
 
+// Join indicates the join queries
+func (m *Model) Join(join string, args ...interface{}) Modeler {
+	m.join = join
+	m.joinArgs = args
+
+	return m
+}
+
 // Limit indicates the number limit of records to retrieve from the database.
 func (m *Model) Limit(limit int) Modeler {
 	m.limit = limit
@@ -682,6 +708,12 @@ func (m *Model) Scan(dest interface{}) Modeler {
 
 	m.queryBuilder.WriteString(" FROM ")
 	m.queryBuilder.WriteString(m.tableName)
+
+	if m.join != "" {
+		m.queryBuilder.WriteString(" ")
+		m.queryBuilder.WriteString(m.join)
+		m.args = append(m.args, m.joinArgs...)
+	}
 
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")

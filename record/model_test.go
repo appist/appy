@@ -174,6 +174,18 @@ CREATE TABLE IF NOT EXISTS user_without_pks (
 	deleted_at TIMESTAMP,
 	updated_at TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS committees (
+	committee_id INT AUTO_INCREMENT,
+	name VARCHAR(100),
+	PRIMARY KEY (committee_id)
+);
+
+CREATE TABLE IF NOT EXISTS members (
+	member_id INT AUTO_INCREMENT,
+	name VARCHAR(100),
+	PRIMARY KEY (member_id)
+);
 `
 	case "postgres":
 		os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("postgresql://postgres:whatever@0.0.0.0:15432/%s?sslmode=disable&connect_timeout=5", database))
@@ -232,6 +244,16 @@ CREATE TABLE IF NOT EXISTS user_without_pks (
 	created_at TIMESTAMP,
 	deleted_at TIMESTAMP,
 	updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS committees (
+	committee_id SERIAL PRIMARY KEY,
+	name VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS members (
+	member_id  SERIAL PRIMARY KEY,
+	name VARCHAR
 );
 `
 	}

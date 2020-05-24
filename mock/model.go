@@ -216,6 +216,25 @@ func (_m *Model) Having(having string, args ...interface{}) record.Modeler {
 	return r0
 }
 
+// Join provides a mock function with given fields: join, args
+func (_m *Model) Join(join string, args ...interface{}) record.Modeler {
+	var _ca []interface{}
+	_ca = append(_ca, join)
+	_ca = append(_ca, args...)
+	ret := _m.Called(_ca...)
+
+	var r0 record.Modeler
+	if rf, ok := ret.Get(0).(func(string, ...interface{}) record.Modeler); ok {
+		r0 = rf(join, args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(record.Modeler)
+		}
+	}
+
+	return r0
+}
+
 // Limit provides a mock function with given fields: limit
 func (_m *Model) Limit(limit int) record.Modeler {
 	ret := _m.Called(limit)
