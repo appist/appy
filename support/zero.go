@@ -7,7 +7,7 @@ type (
 	// and NULL in SQL.
 	ZBool = zero.Bool
 
-	// ZFloat is a nullable float64. If the value is zero, it equals to 0 in JSON
+	// ZFloat64 is a nullable float64. If the value is zero, it equals to 0 in JSON
 	// and NULL in SQL.
 	ZFloat64 = zero.Float
 
