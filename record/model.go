@@ -12,6 +12,8 @@ import (
 	"github.com/appist/appy/support"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"gopkg.in/guregu/null.v4"
+	"gopkg.in/guregu/null.v4/zero"
 )
 
 type (
@@ -384,6 +386,8 @@ func (m *Model) Create() Modeler {
 	m.queryBuilder.WriteString(";")
 
 	now := m.timeNow()
+	nullNow := null.TimeFrom(now)
+	zeroNow := zero.TimeFrom(now)
 	switch m.destKind {
 	case reflect.Array, reflect.Slice:
 		v := reflect.ValueOf(m.dest).Elem()
@@ -392,7 +396,16 @@ func (m *Model) Create() Modeler {
 			field := v.Index(i).FieldByName(createdAtField)
 
 			if field.IsValid() {
-				field.Set(reflect.ValueOf(&now))
+				switch field.Interface().(type) {
+				case time.Time:
+					field.Set(reflect.ValueOf(now))
+				case *time.Time:
+					field.Set(reflect.ValueOf(&now))
+				case null.Time:
+					field.Set(reflect.ValueOf(nullNow))
+				case zero.Time:
+					field.Set(reflect.ValueOf(zeroNow))
+				}
 			}
 		}
 	case reflect.Ptr:
@@ -400,7 +413,16 @@ func (m *Model) Create() Modeler {
 		field := v.FieldByName(createdAtField)
 
 		if field.IsValid() {
-			field.Set(reflect.ValueOf(&now))
+			switch field.Interface().(type) {
+			case time.Time:
+				field.Set(reflect.ValueOf(now))
+			case *time.Time:
+				field.Set(reflect.ValueOf(&now))
+			case null.Time:
+				field.Set(reflect.ValueOf(nullNow))
+			case zero.Time:
+				field.Set(reflect.ValueOf(zeroNow))
+			}
 		}
 	}
 
@@ -734,6 +756,8 @@ func (m *Model) Update() Modeler {
 	m.action = "update"
 
 	now := m.timeNow()
+	nullNow := null.TimeFrom(now)
+	zeroNow := zero.TimeFrom(now)
 	switch m.destKind {
 	case reflect.Array, reflect.Slice:
 		v := reflect.ValueOf(m.dest).Elem()
@@ -742,7 +766,16 @@ func (m *Model) Update() Modeler {
 			field := v.Index(i).FieldByName(updatedAtField)
 
 			if field.IsValid() {
-				field.Set(reflect.ValueOf(&now))
+				switch field.Interface().(type) {
+				case time.Time:
+					field.Set(reflect.ValueOf(now))
+				case *time.Time:
+					field.Set(reflect.ValueOf(&now))
+				case null.Time:
+					field.Set(reflect.ValueOf(nullNow))
+				case zero.Time:
+					field.Set(reflect.ValueOf(zeroNow))
+				}
 			}
 
 			m.appendModelIndividual(v.Index(i))
@@ -752,7 +785,16 @@ func (m *Model) Update() Modeler {
 		field := v.FieldByName(updatedAtField)
 
 		if field.IsValid() {
-			field.Set(reflect.ValueOf(&now))
+			switch field.Interface().(type) {
+			case time.Time:
+				field.Set(reflect.ValueOf(now))
+			case *time.Time:
+				field.Set(reflect.ValueOf(&now))
+			case null.Time:
+				field.Set(reflect.ValueOf(nullNow))
+			case zero.Time:
+				field.Set(reflect.ValueOf(zeroNow))
+			}
 		}
 
 		m.appendModelIndividual(v)
