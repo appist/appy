@@ -7,43 +7,42 @@
 
 ## Config
 
-* [Getting Started](config/getting-started.md)
-* [Manage Environments](config/manage-environments.md)
-* [Modifying Built-In Config](config/modifying-built-in-config.md)
-* [Adding Custom Config](config/adding-custom-config.md)
+* [Basics](config/basics.md)
+* [Environments](config/environments.md)
+* [Built-In Config](config/built-in-config.md)
+* [Custom Config](config/custom-config.md)
 
-## Database
+## Database & Model
 
-* [Getting Started](database/getting-started.md)
-* [Writing Unit Tests](database/writing-unit-tests.md)
-
-## Model
-
-* [Getting Started](model/getting-started.md)
-* [Writing Unit Tests](model/writing-unit-tests.md)
+* [Basics](database-and-model/getting-started.md)
+* [Database Migrations](database-and-model/database-migrations.md)
+* [Model Validations](database-and-model/model-validations.md)
+* [Model Callbacks](database-and-model/model-callbacks.md)
+* [Query Interface](database-and-model/query-interface.md)
+* [Unit Tests](database-and-model/unit-tests.md)
 
 ## GraphQL
 
-* [Getting Started](graphql/getting-started.md)
-* [Writing Unit Tests](graphql/writing-unit-tests.md)
+* [Basics](graphql/basics.md)
+* [Unit Tests](graphql/unit-tests.md)
 
 ## HTTP Handler
 
-* [Getting Started](http-handler/getting-started.md)
-* [Writing Unit Tests](http-handler/writing-unit-tests.md)
+* [Basics](http-handler/basics.md)
+* [Unit Tests](http-handler/unit-tests.md)
 
 ## Mailer
 
-* [Getting Started](mailer/getting-started.md)
-* [Writing Unit Tests](mailer/writing-unit-tests.md)
+* [Basics](mailer/basics.md)
+* [Unit Tests](mailer/unit-tests.md)
 
 ## View
 
-* [Getting Started](view/getting-started.md)
-* [Writing Unit Tests](view/writing-unit-tests.md)
+* [Basics](view/basics.md)
+* [Unit Tests](view/unit-tests.md)
 
 ## Worker
 
-* [Getting Started](worker/getting-started.md)
-* [Writing Unit Tests](worker/writing-unit-tests.md)
+* [Basics](worker/basics.md)
+* [Unit Tests](worker/unit-tests.md)
 
