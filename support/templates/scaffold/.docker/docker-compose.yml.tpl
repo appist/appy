@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 
 services:{{if eq .dbAdapter "mysql"}}
   mysql-master:

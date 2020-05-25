@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/appist/appy"
+	"github.com/appist/appy/pack"
 )
 
-func welcomeIndex(c *appy.Context) {
+func welcomeIndex(c *pack.Context) {
 	c.HTML(http.StatusOK, "welcome/index.html", nil)
 }

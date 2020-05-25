@@ -8,19 +8,21 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/appist/appy"
+	"github.com/appist/appy/support"
+	"github.com/appist/appy/test"
+	"github.com/appist/appy/worker"
 )
 
 type ExampleSuite struct {
-	appy.Suite
+	test.Suite
 	buffer   *bytes.Buffer
-	logger   *appy.Logger
+	logger   *support.Logger
 	recorder *httptest.ResponseRecorder
 	writer   *bufio.Writer
 }
 
 func (s *ExampleSuite) SetupTest() {
-	s.logger, s.buffer, s.writer = appy.NewTestLogger()
+	s.logger, s.buffer, s.writer = support.NewTestLogger()
 	s.recorder = httptest.NewRecorder()
 }
 
@@ -33,9 +35,9 @@ func (s *ExampleSuite) TestExample() {
 	defer func() { app.Logger = oldLogger }()
 
 	ctx := context.Background()
-	job := appy.NewJob("test", nil)
+	job := worker.NewJob("test", nil)
 
-	mockedHandler := appy.NewMockedWorkerHandler()
+	mockedHandler := worker.NewMockedHandler()
 	mockedHandler.On("ProcessTask", ctx, job).Return(nil)
 	err := Example(mockedHandler).ProcessTask(ctx, job)
 	s.writer.Flush()
@@ -46,5 +48,5 @@ func (s *ExampleSuite) TestExample() {
 }
 
 func TestExampleSuite(t *testing.T) {
-	appy.RunSuite(t, new(ExampleSuite))
+	test.Run(t, new(ExampleSuite))
 }
