@@ -36,14 +36,14 @@ func newDBMigrateStatusCommand(config *support.Config, dbManager *record.Engine,
 				}
 				defer db.Close()
 
-				fmt.Println()
-				fmt.Printf("database: %s\n", name)
-				fmt.Println()
-
 				status, err := db.MigrateStatus()
 				if err != nil {
 					logger.Fatal(err)
 				}
+
+				fmt.Println()
+				fmt.Printf("database: %s\n", name)
+				fmt.Println()
 
 				table := gotabulate.Create(status)
 				table.SetAlign("left")
