@@ -1,10 +1,10 @@
 ---
-description: Covers how you can configure your application by adding custom config.
+description: Covers how to configure your application by adding custom config.
 ---
 
 # Adding Custom Config
 
-It is very common that an application would have its own configuration, e.g. database URI, 3rd party API credentials and etc. In order to accomodate this requirement while keeping the config management easier, `appy` combines both built-in and application config into 1 single config and place it under `app` package in your project module.
+It is very common that an application would have its own configuration, e.g. database URI, 3rd party API credentials and etc. In order to accommodate this requirement while keeping the config management easier, `appy` combines both built-in and application config into 1 single config and place it under `app` package in your project module.
 
 For example, we would like to integrate with [Facebook Graph API](https://developers.facebook.com/docs/graph-api/) and the API would require us to pass in `app_id` and `app_secret` to authenticate the request. And below is how we can configure the credentials:
 

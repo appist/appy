@@ -1,7 +1,5 @@
 ---
-description: >-
-  Covers how you can configure your application by modifying appy's built-in
-  config.
+description: Covers how to configure your application by modifying appy's built-in config.
 ---
 
 # Modifying Built-In Config
@@ -20,5 +18,7 @@ And now you can open the GraphQL playground at [http://0.0.0.0:3000/gqlplaygroun
 
 ![GraphQL Playground](../.gitbook/assets/screenshot-2020-03-31-at-8.51.00-pm.png)
 
+{% hint style="info" %}
 For the full list of supported built-in config, please refer to the [documentation](https://pkg.go.dev/github.com/appist/appy?tab=doc#Config).
+{% endhint %}
 

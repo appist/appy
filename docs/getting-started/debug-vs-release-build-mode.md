@@ -16,15 +16,15 @@ Below is the snippet for working with the build mode:
 // 
 // Please take note that this value will be updated to `release` when running
 // `go run . build` command.
-var appy.Build
+var support.Build
 
 // IsDebugBuild indicates the current build is debug build which is meant for 
 // local development.
-func appy.IsDebugBuild() bool
+func support.IsDebugBuild() bool
 
 // IsReleaseBuild indicates the current build is release build which is meant 
 // for production deployment.
-func appy.IsReleaseBuild() bool
+func support.IsReleaseBuild() bool
 ```
 
 Below are the main differences:
