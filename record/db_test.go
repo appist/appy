@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
@@ -95,6 +96,8 @@ func (s *dbSuite) TestConnect() {
 		s.Equal(1, len(configs))
 
 		db := NewDB(configs["primary"], s.logger)
+
+		time.Sleep(2 * time.Second)
 		err := db.Connect()
 
 		s.Contains(err.(*mysql.MySQLError).Message, "Access denied for user 'root'@")
