@@ -25,6 +25,12 @@ For example, a model struct called `Book`, you should have a database table call
 * **Foreign Keys** These fields should be in `singularised_table_name_id` form \(e.g. `order_id`\) which is what `appy` looks for when you create associations between your models 
 * **Primary Keys**  By default, `appy` will use an integer column named `id` as the table's primary key \(`bigint` for PostgreSQL and MySQL\).
 
+There are also some optional column names that will add additional features to ORM instances:
+
+* **created\_at** Automatically gets set to the current date and time when the record is first created. 
+* **deleted\_at** Automatically gets set to the current date and time whenever the record is soft-deleted. 
+* **updated\_at** Automatically gets set to the current date and time whenever the record is updated.
+
 ### Creating Models
 
 Suppose that the `products` table was created using an SQL statement like:

@@ -23,7 +23,7 @@
   * [Validations](database-and-model/using-orms/validations.md)
   * [Callbacks](database-and-model/using-orms/callbacks.md)
   * [Associations](database-and-model/using-orms/associations.md)
-  * [Query Interfaces](database-and-model/using-orms/query-interfaces.md)
+  * [CRUD Interfaces](database-and-model/using-orms/crud-interfaces.md)
 * [Writing Unit Tests](database-and-model/writing-unit-tests.md)
 * [Advanced Topics](database-and-model/advanced-topics.md)
 
