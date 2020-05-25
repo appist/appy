@@ -17,18 +17,18 @@
 
 * [Understanding Basics](database-and-model/understanding-basics.md)
 * [Configuring Databases](database-and-model/configuring-databases.md)
-* [Configuring Model](database-and-model/using-model-structs/README.md)
-  * [Callbacks](database-and-model/using-model-structs/using-model-callbacks.md)
-  * [Validations](database-and-model/using-model-structs/using-model-validations.md)
-  * [Query Interfaces](database-and-model/using-model-structs/using-query-interfaces.md)
+* [Configuring Models](database-and-model/configuring-models/README.md)
+  * [Callbacks](database-and-model/configuring-models/callbacks.md)
+  * [Validations](database-and-model/configuring-models/validations.md)
+  * [Query Interfaces](database-and-model/configuring-models/query-interfaces.md)
 * [Writing Unit Tests](database-and-model/writing-unit-tests.md)
 * [Advanced Topics](database-and-model/advanced-topics.md)
 
 ## HTTP Handler
 
 * [Understanding Basics](http-handler/understanding-basics.md)
-* [Writing Route Handler](http-handler/writing-route-handler.md)
-* [Writing Route Middleware](http-handler/writing-route-middleware.md)
+* [Configuring Routes](http-handler/configuring-routes/README.md)
+  * [Middleware](http-handler/configuring-routes/middleware.md)
 * [Writing Unit Tests](http-handler/writing-unit-tests.md)
 * [Advanced Topics](http-handler/advanced-topics.md)
 
