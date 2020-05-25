@@ -86,7 +86,7 @@ CREATE TABLE users (
 
 func (s *dbSuite) TestConnect() {
 	{
-		os.Setenv("DB_URI_PRIMARY", "mysql://root:@0.0.0.0:13306/test_connect")
+		os.Setenv("DB_URI_PRIMARY", "mysql://root:@0.0.0.0:13306/mysql")
 		defer os.Unsetenv("DB_URI_PRIMARY")
 
 		configs, errs := parseDBConfig()
@@ -101,7 +101,7 @@ func (s *dbSuite) TestConnect() {
 	}
 
 	{
-		os.Setenv("DB_URI_PRIMARY", "postgres://postgres:@0.0.0.0:15432/test_connect?sslmode=disable&connect_timeout=5")
+		os.Setenv("DB_URI_PRIMARY", "postgres://postgres:@0.0.0.0:15432/postgres?sslmode=disable&connect_timeout=5")
 		defer os.Unsetenv("DB_URI_PRIMARY")
 
 		configs, errs := parseDBConfig()
