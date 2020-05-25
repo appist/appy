@@ -17,10 +17,10 @@
 
 * [Understanding Basics](database-and-model/understanding-basics.md)
 * [Configuring Databases](database-and-model/configuring-databases.md)
-* [Using Model Structs](database-and-model/using-model-structs.md)
-* [Using Model Validations](database-and-model/using-model-validations.md)
-* [Using Model Callbacks](database-and-model/using-model-callbacks.md)
-* [Using Query Interfaces](database-and-model/using-query-interfaces.md)
+* [Configuring Model](database-and-model/using-model-structs/README.md)
+  * [Callbacks](database-and-model/using-model-structs/using-model-callbacks.md)
+  * [Validations](database-and-model/using-model-structs/using-model-validations.md)
+  * [Query Interfaces](database-and-model/using-model-structs/using-query-interfaces.md)
 * [Writing Unit Tests](database-and-model/writing-unit-tests.md)
 * [Advanced Topics](database-and-model/advanced-topics.md)
 

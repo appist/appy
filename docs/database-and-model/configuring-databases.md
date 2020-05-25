@@ -1,5 +1,5 @@
 ---
-description: Covers how to configure the databases following 12factor.
+description: Covers how to configure the databases following 12factor principle.
 ---
 
 # Configuring Databases

@@ -26,20 +26,20 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 
 ## Features
 
-* Support [12factor](https://12factor.net/) app
-* Support dotenv configuration\(encrypted line-by-line\) for clearer PR review
-* Support [sqlx](https://github.com/jmoiron/sqlx) with database tooling
-* Support I18n on both [server-side](https://github.com/nicksnyder/go-i18n) + [client-side](https://github.com/fnando/i18n-js)
-* Support [Jet template engine](https://github.com/CloudyKit/jet) for server-side rendering + browser auto-reload upon changes
-* Support [SvelteJS](https://svelte.dev/) PWA static resource embedding + pre-rendering
-* Support [CodeceptJS](https://codecept.io/) with [Playwright](https://github.com/microsoft/playwright) for e2e testing
-* Support [GraphQL](https://graphql.org/) development via [gqlgen](https://gqlgen.com/) + [GraphQL Playground](https://github.com/prisma-labs/graphql-playground)
-* Support background job processing worker via [asynq](https://github.com/hibiken/asynq) + web UI \(coming soon\)
-* Support SMTP email sending with I18n support + preview web UI
-* Support custom commands building via [cobra](https://github.com/spf13/cobra)
+* Support encrypted/reviewable dotenv configuration
+* Support CLI building via [cobra](https://github.com/spf13/cobra)
+* Support DB/ORM for interacting with multiple databases \(support context execution + replica\)
+* Support DB/ORM mocks for easier unit testing
+* Support powerful HTTP router [gin-gonic](https://github.com/gin-gonic/gin) + [gqlgen](https://gqlgen.com/)
+* Support performant logger with [zap](https://github.com/uber-go/zap)
+* Support CSR view with [SvelteJS](https://svelte.dev/) PWA + static embed + SEO pre-render
+* Support SSR view with I18n + browser auto-reload
+* Support e2e testing with [CodeceptJS](https://codecept.io/) + [Playwright](https://github.com/microsoft/playwright)
+* Support background job worker with [asynq](https://github.com/hibiken/asynq)
+* Support SMTP mailer with I18n + preview web UI
 * Support local development with auto-recompile
-* Support local cluster setup using docker-compose \(even with the binary!\)
-* Support local HTTPS setup via [mkcert](https://github.com/FiloSottile/mkcert)
+* Support local cluster setup using docker-compose \(embeddable in the binary\)
+* Support local HTTPS setup with [mkcert](https://github.com/FiloSottile/mkcert)
 
 ## Caveats
 
