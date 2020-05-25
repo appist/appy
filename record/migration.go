@@ -67,7 +67,7 @@ func migrationTpl(dbname string, tx bool) ([]byte, error) {
 		`package {{.DBName}}
 
 import (
-	"github.com/appist/appy"
+	"github.com/appist/appy/record"
 	"{{.Module}}/pkg/app"
 )
 
@@ -77,12 +77,12 @@ func init() {
 	if db != nil {
 		err := db.RegisterMigration{{if .Tx}}Tx{{end}}(
 			// Up migration
-			func(db appy.{{if .Tx}}Tx{{else}}DB{{end}}) error {
+			func(db record.{{if .Tx}}Txer{{else}}DBer{{end}}) error {
 				_, err := db.Exec(` + "`" + "`" + `)
 				return err
 			},
 			// Down migration
-			func(db appy.{{if .Tx}}Tx{{else}}DB{{end}}) error {
+			func(db record.{{if .Tx}}Txer{{else}}DBer{{end}}) error {
 				_, err := db.Exec(` + "`" + "`" + `)
 				return err
 			},

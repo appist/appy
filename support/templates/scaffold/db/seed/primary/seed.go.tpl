@@ -1,7 +1,7 @@
 package primary
 
 import (
-	"github.com/appist/appy"
+	"github.com/appist/appy/record"
 
 	"{{.projectName}}/pkg/app"
 )
@@ -11,7 +11,7 @@ func init() {
 
 	if db != nil {
 		db.RegisterSeedTx(
-			func(db appy.Tx) error {
+			func(db record.Txer) error {
 				return nil
 			},
 		)

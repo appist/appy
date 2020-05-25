@@ -150,7 +150,7 @@ func (s *dbSuite) TestGenerateMigration() {
 	s.Contains(string(content), "db.RegisterMigration(")
 	s.Contains(string(content), "// Up migration")
 	s.Contains(string(content), "// Down migration")
-	s.Contains(string(content), "func(db appy.DB) error {")
+	s.Contains(string(content), "func(db record.DBer) error {")
 
 	err = os.RemoveAll(migratePath)
 	s.Nil(err)
@@ -172,7 +172,7 @@ func (s *dbSuite) TestGenerateMigration() {
 	s.Contains(string(content), "db.RegisterMigrationTx(")
 	s.Contains(string(content), "// Up migration")
 	s.Contains(string(content), "// Down migration")
-	s.Contains(string(content), "func(db appy.Tx) error {")
+	s.Contains(string(content), "func(db record.Txer) error {")
 
 	err = os.RemoveAll(migratePath)
 	s.Nil(err)
