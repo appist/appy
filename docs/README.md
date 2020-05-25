@@ -30,6 +30,7 @@ Hence, `appy` was built to help businesses, especially startups, to focus more o
 * Support CLI building via [cobra](https://github.com/spf13/cobra)
 * Support DB/ORM for interacting with multiple databases \(support context execution + replica\)
 * Support DB/ORM mocks for easier unit testing
+* Support DB tooling, e.g. `db:migrate`, `db:rollback`, `db:seed`, `db:setup` and etc.
 * Support powerful HTTP router [gin-gonic](https://github.com/gin-gonic/gin) + [gqlgen](https://gqlgen.com/)
 * Support performant logger with [zap](https://github.com/uber-go/zap)
 * Support CSR view with [SvelteJS](https://svelte.dev/) PWA + static embed + SEO pre-render

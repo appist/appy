@@ -16,7 +16,9 @@
 ## Database & Model
 
 * [Understanding Basics](database-and-model/understanding-basics.md)
-* [Configuring Databases](database-and-model/configuring-databases.md)
+* [Configuring Databases](database-and-model/configuring-databases/README.md)
+  * [Migrations](database-and-model/configuring-databases/migrations.md)
+  * [Seed Data](database-and-model/configuring-databases/seed-data.md)
 * [Configuring Models](database-and-model/configuring-models/README.md)
   * [Callbacks](database-and-model/configuring-models/callbacks.md)
   * [Validations](database-and-model/configuring-models/validations.md)

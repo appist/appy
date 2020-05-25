@@ -18,5 +18,5 @@ Although `appy` framework provides a convenient way for the team to easily maint
 $ APPY_ENV=<ENV> go run . config:secret:rotate <OLD_SECRET> <NEW_SECRET>
 ```
 
-The command above will use the `OLD_SECRET` to decrypt all values in `./config/.env.<ENV>` and re-encrypt them using `NEW_SECRET`.
+The command above will use the `OLD_SECRET` to decrypt all values in `configs/.env.<ENV>` and re-encrypt them using `NEW_SECRET`.
 

@@ -66,7 +66,7 @@ $ go run . setup
 $ go run . start
 ```
 
-### Step 7: Build the application binary \(release mode\)
+### Step 7: Build the application binary \(release mode\).
 
 ```text
 $ go run . build
