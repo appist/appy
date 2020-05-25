@@ -13,7 +13,6 @@ If you're used to using raw SQL to find database records, then you will generall
 ```sql
 CREATE TABLE IF NOT EXISTS users (
 	id SERIAL PRIMARY KEY,
-	email VARCHAR UNIQUE NOT NULL,
 	username VARCHAR UNIQUE NOT NULL,
 	created_at TIMESTAMP,
 	deleted_at TIMESTAMP,
@@ -34,7 +33,6 @@ import (
 type User struct {
     record.Model             `masters:"primary" replicas:"primaryReplica" autoIncrement:"id" primaryKeys:"id"`
     ID support.ZInt64        `db:"id"`
-    Email support.ZString    `db:"email"`
     Username support.ZString `db:"username"`
     CreatedAt support.ZTime  `db:"created_at"`
     DeletedAt support.ZTime  `db:"deleted_at"`
@@ -44,7 +42,60 @@ type User struct {
 
 ## Create Records
 
+Create Single User
 
+```go
+user := User{ Username: "foo" }
+
+// count - the affected rows count which should be 1
+// err - the error from creating the user
+count, err := app.Model(&user).Create().Exec()
+
+// within SQL transaction
+count, err := app.Model(&user, record.ModelOption{tx}).Create().Exec()
+
+// with context support
+ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+defer cancel()
+
+count, err := app.Model(&user).Create().Exec(record.ExecOption{Context: ctx})
+```
+
+Create Multiple Users
+
+```go
+users := []User{ 
+    { Username: "john" },
+    { Username: "mary" },
+}
+
+// count - the affected rows count which should be 2
+// err - the error from creating the users
+count, err := app.Model(&users).Create().Exec()
+
+// within SQL transaction
+count, err := app.Model(&users, record.ModelOption{tx}).Create().Exec()
+
+// with context support
+ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+defer cancel()
+
+count, err := app.Model(&users).Create().Exec(record.ExecOption{Context: ctx})
+```
+
+{% hint style="info" %}
+Before creating the user in the database, each of the model instance's `CreatedAt` would be updated to the current timestamp.
+
+In addition, it will also trigger each of the model instance's ORM callbacks in the sequence below:
+
+* BeforeValidate
+* AfterValidate
+* BeforeCreate
+* AfterCreate
+* AfterCreateCommit / AfterRollback \(if executed within SQL transaction\)
+
+Note: If any of the callbacks returns error, it will return the error immediately without executing the remaining callbacks.
+{% endhint %}
 
 ## Query Records
 
@@ -52,7 +103,31 @@ type User struct {
 
 ## Update Records
 
+Update Single User
 
+```go
+
+```
+
+Update Multiple Users
+
+```go
+
+```
+
+{% hint style="info" %}
+Before updating the user in the database, each of the model instance's `UpdatedAt` would be updated to the current timestamp.
+
+In addition, it will also trigger each of the model instance's ORM callbacks in the sequence below:
+
+* BeforeValidate
+* AfterValidate
+* BeforeUpdate
+* AfterUpdate
+* AfterUpdateCommit / AfterRollback \(if executed within SQL transaction\)
+
+Note: If any of the callbacks returns error, it will return immediately without executing the remaining callbacks.
+{% endhint %}
 
 ## Delete Records
 
