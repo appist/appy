@@ -1,12 +1,14 @@
 ---
-description: Covers all the recommended practices for a team to work more efficiently.
+description: >-
+  Covers all the recommended practices for how a team can work more
+  effectively/efficiently.
 ---
 
 # Advanced Topics
 
 ### Reviewable Configuration Change
 
-Managing configuration for different environment can be a very tedious task which can easily lead to disaster when a careless mistake is made. Hence, it's strongly recommended that there is always another pair of eyes to help reviewing with what's being changed. 
+Managing configuration for different environment can be a very tedious task which can easily lead to disaster when a careless mistake is made. Hence, it's strongly recommended that there is always another pair of eyes to help reviewing with what's being changed.
 
 ### Frequent Secret Rotation
 

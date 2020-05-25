@@ -17,6 +17,7 @@
 
 * [Understanding Basics](database-and-model/understanding-basics.md)
 * [Configuring Databases](database-and-model/configuring-databases.md)
+* [Using Model Structs](database-and-model/using-model-structs.md)
 * [Using Model Validations](database-and-model/using-model-validations.md)
 * [Using Model Callbacks](database-and-model/using-model-callbacks.md)
 * [Using Query Interfaces](database-and-model/using-query-interfaces.md)
