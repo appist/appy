@@ -30,11 +30,11 @@ The &lt;PROJECT\_NAME&gt; must be an alphanumeric string.
 package main
 
 import (
-  "github.com/appist/appy"
+  "github.com/appist/appy/support"
 )
 
 func main() {
-  appy.Scaffold(appy.ScaffoldOption{
+  support.Scaffold(support.ScaffoldOption{
     DBAdapter: "postgres", // only "mysql" and "postgres" are supported
     Description: "my first awesome app", // used in HTML's description meta tag, package.json and CLI help
   })
@@ -50,7 +50,7 @@ $ go run .
 ### Step 4: Install project dependencies for backend and frontend.
 
 ```bash
-$ make install
+$ go mod download
 $ npm install
 ```
 
