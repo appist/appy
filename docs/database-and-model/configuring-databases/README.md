@@ -12,7 +12,7 @@ $ APPY_ENV=<ENV> go run . config:enc <KEY> <VALUE>
 ```
 
 {% hint style="info" %}
-Note that the above assumes that the secret key is stored in `./configs/<ENV>.key` which is used as the `APPY_MASTER_KEY` to encrypt the value.
+Note that the above assumes that the secret key is stored in `configs/<ENV>.key` which is used as the `APPY_MASTER_KEY` to encrypt the value.
 {% endhint %}
 
 In order to add a database called `primary`, we would configure it as shown in below:
