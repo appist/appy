@@ -6,8 +6,8 @@ description: Covers how to work with the database layer.
 
 With `appy` framework, you can decide if you wanna use 1 of the below to interact with the database:
 
-* `app.DB(name string) record.DBer` which returns a DB handle with the specified name and is using [sqlx](https://github.com/jmoiron/sqlx) as its query interface. 
-* `app.Model(dest interface{}, opts ...record.ModelOption) record.Modeler` which returns a ORM model and is using `record.DBer` as its query interface.
+* `app.DB(name string) record.DBer` which returns a DB handle with the specified name and is using [sqlx](https://github.com/jmoiron/sqlx) as its query interface. This is recommended if you're already familiar with `database/sql` package and fine with writing boilerplate code. 
+* `app.Model(dest interface{}, opts ...record.ModelOption) record.Modeler` which returns a ORM model and is using `record.DBer` as its query interface. This is recommended if you're just starting off and would like to avoid writing boilerplate code.
 
 {% hint style="info" %}
 Both `record.DBer` and `record.Modeler` are interfaces which allows us to easily provide mocks for unit testing. For more details, please refer to [Writing Unit Tests](https://app.gitbook.com/@appist/s/appy/~/drafts/-M89Lng7Tw37CmiJzM9P/database-and-model/writing-unit-tests).
