@@ -268,18 +268,15 @@ module.exports = {
       template: path.resolve(__dirname, publicDir, "index.html"),
       minify: isProduction,
     }),
-    new CopyWebpackPlugin(
-      [
+    new CopyWebpackPlugin({
+      patterns: [
         {
           from: path.resolve(__dirname, publicDir),
           to: path.resolve(__dirname, distDir),
           toType: "dir",
-          ignore: [
-            {
-              glob: "index.html",
-              matchBase: false,
-            },
-          ],
+          globOptions: {
+            ignore: [".DS_Store", ".gitkeep", "index.html"],
+          },
         },
         {
           from: path.resolve(__dirname, "assets"),
@@ -287,13 +284,12 @@ module.exports = {
             __dirname,
             isProduction ? `${distDir}/[path][name].[contenthash:12].[ext]` : `${distDir}/[path][name].[ext]`
           ),
+          globOptions: {
+            ignore: [".DS_Store", ".gitkeep", "**/*.{jsx,less,sass,scss,ts,tsx}"],
+          },
         },
       ],
-      {
-        copyUnmodified: true,
-        ignore: [".DS_Store", ".gitkeep", "**/*.{jsx,less,sass,scss,ts,tsx}"],
-      }
-    ),
+    }),
     new ManifestPlugin({
       map: function (file) {
         file.name = file.name.replace(/(\.[a-z0-9]{12})(\..*)$/i, "$2");

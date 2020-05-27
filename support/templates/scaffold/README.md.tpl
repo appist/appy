@@ -5,9 +5,9 @@
 ## Prerequisites
 
 - [Go >= 1.14](https://golang.org/dl/)
-- [NodeJS >= 13](https://nodejs.org/en/download/){{if eq .dbAdapter "postgres"}}
+- [NodeJS >= 14](https://nodejs.org/en/download/){{if eq .dbAdapter "postgres"}}
 - [PostgreSQL >= 12](https://www.postgresql.org/download/){{else if eq .dbAdapter "mysql"}}
-- [MySQL >= 5](https://www.mysql.com/downloads/){{end}}
+- [MySQL >= 8](https://www.mysql.com/downloads/){{end}}
 
 ## Setup Environment
 
