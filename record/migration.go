@@ -114,9 +114,11 @@ func schemaDumpTpl(database, schema string) ([]byte, error) {
 
 	t, _ := template.New("schemaDump").Parse(
 		`package {{.Database}}
+
 import (
 	"{{.Module}}/pkg/app"
 )
+
 func init() {
 	db := app.DB("{{.Database}}")
 
