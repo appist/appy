@@ -61,14 +61,16 @@ func (_m *Model) BeginContext(ctx context.Context, opts *sql.TxOptions) error {
 }
 
 // Commit provides a mock function with given fields:
-func (_m *Model) Commit() error {
+func (_m *Model) Commit() []error {
 	ret := _m.Called()
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func() error); ok {
+	var r0 []error
+	if rf, ok := ret.Get(0).(func() []error); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]error)
+		}
 	}
 
 	return r0
@@ -139,7 +141,7 @@ func (_m *Model) DeleteAll() record.Modeler {
 }
 
 // Exec provides a mock function with given fields: opts
-func (_m *Model) Exec(opts ...record.ExecOption) (int64, error) {
+func (_m *Model) Exec(opts ...record.ExecOption) (int64, []error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -155,11 +157,13 @@ func (_m *Model) Exec(opts ...record.ExecOption) (int64, error) {
 		r0 = ret.Get(0).(int64)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(...record.ExecOption) error); ok {
+	var r1 []error
+	if rf, ok := ret.Get(1).(func(...record.ExecOption) []error); ok {
 		r1 = rf(opts...)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]error)
+		}
 	}
 
 	return r0, r1
@@ -284,14 +288,16 @@ func (_m *Model) Order(order string) record.Modeler {
 }
 
 // Rollback provides a mock function with given fields:
-func (_m *Model) Rollback() error {
+func (_m *Model) Rollback() []error {
 	ret := _m.Called()
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func() error); ok {
+	var r0 []error
+	if rf, ok := ret.Get(0).(func() []error); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]error)
+		}
 	}
 
 	return r0

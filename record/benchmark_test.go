@@ -206,7 +206,7 @@ func dbInsert(db DBer, b *testing.B) (int64, error) {
 	return result.LastInsertId()
 }
 
-func ormInsert(dbManager *Engine, b *testing.B) (int64, error) {
+func ormInsert(dbManager *Engine, b *testing.B) (int64, []error) {
 	user := BenchmarkUser{
 		Name:    "benchmark",
 		Title:   "just a benchmark",
@@ -217,9 +217,9 @@ func ormInsert(dbManager *Engine, b *testing.B) (int64, error) {
 	}
 	model := NewModel(dbManager, &user)
 
-	_, err := model.Create().Exec()
-	if err != nil {
-		return 0, err
+	_, errs := model.Create().Exec()
+	if errs != nil {
+		return 0, errs
 	}
 
 	return user.ID, nil
@@ -271,9 +271,9 @@ func BenchmarkInsertORM(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := ormInsert(dbManager, b)
-		if err != nil {
-			fmt.Println(err)
+		_, errs := ormInsert(dbManager, b)
+		if errs != nil {
+			fmt.Println(errs)
 			b.FailNow()
 		}
 	}
@@ -411,9 +411,9 @@ func BenchmarkUpdateORM(b *testing.B) {
 	dbManager := newOrmDBManager()
 	defer dbManager.DB("primary").Close()
 
-	id, err := ormInsert(dbManager, b)
-	if err != nil {
-		fmt.Println(err)
+	id, errs := ormInsert(dbManager, b)
+	if errs != nil {
+		fmt.Println(errs)
 		b.FailNow()
 	}
 
@@ -506,10 +506,9 @@ func BenchmarkReadORM(b *testing.B) {
 	dbManager := newOrmDBManager()
 	defer dbManager.DB("primary").Close()
 
-	id, err := ormInsert(dbManager, b)
-
-	if err != nil {
-		fmt.Println(err)
+	id, errs := ormInsert(dbManager, b)
+	if errs != nil {
+		fmt.Println(errs)
 		b.FailNow()
 	}
 
@@ -648,9 +647,9 @@ func BenchmarkReadSliceORM(b *testing.B) {
 	defer dbManager.DB("primary").Close()
 
 	for i := 0; i < 100; i++ {
-		_, err := ormInsert(dbManager, b)
-		if err != nil {
-			fmt.Println(err)
+		_, errs := ormInsert(dbManager, b)
+		if errs != nil {
+			fmt.Println(errs)
 			b.FailNow()
 		}
 	}

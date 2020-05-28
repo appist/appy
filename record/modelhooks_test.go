@@ -212,9 +212,9 @@ func (s *modelSuite) TestCallback() {
 			var user UserWithBeforeValidateError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before validate error")
+			s.EqualError(errs[0], "before validate error")
 		}
 
 		{
@@ -225,18 +225,18 @@ func (s *modelSuite) TestCallback() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before validate error")
+			s.EqualError(errs[0], "before validate error")
 		}
 
 		{
 			var user UserWithAfterValidateError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "after validate error")
+			s.EqualError(errs[0], "after validate error")
 		}
 
 		{
@@ -247,18 +247,18 @@ func (s *modelSuite) TestCallback() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "after validate error")
+			s.EqualError(errs[0], "after validate error")
 		}
 
 		{
 			var user UserWithBeforeCreateError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before create error")
+			s.EqualError(errs[0], "before create error")
 		}
 
 		{
@@ -269,18 +269,18 @@ func (s *modelSuite) TestCallback() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before create error")
+			s.EqualError(errs[0], "before create error")
 		}
 
 		{
 			var user UserWithAfterCreateError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.EqualError(err, "after create error")
+			s.EqualError(errs[0], "after create error")
 		}
 
 		{
@@ -291,23 +291,23 @@ func (s *modelSuite) TestCallback() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.EqualError(err, "after create error")
+			s.EqualError(errs[0], "after create error")
 		}
 
 		{
 			var user UserWithBeforeUpdateError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user.Username = "foo"
-			count, err = s.model(&user).Update().Exec()
+			count, errs = s.model(&user).Update().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before update error")
+			s.EqualError(errs[0], "before update error")
 		}
 
 		{
@@ -318,14 +318,14 @@ func (s *modelSuite) TestCallback() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users[0].Username = "bar"
-			count, err = s.model(&users).Update().Exec()
+			count, errs = s.model(&users).Update().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before update error")
+			s.EqualError(errs[0], "before update error")
 		}
 
 		{
@@ -333,16 +333,16 @@ func (s *modelSuite) TestCallback() {
 			s.Nil(faker.FakeData(&user))
 			user.UpdatedAt = time.Now()
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user.Username = "foo"
 
 			time.Sleep(1 * time.Second)
-			count, err = s.model(&user).Update().Exec()
+			count, errs = s.model(&user).Update().Exec()
 			s.Equal(int64(1), count)
-			s.EqualError(err, "after update error")
+			s.EqualError(errs[0], "after update error")
 		}
 
 		{
@@ -355,29 +355,29 @@ func (s *modelSuite) TestCallback() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users[0].Username = "bar"
 
 			time.Sleep(1 * time.Second)
-			count, err = s.model(&users).Update().Exec()
+			count, errs = s.model(&users).Update().Exec()
 			s.Equal(int64(10), count)
-			s.EqualError(err, "after update error")
+			s.EqualError(errs[0], "after update error")
 		}
 
 		{
 			var user UserWithBeforeDeleteError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&user).Delete().Exec()
+			count, errs = s.model(&user).Delete().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before delete error")
+			s.EqualError(errs[0], "before delete error")
 		}
 
 		{
@@ -388,26 +388,26 @@ func (s *modelSuite) TestCallback() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
 
-			count, err = s.model(&users).Delete().Exec()
+			count, errs = s.model(&users).Delete().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before delete error")
+			s.EqualError(errs[0], "before delete error")
 		}
 
 		{
 			var user UserWithAfterDeleteError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user.Username = "foo"
-			count, err = s.model(&user).Delete().Exec()
+			count, errs = s.model(&user).Delete().Exec()
 			s.Equal(int64(1), count)
-			s.EqualError(err, "after delete error")
+			s.EqualError(errs[0], "after delete error")
 		}
 
 		{
@@ -418,14 +418,14 @@ func (s *modelSuite) TestCallback() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users[0].Username = "bar"
-			count, err = s.model(&users).Delete().Exec()
+			count, errs = s.model(&users).Delete().Exec()
 			s.Equal(int64(10), count)
-			s.EqualError(err, "after delete error")
+			s.EqualError(errs[0], "after delete error")
 		}
 	}
 }
@@ -443,9 +443,9 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before validate error")
+			s.EqualError(errs[0], "before validate error")
 			s.Nil(model.Tx())
 		}
 
@@ -462,9 +462,9 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before validate error")
+			s.EqualError(errs[0], "before validate error")
 			s.Nil(model.Tx())
 		}
 
@@ -477,9 +477,9 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "after validate error")
+			s.EqualError(errs[0], "after validate error")
 			s.Nil(model.Tx())
 		}
 
@@ -496,9 +496,9 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "after validate error")
+			s.EqualError(errs[0], "after validate error")
 			s.Nil(model.Tx())
 		}
 
@@ -511,9 +511,9 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before create error")
+			s.EqualError(errs[0], "before create error")
 			s.Nil(model.Tx())
 		}
 
@@ -530,9 +530,9 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before create error")
+			s.EqualError(errs[0], "before create error")
 			s.Nil(model.Tx())
 		}
 
@@ -545,9 +545,9 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
-			s.EqualError(err, "after create error")
+			s.EqualError(errs[0], "after create error")
 			s.Nil(model.Tx())
 		}
 
@@ -564,9 +564,9 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(10), count)
-			s.EqualError(err, "after create error")
+			s.EqualError(errs[0], "after create error")
 			s.Nil(model.Tx())
 		}
 
@@ -574,19 +574,19 @@ func (s *modelSuite) TestCallbackTx() {
 			var user UserWithBeforeUpdateError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&user)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
 			user.Username = "foo"
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before update error")
+			s.EqualError(errs[0], "before update error")
 			s.Nil(model.Tx())
 		}
 
@@ -598,19 +598,19 @@ func (s *modelSuite) TestCallbackTx() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&users)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
 			users[0].Username = "bar"
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before update error")
+			s.EqualError(errs[0], "before update error")
 			s.Nil(model.Tx())
 		}
 
@@ -624,15 +624,15 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
 
 			user.Username = "foo"
 
 			time.Sleep(1 * time.Second)
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(1), count)
-			s.EqualError(err, "after update error")
+			s.EqualError(errs[0], "after update error")
 			s.Nil(model.Tx())
 		}
 
@@ -646,21 +646,21 @@ func (s *modelSuite) TestCallbackTx() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&users)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
 			users[0].Username = "bar"
 
 			time.Sleep(1 * time.Second)
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(10), count)
-			s.EqualError(err, "after update error")
+			s.EqualError(errs[0], "after update error")
 			s.Nil(model.Tx())
 		}
 
@@ -668,19 +668,19 @@ func (s *modelSuite) TestCallbackTx() {
 			var user UserWithBeforeDeleteError
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&user)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
 			user.Username = "foo"
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before delete error")
+			s.EqualError(errs[0], "before delete error")
 			s.Nil(model.Tx())
 		}
 
@@ -692,37 +692,37 @@ func (s *modelSuite) TestCallbackTx() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&users)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
 			users[0].Username = "bar"
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(0), count)
-			s.EqualError(err, "before delete error")
+			s.EqualError(errs[0], "before delete error")
 			s.Nil(model.Tx())
 		}
 
 		{
 			var user UserWithAfterDeleteError
 			s.Nil(faker.FakeData(&user))
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&user)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(1), count)
-			s.EqualError(err, "after delete error")
+			s.EqualError(errs[0], "after delete error")
 			s.Nil(model.Tx())
 		}
 
@@ -734,18 +734,18 @@ func (s *modelSuite) TestCallbackTx() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&users)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(10), count)
-			s.EqualError(err, "after delete error")
+			s.EqualError(errs[0], "after delete error")
 			s.Nil(model.Tx())
 		}
 
@@ -758,13 +758,13 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
+			errs = model.Commit()
 			s.Nil(model.Tx())
-			s.EqualError(err, "after create commit error")
+			s.EqualError(errs[0], "after create commit error")
 		}
 
 		{
@@ -780,13 +780,13 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
+			errs = model.Commit()
 			s.Nil(model.Tx())
-			s.EqualError(err, "after create commit error")
+			s.EqualError(errs[0], "after create commit error")
 		}
 
 		{
@@ -798,13 +798,13 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
+			errs = model.Commit()
 			s.Nil(model.Tx())
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("after create commit", user.Message)
 		}
 
@@ -821,13 +821,13 @@ func (s *modelSuite) TestCallbackTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
+			errs = model.Commit()
 			s.Nil(model.Tx())
-			s.Nil(err)
+			s.Nil(errs)
 
 			for i := 0; i < 10; i++ {
 				s.Equal("after create commit", users[i].Message)
@@ -837,23 +837,23 @@ func (s *modelSuite) TestCallbackTx() {
 		{
 			var user UserWithAfterUpdateCommit
 			s.Nil(faker.FakeData(&user))
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&user)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
 			user.Username = "foo"
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
+			errs = model.Commit()
 			s.Nil(model.Tx())
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("after update commit", user.Message)
 		}
 
@@ -865,23 +865,23 @@ func (s *modelSuite) TestCallbackTx() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&users)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
 			users[0].Username = "bar"
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
+			errs = model.Commit()
 			s.Nil(model.Tx())
-			s.Nil(err)
+			s.Nil(errs)
 
 			for i := 0; i < 10; i++ {
 				s.Equal("after update commit", users[i].Message)
@@ -891,22 +891,22 @@ func (s *modelSuite) TestCallbackTx() {
 		{
 			var user UserWithAfterDeleteCommit
 			s.Nil(faker.FakeData(&user))
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&user)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
+			errs = model.Commit()
 			s.Nil(model.Tx())
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("after delete commit", user.Message)
 		}
 
@@ -918,22 +918,22 @@ func (s *modelSuite) TestCallbackTx() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&users)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
+			errs = model.Commit()
 			s.Nil(model.Tx())
-			s.Nil(err)
+			s.Nil(errs)
 
 			for i := 0; i < 10; i++ {
 				s.Equal("after delete commit", users[i].Message)
@@ -943,22 +943,22 @@ func (s *modelSuite) TestCallbackTx() {
 		{
 			var user UserWithAfterRollbackError
 			s.Nil(faker.FakeData(&user))
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&user)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
+			errs = model.Rollback()
 			s.Nil(model.Tx())
-			s.EqualError(err, "after rollback error")
+			s.EqualError(errs[0], "after rollback error")
 		}
 
 		{
@@ -969,43 +969,43 @@ func (s *modelSuite) TestCallbackTx() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&users)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
+			errs = model.Rollback()
 			s.Nil(model.Tx())
-			s.EqualError(err, "after rollback error")
+			s.EqualError(errs[0], "after rollback error")
 		}
 
 		{
 			var user UserWithAfterRollback
 			s.Nil(faker.FakeData(&user))
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&user)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
+			errs = model.Rollback()
 			s.Nil(model.Tx())
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("after rollback", user.Message)
 		}
 
@@ -1017,22 +1017,22 @@ func (s *modelSuite) TestCallbackTx() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			model := s.model(&users)
-			err = model.Begin()
+			err := model.Begin()
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err = model.Delete().Exec()
+			count, errs = model.Delete().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
+			errs = model.Rollback()
 			s.Nil(model.Tx())
-			s.Nil(err)
+			s.Nil(errs)
 
 			for i := 0; i < 10; i++ {
 				s.Equal("after rollback", users[i].Message)
