@@ -80,7 +80,7 @@ users := []User{
 fmt.Println(app.Model(&users).Create().SQL())
 
 // count - the affected rows count which should be 2
-// err - the error from creating the users
+// errs - the errors from creating the users
 count, errs = app.Model(&users).Create().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
@@ -189,7 +189,7 @@ defer cancel()
 user := User{ ID: 1 }
 
 // count - the affected rows count which should be 1 if the user exists
-// err - the error from finding the user
+// errs - the errors from finding the user
 count, errs := app.Model(&user).Find().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
@@ -207,7 +207,7 @@ users := []User{
 }
 
 // count - the affected rows count which should be 2 if the users exist
-// err - the error from finding the user
+// errs - the errors from finding the user
 count, errs = app.Model(&users).Find().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
