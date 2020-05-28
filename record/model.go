@@ -22,12 +22,12 @@ type (
 		All() Modeler
 		Begin() error
 		BeginContext(ctx context.Context, opts *sql.TxOptions) error
-		Commit() error
+		Commit() []error
 		Count() Modeler
 		Create() Modeler
 		Delete() Modeler
 		DeleteAll() Modeler
-		Exec(opts ...ExecOption) (int64, error)
+		Exec(opts ...ExecOption) (int64, []error)
 		Find() Modeler
 		Group(group string) Modeler
 		Having(having string, args ...interface{}) Modeler
@@ -35,7 +35,7 @@ type (
 		Limit(limit int) Modeler
 		Offset(offset int) Modeler
 		Order(order string) Modeler
-		Rollback() error
+		Rollback() []error
 		Scan(dest interface{}) Modeler
 		Select(columns string) Modeler
 		SQL() string
@@ -261,16 +261,16 @@ func (m *Model) BeginContext(ctx context.Context, opts *sql.TxOptions) error {
 }
 
 // Commit commits the transaction.
-func (m *Model) Commit() error {
-	var err error
+func (m *Model) Commit() []error {
+	var errs []error
 
 	if m.tx != nil {
-		err = m.tx.Commit()
-
-		if err == nil {
-			m.tx = nil
+		err := m.tx.Commit()
+		if err != nil {
+			return []error{err}
 		}
 
+		m.tx = nil
 		afterCommitActions := []string{"create", "update", "delete"}
 		if support.ArrayContains(afterCommitActions, m.action) {
 			v := reflect.ValueOf(m.dest)
@@ -281,32 +281,32 @@ func (m *Model) Commit() error {
 				for i := 0; i < elem.Len(); i++ {
 					err = m.handleCallback(elem.Index(i), "After"+support.ToPascalCase(m.action)+"Commit")
 					if err != nil {
-						return err
+						errs = append(errs, err)
 					}
 				}
 			case reflect.Ptr:
 				err = m.handleCallback(v.Elem(), "After"+support.ToPascalCase(m.action)+"Commit")
 				if err != nil {
-					return err
+					errs = append(errs, err)
 				}
 			}
 		}
 	}
 
-	return err
+	return errs
 }
 
 // Rollback aborts the transaction.
-func (m *Model) Rollback() error {
-	var err error
+func (m *Model) Rollback() []error {
+	var errs []error
 
 	if m.tx != nil {
-		err = m.tx.Rollback()
-
-		if err == nil {
-			m.tx = nil
+		err := m.tx.Rollback()
+		if err != nil {
+			return []error{err}
 		}
 
+		m.tx = nil
 		v := reflect.ValueOf(m.dest)
 		switch m.destKind {
 		case reflect.Array, reflect.Slice:
@@ -315,18 +315,18 @@ func (m *Model) Rollback() error {
 			for i := 0; i < elem.Len(); i++ {
 				err = m.handleCallback(elem.Index(i), "AfterRollback")
 				if err != nil {
-					return err
+					errs = append(errs, err)
 				}
 			}
 		case reflect.Ptr:
 			err = m.handleCallback(v.Elem(), "AfterRollback")
 			if err != nil {
-				return err
+				errs = append(errs, err)
 			}
 		}
 	}
 
-	return err
+	return errs
 }
 
 // Count returns the total count of matching records. Note that this can cause
@@ -486,10 +486,11 @@ func (m *Model) DeleteAll() Modeler {
 
 // Exec can execute the query with/without context/replica which will return
 // the affected rows and error if there is any.
-func (m *Model) Exec(opts ...ExecOption) (int64, error) {
+func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 	var (
 		count               int64
 		err                 error
+		errs                []error
 		db, master, replica DBer
 	)
 
@@ -507,16 +508,16 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 	}
 
 	if master == nil {
-		return int64(0), ErrModelMissingMasterDB
+		return int64(0), []error{ErrModelMissingMasterDB}
 	}
 
 	if opt.UseReplica && replica == nil {
-		return int64(0), ErrModelMissingReplicaDB
+		return int64(0), []error{ErrModelMissingReplicaDB}
 	}
 
 	// Note: m.action = "delete|update" is using m.individuals to store the queries.
 	if !support.ArrayContains([]string{"delete", "update"}, m.action) && m.queryBuilder.String() == "" {
-		return int64(0), ErrModelEmptyQueryBuilder
+		return int64(0), []error{ErrModelEmptyQueryBuilder}
 	}
 
 	db = master
@@ -559,21 +560,15 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 			dest = reflect.ValueOf(dest).Elem().Interface()
 		}
 
-		count, err = m.namedExecOrQuery(db, dest, query, opt)
+		count, errs = m.namedExecOrQuery(db, dest, query, opt)
 	case "delete", "update":
-		errs := []error{}
-
 		for _, individual := range m.individuals {
-			individualCount, err := m.namedExecOrQuery(db, individual.dest, individual.query, opt)
+			individualCount, tmpErrs := m.namedExecOrQuery(db, individual.dest, individual.query, opt)
 			count += individualCount
 
-			if err != nil {
-				errs = append(errs, err)
+			if tmpErrs != nil {
+				errs = append(errs, tmpErrs...)
 			}
-		}
-
-		if len(errs) > 0 {
-			return count, errs[0]
 		}
 
 		m.individuals = []modelIndividual{}
@@ -581,7 +576,11 @@ func (m *Model) Exec(opts ...ExecOption) (int64, error) {
 		count, err = m.getOrSelect(db, query, opt)
 	}
 
-	return count, err
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return count, errs
 }
 
 // Find retrieves the records from the database.
@@ -1231,10 +1230,11 @@ func (m *Model) handleCallback(elem reflect.Value, callback string) error {
 	return nil
 }
 
-func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt ExecOption) (int64, error) {
+func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt ExecOption) (int64, []error) {
 	var (
 		count  int64
 		err    error
+		errs   []error
 		result sql.Result
 		rows   *Rows
 	)
@@ -1251,24 +1251,28 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			if support.ArrayContains(validateActions, m.action) {
 				err = m.handleCallback(elem, "BeforeValidate")
 				if err != nil {
-					return int64(0), err
+					errs = append(errs, err)
 				}
 
 				err = ginValidator.Struct(elem.Interface())
 				if err != nil {
-					return int64(0), err
+					errs = append(errs, err)
 				}
 
 				err = m.handleCallback(elem, "AfterValidate")
 				if err != nil {
-					return int64(0), err
+					errs = append(errs, err)
 				}
 			}
 
 			err = m.handleCallback(elem, "Before"+support.ToPascalCase(m.action))
 			if err != nil {
-				return int64(0), err
+				errs = append(errs, err)
 			}
+		}
+
+		if errs != nil {
+			return int64(0), errs
 		}
 	case reflect.Ptr:
 		elem := v.Elem()
@@ -1276,23 +1280,23 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		if support.ArrayContains(validateActions, m.action) {
 			err = m.handleCallback(elem, "BeforeValidate")
 			if err != nil {
-				return int64(0), err
+				return int64(0), []error{err}
 			}
 
 			err = ginValidator.Struct(elem.Interface())
 			if err != nil {
-				return int64(0), err
+				return int64(0), []error{err}
 			}
 
 			err = m.handleCallback(elem, "AfterValidate")
 			if err != nil {
-				return int64(0), err
+				return int64(0), []error{err}
 			}
 		}
 
 		err = m.handleCallback(elem, "Before"+support.ToPascalCase(m.action))
 		if err != nil {
-			return int64(0), err
+			return int64(0), []error{err}
 		}
 	}
 
@@ -1313,18 +1317,18 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		}
 
 		if err != nil {
-			return int64(0), err
+			return int64(0), []error{err}
 		}
 
 		count, err = result.RowsAffected()
 		if err != nil {
-			return int64(0), err
+			return int64(0), []error{err}
 		}
 
 		if m.action == "create" {
 			lastInsertID, err := result.LastInsertId()
 			if err != nil {
-				return int64(0), err
+				return int64(0), []error{err}
 			}
 
 			if m.autoIncrement != "" {
@@ -1356,7 +1360,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		}
 
 		if err != nil {
-			return int64(0), err
+			return int64(0), []error{err}
 		}
 
 		if m.action == "create" {
@@ -1368,16 +1372,20 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 					err = m.scanPrimaryKeys(rows, v.Index(i))
 
 					if err != nil {
-						return count, err
+						errs = append(errs, err)
 					}
 
 					count++
+				}
+
+				if errs != nil {
+					return count, errs
 				}
 			case reflect.Ptr:
 				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
 
 				if err != nil {
-					return count, err
+					return count, []error{err}
 				}
 
 				count++
@@ -1396,13 +1404,17 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		for i := 0; i < v.Len(); i++ {
 			err = m.handleCallback(v.Index(i), "After"+support.ToPascalCase(m.action))
 			if err != nil {
-				return count, err
+				errs = append(errs, err)
 			}
+		}
+
+		if errs != nil {
+			return count, errs
 		}
 	case reflect.Ptr:
 		err = m.handleCallback(v.Elem(), "After"+support.ToPascalCase(m.action))
 		if err != nil {
-			return count, err
+			return count, []error{err}
 		}
 	}
 

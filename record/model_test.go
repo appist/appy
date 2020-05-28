@@ -306,18 +306,18 @@ func (s *modelSuite) TestAll() {
 
 		{
 			var user User
-			count, err := s.model(&user).All().Exec()
+			count, errs := s.model(&user).All().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).All().Exec()
+			count, errs := s.model(&users).All().Exec()
 			s.Equal(int64(10), count)
 			s.Equal(int64(1), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -325,10 +325,10 @@ func (s *modelSuite) TestAll() {
 			time.Sleep(500 * time.Millisecond)
 
 			var users []User
-			count, err := s.model(&users).All().Exec(ExecOption{UseReplica: true})
+			count, errs := s.model(&users).All().Exec(ExecOption{UseReplica: true})
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -336,17 +336,17 @@ func (s *modelSuite) TestAll() {
 
 		{
 			var user User
-			count, err := s.model(&user).All().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&user).All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).All().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&users).All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
 			s.Equal(int64(1), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
@@ -354,16 +354,16 @@ func (s *modelSuite) TestAll() {
 
 		{
 			var user User
-			count, err := s.model(&user).All().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&user).All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).All().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&users).All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 		}
 	}
 }
@@ -380,13 +380,13 @@ func (s *modelSuite) TestAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.All().Exec()
+			count, errs := userModel.All().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		{
@@ -396,13 +396,13 @@ func (s *modelSuite) TestAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.All().Exec()
+			count, errs := userModel.All().Exec()
 			s.Equal(int64(10), count)
 			s.Equal(int64(1), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		{
@@ -415,13 +415,13 @@ func (s *modelSuite) TestAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.All().Exec(ExecOption{UseReplica: true})
+			count, errs := userModel.All().Exec(ExecOption{UseReplica: true})
 			s.Equal(int64(10), count)
 			s.Equal(int64(1), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -434,12 +434,12 @@ func (s *modelSuite) TestAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.All().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		{
@@ -449,13 +449,13 @@ func (s *modelSuite) TestAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.All().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
 			s.Equal(int64(1), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
@@ -468,12 +468,12 @@ func (s *modelSuite) TestAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.All().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		{
@@ -483,12 +483,12 @@ func (s *modelSuite) TestAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.All().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.All().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 	}
 }
@@ -500,37 +500,37 @@ func (s *modelSuite) TestCount() {
 
 		{
 			var user User
-			count, err := s.model(&user).Count().Exec()
+			count, errs := s.model(&user).Count().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Count().Exec()
+			count, errs := s.model(&users).Count().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var user User
-			count, err := s.model(&user).Select("DISTINCT concat(email, username)").Count().Exec()
+			count, errs := s.model(&user).Select("DISTINCT concat(email, username)").Count().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var user User
-			count, err := s.model(&user).Where("$?").Count().Exec()
+			count, errs := s.model(&user).Where("$?").Count().Exec()
 			s.Equal(int64(0), count)
-			s.NotNil(err)
+			s.NotNil(errs)
 		}
 
 		{
 			user := User{}
-			count, err := s.model(&user).Where("id > ?", 5).Count().Exec()
+			count, errs := s.model(&user).Where("id > ?", 5).Count().Exec()
 			s.Equal(int64(5), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -538,9 +538,9 @@ func (s *modelSuite) TestCount() {
 			time.Sleep(500 * time.Millisecond)
 
 			var user User
-			count, err := s.model(&user).Count().Exec(ExecOption{UseReplica: true})
+			count, errs := s.model(&user).Count().Exec(ExecOption{UseReplica: true})
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -548,16 +548,16 @@ func (s *modelSuite) TestCount() {
 
 		{
 			var user User
-			count, err := s.model(&user).Count().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&user).Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Count().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&users).Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
@@ -565,16 +565,16 @@ func (s *modelSuite) TestCount() {
 
 		{
 			var user User
-			count, err := s.model(&user).Count().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&user).Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Count().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&users).Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 		}
 	}
 }
@@ -591,12 +591,12 @@ func (s *modelSuite) TestCountTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Count().Exec()
+			count, errs := userModel.Count().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		{
@@ -606,12 +606,12 @@ func (s *modelSuite) TestCountTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Count().Exec()
+			count, errs := userModel.Count().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		{
@@ -621,12 +621,12 @@ func (s *modelSuite) TestCountTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := s.model(&user).Where("$?").Count().Exec()
+			count, errs := s.model(&user).Where("$?").Count().Exec()
 			s.Equal(int64(0), count)
-			s.NotNil(err)
+			s.NotNil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -639,12 +639,12 @@ func (s *modelSuite) TestCountTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Count().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		{
@@ -654,12 +654,12 @@ func (s *modelSuite) TestCountTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Count().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
@@ -672,12 +672,12 @@ func (s *modelSuite) TestCountTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Count().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 
 		{
@@ -687,12 +687,12 @@ func (s *modelSuite) TestCountTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Count().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.Count().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 		}
 	}
 }
@@ -705,10 +705,10 @@ func (s *modelSuite) TestCreate() {
 			var user User
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -719,10 +719,10 @@ func (s *modelSuite) TestCreate() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			for idx, user := range users {
 				s.Equal(int64(idx+2), user.ID)
@@ -736,10 +736,10 @@ func (s *modelSuite) TestCreate() {
 			user := User{}
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&user).Create().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
 			s.Equal(int64(12), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -750,9 +750,9 @@ func (s *modelSuite) TestCreate() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&users).Create().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			for idx, user := range users {
 				s.Equal(int64(idx+13), user.ID)
@@ -766,9 +766,9 @@ func (s *modelSuite) TestCreate() {
 			user := User{}
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&user).Create().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 		}
 
 		{
@@ -779,9 +779,9 @@ func (s *modelSuite) TestCreate() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&users).Create().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 		}
 	}
 }
@@ -799,17 +799,17 @@ func (s *modelSuite) TestCreateTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
+			count, errs := userModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -821,17 +821,17 @@ func (s *modelSuite) TestCreateTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
+			count, errs := userModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(2), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Rollback()
-			s.Nil(err)
+			errs = userModel.Rollback()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -847,18 +847,18 @@ func (s *modelSuite) TestCreateTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
+			count, errs := userModel.Create().Exec()
 			s.Equal(int64(10), count)
 			s.Equal(int64(3), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&users).Count().Exec()
+			count, errs = s.model(&users).Count().Exec()
 			s.Equal(int64(11), count)
 			s.Equal(int64(3), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -874,18 +874,18 @@ func (s *modelSuite) TestCreateTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
+			count, errs := userModel.Create().Exec()
 			s.Equal(int64(10), count)
 			s.Equal(int64(13), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Rollback()
-			s.Nil(err)
+			errs = userModel.Rollback()
+			s.Nil(errs)
 
-			count, err = s.model(&users).Count().Exec()
+			count, errs = s.model(&users).Count().Exec()
 			s.Equal(int64(11), count)
 			s.Equal(int64(13), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -900,17 +900,17 @@ func (s *modelSuite) TestCreateTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.Create().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
 			s.Equal(int64(23), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(12), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
@@ -925,16 +925,16 @@ func (s *modelSuite) TestCreateTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.Create().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(12), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -950,16 +950,16 @@ func (s *modelSuite) TestCreateTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.Create().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&users).Count().Exec()
+			count, errs = s.model(&users).Count().Exec()
 			s.Equal(int64(12), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -985,16 +985,16 @@ func (s *modelSuite) TestCustomTableName() {
 			adminUsers = append(adminUsers, adminUser)
 		}
 
-		count, err := s.model(&adminUsers).Create().Exec()
+		count, errs := s.model(&adminUsers).Create().Exec()
 		s.Equal(10, len(adminUsers))
 		s.Equal(int64(10), count)
-		s.Nil(err)
+		s.Nil(errs)
 
 		adminUsers = []AdminUser{}
-		count, err = s.model(&adminUsers).All().Exec()
+		count, errs = s.model(&adminUsers).All().Exec()
 		s.Equal(10, len(adminUsers))
 		s.Equal(int64(10), count)
-		s.Nil(err)
+		s.Nil(errs)
 
 		for idx, adminUser := range adminUsers {
 			s.Equal(int64(idx+1), adminUser.ID)
@@ -1008,31 +1008,31 @@ func (s *modelSuite) TestDelete() {
 		s.insertUsers()
 
 		var users []User
-		count, err := s.model(&users).All().Exec()
+		count, errs := s.model(&users).All().Exec()
 		s.Equal(10, len(users))
 		s.Equal(int64(10), count)
-		s.Nil(err)
+		s.Nil(errs)
 
 		splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
 		s.Equal(11, len(splits))
 
-		count, err = s.model(&users[5]).Delete().Exec()
+		count, errs = s.model(&users[5]).Delete().Exec()
 		s.Equal(int64(1), count)
-		s.Nil(err)
+		s.Nil(errs)
 
-		count, err = s.model(&users[5]).Find().Exec()
+		count, errs = s.model(&users[5]).Find().Exec()
 		s.Equal(int64(0), count)
-		s.Nil(err)
+		s.Nil(errs)
 
 		users = []User{users[0], users[1]}
-		count, err = s.model(&users).Delete().Exec()
+		count, errs = s.model(&users).Delete().Exec()
 		s.Equal(int64(2), count)
-		s.Nil(err)
+		s.Nil(errs)
 
 		users = []User{}
-		count, err = s.model(&users).All().Exec()
+		count, errs = s.model(&users).All().Exec()
 		s.Equal(int64(7), count)
-		s.Nil(err)
+		s.Nil(errs)
 	}
 }
 
@@ -1048,16 +1048,16 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Delete().Exec()
+			count, errs := model.Delete().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
-			s.Nil(err)
+			errs = model.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&User{ID: 1}).Find().Exec()
+			count, errs = s.model(&User{ID: 1}).Find().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1067,16 +1067,16 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Delete().Exec()
+			count, errs := model.Delete().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
-			s.Nil(err)
+			errs = model.Rollback()
+			s.Nil(errs)
 
-			count, err = s.model(&User{ID: 2}).Find().Exec()
+			count, errs = s.model(&User{ID: 2}).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1086,16 +1086,16 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Delete().Exec()
+			count, errs := model.Delete().Exec()
 			s.Equal(int64(2), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
-			s.Nil(err)
+			errs = model.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&[]User{{ID: 2}, {ID: 3}}).Find().Exec()
+			count, errs = s.model(&[]User{{ID: 2}, {ID: 3}}).Find().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1105,16 +1105,16 @@ func (s *modelSuite) TestDeleteTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Delete().Exec()
+			count, errs := model.Delete().Exec()
 			s.Equal(int64(2), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
-			s.Nil(err)
+			errs = model.Rollback()
+			s.Nil(errs)
 
-			count, err = s.model(&[]User{{ID: 4}, {ID: 5}}).Find().Exec()
+			count, errs = s.model(&[]User{{ID: 4}, {ID: 5}}).Find().Exec()
 			s.Equal(int64(2), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 	}
 }
@@ -1130,10 +1130,10 @@ func (s *modelSuite) TestDeleteAll() {
 			s.Nil(faker.FakeData(&u))
 			usersWithoutPK = append(usersWithoutPK, u)
 		}
-		count, err := s.model(&usersWithoutPK).Create().Exec()
+		count, errs := s.model(&usersWithoutPK).Create().Exec()
 		s.Equal(10, len(usersWithoutPK))
 		s.Equal(int64(10), count)
-		s.Nil(err)
+		s.Nil(errs)
 
 		admins := []AdminUser{}
 		for i := 0; i < 10; i++ {
@@ -1141,65 +1141,65 @@ func (s *modelSuite) TestDeleteAll() {
 			s.Nil(faker.FakeData(&u))
 			admins = append(admins, u)
 		}
-		count, err = s.model(&admins).Create().Exec()
+		count, errs = s.model(&admins).Create().Exec()
 		s.Equal(10, len(admins))
 		s.Equal(int64(10), count)
-		s.Nil(err)
+		s.Nil(errs)
 
 		{
 			user := User{}
-			count, err = s.model(&user).Where("id ?").DeleteAll().Exec()
+			count, errs = s.model(&user).Where("id ?").DeleteAll().Exec()
 			s.Equal(int64(0), count)
-			s.NotNil(err)
+			s.NotNil(errs)
 		}
 
 		{
 			user := User{}
-			count, err = s.model(&user).Where("id = ?", 0).DeleteAll().Exec()
+			count, errs = s.model(&user).Where("id = ?", 0).DeleteAll().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			user := User{ID: 9}
-			count, err = s.model(&user).DeleteAll().Exec()
+			count, errs = s.model(&user).DeleteAll().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&User{}).Count().Exec()
+			count, errs = s.model(&User{}).Count().Exec()
 			s.Equal(int64(9), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			admin := AdminUser{ID: 9}
-			count, err = s.model(&admin).DeleteAll().Exec()
+			count, errs = s.model(&admin).DeleteAll().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&AdminUser{}).Count().Exec()
+			count, errs = s.model(&AdminUser{}).Count().Exec()
 			s.Equal(int64(9), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			admin := AdminUser{ID: 8, Email: "foo", Username: "bar"}
-			count, err = s.model(&admin).DeleteAll().Exec()
+			count, errs = s.model(&admin).DeleteAll().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&AdminUser{}).Count().Exec()
+			count, errs = s.model(&AdminUser{}).Count().Exec()
 			s.Equal(int64(9), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			admin = AdminUser{ID: 8, Email: admins[7].Email, Username: "bar"}
-			count, err = s.model(&admin).DeleteAll().Exec()
+			count, errs = s.model(&admin).DeleteAll().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&AdminUser{}).Count().Exec()
+			count, errs = s.model(&AdminUser{}).Count().Exec()
 			s.Equal(int64(8), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1208,49 +1208,49 @@ func (s *modelSuite) TestDeleteAll() {
 				{ID: 6, Email: admins[5].Email, Username: "bar"},
 			}
 
-			count, err = s.model(&admins).DeleteAll().Exec()
+			count, errs = s.model(&admins).DeleteAll().Exec()
 			s.Equal(int64(2), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&AdminUser{}).Count().Exec()
+			count, errs = s.model(&AdminUser{}).Count().Exec()
 			s.Equal(int64(6), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			usersWithoutPK = []UserWithoutPK{}
-			count, err = s.model(&usersWithoutPK).DeleteAll().Exec()
+			count, errs = s.model(&usersWithoutPK).DeleteAll().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&UserWithoutPK{}).Count().Exec()
+			count, errs = s.model(&UserWithoutPK{}).Count().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
 		{
-			count, err = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).DeleteAll().Exec(ExecOption{Context: ctx})
+			count, errs = s.model(&User{}).Where("id IN (?)", []int64{1, 2, 3}).DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(3), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user := User{}
-			count, err = s.model(&user).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec()
+			count, errs = s.model(&user).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users := []User{}
-			count, err = s.model(&users).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec()
+			count, errs = s.model(&users).Where("id IN (?)", []int64{1, 2, 3}).Find().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user = User{}
-			count, err = s.model(&user).Where("id = ?", 5).Find().Exec()
+			count, errs = s.model(&user).Where("id = ?", 5).Find().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(5), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
@@ -1258,9 +1258,9 @@ func (s *modelSuite) TestDeleteAll() {
 
 		{
 			user := User{}
-			count, err = s.model(&user).Where("id ?").DeleteAll().Exec(ExecOption{Context: ctx})
+			count, errs = s.model(&user).Where("id ?").DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.NotNil(err)
+			s.NotNil(errs)
 		}
 	}
 }
@@ -1277,16 +1277,16 @@ func (s *modelSuite) TestDeleteAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.DeleteAll().Exec()
+			count, errs := userModel.DeleteAll().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(9), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1296,16 +1296,16 @@ func (s *modelSuite) TestDeleteAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.DeleteAll().Exec()
+			count, errs := userModel.DeleteAll().Exec()
 			s.Equal(int64(1), count)
 			s.Nil(err)
 
-			err = userModel.Rollback()
-			s.Nil(err)
+			errs = userModel.Rollback()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(9), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -1318,16 +1318,16 @@ func (s *modelSuite) TestDeleteAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(8), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1337,16 +1337,16 @@ func (s *modelSuite) TestDeleteAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Rollback()
-			s.Nil(err)
+			errs = userModel.Rollback()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(8), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
@@ -1359,16 +1359,16 @@ func (s *modelSuite) TestDeleteAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
+			count, errs := userModel.DeleteAll().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Count().Exec()
+			count, errs = s.model(&user).Count().Exec()
 			s.Equal(int64(8), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 	}
 }
@@ -1377,9 +1377,9 @@ func (s *modelSuite) TestEmptyQueryBuilder() {
 	var user User
 	s.Nil(faker.FakeData(&user))
 
-	count, err := s.model(&user).Exec()
+	count, errs := s.model(&user).Exec()
 	s.Equal(int64(0), count)
-	s.Error(ErrModelEmptyQueryBuilder, err)
+	s.Error(ErrModelEmptyQueryBuilder, errs[0])
 }
 
 func (s *modelSuite) TestFind() {
@@ -1388,108 +1388,108 @@ func (s *modelSuite) TestFind() {
 		s.insertUsers()
 
 		{
-			count, err := s.model(&User{}).Where("id > ?", 50).Find().Exec()
+			count, errs := s.model(&User{}).Where("id > ?", 50).Find().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			user := User{ID: 1}
-			count, err := s.model(&user).Find().Exec()
+			count, errs := s.model(&user).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var user User
-			count, err := s.model(&user).Where("id ?").Find().Exec()
+			count, errs := s.model(&user).Where("id ?").Find().Exec()
 			s.Equal(int64(0), count)
-			s.NotNil(err)
+			s.NotNil(errs)
 		}
 
 		{
 			var user User
-			count, err := s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec()
+			count, errs := s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(6), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var user User
-			count, err := s.model(&user).Where("id = ?", 0).Find().Exec()
+			count, errs := s.model(&user).Where("id = ?", 0).Find().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Where("id ?").Find().Exec()
+			count, errs := s.model(&users).Where("id ?").Find().Exec()
 			s.Equal(int64(0), count)
-			s.NotNil(err)
+			s.NotNil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Where("id > ?", 5).Find().Exec()
+			count, errs := s.model(&users).Where("id > ?", 5).Find().Exec()
 			s.Equal(5, len(users))
 			s.Equal(int64(5), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Select("username").Where("id > ?", 5).Find().Exec()
+			count, errs := s.model(&users).Select("username").Where("id > ?", 5).Find().Exec()
 			s.Equal(5, len(users))
 			s.Equal(int64(5), count)
 			s.Equal("", users[0].Email)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Where("email = ? AND id IN (?) AND username = ?", "barfoo", []int64{5, 6, 7}, "foobar").Order("id ASC").Find().Exec()
+			count, errs := s.model(&users).Where("email = ? AND id IN (?) AND username = ?", "barfoo", []int64{5, 6, 7}, "foobar").Order("id ASC").Find().Exec()
 			s.Equal(0, len(users))
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Where("id != ?", 0).Order("id DESC").Limit(1).Find().Exec()
+			count, errs := s.model(&users).Where("id != ?", 0).Order("id DESC").Limit(1).Find().Exec()
 			s.Equal(1, len(users))
 			s.Equal(int64(1), count)
 			s.Equal(int64(10), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec()
+			count, errs := s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec()
 			s.Equal(1, len(users))
 			s.Equal(int64(1), count)
 			s.Equal(int64(6), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
 		{
-			count, err := s.model(&User{}).Where("id = ?", 5).Find().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&User{}).Where("id = ?", 5).Find().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Where("id IN (?)", []int64{5, 6, 7}).Order("id ASC").Find().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&users).Where("id IN (?)", []int64{5, 6, 7}).Order("id ASC").Find().Exec(ExecOption{Context: ctx})
 			s.Equal(3, len(users))
 			s.Equal(int64(3), count)
 			s.Equal(int64(5), users[0].ID)
 			s.Equal(int64(6), users[1].ID)
 			s.Equal(int64(7), users[2].ID)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Nanosecond)
@@ -1497,17 +1497,17 @@ func (s *modelSuite) TestFind() {
 
 		{
 			var user User
-			count, err := s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&user).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ExecOption{Context: ctx})
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 		}
 
 		{
 			var users []User
-			count, err := s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ExecOption{Context: ctx})
+			count, errs := s.model(&users).Where("id != ?", 0).Order("id ASC").Limit(1).Offset(5).Find().Exec(ExecOption{Context: ctx})
 			s.Equal(0, len(users))
 			s.Equal(int64(0), count)
-			s.EqualError(err, "context deadline exceeded")
+			s.EqualError(errs[0], "context deadline exceeded")
 		}
 	}
 }
@@ -1525,21 +1525,21 @@ func (s *modelSuite) TestFindTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = model.Count().Exec()
+			count, errs = model.Count().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
-			s.Nil(err)
+			errs = model.Commit()
+			s.Nil(errs)
 
-			count, err = model.Count().Exec()
+			count, errs = model.Count().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1551,21 +1551,21 @@ func (s *modelSuite) TestFindTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(2), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = model.Count().Exec()
+			count, errs = model.Count().Exec()
 			s.Equal(int64(2), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
-			s.Nil(err)
+			errs = model.Rollback()
+			s.Nil(errs)
 
-			count, err = model.Count().Exec()
+			count, errs = model.Count().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 	}
 }
@@ -1614,11 +1614,11 @@ func (s *modelSuite) TestScan() {
 				result customResult
 			)
 
-			count, err := s.model(&user).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&result).Exec()
+			count, errs := s.model(&user).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&result).Exec()
 			s.Equal(int64(7), result.ID)
 			s.Equal(int64(14), result.Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1627,20 +1627,20 @@ func (s *modelSuite) TestScan() {
 				results []customResult
 			)
 
-			count, err := s.model(&users).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&results).Exec()
+			count, errs := s.model(&users).Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&results).Exec()
 			s.Equal(1, len(results))
 			s.Equal(int64(7), results[0].ID)
 			s.Equal(int64(14), results[0].Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
 			var user, scanUser User
-			count, err := s.model(&user).Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Scan(&scanUser).Exec()
+			count, errs := s.model(&user).Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id ASC").Scan(&scanUser).Exec()
 			s.Equal(int64(6), scanUser.ID)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 	}
 }
@@ -1663,27 +1663,27 @@ func (s *modelSuite) TestScanTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
 			var result customResult
-			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id ASC").Limit(1).Offset(0).Scan(&result).Exec()
+			count, errs = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id ASC").Limit(1).Offset(0).Scan(&result).Exec()
 			s.Equal(int64(1), result.ID)
 			s.Equal(int64(2), result.Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
-			s.Nil(err)
+			errs = model.Commit()
+			s.Nil(errs)
 
 			result = customResult{}
-			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id ASC").Limit(1).Offset(0).Scan(&result).Exec()
+			count, errs = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id ASC").Limit(1).Offset(0).Scan(&result).Exec()
 			s.Equal(int64(1), result.ID)
 			s.Equal(int64(2), result.Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1695,27 +1695,27 @@ func (s *modelSuite) TestScanTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(2), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
 			var result customResult
-			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&result).Exec()
+			count, errs = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&result).Exec()
 			s.Equal(int64(2), result.ID)
 			s.Equal(int64(4), result.Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
-			s.Nil(err)
+			errs = model.Rollback()
+			s.Nil(errs)
 
 			result = customResult{}
-			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&result).Exec()
+			count, errs = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&result).Exec()
 			s.Equal(int64(1), result.ID)
 			s.Equal(int64(2), result.Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1731,29 +1731,29 @@ func (s *modelSuite) TestScanTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			var results []customResult
-			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
+			count, errs = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
 			s.Equal(1, len(results))
 			s.Equal(int64(12), results[0].ID)
 			s.Equal(int64(24), results[0].Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
-			s.Nil(err)
+			errs = model.Commit()
+			s.Nil(errs)
 
 			results = []customResult{}
-			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
+			count, errs = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
 			s.Equal(1, len(results))
 			s.Equal(int64(12), results[0].ID)
 			s.Equal(int64(24), results[0].Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1769,29 +1769,29 @@ func (s *modelSuite) TestScanTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			var results []customResult
-			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
+			count, errs = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
 			s.Equal(1, len(results))
 			s.Equal(int64(22), results[0].ID)
 			s.Equal(int64(44), results[0].Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
-			s.Nil(err)
+			errs = model.Rollback()
+			s.Nil(errs)
 
 			results = []customResult{}
-			count, err = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
+			count, errs = model.Select("id, SUM(id * 2) AS total").Where("id != ?", 0).Group("id").Having("id > ?", 0).Order("id DESC").Limit(1).Offset(0).Scan(&results).Exec()
 			s.Equal(1, len(results))
 			s.Equal(int64(12), results[0].ID)
 			s.Equal(int64(24), results[0].Total)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -1803,19 +1803,19 @@ func (s *modelSuite) TestScanTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id DESC").Scan(&scanUser).Exec()
+			count, errs := model.Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id DESC").Scan(&scanUser).Exec()
 			s.Equal(int64(12), scanUser.ID)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
-			s.Nil(err)
+			errs = model.Commit()
+			s.Nil(errs)
 
 			scanUser = User{}
-			count, err = model.Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id DESC").Scan(&scanUser).Exec()
+			count, errs = model.Where("id != ?", 0).Group("id").Having("id > ?", 5).Order("id DESC").Scan(&scanUser).Exec()
 			s.Equal(int64(12), scanUser.ID)
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 	}
 }
@@ -1832,31 +1832,31 @@ func (s *modelSuite) TestShareTx() {
 			err := duModel.Begin()
 			s.Nil(err)
 
-			count, err := duModel.Create().Exec()
+			count, errs := duModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), du.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
 			var u User
 			s.Nil(faker.FakeData(&u))
 
 			uModel := s.model(&u, ModelOption{duModel.Tx()})
-			count, err = uModel.Create().Exec()
+			count, errs = uModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), u.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = duModel.Commit()
-			s.Nil(err)
+			errs = duModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&du).Find().Exec()
+			count, errs = s.model(&du).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal(int64(1), du.ID)
 
-			count, err = s.model(&u).Find().Exec()
+			count, errs = s.model(&u).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal(int64(1), u.ID)
 		}
 
@@ -1868,33 +1868,33 @@ func (s *modelSuite) TestShareTx() {
 			err := duModel.Begin()
 			s.Nil(err)
 
-			count, err := duModel.Create().Exec()
+			count, errs := duModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(2), du.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
 			var u User
 			s.Nil(faker.FakeData(&u))
 
 			uModel := s.model(&u, ModelOption{duModel.Tx()})
-			count, err = uModel.Create().Exec()
+			count, errs = uModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(2), u.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = duModel.Rollback()
-			s.Nil(err)
+			errs = duModel.Rollback()
+			s.Nil(errs)
 
 			du = DuplicateUser{}
-			count, err = s.model(&du).Find().Exec()
+			count, errs = s.model(&du).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal(int64(1), du.ID)
 
 			u = User{}
-			count, err = s.model(&u).Find().Exec()
+			count, errs = s.model(&u).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal(int64(1), u.ID)
 		}
 	}
@@ -1908,23 +1908,23 @@ func (s *modelSuite) TestUpdate() {
 			var user User
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user.Email = "foo@gmail.com"
 			user.Username = "foo"
 			user.LoginCount = nil
 
-			count, err = s.model(&user).Update().Exec()
+			count, errs = s.model(&user).Update().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user = User{}
-			count, err = s.model(&user).Find().Exec()
+			count, errs = s.model(&user).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("foo@gmail.com", user.Email)
 			s.Equal("foo", user.Username)
 		}
@@ -1937,10 +1937,10 @@ func (s *modelSuite) TestUpdate() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users[0].Email = "bar@gmail.com"
 			users[0].Username = "bar"
@@ -1952,14 +1952,14 @@ func (s *modelSuite) TestUpdate() {
 			splits := strings.Split(s.model(&users).Update().SQL(), "\n")
 			s.Equal(11, len(splits))
 
-			count, err = s.model(&users).Update().Exec()
+			count, errs = s.model(&users).Update().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users = []User{}
-			count, err = s.model(&users).All().Exec()
+			count, errs = s.model(&users).All().Exec()
 			s.Equal(int64(11), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("bar@gmail.com", users[1].Email)
 			s.Equal("bar", users[1].Username)
 			s.Equal("foobar@gmail.com", users[10].Email)
@@ -1981,26 +1981,26 @@ func (s *modelSuite) TestUpdateTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user.Email = "foo@gmail.com"
 			user.Username = "foo"
 			user.LoginCount = nil
 
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
-			s.Nil(err)
+			errs = model.Commit()
+			s.Nil(errs)
 
 			user = User{}
-			count, err = s.model(&user).Find().Exec()
+			count, errs = s.model(&user).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("foo@gmail.com", user.Email)
 			s.Equal("foo", user.Username)
 		}
@@ -2014,26 +2014,26 @@ func (s *modelSuite) TestUpdateTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(2), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
 			user.Email = "foo1@gmail.com"
 			user.Username = "foo1"
 			user.LoginCount = nil
 
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
-			s.Nil(err)
+			errs = model.Rollback()
+			s.Nil(errs)
 
 			user = User{}
-			count, err = s.model(&user).Find().Exec()
+			count, errs = s.model(&user).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 
 		{
@@ -2049,10 +2049,10 @@ func (s *modelSuite) TestUpdateTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users[0].Email = "bar@gmail.com"
 			users[0].Username = "bar"
@@ -2061,17 +2061,17 @@ func (s *modelSuite) TestUpdateTx() {
 			users[9].Username = "foobar"
 			users[9].LoginCount = nil
 
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Commit()
-			s.Nil(err)
+			errs = model.Commit()
+			s.Nil(errs)
 
 			users = []User{}
-			count, err = s.model(&users).All().Exec()
+			count, errs = s.model(&users).All().Exec()
 			s.Equal(int64(11), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("bar@gmail.com", users[1].Email)
 			s.Equal("bar", users[1].Username)
 			s.Equal("foobar@gmail.com", users[10].Email)
@@ -2091,26 +2091,26 @@ func (s *modelSuite) TestUpdateTx() {
 			s.NotNil(model.Tx())
 			s.Nil(err)
 
-			count, err := model.Create().Exec()
+			count, errs := model.Create().Exec()
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users[0].Email = "barfoo@gmail.com"
 			users[0].Username = "barfoo"
 			users[0].LoginCount = nil
 
-			count, err = model.Update().Exec()
+			count, errs = model.Update().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = model.Rollback()
-			s.Nil(err)
+			errs = model.Rollback()
+			s.Nil(errs)
 
 			users = []User{}
-			count, err = s.model(&users).All().Exec()
+			count, errs = s.model(&users).All().Exec()
 			s.Equal(int64(11), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 	}
 }
@@ -2123,18 +2123,18 @@ func (s *modelSuite) TestUpdateAll() {
 			var user DuplicateUser
 			s.Nil(faker.FakeData(&user))
 
-			count, err := s.model(&user).Create().Exec()
+			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&user).UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, errs = s.model(&user).UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&user).Find().Exec()
+			count, errs = s.model(&user).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("foo@gmail.com", user.Email)
 			s.Equal("foo", user.Username)
 		}
@@ -2147,22 +2147,22 @@ func (s *modelSuite) TestUpdateAll() {
 				users = append(users, user)
 			}
 
-			count, err := s.model(&users).Create().Exec()
+			count, errs := s.model(&users).Create().Exec()
 			s.Equal(10, len(users))
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			users = []DuplicateUser{
 				{ID: 1},
 				{ID: 2},
 			}
-			count, err = s.model(&users).UpdateAll("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
+			count, errs = s.model(&users).UpdateAll("email = ?, username = ?", "bar@gmail.com", "bar").Exec()
 			s.Equal(int64(2), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = s.model(&users).Find().Exec()
+			count, errs = s.model(&users).Find().Exec()
 			s.Equal(int64(2), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			s.Equal(int64(1), users[0].ID)
 			s.Equal("bar@gmail.com", users[0].Email)
@@ -2187,21 +2187,21 @@ func (s *modelSuite) TestUpdateAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
+			count, errs := userModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, errs = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Find().Exec()
+			count, errs = s.model(&user).Find().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.Equal("foo@gmail.com", user.Email)
 			s.Equal("foo", user.Username)
 		}
@@ -2215,21 +2215,21 @@ func (s *modelSuite) TestUpdateAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
+			count, errs := userModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(2), user.ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, errs = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Rollback()
-			s.Nil(err)
+			errs = userModel.Rollback()
+			s.Nil(errs)
 
-			count, err = s.model(&user).Find().Exec()
+			count, errs = s.model(&user).Find().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 			s.NotEqual("foo@gmail.com", user.Email)
 			s.NotEqual("foo", user.Username)
 		}
@@ -2247,21 +2247,21 @@ func (s *modelSuite) TestUpdateAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
+			count, errs := userModel.Create().Exec()
 			s.Equal(int64(10), count)
 			s.Equal(int64(3), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, errs = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Commit()
-			s.Nil(err)
+			errs = userModel.Commit()
+			s.Nil(errs)
 
-			count, err = s.model(&users).Find().Exec()
+			count, errs = s.model(&users).Find().Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			for i := 0; i < 10; i++ {
 				s.Equal("foo@gmail.com", users[i].Email)
@@ -2282,21 +2282,21 @@ func (s *modelSuite) TestUpdateAllTx() {
 			s.NotNil(userModel.Tx())
 			s.Nil(err)
 
-			count, err := userModel.Create().Exec()
+			count, errs := userModel.Create().Exec()
 			s.Equal(int64(10), count)
 			s.Equal(int64(13), users[0].ID)
-			s.Nil(err)
+			s.Nil(errs)
 
-			count, err = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
+			count, errs = userModel.UpdateAll("email = ?, username = ?", "foo@gmail.com", "foo").Exec()
 			s.Equal(int64(10), count)
-			s.Nil(err)
+			s.Nil(errs)
 
-			err = userModel.Rollback()
-			s.Nil(err)
+			errs = userModel.Rollback()
+			s.Nil(errs)
 
-			count, err = s.model(&users).Find().Exec()
+			count, errs = s.model(&users).Find().Exec()
 			s.Equal(int64(0), count)
-			s.Nil(err)
+			s.Nil(errs)
 		}
 	}
 }
