@@ -45,6 +45,9 @@ type User struct {
 Create User\(s\)
 
 ```go
+ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+defer cancel()
+
 user := User{ Username: "foo" }
 
 // inspect the SQL
@@ -55,17 +58,14 @@ user := User{ Username: "foo" }
 fmt.Println(app.Model(&user).Create().SQL())
 
 // count - the affected rows count which should be 1
-// err - the error from creating the user
-count, err := app.Model(&user).Create().Exec()
+// errs - the errors from creating the user
+count, errs := app.Model(&user).Create().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err := app.Model(&user, record.ModelOption{Tx: tx}).Create().Exec()
-
-ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-defer cancel()
+count, errs = app.Model(&user, record.ModelOption{Tx: tx}).Create().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err := app.Model(&user).Create().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&user).Create().Exec(record.ExecOption{Context: ctx})
 
 users := []User{ 
     { Username: "john" },
@@ -81,16 +81,13 @@ fmt.Println(app.Model(&users).Create().SQL())
 
 // count - the affected rows count which should be 2
 // err - the error from creating the users
-count, err := app.Model(&users).Create().Exec()
+count, errs = app.Model(&users).Create().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err := app.Model(&users, record.ModelOption{Tx: tx}).Create().Exec()
-
-ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-defer cancel()
+count, errs = app.Model(&users, record.ModelOption{Tx: tx}).Create().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err := app.Model(&users).Create().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&users).Create().Exec(record.ExecOption{Context: ctx})
 ```
 
 {% hint style="info" %}
@@ -116,28 +113,28 @@ ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 defer cancel()
 
 var user User
-count, err := app.Model(&user).All().Exec()
+count, errs := app.Model(&user).All().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&user, record.ModelOption{Tx: tx}).All().Exec()
+count, errs = app.Model(&user, record.ModelOption{Tx: tx}).All().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&user).All().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&user).All().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&user).All().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&user).All().Exec(record.ExecOption{UseReplica: true})
 
 var users []User
-count, err := app.Model(&users).All().Exec()
+count, errs = app.Model(&users).All().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&users, record.ModelOption{Tx: tx}).All().Exec()
+count, errs = app.Model(&users, record.ModelOption{Tx: tx}).All().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&users).All().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&users).All().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&users).All().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&users).All().Exec(record.ExecOption{UseReplica: true})
 ```
 
 Count User\(s\) With `Select`, `Where`, `Order`, `Limit`, `Offset`
@@ -149,36 +146,36 @@ ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 defer cancel()
 
 var user User
-count, err := app.Model(&user).Count().Exec()
+count, errs := app.Model(&user).Count().Exec()
 
-count, err = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(10).Offset(5).Count().Exec()
+count, errs = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(10).Offset(5).Count().Exec()
 
-count, err = app.Model(&user).Select("DISTINCT concat(id, username)").Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(10).Offset(5).Count().Exec()
+count, errs = app.Model(&user).Select("DISTINCT concat(id, username)").Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(10).Offset(5).Count().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&user, record.ModelOption{Tx: tx}).Count().Exec()
+count, errs = app.Model(&user, record.ModelOption{Tx: tx}).Count().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&user).Count().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&user).Count().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&user).Count().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&user).Count().Exec(record.ExecOption{UseReplica: true})
 
 var users []User
-count, err := app.Model(&users).Count().Exec()
+count, errs = app.Model(&users).Count().Exec()
 
-count, err = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(10).Offset(5).Count().Exec()
+count, errs = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(10).Offset(5).Count().Exec()
 
-count, err = app.Model(&users).Select("DISTINCT concat(id, username)").Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(10).Offset(5).Count().Exec()
+count, errs = app.Model(&users).Select("DISTINCT concat(id, username)").Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(10).Offset(5).Count().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&users, record.ModelOption{Tx: tx}).Count().Exec()
+count, errs = app.Model(&users, record.ModelOption{Tx: tx}).Count().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&users).Count().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&users).Count().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&users).Count().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&users).Count().Exec(record.ExecOption{UseReplica: true})
 ```
 
 Find User\(s\) With Primary Key
@@ -193,16 +190,16 @@ user := User{ ID: 1 }
 
 // count - the affected rows count which should be 1 if the user exists
 // err - the error from finding the user
-count, err := app.Model(&user).Find().Exec()
+count, errs := app.Model(&user).Find().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&user, record.ModelOption{Tx: tx}).Find().Exec()
+count, errs = app.Model(&user, record.ModelOption{Tx: tx}).Find().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&user).Find().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&user).Find().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&user).Find().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&user).Find().Exec(record.ExecOption{UseReplica: true})
 
 users := []User{
     { ID: 1 },
@@ -211,16 +208,16 @@ users := []User{
 
 // count - the affected rows count which should be 2 if the users exist
 // err - the error from finding the user
-count, err := app.Model(&users).Find().Exec()
+count, errs = app.Model(&users).Find().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&users, record.ModelOption{Tx: tx}).Find().Exec()
+count, errs = app.Model(&users, record.ModelOption{Tx: tx}).Find().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&users).Find().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&users).Find().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&users).Find().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&users).Find().Exec(record.ExecOption{UseReplica: true})
 ```
 
 Find User\(s\) With `Select`, `Where`, `Order`, `Limit`, `Offset`
@@ -233,66 +230,66 @@ defer cancel()
 
 // only the 1st row of the returned result will be filled up
 var user User
-count, err := app.Model(&user).Where("username = ?", "foo").Find().Exec()
+count, errs := app.Model(&user).Where("username = ?", "foo").Find().Exec()
 
 user = User{}
-count, err = app.Model(&user).Where("username IN (?)", []string{"foo", "bar"}).Find().Exec()
+count, errs = app.Model(&user).Where("username IN (?)", []string{"foo", "bar"}).Find().Exec()
 
 user = User{}
-count, err = app.Model(&user).Where("username IN (?) AND created_at > ?", []string{"foo", "bar"}, now.Add(time.Duration(-5) * time.Second)).Find().Exec()
+count, errs = app.Model(&user).Where("username IN (?) AND created_at > ?", []string{"foo", "bar"}, now.Add(time.Duration(-5) * time.Second)).Find().Exec()
 
 user = User{}
-count, err = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec()
+count, errs = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec()
 
 user = User{}
-count, err = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(1).Offset(5).Find().Exec()
+count, errs = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(1).Offset(5).Find().Exec()
 
 user = User{}
 // only user.Username and user.CreatedAt will be filled up
-count, err = app.Model(&user).Select("username, created_at").Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(1).Offset(5).Find().Exec()
+count, errs = app.Model(&user).Select("username, created_at").Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(1).Offset(5).Find().Exec()
 
 user = User{}
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&user, record.ModelOption{Tx: tx}).Where("username = ?", "foo").Find().Exec()
+count, errs = app.Model(&user, record.ModelOption{Tx: tx}).Where("username = ?", "foo").Find().Exec()
 
 user = User{}
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec(record.ExecOption{Context: ctx})
 
 user = User{}
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec(record.ExecOption{UseReplica: true})
 
 var users []User
-count, err = app.Model(&users).Where("username = ?", "foo").Find().Exec()
+count, errs = app.Model(&users).Where("username = ?", "foo").Find().Exec()
 
 users = []User{}
-count, err = app.Model(&users).Where("username IN (?)", []string{"foo", "bar"}).Find().Exec()
+count, errs = app.Model(&users).Where("username IN (?)", []string{"foo", "bar"}).Find().Exec()
 
 users = []User{}
-count, err = app.Model(&users).Where("username IN (?) AND created_at > ?", []string{"foo", "bar"}, now.Add(time.Duration(-5) * time.Second)).Find().Exec()
+count, errs = app.Model(&users).Where("username IN (?) AND created_at > ?", []string{"foo", "bar"}, now.Add(time.Duration(-5) * time.Second)).Find().Exec()
 
 users = []User{}
-count, err = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec()
+count, errs = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec()
 
 users = []User{}
-count, err = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(1).Offset(5).Find().Exec()
+count, errs = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(1).Offset(5).Find().Exec()
 
 users = []User{}
 // only users[i].Username and users[i].CreatedAt will be filled up
-count, err = app.Model(&users).Select("username, created_at").Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(1).Offset(5).Find().Exec()
+count, errs = app.Model(&users).Select("username, created_at").Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Order("created_at ASC").Limit(1).Offset(5).Find().Exec()
 
 users = []User{}
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&users, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec()
+count, errs = app.Model(&users, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec()
 
 users = []User{}
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec(record.ExecOption{Context: ctx})
 
 users = []User{}
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).Find().Exec(record.ExecOption{UseReplica: true})
 ```
 
 {% hint style="info" %}
@@ -313,28 +310,28 @@ type Result {
 }
 
 var result Result
-count, err := s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&result).Exec()
+count, errs := s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&result).Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = s.model(&user, record.ModelOption{Tx: tx}).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&result).Exec()
+count, errs = s.model(&user, record.ModelOption{Tx: tx}).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&result).Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&result).Exec(record.ExecOption{Context: ctx})
+count, errs = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&result).Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&result).Exec(record.ExecOption{UseReplica: true})
+count, errs = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&result).Exec(record.ExecOption{UseReplica: true})
 
 var results []Result
-count, err = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&results).Exec()
+count, errs = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&results).Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = s.model(&user, record.ModelOption{Tx: tx}).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&results).Exec()
+count, errs = s.model(&user, record.ModelOption{Tx: tx}).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&results).Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&results).Exec(record.ExecOption{Context: ctx})
+count, errs = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&results).Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&results).Exec(record.ExecOption{UseReplica: true})
+count, errs = s.model(&user).Select("username, LENGTH(username) AS length").Where("created_at > ?", now).Group("username").Having("username != ?", "").Scan(&results).Exec(record.ExecOption{UseReplica: true})
 ```
 
 Find User\(s\) Related Data With Join Queries
@@ -354,16 +351,16 @@ defer cancel()
 
 var user User
 
-count, err := s.model(&user).Join("INNER JOIN orders o ON o.username = username").Where("id IN (?)", []int64{1, 2}).Find().Exec()
+count, errs := s.model(&user).Join("INNER JOIN orders o ON o.username = username").Where("id IN (?)", []int64{1, 2}).Find().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = s.model(&user, record.ModelOption{Tx: tx}).Join("INNER JOIN orders o ON o.username = username").Where("id IN (?)", []int64{1, 2}).Find().Exec()
+count, errs = s.model(&user, record.ModelOption{Tx: tx}).Join("INNER JOIN orders o ON o.username = username").Where("id IN (?)", []int64{1, 2}).Find().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = s.model(&user).Join("INNER JOIN orders o ON o.username = username").Where("id IN (?)", []int64{1, 2}).Find().Exec(record.ExecOption{Context: ctx})
+count, errs = s.model(&user).Join("INNER JOIN orders o ON o.username = username").Where("id IN (?)", []int64{1, 2}).Find().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = s.model(&user).Join("INNER JOIN orders o ON o.username = username").Where("id IN (?)", []int64{1, 2}).Find().Exec(record.ExecOption{UseReplica: true})
+count, errs = s.model(&user).Join("INNER JOIN orders o ON o.username = username").Where("id IN (?)", []int64{1, 2}).Find().Exec(record.ExecOption{UseReplica: true})
 ```
 
 ## Update Records
@@ -379,16 +376,16 @@ user := User{
     Username: "foo",
 }
 
-count, err := app.model(&user).Update().Exec()
+count, errs := app.model(&user).Update().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&user, record.ModelOption{Tx: tx}).Update().Exec()
+count, errs = app.Model(&user, record.ModelOption{Tx: tx}).Update().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&user).Update().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&user).Update().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&user).Update().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&user).Update().Exec(record.ExecOption{UseReplica: true})
 
 users := []User{
     {
@@ -401,16 +398,16 @@ users := []User{
     },
 }
 
-count, err = app.model(&users).Update().Exec()
+count, errs = app.model(&users).Update().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&users, record.ModelOption{Tx: tx}).Update().Exec()
+count, errs = app.Model(&users, record.ModelOption{Tx: tx}).Update().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&users).Update().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&users).Update().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&users).Update().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&users).Update().Exec(record.ExecOption{UseReplica: true})
 ```
 
 {% hint style="info" %}
@@ -437,31 +434,31 @@ defer cancel()
 
 var user User
 
-count, err := app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
+count, errs := app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.model(&user, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
+count, errs = app.model(&user, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec(record.ExecOption{Context: ctx})
+count, errs = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec(record.ExecOption{UseReplica: true})
+count, errs = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec(record.ExecOption{UseReplica: true})
 
-count, err = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
+count, errs = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
 
 var users []User
 
-count, err = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
+count, errs = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.model(&users, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
+count, errs = app.model(&users, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec(record.ExecOption{Context: ctx})
+count, errs = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec(record.ExecOption{UseReplica: true})
+count, errs = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).UpdateAll("username = ?", "foo").Exec(record.ExecOption{UseReplica: true})
 ```
 
 {% hint style="info" %}
@@ -478,32 +475,32 @@ defer cancel()
 
 user := User{ ID: 1 }
 
-count, err := app.model(&user).Delete().Exec()
+count, errs := app.model(&user).Delete().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&user, record.ModelOption{Tx: tx}).Delete().Exec()
+count, errs = app.Model(&user, record.ModelOption{Tx: tx}).Delete().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&user).Delete().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&user).Delete().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&user).Delete().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&user).Delete().Exec(record.ExecOption{UseReplica: true})
 
 users := []User{
     { ID: 1 },
     { ID: 2 },
 }
 
-count, err = app.model(&users).Delete().Exec()
+count, errs = app.model(&users).Delete().Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.Model(&users, record.ModelOption{Tx: tx}).Delete().Exec()
+count, errs = app.Model(&users, record.ModelOption{Tx: tx}).Delete().Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.Model(&users).Delete().Exec(record.ExecOption{Context: ctx})
+count, errs = app.Model(&users).Delete().Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.Model(&users).Delete().Exec(record.ExecOption{UseReplica: true})
+count, errs = app.Model(&users).Delete().Exec(record.ExecOption{UseReplica: true})
 ```
 
 {% hint style="info" %}
@@ -530,31 +527,31 @@ defer cancel()
 
 var user User
 
-count, err := app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
+count, errs := app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.model(&user, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
+count, errs = app.model(&user, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec(record.ExecOption{Context: ctx})
+count, errs = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec(record.ExecOption{UseReplica: true})
+count, errs = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec(record.ExecOption{UseReplica: true})
 
-count, err = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
+count, errs = app.model(&user).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
 
 var users []User
 
-count, err = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
+count, errs = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
 
 // within SQL transaction, assuming the tx was created with `app.DB('...').Begin()` or `app.Model(&products).Begin()`
-count, err = app.model(&users, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
+count, errs = app.model(&users, record.ModelOption{Tx: tx}).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec()
 
 // with context support, will cancel the query if it doesn't return within 3 seconds
-count, err = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec(record.ExecOption{Context: ctx})
+count, errs = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec(record.ExecOption{Context: ctx})
 
 // use 1 of the replicas defined in the model struct tag to execute the query
-count, err = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec(record.ExecOption{UseReplica: true})
+count, errs = app.model(&users).Where("created_at > ? AND created_at < ?", now.Add(time.Duration(-5) * time.Second), now).DeleteAll("username = ?", "foo").Exec(record.ExecOption{UseReplica: true})
 ```
 
 {% hint style="info" %}
