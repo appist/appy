@@ -1182,12 +1182,12 @@ func (s *modelSuite) TestDelete() {
 			users = []HardDeleteUser{}
 			count, errs = s.model(&users).All().Exec()
 
-			s.Equal(16, len(users))
-			s.Equal(int64(16), count)
+			s.Equal(30, len(users))
+			s.Equal(int64(30), count)
 			s.Nil(errs)
 
 			splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
-			s.Equal(17, len(splits))
+			s.Equal(31, len(splits))
 
 			count, errs = s.model(&users[5]).Delete().Exec()
 			s.Equal(int64(1), count)
@@ -1204,7 +1204,7 @@ func (s *modelSuite) TestDelete() {
 
 			users = []HardDeleteUser{}
 			count, errs = s.model(&users).DeleteAll().Exec()
-			s.Equal(int64(13), count)
+			s.Equal(int64(27), count)
 			s.Nil(errs)
 
 			users = []HardDeleteUser{}

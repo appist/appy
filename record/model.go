@@ -515,8 +515,15 @@ func (m *Model) DeleteAll() Modeler {
 	m.action = "delete_all"
 	m.args = []interface{}{}
 
-	m.queryBuilder.WriteString("DELETE FROM ")
-	m.queryBuilder.WriteString(m.tableName)
+	if m.softDeleteColumn != "" {
+		m.queryBuilder.WriteString("UPDATE ")
+		m.queryBuilder.WriteString(m.tableName)
+		m.queryBuilder.WriteString(" SET ")
+		m.queryBuilder.WriteString(m.softDeleteColumn + " = NOW()")
+	} else {
+		m.queryBuilder.WriteString("DELETE FROM ")
+		m.queryBuilder.WriteString(m.tableName)
+	}
 
 	if m.where == "" {
 		m.buildWhereWithPrimaryKeys()
@@ -959,7 +966,13 @@ func (m *Model) Where(condition string, args ...interface{}) Modeler {
 
 func (m *Model) appendModelIndividual(v reflect.Value) {
 	var builder strings.Builder
+
 	wheres := []string{}
+	for _, pk := range m.primaryKeys {
+		if !v.FieldByName(m.attrs[pk].stFieldName).IsZero() {
+			wheres = append(wheres, pk+" = :"+pk)
+		}
+	}
 
 	switch m.action {
 	case "delete":
@@ -988,12 +1001,6 @@ func (m *Model) appendModelIndividual(v reflect.Value) {
 		}
 
 		builder.WriteString(strings.Join(sets, ", "))
-	}
-
-	for _, pk := range m.primaryKeys {
-		if !v.FieldByName(m.attrs[pk].stFieldName).IsZero() {
-			wheres = append(wheres, pk+" = :"+pk)
-		}
 	}
 
 	builder.WriteString(" WHERE ")
@@ -1307,7 +1314,7 @@ func (m *Model) getOrSelect(db DBer, query string, opt ExecOption) (int64, error
 func (m *Model) getSelectColumns() string {
 	columns := []string{}
 
-	for column, _ := range m.attrs {
+	for column := range m.attrs {
 		columns = append(columns, m.tableName+"."+column)
 	}
 
