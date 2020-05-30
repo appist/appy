@@ -47,18 +47,17 @@ type (
 
 	// Model is the layer that represents business data and logic.
 	Model struct {
-		adapter, autoIncrement, tableName                                  string
-		attrs                                                              map[string]*modelAttr
-		dest, scanDest                                                     interface{}
-		destKind                                                           reflect.Kind
-		masters, replicas                                                  []DBer
-		primaryKeys                                                        []string
-		queryBuilder                                                       strings.Builder
-		tx                                                                 Txer
-		limit, offset                                                      int
-		action, group, having, join, order, selectColumns, timezone, where string
-		args, havingArgs, joinArgs, whereArgs                              []interface{}
-		individuals                                                        []modelIndividual
+		adapter, autoIncrement, tableName, action, group, having, join, order, selectColumns, timezone, where, softDeleteColumn string
+		attrs                                                                                                                   map[string]*modelAttr
+		dest, scanDest                                                                                                          interface{}
+		destKind                                                                                                                reflect.Kind
+		masters, replicas                                                                                                       []DBer
+		primaryKeys                                                                                                             []string
+		queryBuilder                                                                                                            strings.Builder
+		tx                                                                                                                      Txer
+		limit, offset                                                                                                           int
+		args, havingArgs, joinArgs, whereArgs                                                                                   []interface{}
+		individuals                                                                                                             []modelIndividual
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
@@ -79,7 +78,6 @@ type (
 
 	modelAttr struct {
 		autoIncrement bool
-		ignored       bool
 		primaryKey    bool
 		stFieldName   string
 		stFieldType   reflect.Type
@@ -93,6 +91,7 @@ type (
 
 const (
 	createdAtField = "CreatedAt"
+	deletedAtField = "DeletedAt"
 	updatedAtField = "UpdatedAt"
 )
 
@@ -182,7 +181,6 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 			dbColumn := support.ToSnakeCase(field.Name)
 			attr := modelAttr{
 				autoIncrement: false,
-				ignored:       false,
 				stFieldName:   field.Name,
 				stFieldType:   field.Type,
 			}
@@ -190,7 +188,6 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 			// SQLX uses db tag to retrieve the column name.
 			dbTag := field.Tag.Get("db")
 			if dbTag == "-" {
-				attr.ignored = true
 				continue
 			}
 
@@ -204,6 +201,10 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 
 			if support.ArrayContains(model.primaryKeys, dbColumn) {
 				attr.primaryKey = true
+			}
+
+			if field.Name == deletedAtField {
+				model.softDeleteColumn = dbColumn
 			}
 
 			model.attrs[dbColumn] = &attr
@@ -221,8 +222,15 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 // in the model's table.
 func (m *Model) All() Modeler {
 	m.action = "all"
-	m.queryBuilder.WriteString("SELECT * FROM ")
+	m.queryBuilder.WriteString("SELECT ")
+	m.queryBuilder.WriteString(m.getSelectColumns())
+	m.queryBuilder.WriteString(" FROM ")
 	m.queryBuilder.WriteString(m.tableName)
+
+	if m.softDeleteColumn != "" {
+		m.queryBuilder.WriteString(" WHERE " + m.softDeleteColumn + " IS NULL")
+	}
+
 	m.queryBuilder.WriteString(";")
 
 	return m
@@ -354,7 +362,16 @@ func (m *Model) Count() Modeler {
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
+
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" AND " + m.softDeleteColumn + " IS NULL")
+		}
+
 		m.args = append(m.args, m.whereArgs...)
+	} else {
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" WHERE " + m.softDeleteColumn + " IS NULL")
+		}
 	}
 
 	m.queryBuilder.WriteString(";")
@@ -372,7 +389,7 @@ func (m *Model) Create() Modeler {
 	columns := []string{}
 	values := []string{}
 	for column, attr := range m.attrs {
-		if attr.ignored || attr.autoIncrement {
+		if attr.autoIncrement {
 			continue
 		}
 
@@ -440,15 +457,52 @@ func (m *Model) Create() Modeler {
 func (m *Model) Delete() Modeler {
 	m.action = "delete"
 
+	now := m.timeNow()
+	nullNow := null.TimeFrom(now)
+	zeroNow := zero.TimeFrom(now)
 	switch m.destKind {
 	case reflect.Array, reflect.Slice:
 		v := reflect.ValueOf(m.dest).Elem()
 
 		for i := 0; i < v.Len(); i++ {
+			if m.softDeleteColumn != "" {
+				field := v.Index(i).FieldByName(deletedAtField)
+
+				if field.IsValid() {
+					switch field.Interface().(type) {
+					case time.Time:
+						field.Set(reflect.ValueOf(now))
+					case *time.Time:
+						field.Set(reflect.ValueOf(&now))
+					case null.Time:
+						field.Set(reflect.ValueOf(nullNow))
+					case zero.Time:
+						field.Set(reflect.ValueOf(zeroNow))
+					}
+				}
+			}
+
 			m.appendModelIndividual(v.Index(i))
 		}
 	case reflect.Ptr:
 		v := reflect.ValueOf(m.dest).Elem()
+
+		if m.softDeleteColumn != "" {
+			field := v.FieldByName(deletedAtField)
+
+			if field.IsValid() {
+				switch field.Interface().(type) {
+				case time.Time:
+					field.Set(reflect.ValueOf(now))
+				case *time.Time:
+					field.Set(reflect.ValueOf(&now))
+				case null.Time:
+					field.Set(reflect.ValueOf(nullNow))
+				case zero.Time:
+					field.Set(reflect.ValueOf(zeroNow))
+				}
+			}
+		}
 
 		m.appendModelIndividual(v)
 	}
@@ -471,7 +525,16 @@ func (m *Model) DeleteAll() Modeler {
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
+
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" AND " + m.softDeleteColumn + " IS NULL")
+		}
+
 		m.args = append(m.args, m.whereArgs...)
+	} else {
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" WHERE " + m.softDeleteColumn + " IS NULL")
+		}
 	}
 
 	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
@@ -592,12 +655,7 @@ func (m *Model) Find() Modeler {
 	if m.selectColumns != "" {
 		m.queryBuilder.WriteString(m.selectColumns)
 	} else {
-		if m.join != "" {
-			m.queryBuilder.WriteString(m.tableName)
-			m.queryBuilder.WriteString(".")
-		}
-
-		m.queryBuilder.WriteString("*")
+		m.queryBuilder.WriteString(m.getSelectColumns())
 	}
 
 	m.queryBuilder.WriteString(" FROM ")
@@ -617,7 +675,16 @@ func (m *Model) Find() Modeler {
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
+
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" AND " + m.softDeleteColumn + " IS NULL")
+		}
+
 		m.args = append(m.args, m.whereArgs...)
+	} else {
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" WHERE " + m.softDeleteColumn + " IS NULL")
+		}
 	}
 
 	if m.order != "" {
@@ -702,7 +769,7 @@ func (m *Model) Scan(dest interface{}) Modeler {
 	if m.selectColumns != "" {
 		m.queryBuilder.WriteString(m.selectColumns)
 	} else {
-		m.queryBuilder.WriteString("*")
+		m.queryBuilder.WriteString(m.getSelectColumns())
 	}
 
 	m.queryBuilder.WriteString(" FROM ")
@@ -717,7 +784,16 @@ func (m *Model) Scan(dest interface{}) Modeler {
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
+
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" AND " + m.softDeleteColumn + " IS NULL")
+		}
+
 		m.args = append(m.args, m.whereArgs...)
+	} else {
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" WHERE " + m.softDeleteColumn + " IS NULL")
+		}
 	}
 
 	if m.group != "" {
@@ -852,7 +928,16 @@ func (m *Model) UpdateAll(set string, args ...interface{}) Modeler {
 	if m.where != "" {
 		m.queryBuilder.WriteString(" WHERE ")
 		m.queryBuilder.WriteString(m.where)
+
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" AND " + m.softDeleteColumn + " IS NULL")
+		}
+
 		m.args = append(m.args, m.whereArgs...)
+	} else {
+		if m.softDeleteColumn != "" {
+			m.queryBuilder.WriteString(" WHERE " + m.softDeleteColumn + " IS NULL")
+		}
 	}
 
 	if len(m.primaryKeys) > 0 && m.adapter == "postgres" {
@@ -874,20 +959,28 @@ func (m *Model) Where(condition string, args ...interface{}) Modeler {
 
 func (m *Model) appendModelIndividual(v reflect.Value) {
 	var builder strings.Builder
+	wheres := []string{}
 
 	switch m.action {
 	case "delete":
-		builder.WriteString("DELETE FROM ")
-		builder.WriteString(m.tableName)
+		if m.softDeleteColumn != "" {
+			builder.WriteString("UPDATE ")
+			builder.WriteString(m.tableName)
+			builder.WriteString(" SET ")
+			builder.WriteString(m.softDeleteColumn + " = :" + m.softDeleteColumn)
+			wheres = append(wheres, m.softDeleteColumn+" IS NULL")
+		} else {
+			builder.WriteString("DELETE FROM ")
+			builder.WriteString(m.tableName)
+		}
 	case "update":
 		builder.WriteString("UPDATE ")
 		builder.WriteString(m.tableName)
 		builder.WriteString(" SET ")
 
 		sets := []string{}
-
 		for column, attr := range m.attrs {
-			if attr.ignored || attr.autoIncrement {
+			if attr.autoIncrement {
 				continue
 			}
 
@@ -897,7 +990,6 @@ func (m *Model) appendModelIndividual(v reflect.Value) {
 		builder.WriteString(strings.Join(sets, ", "))
 	}
 
-	wheres := []string{}
 	for _, pk := range m.primaryKeys {
 		if !v.FieldByName(m.attrs[pk].stFieldName).IsZero() {
 			wheres = append(wheres, pk+" = :"+pk)
@@ -931,6 +1023,11 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 
 	switch m.destKind {
 	case reflect.Array, reflect.Slice:
+		dest = dest.Elem()
+		if dest.IsZero() || dest.IsNil() || dest.Len() < 1 {
+			return
+		}
+
 		if len(m.primaryKeys) > 1 {
 			builder.WriteString("(")
 		}
@@ -943,7 +1040,6 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 
 		builder.WriteString(" IN (")
 
-		dest = dest.Elem()
 		for i := 0; i < dest.Len(); i++ {
 			elem := dest.Index(i)
 			pkValues := []interface{}{}
@@ -981,8 +1077,11 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 		m.whereArgs = args
 	case reflect.Ptr:
 		dest = dest.Elem()
-		wheres := []string{}
+		if dest.IsZero() {
+			return
+		}
 
+		wheres := []string{}
 		for _, pk := range m.primaryKeys {
 			if !dest.FieldByName(m.attrs[pk].stFieldName).IsZero() {
 				wheres = append(wheres, pk+" = ?")
@@ -1203,6 +1302,16 @@ func (m *Model) getOrSelect(db DBer, query string, opt ExecOption) (int64, error
 	}
 
 	return count, err
+}
+
+func (m *Model) getSelectColumns() string {
+	columns := []string{}
+
+	for column, _ := range m.attrs {
+		columns = append(columns, m.tableName+"."+column)
+	}
+
+	return strings.Join(columns, ", ")
 }
 
 func (m *Model) handleCallback(elem reflect.Value, callback string) error {

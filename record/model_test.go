@@ -60,6 +60,41 @@ type (
 		UpdatedAt  support.NTime `db:"updated_at" faker:"-"`
 	}
 
+	SoftDeleteNUser struct {
+		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+		ID         int64         `db:"id" faker:"-"`
+		Age        int64         `db:"-"`
+		LoginCount *int64        `db:"login_count"`
+		Email      string        `db:"email" faker:"email,unique"`
+		Username   string        `db:"username" faker:"username,unique"`
+		CreatedAt  support.ZTime `db:"created_at" faker:"-"`
+		DeletedAt  support.NTime `db:"deleted_at" faker:"-"`
+		UpdatedAt  support.NTime `db:"updated_at" faker:"-"`
+	}
+
+	SoftDeleteZUser struct {
+		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+		ID         int64         `db:"id" faker:"-"`
+		Age        int64         `db:"-"`
+		LoginCount *int64        `db:"login_count"`
+		Email      string        `db:"email" faker:"email,unique"`
+		Username   string        `db:"username" faker:"username,unique"`
+		CreatedAt  support.ZTime `db:"created_at" faker:"-"`
+		DeletedAt  support.ZTime `db:"deleted_at" faker:"-"`
+		UpdatedAt  support.NTime `db:"updated_at" faker:"-"`
+	}
+
+	HardDeleteUser struct {
+		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+		ID         int64         `db:"id" faker:"-"`
+		Age        int64         `db:"-"`
+		LoginCount *int64        `db:"login_count"`
+		Email      string        `db:"email" faker:"email,unique"`
+		Username   string        `db:"username" faker:"username,unique"`
+		CreatedAt  support.ZTime `db:"created_at" faker:"-"`
+		UpdatedAt  support.NTime `db:"updated_at" faker:"-"`
+	}
+
 	UserWithoutPK struct {
 		Model      `masters:"primary" replicas:"primaryReplica" primaryKeys:"" tableName:"" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
@@ -1005,34 +1040,178 @@ func (s *modelSuite) TestCustomTableName() {
 func (s *modelSuite) TestDelete() {
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_model_delete_"+adapter)
-		s.insertUsers()
 
-		var users []User
-		count, errs := s.model(&users).All().Exec()
-		s.Equal(10, len(users))
-		s.Equal(int64(10), count)
-		s.Nil(errs)
+		{
+			s.insertUsers()
 
-		splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
-		s.Equal(11, len(splits))
+			var users []User
+			count, errs := s.model(&users).All().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(errs)
 
-		count, errs = s.model(&users[5]).Delete().Exec()
-		s.Equal(int64(1), count)
-		s.Nil(errs)
+			splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
+			s.Equal(11, len(splits))
 
-		count, errs = s.model(&users[5]).Find().Exec()
-		s.Equal(int64(0), count)
-		s.Nil(errs)
+			count, errs = s.model(&users[5]).Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(errs)
 
-		users = []User{users[0], users[1]}
-		count, errs = s.model(&users).Delete().Exec()
-		s.Equal(int64(2), count)
-		s.Nil(errs)
+			count, errs = s.model(&users[5]).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(errs)
 
-		users = []User{}
-		count, errs = s.model(&users).All().Exec()
-		s.Equal(int64(7), count)
-		s.Nil(errs)
+			users = []User{users[0], users[1]}
+			count, errs = s.model(&users).Delete().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(errs)
+
+			users = []User{}
+			count, errs = s.model(&users).DeleteAll().Exec()
+			s.Equal(int64(7), count)
+			s.Nil(errs)
+
+			users = []User{}
+			count, errs = s.model(&users).All().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(errs)
+		}
+
+		{
+			users := []SoftDeleteNUser{}
+			for i := 0; i < 10; i++ {
+				user := SoftDeleteNUser{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			count, errs := s.model(&users).Create().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(errs)
+
+			users = []SoftDeleteNUser{}
+			count, errs = s.model(&users).All().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(errs)
+
+			splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
+			s.Equal(11, len(splits))
+
+			count, errs = s.model(&users[5]).Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(errs)
+
+			count, errs = s.model(&users[5]).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(errs)
+
+			users = []SoftDeleteNUser{users[0], users[1]}
+			count, errs = s.model(&users).Delete().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(errs)
+
+			users = []SoftDeleteNUser{}
+			count, errs = s.model(&users).DeleteAll().Exec()
+			s.Equal(int64(7), count)
+			s.Nil(errs)
+
+			users = []SoftDeleteNUser{}
+			count, errs = s.model(&users).All().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(errs)
+		}
+
+		{
+			users := []SoftDeleteZUser{}
+			for i := 0; i < 10; i++ {
+				user := SoftDeleteZUser{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			count, errs := s.model(&users).Create().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(errs)
+
+			users = []SoftDeleteZUser{}
+			count, errs = s.model(&users).All().Exec()
+			s.Equal(10, len(users))
+			s.Equal(int64(10), count)
+			s.Nil(errs)
+
+			splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
+			s.Equal(11, len(splits))
+
+			count, errs = s.model(&users[5]).Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(errs)
+
+			count, errs = s.model(&users[5]).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(errs)
+
+			users = []SoftDeleteZUser{users[0], users[1]}
+			count, errs = s.model(&users).Delete().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(errs)
+
+			users = []SoftDeleteZUser{}
+			count, errs = s.model(&users).DeleteAll().Exec()
+			s.Equal(int64(7), count)
+			s.Nil(errs)
+
+			users = []SoftDeleteZUser{}
+			count, errs = s.model(&users).All().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(errs)
+		}
+
+		{
+			users := []HardDeleteUser{}
+			for i := 0; i < 10; i++ {
+				user := HardDeleteUser{}
+				s.Nil(faker.FakeData(&user))
+				users = append(users, user)
+			}
+
+			count, errs := s.model(&users).Create().Exec()
+			s.Equal(int64(10), count)
+			s.Nil(errs)
+
+			users = []HardDeleteUser{}
+			count, errs = s.model(&users).All().Exec()
+
+			s.Equal(16, len(users))
+			s.Equal(int64(16), count)
+			s.Nil(errs)
+
+			splits := strings.Split(s.model(&users).Delete().SQL(), "\n")
+			s.Equal(17, len(splits))
+
+			count, errs = s.model(&users[5]).Delete().Exec()
+			s.Equal(int64(1), count)
+			s.Nil(errs)
+
+			count, errs = s.model(&users[5]).Find().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(errs)
+
+			users = []HardDeleteUser{users[0], users[1]}
+			count, errs = s.model(&users).Delete().Exec()
+			s.Equal(int64(2), count)
+			s.Nil(errs)
+
+			users = []HardDeleteUser{}
+			count, errs = s.model(&users).DeleteAll().Exec()
+			s.Equal(int64(13), count)
+			s.Nil(errs)
+
+			users = []HardDeleteUser{}
+			count, errs = s.model(&users).All().Exec()
+			s.Equal(int64(0), count)
+			s.Nil(errs)
+		}
 	}
 }
 
@@ -1623,6 +1802,19 @@ func (s *modelSuite) TestScan() {
 
 		{
 			var (
+				user   User
+				result customResult
+			)
+
+			count, errs := s.model(&user).Select("id, SUM(id * 2) AS total").Group("id").Having("id > ?", 5).Order("id ASC").Limit(1).Offset(1).Scan(&result).Exec()
+			s.Equal(int64(7), result.ID)
+			s.Equal(int64(14), result.Total)
+			s.Equal(int64(1), count)
+			s.Nil(errs)
+		}
+
+		{
+			var (
 				users   []User
 				results []customResult
 			)
@@ -2137,6 +2329,11 @@ func (s *modelSuite) TestUpdateAll() {
 			s.Nil(errs)
 			s.Equal("foo@gmail.com", user.Email)
 			s.Equal("foo", user.Username)
+
+			user = DuplicateUser{}
+			count, errs = s.model(&user).UpdateAll("email = ?, username = ?", "barfoo@gmail.com", "barfoo").Exec()
+			s.Equal(int64(1), count)
+			s.Nil(errs)
 		}
 
 		{
@@ -2170,6 +2367,11 @@ func (s *modelSuite) TestUpdateAll() {
 			s.Equal(int64(2), users[1].ID)
 			s.Equal("bar@gmail.com", users[1].Email)
 			s.Equal("bar", users[1].Username)
+
+			users = []DuplicateUser{}
+			count, errs = s.model(&users).UpdateAll("email = ?, username = ?", "foobar@gmail.com", "foobar").Exec()
+			s.Equal(int64(11), count)
+			s.Nil(errs)
 		}
 	}
 }
