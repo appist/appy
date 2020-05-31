@@ -38,7 +38,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Powerful built-in commands
   <details>
-    <summary>Check the available built-in commands.</summary>
+    <summary>Click to see details</summary>
 
     ```bash
     My first awesome web application in Go.
@@ -94,7 +94,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Developer friendly email preview UI
   <details>
-    <summary>Check the preview UI screenshot.</summary>
+    <summary>Click to see details</summary>
 
     <p align="center">
       <img height="450px" alt="Preview UI" src="./.github/assets/mailer_preview_ui.png" />
@@ -105,7 +105,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Powerful built-in HTTP middleware
   <details>
-    <summary>Check the available built-in middleware.</summary>
+    <summary>Click to see details</summary>
 
     - API Only<br>
       Remove `Set-Cookie` response header if the `X-API-ONLY: 1` request header is sent.
@@ -162,7 +162,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Powerful database management commands
   <details>
-    <summary>Check the available database management commands.</summary>
+    <summary>Click to see details</summary>
 
     ```bash
     db:create         Create all databases for the current environment
@@ -180,7 +180,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Fully featured ORM
   <details>
-    <summary>Check the features.</summary>
+    <summary>Click to see details</summary>
 
     - Master/Replica switch
     - Soft delete
@@ -207,7 +207,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Performant ORM
   <details>
-    <summary>Check the performance benchmark.</summary>
+    <summary>Click to see details</summary>
 
     ```bash
     go test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./record
@@ -253,7 +253,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Fully featured background job processing backed by Redis
   <details>
-    <summary>Check the features.</summary>
+    <summary>Click to see details</summary>
 
     - Cron jobs (Work In Progress)
     - Expiring jobs
