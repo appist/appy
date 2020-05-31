@@ -21,6 +21,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 #### Additional Notes
 
 - `appy` is made as a package for your application to import without the need to install any additional binary
+- `appy` glues the [great packages](#acknowledgement) to provide best productivity in developing Go web application
 - `appy` comes with 2 build types:
   - debug - when the code is NOT running with the binary
   - release - when the code is running with the binary
@@ -173,6 +174,8 @@ An opinionated productive web framework that helps scaling business easier, i.e.
     - View Engine<br>
       Provide server-side HTML template rendering.
   </details>
+
+- Fully integrated with [gqlgen](https://gqlgen.com/) with watch mode
 
 - Ready-to-use test context builder for unit test
 
