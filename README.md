@@ -9,16 +9,24 @@
 
 An opinionated productive web framework that helps scaling business easier, i.e. focus on monolith first, only move to microservices with [GRPC](https://grpc.io/) later on when your team is ready.
 
-> `appy` is made as a package for your application to import without the need to install any additional binary.
-
 <details>
-  <summary>Click to see `appy` in action</summary>
+  <summary>Click to see an application called "appist" made with "appy" in action</summary>
 
   <p align="center">
     <img width="48%" alt="Debug Mode" src=".github/assets/debug.gif">&nbsp;&nbsp;&nbsp;&nbsp;
     <img width="48%" alt="Release Mode" src=".github/assets/release.gif">
   </p>
 </details>
+
+> Tips:
+> - `appy` is made as a package for your application to import without the need to install any additional binary
+> - `appy` comes with 2 build types:
+>   - debug - when the code is NOT running with the binary
+>   - release - when the code is running with the binary
+> - `appy` follows 12factor via `APPY_ENV` environment variable:
+>   - by default, it is `development`
+>   - when `APPY_ENV=development` is set, the config file is `configs/.env.development`
+>   - utilise `configs/.env.<APPY_ENV>` to support multiple environments deployment
 
 ## Table Of Contents
 
