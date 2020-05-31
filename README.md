@@ -221,7 +221,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
     - Execution with context
     - SQL query builder/logger/inspector
     - Transactions
-    - Validations
+    - Validations with I18n support
   </details>
 
 - Performant ORM
