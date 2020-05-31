@@ -9,17 +9,167 @@
 
 An opinionated productive web framework that helps scaling business easier.
 
-##### Debug Mode - Local Development
+## Overview
 
-[![asciicast](docs/.gitbook/assets/debug.gif)](https://asciinema.org/a/312186)
+Monolith first, only microservices with [GRPC](https://grpc.io/) later when your team is ready.
 
-##### Release Mode - Get Ready For Deployment
+![architecture](./.github/assets/architecture.png)
 
-[![asciicast](docs/.gitbook/assets/release.gif)](https://asciinema.org/a/312188)
+## Features
 
-## Documentation
+### package `cmd`
 
-Please refer to [here](https://appist.gitbook.io/appy/) for more detailed documentation.
+- Powerful built-in commands
+  <details>
+    <summary>Check out the available built-in commands.</summary>
+
+    ```bash
+    My first awesome web application in Go.
+
+    Usage:
+      myapp [command]
+
+    Available Commands:
+      build             Compile the static assets into go files and build the release build binary (only available in debug build)
+      config:dec        Decrypt a config value using the secret in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY` (only available in debug build)
+      config:enc        Encrypt a config value using the secret in `configs/<APPY_ENV>.key` or `APPY_MASTER_KEY` (only available in debug build)
+      db:create         Create all databases for the current environment
+      db:drop           Drop all databases for the current environment
+      db:migrate        Migrate the database(default: all, use --database to specify the target database) for the current environment
+      db:migrate:status List all the database migration status(default: all, use --database to specify the target database) for the current environment
+      db:rollback       Rollback the database(default: primary, use --database to specify the target database) to previous version for the current environment
+      db:schema:dump    Dump all the databases schema for the current environment (only available in debug build)
+      db:schema:load    Load all the databases schema for the current environment
+      db:seed           Seed all databases for the current environment
+      dc:down           Tear down the docker compose cluster
+      dc:restart        Restart services that are defined in `.docker/docker-compose.yml`
+      dc:up             Create and start containers that are defined in `.docker/docker-compose.yml`
+      gen:migration     Generate database migration file(default: primary, use --database to specify the target database) for the current environment (only available in debug build)
+      help              Help about any command
+      middleware        List all the global middleware
+      routes            List all the server-side routes
+      secret            Generate a cryptographically secure secret key for encrypting cookie, CSRF token and config
+      serve             Run the HTTP/HTTPS web server without `webpack-dev-server`
+      setup             Run dc:up/db:create/db:schema:load/db:seed to setup the datastore with seed data
+      ssl:setup         Generate and install the locally trusted SSL certs using `mkcert`
+      ssl:teardown      Uninstall the locally trusted SSL certs using `mkcert`
+      start             Run the HTTP/HTTPS web server with `webpack-dev-server` in development watch mode (only available in debug build)
+      teardown          Tear down the docker compose cluster
+      work              Run the worker to process background jobs
+
+    Flags:
+      -h, --help      help for myapp
+      -v, --version   version for myapp
+
+    Use "myapp [command] --help" for more information about a command.
+    ```
+  </details>
+
+- Flexible custom commands building
+
+### package `mailer`
+
+- Ready-to-use SMTP email sending with I18n support
+
+- Developer friendly mailer preview UI
+
+### package `pack`
+
+- Powerful built-in middleware
+    <details>
+    <summary>Check out the available built-in middleware.</summary>
+
+    ```bash
+    ```
+    </details>
+
+-
+
+### package `record`
+
+### package `support`
+
+### package `test`
+
+### package `view`
+
+### package `worker`
+
+
+## Getting Started
+
+### Prerequisites
+
+* [Docker w/ Docker Compose &gt;= 19](https://www.docker.com/products/docker-desktop)
+* [Go &gt;= 1.14](https://golang.org/dl/)
+* [NodeJS &gt;= 14](https://nodejs.org/en/download/)
+* [PostgreSQL &gt;= 11](https://www.postgresql.org/download/)
+* [MySQL &gt;= 8](https://www.mysql.com/downloads/)
+
+### Quick Start
+
+#### Step 1: Create the project folder with go module and git initialised.
+
+```bash
+$ mkdir <PROJECT_NAME> && cd $_ && go mod init $_ && git init
+```
+
+
+> Note: The <PROJECT_NAME> must be an alphanumeric string.
+
+#### Step 2: Create `main.go` with the snippet below.
+
+```go
+package main
+
+import (
+  "github.com/appist/appy/support"
+)
+
+func main() {
+  support.Scaffold(support.ScaffoldOption{
+    DBAdapter: "postgres", // only "mysql" and "postgres" are supported
+    Description: "my first awesome app", // used in HTML's description meta tag, package.json and CLI help
+  })
+}
+```
+
+#### Step 3: Initialize the appy's project layout.
+
+```bash
+$ go run .
+```
+
+#### Step 4: Install project dependencies for backend and frontend.
+
+```bash
+$ go mod download
+$ npm install
+```
+
+#### Step 5: Setup your local environment with databases running in docker compose cluster.
+
+```bash
+$ go run . setup
+```
+
+#### Step 6: Start developing your application locally.
+
+```bash
+$ go run . start
+```
+
+#### Step 7: Build the application binary with release mode.
+
+```bash
+$ go run . build
+```
+
+### Step 8: Tear down everything once you're done.
+
+```bash
+$ go run . teardown
+```
 
 ## Acknowledgement
 
