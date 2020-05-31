@@ -14,7 +14,7 @@ An opinionated productive web framework that helps scaling business easier.
 Monolith first, only microservices with [GRPC](https://grpc.io/) later when your team is ready.
 
 <p align="center">
-  <img height="420px" alt="architecture" src="./.github/assets/architecture.png" />
+  <img height="450px" alt="architecture" src="./.github/assets/architecture.png" />
 </p>
 
 ## Features
