@@ -17,8 +17,6 @@ An opinionated productive web framework that helps scaling business easier, i.e.
   - [package `mailer`](#package-mailer)
   - [package `pack`](#package-pack)
   - [package `record`](#package-record)
-  - [package `support`](#package-support)
-  - [package `test`](#package-test)
   - [package `view`](#package-view)
   - [package `worker`](#package-worker)
 - [Getting Started](#getting-started)
@@ -203,6 +201,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
     - Execution with context
     - SQL query builder/logger/inspector
     - Transactions
+    - Validations
   </details>
 
 - Performant ORM
@@ -235,11 +234,10 @@ An opinionated productive web framework that helps scaling business easier, i.e.
   </details>
 
 
+
+
+
 - Ready-to-use DB/ORM mocks for unit test
-
-### package `support`
-
-### package `test`
 
 ### package `view`
 
