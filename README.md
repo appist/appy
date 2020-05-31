@@ -200,6 +200,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
   <details>
     <summary>Click to see details</summary>
 
+    - Multiple databases support
     - Master/Replica switch
     - Soft delete
     - Associations (Work In Progress)
