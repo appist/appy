@@ -354,7 +354,7 @@ $ go run . start
 $ go run . build
 ```
 
-#### Step 8: Tear down everything once you're done.
+#### Step 8: Tear down everything once you're done testing.
 
 ```bash
 $ go run . teardown
