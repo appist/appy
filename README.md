@@ -9,6 +9,17 @@
 
 An opinionated productive web framework that helps scaling business easier, i.e. focus on monolith first, only move to microservices with [GRPC](https://grpc.io/) later on when your team is ready.
 
+> `appy` is made as a package for your application to import without the need to install any additional binary.
+
+<details>
+  <summary>Click to see `appy` in action</summary>
+
+  <p align="center">
+    <img width="48%" alt="Debug Mode" src=".github/assets/debug.gif">&nbsp;&nbsp;&nbsp;&nbsp;
+    <img width="48%" alt="Release Mode" src=".github/assets/release.gif">
+  </p>
+</details>
+
 ## Table Of Contents
 
 - [Overview](#overview)
