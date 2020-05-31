@@ -93,7 +93,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 ### package `pack`
 
 - Powerful built-in HTTP middleware
-    <details>
+  <details>
     <summary>Check out the available built-in middleware.</summary>
 
     - API Only<br>
@@ -135,16 +135,15 @@ An opinionated productive web framework that helps scaling business easier, i.e.
     - Secure<br>
       Provide the standard HTTP security guards.
 
+    - Session<br>
+      Provide session management using cookie/redis.
+
     - SPA<br>
       Provide SPA hosting with specific path.
 
     - View Engine<br>
       Provide server-side HTML template rendering.
-    </details>
-
-
-
-
+  </details>
 
 - Ready-to-use test context builder for unit test
 
@@ -168,7 +167,34 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Extended `sql.DB` with [sqlx](https://github.com/jmoiron/sqlx)
 
-- Minimalist and performant ORM
+- Fully featured ORM
+  <details>
+    <summary>Check out the features.</summary>
+
+    - Master/Replica switch
+    - Soft delete
+    - Associations (Work In Progress)
+      - Has One
+      - Has Many
+      - Belongs To
+      - Many To Many
+      - Polymorphism
+      - Preload
+      - Eager Load
+    - Callbacks
+      - BeforeValidate/AfterValidate
+      - BeforeCreate/AfterCreate
+      - BeforeDelete/AfterDelete
+      - BeforeUpdate/AfterUpdate
+      - BeforeCommit/AfterCreateCommit/AfterDeleteCommit/AfterUpdateCommit
+      - BeforeRollback/AfterRollback
+    - Composite primary keys
+    - Execution with context
+    - SQL query builder/logger/inspector
+    - Transactions
+  </details>
+
+- Performant ORM
   <details>
     <summary>Check out the performance benchmark.</summary>
 
@@ -196,6 +222,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
     ok      github.com/appist/appy/record   344.692s
     ```
   </details>
+
 
 - Ready-to-use DB/ORM mocks for unit test
 
