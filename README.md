@@ -323,7 +323,7 @@ func main() {
 }
 ```
 
-#### Step 3: Initialize the appy's project layout.
+#### Step 3: Initialize the project layout.
 
 ```bash
 $ go run .
