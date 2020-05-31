@@ -71,21 +71,116 @@ Monolith first, only microservices with [GRPC](https://grpc.io/) later when your
 
 - Ready-to-use SMTP email sending with I18n support
 
-- Developer friendly mailer preview UI
+- Developer friendly email preview UI
 
 ### package `pack`
 
-- Powerful built-in middleware
+- Powerful built-in HTTP middleware
     <details>
     <summary>Check out the available built-in middleware.</summary>
 
-    ```bash
-    ```
+    - API Only<br>
+      Remove `Set-Cookie` response header if the `X-API-ONLY: 1` request header is sent.
+
+    - CSRF<br>
+      Protect cookies from `Cross-Site Request Forgery` by including/validating a token in the cookie across requests.
+
+    - GZIP Compress<br>
+      Compress the responses before returning it to the clients.
+
+    - Health Check<br>
+      Provide the HTTP GET endpoint for health check purpose.
+
+    - I18n<br>
+      Provide I18n support which the translations are stored in `<PROJECT_NAME>/pkg/locales/*.yml`.
+
+    - Logger<br>
+      Provide logger support.
+
+    - Mailer<br>
+      Provide mailer support which the views templates are stored in `<PROJECT_NAME>/pkg/views/mailers/**/*.{html,txt}`.
+
+    - Prerender<br>
+      Prerender and return the SPA page rendered by Chrome if the HTTP request is coming from the search engines.
+
+    - Real IP<br>
+      Retrieves the client's real IP address via `X-FORWARDED-FOR` or `X-REAL-IP` HTTP request header.
+
+    - Recovery<br>
+      Recover the HTTP request from panic and return 500 error page.
+
+    - Request ID<br>
+      Generate UUID v4 string for every HTTP request.
+
+    - Request Logger<br>
+      Log the HTTP request information.
+
+    - Secure<br>
+      Provide the standard HTTP security guards.
+
+    - SPA<br>
+      Provide SPA hosting with specific path.
+
+    - View Engine<br>
+      Provide server-side HTML template rendering.
     </details>
 
--
+
+
+
+
+- Ready-to-use test context builder for unit test
 
 ### package `record`
+
+- Powerful database management commands
+  <details>
+    <summary>Check out the available database management commands.</summary>
+
+    ```bash
+    db:create         Create all databases for the current environment
+    db:drop           Drop all databases for the current environment
+    db:migrate        Migrate the database(default: all, use --database to specify the target database) for the current environment
+    db:migrate:status List all the database migration status(default: all, use --database to specify the target database) for the current environment
+    db:rollback       Rollback the database(default: primary, use --database to specify the target database) to previous version for the current environment
+    db:schema:dump    Dump all the databases schema for the current environment (only available in debug build)
+    db:schema:load    Load all the databases schema for the current environment
+    db:seed           Seed all databases for the current environment
+    ```
+  </details>
+
+- Extended `sql.DB` with [sqlx](https://github.com/jmoiron/sqlx)
+
+- Minimalist and performant ORM
+  <details>
+    <summary>Check out the performance benchmark.</summary>
+
+    ```bash
+    go test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./record
+    goos: darwin
+    goarch: amd64
+    pkg: github.com/appist/appy/record
+    BenchmarkInsertRaw-4                1239          10103533 ns/op              88 B/op          5 allocs/op
+    BenchmarkInsertDB-4                  898          11351591 ns/op            1548 B/op         19 allocs/op
+    BenchmarkInsertORM-4                 826          13826999 ns/op           15338 B/op        283 allocs/op
+    BenchmarkInsertMultiRaw-4            529          21830643 ns/op          107896 B/op        415 allocs/op
+    BenchmarkInsertMultiDB-4             481          20931749 ns/op          166302 B/op        441 allocs/op
+    BenchmarkInsertMultiORM-4            471          23261618 ns/op          791677 B/op       3872 allocs/op
+    BenchmarkUpdateRaw-4                 903          13807008 ns/op            1064 B/op         21 allocs/op
+    BenchmarkUpdateDB-4                 1008          13577352 ns/op            3677 B/op         52 allocs/op
+    BenchmarkUpdateORM-4                 788          13923442 ns/op            8920 B/op        233 allocs/op
+    BenchmarkReadRaw-4                  2162           4723198 ns/op            1810 B/op         47 allocs/op
+    BenchmarkReadDB-4                   2263           5300805 ns/op            3257 B/op         69 allocs/op
+    BenchmarkReadORM-4                  2259           5184327 ns/op            6911 B/op        230 allocs/op
+    BenchmarkReadSliceRaw-4             2210           5871991 ns/op           23088 B/op       1331 allocs/op
+    BenchmarkReadSliceDB-4              2197           5752959 ns/op           25070 B/op       1353 allocs/op
+    BenchmarkReadSliceORM-4             1864           6249231 ns/op          246630 B/op       1526 allocs/op
+    PASS
+    ok      github.com/appist/appy/record   344.692s
+    ```
+  </details>
+
+- Ready-to-use DB/ORM mocks for unit test
 
 ### package `support`
 
@@ -94,7 +189,6 @@ Monolith first, only microservices with [GRPC](https://grpc.io/) later when your
 ### package `view`
 
 ### package `worker`
-
 
 ## Getting Started
 
