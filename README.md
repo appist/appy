@@ -25,7 +25,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 - `appy` comes with 2 build types:
   - debug - when the code is NOT running with the binary
   - release - when the code is running with the binary
-- `appy` follows 12factor via `APPY_ENV` environment variable:
+- `appy` follows [12factor](https://12factor.net/) via `APPY_ENV` environment variable:
   - by default, it is `development`
   - when `APPY_ENV=staging` is set, the config file is `configs/.env.staging`
   - utilise `configs/.env.<APPY_ENV>` to support multiple environments deployment
