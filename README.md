@@ -38,7 +38,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Powerful built-in commands
   <details>
-    <summary>Check out the available built-in commands.</summary>
+    <summary>Check the available built-in commands.</summary>
 
     ```bash
     My first awesome web application in Go.
@@ -86,15 +86,26 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 ### package `mailer`
 
-- Ready-to-use SMTP email sending with I18n support
+- Ready-to-use SMTP email sending
+
+- I18n support
+
+- HTML templates binary embed support
 
 - Developer friendly email preview UI
+  <details>
+    <summary>Check the preview UI screenshot.</summary>
+
+    <p align="center">
+      <img height="450px" alt="Preview UI" src="./.github/assets/mailer_preview_ui.png" />
+    </p>
+  </details>
 
 ### package `pack`
 
 - Powerful built-in HTTP middleware
   <details>
-    <summary>Check out the available built-in middleware.</summary>
+    <summary>Check the available built-in middleware.</summary>
 
     - API Only<br>
       Remove `Set-Cookie` response header if the `X-API-ONLY: 1` request header is sent.
@@ -151,7 +162,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Powerful database management commands
   <details>
-    <summary>Check out the available database management commands.</summary>
+    <summary>Check the available database management commands.</summary>
 
     ```bash
     db:create         Create all databases for the current environment
@@ -169,7 +180,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Fully featured ORM
   <details>
-    <summary>Check out the features.</summary>
+    <summary>Check the features.</summary>
 
     - Master/Replica switch
     - Soft delete
@@ -196,7 +207,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 - Performant ORM
   <details>
-    <summary>Check out the performance benchmark.</summary>
+    <summary>Check the performance benchmark.</summary>
 
     ```bash
     go test -run=NONE -bench . -benchmem -benchtime 10s -failfast ./record
@@ -232,17 +243,39 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 ### package `view`
 
+- Performant and fully featured [template engine](https://github.com/CloudyKit/jet)
+
+- I18n support
+
+- HTML templates binary embed support
+
 ### package `worker`
+
+- Fully featured background job processing backed by Redis
+  <details>
+    <summary>Check the features.</summary>
+
+    - Cron jobs (Work In Progress)
+    - Expiring jobs
+    - Unique jobs
+    - Scheduled jobs
+    - Error handling
+    - Middleware
+    - Responsive Web UI + Authorization + Search (Work In Progress)
+    - Strict/Weighted priority queues
+  </details>
+
+- Ready-to-use handler mock for unit test
 
 ## Getting Started
 
 ### Prerequisites
 
-* [Docker w/ Docker Compose &gt;= 19](https://www.docker.com/products/docker-desktop)
-* [Go &gt;= 1.14](https://golang.org/dl/)
-* [NodeJS &gt;= 14](https://nodejs.org/en/download/)
-* [PostgreSQL &gt;= 11](https://www.postgresql.org/download/)
-* [MySQL &gt;= 8](https://www.mysql.com/downloads/)
+* [Docker w/ Docker Compose >= 19](https://www.docker.com/products/docker-desktop)
+* [Go >= 1.14](https://golang.org/dl/)
+* [NodeJS >= 14](https://nodejs.org/en/download/)
+* [PostgreSQL >= 11](https://www.postgresql.org/download/)
+* [MySQL >= 8](https://www.mysql.com/downloads/)
 
 ### Quick Start
 
