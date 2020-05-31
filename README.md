@@ -7,11 +7,26 @@
 [![Go Doc](http://img.shields.io/badge/godoc-reference-5272B4.svg)](https://pkg.go.dev/github.com/appist/appy?tab=doc)
 [![Platform Support](https://img.shields.io/badge/platform-macos%20%7C%20linux%20%7C%20windows-blue)](https://github.com/appist/appy)
 
-An opinionated productive web framework that helps scaling business easier.
+An opinionated productive web framework that helps scaling business easier, i.e. focus on monolith first, only move to microservices with [GRPC](https://grpc.io/) later on when your team is ready.
+
+## Table Of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+  - [package `cmd`](#package-cmd)
+  - [package `mailer`](#package-mailer)
+  - [package `pack`](#package-pack)
+  - [package `record`](#package-record)
+  - [package `support`](#package-support)
+  - [package `test`](#package-test)
+  - [package `view`](#package-view)
+  - [package `worker`](#package-worker)
+- [Getting Started](#getting-started)
+- [Acknowledgement](#acknowledgement)
+- [Contribution](#contribution)
+- [License](#license)
 
 ## Overview
-
-Monolith first, only microservices with [GRPC](https://grpc.io/) later when your team is ready.
 
 <p align="center">
   <img height="450px" alt="architecture" src="./.github/assets/architecture.png" />
@@ -261,7 +276,7 @@ $ go run . start
 $ go run . build
 ```
 
-### Step 8: Tear down everything once you're done.
+#### Step 8: Tear down everything once you're done.
 
 ```bash
 $ go run . teardown
