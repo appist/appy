@@ -18,15 +18,16 @@ An opinionated productive web framework that helps scaling business easier, i.e.
   </p>
 </details>
 
-> Tips:
-> - `appy` is made as a package for your application to import without the need to install any additional binary
-> - `appy` comes with 2 build types:
->   - debug - when the code is NOT running with the binary
->   - release - when the code is running with the binary
-> - `appy` follows 12factor via `APPY_ENV` environment variable:
->   - by default, it is `development`
->   - when `APPY_ENV=development` is set, the config file is `configs/.env.development`
->   - utilise `configs/.env.<APPY_ENV>` to support multiple environments deployment
+#### Additional Notes
+
+- `appy` is made as a package for your application to import without the need to install any additional binary
+- `appy` comes with 2 build types:
+  - debug - when the code is NOT running with the binary
+  - release - when the code is running with the binary
+- `appy` follows 12factor via `APPY_ENV` environment variable:
+  - by default, it is `development`
+  - when `APPY_ENV=staging` is set, the config file is `configs/.env.staging`
+  - utilise `configs/.env.<APPY_ENV>` to support multiple environments deployment
 
 ## Table Of Contents
 
