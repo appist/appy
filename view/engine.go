@@ -96,7 +96,13 @@ func (e *Engine) assetPath(path string) string {
 			hostname = e.manifestHostname
 		}
 
-		response, err := e.httpClient.Get(hostname + manifestPath)
+		req, err := http.NewRequest("GET", hostname+manifestPath, nil)
+		if err != nil {
+			e.logger.Panic(err)
+		}
+
+		req.Header.Set("Accept", "application/json")
+		response, err := e.httpClient.Do(req)
 		if err != nil {
 			e.logger.Panic(err)
 		}
