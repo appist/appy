@@ -14,6 +14,8 @@ type I18n struct {
 	logger *Logger
 }
 
+const validateErrorPrefix = "errors.messages."
+
 // NewI18n initializes the I18n instance.
 func NewI18n(asset *Asset, config *Config, logger *Logger) *I18n {
 	languageTag := language.MustParse("en")
@@ -34,8 +36,10 @@ func NewI18n(asset *Asset, config *Config, logger *Logger) *I18n {
 	for _, fi := range fis {
 		filename := asset.Layout().Locale() + "/" + fi.Name()
 		data, _ := asset.ReadFile(filename)
-		bundle.MustParseMessageFileBytes(data, fi.Name())
+		_, _ = bundle.ParseMessageFileBytes(data, fi.Name())
 	}
+
+	addDefaultValidationErrors(bundle)
 
 	return &I18n{
 		bundle: bundle,
@@ -97,4 +101,49 @@ func (i *I18n) T(key string, args ...interface{}) string {
 	}
 
 	return msg
+}
+
+func addDefaultValidationErrors(bundle *i18n.Bundle) {
+	localizer := i18n.NewLocalizer(bundle, "en")
+	messages := map[string]*i18n.Message{
+		validateErrorPrefix + "eq": {
+			Other: "{{.Field}} must be equal to {{.ExpectedValue}} the value(number/string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "gt": {
+			Other: "{{.Field}} must be greater than {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "gte": {
+			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "len": {
+			Other: "{{.Field}} must be equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "lt": {
+			Other: "{{.Field}} must be less than {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "lte": {
+			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "max": {
+			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "min": {
+			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "ne": {
+			Other: "{{.Field}} must not be equal to {{.ExpectedValue}} the value(number/string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "required": {
+			Other: "{{.Field}} must not be blank",
+		},
+	}
+
+	for id, message := range messages {
+		_, err := localizer.LocalizeMessage(&i18n.Message{ID: id})
+
+		if _, ok := err.(*i18n.MessageNotFoundErr); ok {
+			message.ID = id
+			bundle.AddMessages(language.English, message)
+		}
+	}
 }

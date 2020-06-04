@@ -11,13 +11,15 @@ import (
 type Engine struct {
 	databases map[string]DBer
 	errors    []error
+	i18n      *support.I18n
 	logger    *support.Logger
 }
 
 // NewEngine initializes the engine instance to manage the databases.
-func NewEngine(logger *support.Logger) *Engine {
+func NewEngine(logger *support.Logger, i18n *support.I18n) *Engine {
 	engine := &Engine{
 		databases: map[string]DBer{},
+		i18n:      i18n,
 		logger:    logger,
 	}
 

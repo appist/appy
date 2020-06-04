@@ -30,7 +30,7 @@ func (s *loggerSuite) SetupTest() {
 	baseLogger, buffer, writer := support.NewTestLogger()
 	asset := support.NewAsset(nil, "")
 	config := support.NewConfig(asset, baseLogger)
-	dbManager := record.NewEngine(baseLogger)
+	dbManager := record.NewEngine(baseLogger, nil)
 	worker := NewEngine(asset, config, dbManager, baseLogger)
 
 	s.buffer = buffer

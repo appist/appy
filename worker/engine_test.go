@@ -35,7 +35,7 @@ func (s *engineSuite) SetupTest() {
 	s.logger, s.buffer, s.writer = support.NewTestLogger()
 	s.asset = support.NewAsset(nil, "")
 	s.config = support.NewConfig(s.asset, s.logger)
-	s.dbManager = record.NewEngine(s.logger)
+	s.dbManager = record.NewEngine(s.logger, nil)
 }
 
 func (s *engineSuite) TearDownTest() {
