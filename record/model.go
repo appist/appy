@@ -1378,7 +1378,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 
 				err = ginValidator.Struct(elem.Interface())
 				if err != nil {
-					errs = append(errs, m.convertValidationErrors(err, opt)...)
+					errs = append(errs, m.i18n.GetValidationErrors(err, opt.Locale)...)
 				}
 
 				err = m.handleCallback(elem, "AfterValidate")
@@ -1407,7 +1407,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 
 			err = ginValidator.Struct(elem.Interface())
 			if err != nil {
-				return int64(0), m.convertValidationErrors(err, opt)
+				return int64(0), m.i18n.GetValidationErrors(err, opt.Locale)
 			}
 
 			err = m.handleCallback(elem, "AfterValidate")

@@ -1,7 +1,11 @@
 package support
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/BurntSushi/toml"
+	"github.com/go-playground/validator/v10"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v2"
@@ -36,7 +40,7 @@ func NewI18n(asset *Asset, config *Config, logger *Logger) *I18n {
 	for _, fi := range fis {
 		filename := asset.Layout().Locale() + "/" + fi.Name()
 		data, _ := asset.ReadFile(filename)
-		_, _ = bundle.ParseMessageFileBytes(data, fi.Name())
+		bundle.MustParseMessageFileBytes(data, fi.Name())
 	}
 
 	addDefaultValidationErrors(bundle)
@@ -103,6 +107,53 @@ func (i *I18n) T(key string, args ...interface{}) string {
 	return msg
 }
 
+func (i *I18n) GetValidationErrors(err error, locale string) []error {
+	errs := []error{}
+	verrs := err.(validator.ValidationErrors)
+
+	for _, verr := range verrs {
+		var (
+			field, message                                               string
+			fieldKeyBuilder, generalKeyBuilder, modelAttributeKeyBuilder strings.Builder
+		)
+
+		args := []interface{}{}
+		if locale != "" {
+			args = append(args, locale)
+		}
+
+		fieldKeyBuilder.WriteString("models.")
+		fieldKeyBuilder.WriteString(verr.StructNamespace())
+
+		field = i.T(fieldKeyBuilder.String(), args...)
+		if field == "" {
+			field = verr.StructNamespace()
+		}
+
+		args = append(args, H{
+			"ExactValue":    verr.Value(),
+			"ExpectedValue": verr.Param(),
+			"Field":         field,
+		})
+
+		modelAttributeKeyBuilder.WriteString("errors.models.")
+		modelAttributeKeyBuilder.WriteString(verr.StructNamespace())
+		modelAttributeKeyBuilder.WriteString(".")
+		modelAttributeKeyBuilder.WriteString(verr.Tag())
+
+		message = i.T(modelAttributeKeyBuilder.String(), args...)
+		if message == "" {
+			generalKeyBuilder.WriteString("errors.messages.")
+			generalKeyBuilder.WriteString(verr.Tag())
+			message = i.T(generalKeyBuilder.String(), args...)
+		}
+
+		errs = append(errs, errors.New(message))
+	}
+
+	return errs
+}
+
 func addDefaultValidationErrors(bundle *i18n.Bundle) {
 	localizer := i18n.NewLocalizer(bundle, "en")
 	messages := map[string]*i18n.Message{
@@ -164,7 +215,7 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 			Other: "{{.Field}} must end with '{{.ExpectedValue}}'",
 		},
 		validateErrorPrefix + "eq": {
-			Other: "{{.Field}} must be equal to {{.ExpectedValue}} the value(number/string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must be equal to {{.ExpectedValue}} in value(number/string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "eth_addr": {
 			Other: "{{.Field}} must be a valid ethereum address",
@@ -185,10 +236,10 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 			Other: "{{.Field}} must be a valid FQDN",
 		},
 		validateErrorPrefix + "gt": {
-			Other: "{{.Field}} must be greater than {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must be greater than {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "gte": {
-			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "hexadecimal": {
 			Other: "{{.Field}} must be a valid hexadecimal",
@@ -245,31 +296,31 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 			Other: "{{.Field}} must be a valid latitude",
 		},
 		validateErrorPrefix + "len": {
-			Other: "{{.Field}} must be equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must be equal to {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "longitude": {
 			Other: "{{.Field}} must be a valid longitude",
 		},
 		validateErrorPrefix + "lt": {
-			Other: "{{.Field}} must be less than {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must be less than {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "lte": {
-			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "mac": {
 			Other: "{{.Field}} must be a valid MAC address",
 		},
 		validateErrorPrefix + "max": {
-			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "min": {
-			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} the value(number), length(string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "multibyte": {
 			Other: "{{.Field}} must contain 1 or more multi-byte characters",
 		},
 		validateErrorPrefix + "ne": {
-			Other: "{{.Field}} must not be equal to {{.ExpectedValue}} the value(number/string) or number of items(arrays/slices/maps)",
+			Other: "{{.Field}} must not be equal to {{.ExpectedValue}} in value(number/string) or number of items(arrays/slices/maps)",
 		},
 		validateErrorPrefix + "numeric": {
 			Other: "{{.Field}} must be a valid numeric",
