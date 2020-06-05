@@ -1,0 +1,14 @@
+models:
+  user2:
+    Password: "password"
+    PasswordConfirmation: "password confirmation"
+
+errors:
+  models:
+    user2:
+      PasswordConfirmation:
+        eqfield: "{{.Field}} ({{.ExactValue}}) must be equal to {{.ExpectedValue}}"
+
+  messages:
+    max: "{{.Field}} cannot be more than {{.ExpectedValue}}"
+    min: "{{.Field}} cannot be less than {{.ExpectedValue}}"

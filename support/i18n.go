@@ -113,8 +113,8 @@ func (i *I18n) GetValidationErrors(err error, locale string) []error {
 
 	for _, verr := range verrs {
 		var (
-			field, message                                               string
-			fieldKeyBuilder, generalKeyBuilder, modelAttributeKeyBuilder strings.Builder
+			field, message                                                                string
+			fieldKeyBuilder, generalKeyBuilder, modelAttributeKeyBuilder, paramKeyBuilder strings.Builder
 		)
 
 		args := []interface{}{}
@@ -130,9 +130,26 @@ func (i *I18n) GetValidationErrors(err error, locale string) []error {
 			field = verr.StructNamespace()
 		}
 
+		param := verr.Param()
+		if ArrayContains([]string{"eqfield"}, verr.Tag()) {
+			ns := strings.Split(verr.StructNamespace(), ".")
+
+			if len(ns) > 1 {
+				paramKeyBuilder.WriteString("models.")
+				paramKeyBuilder.WriteString(ns[0])
+				paramKeyBuilder.WriteString(".")
+				paramKeyBuilder.WriteString(param)
+				transParam := i.T("models."+ns[0]+"."+param, args...)
+
+				if transParam != "" {
+					param = transParam
+				}
+			}
+		}
+
 		args = append(args, H{
 			"ExactValue":    verr.Value(),
-			"ExpectedValue": verr.Param(),
+			"ExpectedValue": param,
 			"Field":         field,
 		})
 
@@ -196,6 +213,9 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 		validateErrorPrefix + "contains": {
 			Other: "{{.Field}} must contain '{{.ExpectedValue}}'",
 		},
+		validateErrorPrefix + "containsfield": {
+			Other: "{{.Field}} must contain {{.ExpectedValue}} field's value",
+		},
 		validateErrorPrefix + "containsany": {
 			Other: "{{.Field}} must contain 1 of the Unicode code points in '{{.ExpectedValue}}'",
 		},
@@ -217,11 +237,20 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 		validateErrorPrefix + "eq": {
 			Other: "{{.Field}} must be equal to {{.ExpectedValue}} in value(number/string) or number of items(arrays/slices/maps)",
 		},
+		validateErrorPrefix + "eqfield": {
+			Other: "{{.Field}} must be equal to {{.ExpectedValue}} field",
+		},
+		validateErrorPrefix + "eqcsfield": {
+			Other: "{{.Field}} must be equal to {{.ExpectedValue}} field",
+		},
 		validateErrorPrefix + "eth_addr": {
 			Other: "{{.Field}} must be a valid ethereum address",
 		},
 		validateErrorPrefix + "excludes": {
 			Other: "{{.Field}} must not contain '{{.ExpectedValue}}'",
+		},
+		validateErrorPrefix + "excludesfield": {
+			Other: "{{.Field}} must not contain {{.ExpectedValue}} field's value",
 		},
 		validateErrorPrefix + "excludesall": {
 			Other: "{{.Field}} must not contain any of the Unicode code points in '{{.ExpectedValue}}'",
@@ -238,8 +267,20 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 		validateErrorPrefix + "gt": {
 			Other: "{{.Field}} must be greater than {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
+		validateErrorPrefix + "gtfield": {
+			Other: "{{.Field}} must be greater than {{.ExpectedValue}} field",
+		},
+		validateErrorPrefix + "gtcsfield": {
+			Other: "{{.Field}} must be greater than {{.ExpectedValue}} field",
+		},
 		validateErrorPrefix + "gte": {
 			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "gtefield": {
+			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} field",
+		},
+		validateErrorPrefix + "gtecsfield": {
+			Other: "{{.Field}} must be greater than or equal to {{.ExpectedValue}} field",
 		},
 		validateErrorPrefix + "hexadecimal": {
 			Other: "{{.Field}} must be a valid hexadecimal",
@@ -304,8 +345,20 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 		validateErrorPrefix + "lt": {
 			Other: "{{.Field}} must be less than {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
 		},
+		validateErrorPrefix + "ltfield": {
+			Other: "{{.Field}} must be less than {{.ExpectedValue}} field",
+		},
+		validateErrorPrefix + "ltcsfield": {
+			Other: "{{.Field}} must be less than {{.ExpectedValue}} field",
+		},
 		validateErrorPrefix + "lte": {
 			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} in value(number), length(string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "ltefield": {
+			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} field",
+		},
+		validateErrorPrefix + "ltecsfield": {
+			Other: "{{.Field}} must be less than or equal to {{.ExpectedValue}} field",
 		},
 		validateErrorPrefix + "mac": {
 			Other: "{{.Field}} must be a valid MAC address",
@@ -321,6 +374,12 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 		},
 		validateErrorPrefix + "ne": {
 			Other: "{{.Field}} must not be equal to {{.ExpectedValue}} in value(number/string) or number of items(arrays/slices/maps)",
+		},
+		validateErrorPrefix + "nefield": {
+			Other: "{{.Field}} must not be equal to {{.ExpectedValue}} field",
+		},
+		validateErrorPrefix + "necsfield": {
+			Other: "{{.Field}} must not be equal to {{.ExpectedValue}} field",
 		},
 		validateErrorPrefix + "numeric": {
 			Other: "{{.Field}} must be a valid numeric",
@@ -363,6 +422,9 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 		},
 		validateErrorPrefix + "udp6_addr": {
 			Other: "{{.Field}} must be a valid resolvable v6 UDP address",
+		},
+		validateErrorPrefix + "unique": {
+			Other: "the values in {{.Field}} must be unique",
 		},
 		validateErrorPrefix + "unix_addr": {
 			Other: "{{.Field}} must be a valid Unix address",

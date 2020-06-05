@@ -390,6 +390,7 @@ func (s *modelSuite) TestCallback() {
 
 			count, errs := s.model(&users).Create().Exec()
 			s.Equal(int64(10), count)
+			s.Nil(errs)
 
 			count, errs = s.model(&users).Delete().Exec()
 			s.Equal(int64(0), count)
@@ -626,6 +627,7 @@ func (s *modelSuite) TestCallbackTx() {
 
 			count, errs := model.Create().Exec()
 			s.Equal(int64(1), count)
+			s.Nil(errs)
 
 			user.Username = "foo"
 
