@@ -107,7 +107,7 @@ func (i *I18n) T(key string, args ...interface{}) string {
 	return msg
 }
 
-// GetValidationErrors converts the error into a list of translated validation
+// ValidationErrors converts the error into a list of translated validation
 // errors.
 func (i *I18n) ValidationErrors(err error, locale string) []error {
 	errs := []error{}
