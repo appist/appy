@@ -2569,14 +2569,17 @@ func (s *modelSuite) TestValidate() {
 
 			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
 			s.EqualError(errs[0], "password confirmation (foobar) must be equal to password")
 
 			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-CN"})
 			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
 			s.EqualError(errs[0], "确认密码(foobar)必须与密码相同")
 
 			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-TW"})
 			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
 			s.EqualError(errs[0], "確認密碼(foobar)必須與密碼相同")
 
 			users := []user2{
@@ -2586,16 +2589,19 @@ func (s *modelSuite) TestValidate() {
 
 			count, errs = s.model(&users).Create().Exec()
 			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
 			s.EqualError(errs[0], "password confirmation (bar) must be equal to password")
 			s.EqualError(errs[1], "password confirmation (foo) must be equal to password")
 
 			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-CN"})
 			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
 			s.EqualError(errs[0], "确认密码(bar)必须与密码相同")
 			s.EqualError(errs[1], "确认密码(foo)必须与密码相同")
 
 			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-TW"})
 			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
 			s.EqualError(errs[0], "確認密碼(bar)必須與密碼相同")
 			s.EqualError(errs[1], "確認密碼(foo)必須與密碼相同")
 		}
@@ -2610,14 +2616,17 @@ func (s *modelSuite) TestValidate() {
 
 			count, errs := s.model(&user).Create().Exec()
 			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
 			s.EqualError(errs[0], "user3.Username cannot be less than 5")
 
 			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-CN"})
 			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
 			s.EqualError(errs[0], "user3.Username不能小于5")
 
 			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-TW"})
 			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
 			s.EqualError(errs[0], "user3.Username不能小於5")
 
 			users := []user3{
@@ -2627,16 +2636,19 @@ func (s *modelSuite) TestValidate() {
 
 			count, errs = s.model(&users).Create().Exec()
 			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
 			s.EqualError(errs[0], "user3.Username cannot be less than 5")
 			s.EqualError(errs[1], "user3.Username cannot be more than 8")
 
 			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-CN"})
 			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
 			s.EqualError(errs[0], "user3.Username不能小于5")
 			s.EqualError(errs[1], "user3.Username不能大于8")
 
 			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-TW"})
 			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
 			s.EqualError(errs[0], "user3.Username不能小於5")
 			s.EqualError(errs[1], "user3.Username不能大於8")
 		}
