@@ -22,7 +22,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.3.0
 	github.com/go-redis/redis v6.15.8+incompatible
-	github.com/go-redis/redis/v7 v7.3.0
+	github.com/go-redis/redis/v7 v7.4.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/gorilla/context v1.1.1
@@ -50,7 +50,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.6.0
+	github.com/stretchr/testify v1.6.1
 	github.com/vektah/gqlparser/v2 v2.0.1
 	go.uber.org/zap v1.15.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
