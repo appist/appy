@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/appist/appy/test"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 )
 
 type i18nSuite struct {
@@ -79,6 +81,74 @@ func (s *i18nSuite) TestTWithReleaseBuild() {
 	s.Equal("嗨, tester! 您有0則訊息。", i18n.T("body.message", 0, H{"Name": "tester"}, "zh-TW"))
 	s.Equal("嗨, tester! 您有1則訊息。", i18n.T("body.message", 1, H{"Name": "tester"}, "zh-TW"))
 	s.Equal("嗨, tester! 您有2則訊息。", i18n.T("body.message", 2, H{"Name": "tester"}, "zh-TW"))
+}
+
+func (s *i18nSuite) TestValidationErrors() {
+	s.asset = NewAsset(nil, "../record/testdata")
+	s.config = NewConfig(s.asset, s.logger)
+	i18n := NewI18n(s.asset, s.config, s.logger)
+	validator, _ := binding.Validator.Engine().(*validator.Validate)
+
+	{
+		type user1 struct {
+			Email string `db:"email" binding:"required"`
+		}
+
+		user := user1{}
+
+		errs := i18n.ValidationErrors(validator.Struct(user), "")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "user1.Email must not be blank")
+
+		errs = i18n.ValidationErrors(validator.Struct(user), "zh-CN")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "user1.Email must not be blank")
+
+		errs = i18n.ValidationErrors(validator.Struct(user), "zh-TW")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "user1.Email must not be blank")
+	}
+
+	{
+		type user2 struct {
+			Password             string `db:"password"`
+			PasswordConfirmation string `db:"password_confirmation" binding:"eqfield=Password"`
+		}
+
+		user := user2{Password: "foo", PasswordConfirmation: "foobar"}
+
+		errs := i18n.ValidationErrors(validator.Struct(user), "")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "password confirmation (foobar) must be equal to password")
+
+		errs = i18n.ValidationErrors(validator.Struct(user), "zh-CN")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "确认密码(foobar)必须与密码相同")
+
+		errs = i18n.ValidationErrors(validator.Struct(user), "zh-TW")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "確認密碼(foobar)必須與密碼相同")
+	}
+
+	{
+		type user3 struct {
+			Username string `db:"age" binding:"min=5,max=8"`
+		}
+
+		user := user3{Username: "foo"}
+
+		errs := i18n.ValidationErrors(validator.Struct(user), "")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "user3.Username cannot be less than 5")
+
+		errs = i18n.ValidationErrors(validator.Struct(user), "zh-CN")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "user3.Username不能小于5")
+
+		errs = i18n.ValidationErrors(validator.Struct(user), "zh-TW")
+		s.Equal(1, len(errs))
+		s.EqualError(errs[0], "user3.Username不能小於5")
+	}
 }
 
 func TestI18nSuite(t *testing.T) {

@@ -66,7 +66,7 @@ func newDB() DBer {
 	}()
 
 	logger, _, _ := support.NewTestLogger()
-	dbManager := NewEngine(logger)
+	dbManager := NewEngine(logger, nil)
 
 	for _, db := range dbManager.Databases() {
 		for true {
@@ -116,7 +116,7 @@ func newOrmDBManager() *Engine {
 	}()
 
 	logger, _, _ := support.NewTestLogger()
-	dbManager := NewEngine(logger)
+	dbManager := NewEngine(logger, nil)
 
 	for _, db := range dbManager.Databases() {
 		for true {

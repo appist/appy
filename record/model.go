@@ -51,6 +51,7 @@ type (
 		attrs                                                                                                                   map[string]*modelAttr
 		dest, scanDest                                                                                                          interface{}
 		destKind                                                                                                                reflect.Kind
+		i18n                                                                                                                    *support.I18n
 		masters, replicas                                                                                                       []DBer
 		primaryKeys                                                                                                             []string
 		queryBuilder                                                                                                            strings.Builder
@@ -69,6 +70,10 @@ type (
 	ExecOption struct {
 		// Context can be used to set the query timeout.
 		Context context.Context
+
+		// Locale indicates the language translation to use for validation error
+		// messages.
+		Locale string
 
 		// UseReplica indicates if the query should use replica. Note that there
 		// could be replica lag which won't allow recent inserted/updated data to
@@ -116,6 +121,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 		attrs:         map[string]*modelAttr{},
 		dest:          dest,
 		destKind:      destKind,
+		i18n:          dbManager.i18n,
 		masters:       []DBer{},
 		replicas:      []DBer{},
 		autoIncrement: "",
@@ -1372,7 +1378,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 
 				err = ginValidator.Struct(elem.Interface())
 				if err != nil {
-					errs = append(errs, err)
+					errs = append(errs, m.i18n.ValidationErrors(err, opt.Locale)...)
 				}
 
 				err = m.handleCallback(elem, "AfterValidate")
@@ -1401,7 +1407,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 
 			err = ginValidator.Struct(elem.Interface())
 			if err != nil {
-				return int64(0), []error{err}
+				return int64(0), m.i18n.ValidationErrors(err, opt.Locale)
 			}
 
 			err = m.handleCallback(elem, "AfterValidate")

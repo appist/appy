@@ -20,6 +20,7 @@ type (
 		test.Suite
 		buffer    *bytes.Buffer
 		dbManager *Engine
+		i18n      *support.I18n
 		logger    *support.Logger
 		writer    *bufio.Writer
 	}
@@ -134,6 +135,9 @@ type (
 
 func (s *modelSuite) SetupTest() {
 	s.logger, s.buffer, s.writer = support.NewTestLogger()
+	asset := support.NewAsset(nil, "testdata")
+	config := support.NewConfig(asset, s.logger)
+	s.i18n = support.NewI18n(asset, config, s.logger)
 }
 
 func (s *modelSuite) TearDownTest() {
@@ -293,7 +297,7 @@ CREATE TABLE IF NOT EXISTS members (
 `
 	}
 
-	s.dbManager = NewEngine(s.logger)
+	s.dbManager = NewEngine(s.logger, s.i18n)
 	db := s.dbManager.DB("primary")
 
 	err := db.DropDB(database)
@@ -1477,7 +1481,7 @@ func (s *modelSuite) TestDeleteAllTx() {
 
 			count, errs := userModel.DeleteAll().Exec()
 			s.Equal(int64(1), count)
-			s.Nil(err)
+			s.Nil(errs)
 
 			errs = userModel.Rollback()
 			s.Nil(errs)
@@ -2499,6 +2503,154 @@ func (s *modelSuite) TestUpdateAllTx() {
 			count, errs = s.model(&users).Find().Exec()
 			s.Equal(int64(0), count)
 			s.Nil(errs)
+		}
+	}
+}
+
+func (s *modelSuite) TestValidate() {
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_model_validate_"+adapter)
+
+		{
+			type user1 struct {
+				Model `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+				Email string `db:"email" binding:"required"`
+			}
+
+			user := user1{}
+
+			count, errs := s.model(&user).Create().Exec()
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "user1.Email must not be blank")
+
+			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-CN"})
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "user1.Email must not be blank")
+
+			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-TW"})
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "user1.Email must not be blank")
+
+			users := []user1{
+				{},
+				{},
+			}
+
+			count, errs = s.model(&users).Create().Exec()
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "user1.Email must not be blank")
+			s.EqualError(errs[1], "user1.Email must not be blank")
+
+			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-CN"})
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "user1.Email must not be blank")
+			s.EqualError(errs[1], "user1.Email must not be blank")
+
+			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-TW"})
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "user1.Email must not be blank")
+			s.EqualError(errs[1], "user1.Email must not be blank")
+		}
+
+		{
+			type user2 struct {
+				Model                `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+				Password             string `db:"password"`
+				PasswordConfirmation string `db:"password_confirmation" binding:"eqfield=Password"`
+			}
+
+			user := user2{Password: "foo", PasswordConfirmation: "foobar"}
+
+			count, errs := s.model(&user).Create().Exec()
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "password confirmation (foobar) must be equal to password")
+
+			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-CN"})
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "确认密码(foobar)必须与密码相同")
+
+			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-TW"})
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "確認密碼(foobar)必須與密碼相同")
+
+			users := []user2{
+				{Password: "foo", PasswordConfirmation: "bar"},
+				{Password: "bar", PasswordConfirmation: "foo"},
+			}
+
+			count, errs = s.model(&users).Create().Exec()
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "password confirmation (bar) must be equal to password")
+			s.EqualError(errs[1], "password confirmation (foo) must be equal to password")
+
+			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-CN"})
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "确认密码(bar)必须与密码相同")
+			s.EqualError(errs[1], "确认密码(foo)必须与密码相同")
+
+			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-TW"})
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "確認密碼(bar)必須與密碼相同")
+			s.EqualError(errs[1], "確認密碼(foo)必須與密碼相同")
+		}
+
+		{
+			type user3 struct {
+				Model    `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+				Username string `db:"age" binding:"min=5,max=8"`
+			}
+
+			user := user3{Username: "foo"}
+
+			count, errs := s.model(&user).Create().Exec()
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "user3.Username cannot be less than 5")
+
+			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-CN"})
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "user3.Username不能小于5")
+
+			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-TW"})
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+			s.EqualError(errs[0], "user3.Username不能小於5")
+
+			users := []user3{
+				{Username: "foo"},
+				{Username: "foofoobar"},
+			}
+
+			count, errs = s.model(&users).Create().Exec()
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "user3.Username cannot be less than 5")
+			s.EqualError(errs[1], "user3.Username cannot be more than 8")
+
+			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-CN"})
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "user3.Username不能小于5")
+			s.EqualError(errs[1], "user3.Username不能大于8")
+
+			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-TW"})
+			s.Equal(int64(0), count)
+			s.Equal(2, len(errs))
+			s.EqualError(errs[0], "user3.Username不能小於5")
+			s.EqualError(errs[1], "user3.Username不能大於8")
 		}
 	}
 }

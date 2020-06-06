@@ -55,7 +55,7 @@ CREATE TABLE users (
 `
 	}
 
-	s.dbManager = NewEngine(s.logger)
+	s.dbManager = NewEngine(s.logger, nil)
 	s.db = s.dbManager.DB("primary")
 
 	err := s.db.DropDB(database)

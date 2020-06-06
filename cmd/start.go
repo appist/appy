@@ -37,7 +37,7 @@ var (
 	terminalReadyNotifier chan bool
 	quitNotifier          chan os.Signal
 	watcherPollInterval   time.Duration = 1
-	watcherRegex                        = regexp.MustCompile(`.(development|env|go|gql|graphql|ini|json|html|production|test|toml|txt|yml)$`)
+	watcherRegex                        = regexp.MustCompile(`.(development|env|go|gql|graphql|ini|json|html|production|staging|test|toml|txt|yml)$`)
 	colorRegex                          = regexp.MustCompile(`[\x1b|\033]\[[0-9;]*[0-9]+m[^\ .]*[\x1b|\033]\[[0-9;]*[0-9]+m`)
 	wordRegex                           = regexp.MustCompile(`[\x1b|\033]\[[0-9;]*[0-9]+m(.*)[\x1b|\033]\[[0-9;]*[0-9]+m`)
 )
@@ -292,7 +292,6 @@ func initTerminal(term *terminal) {
 func initWatcher(server *pack.Server, term *terminal) {
 	wd, _ := os.Getwd()
 	paths := []string{
-		wd + "/assets",
 		wd + "/cmd",
 		wd + "/configs",
 		wd + "/db",

@@ -1,0 +1,14 @@
+models:
+  user2:
+    Password: "密碼"
+    PasswordConfirmation: "確認密碼"
+
+errors:
+  models:
+    user2:
+      PasswordConfirmation:
+        eqfield: "{{.Field}}({{.ExactValue}})必須與{{.ExpectedValue}}相同"
+
+  messages:
+    max: "{{.Field}}不能大於{{.ExpectedValue}}"
+    min: "{{.Field}}不能小於{{.ExpectedValue}}"

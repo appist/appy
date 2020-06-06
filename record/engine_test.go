@@ -21,7 +21,7 @@ func (s *engineSuite) TestDBManagerWithBadDBConfig() {
 	os.Setenv("DB_URI_PRIMARY", "0.0.0.0:13306/appy")
 	defer os.Unsetenv("DB_URI_PRIMARY")
 
-	engine := NewEngine(s.logger)
+	engine := NewEngine(s.logger, nil)
 	s.Equal(1, len(engine.Errors()))
 }
 
@@ -33,7 +33,7 @@ func (s *engineSuite) TestDBManagerWithValidDBConfig() {
 		os.Unsetenv("DB_URI_PRIMARY_REPLICA")
 	}()
 
-	engine := NewEngine(s.logger)
+	engine := NewEngine(s.logger, nil)
 	s.Equal(0, len(engine.Errors()))
 	s.Equal(2, len(engine.Databases()))
 	s.Nil(engine.DB("foobar"))
