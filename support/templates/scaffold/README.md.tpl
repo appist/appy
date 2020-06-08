@@ -27,7 +27,7 @@ export PATH="$(go env GOPATH)/bin:$PATH"
 
 ```sh
 // Install backend/frontend project dependencies
-$ make install && npm install
+$ go mod download && npm install
 
 // Run dc:up/db:create/db:schema:load/db:seed to setup the datastore with seed data
 $ go run . setup

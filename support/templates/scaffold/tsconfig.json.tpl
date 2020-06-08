@@ -1,19 +1,20 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./web/src",
+    "baseUrl": "web/src",
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
     "isolatedModules": true,
+    "lib": ["dom", "esnext", "es6"],
     "module": "esnext",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "rootDir": "./web/src",
+    "rootDir": "web/src",
     "sourceMap": true,
     "strict": true,
     "strictBindCallApply": true,
@@ -21,14 +22,13 @@
     "strictPropertyInitialization": true,
     "strictNullChecks": true,
     "target": "esnext",
-    "types": ["jest", "node"],
-    "typeRoots": ["node_modules/@types", "web/src/types"],
+    "types": ["jest", "node", "@pyoner/svelte-types"],
+    "typeRoots": ["node_modules/@types", "web/src/typings"],
     "paths": {
       "@assets": ["../../assets"],
       "@": ["*"]
-    },
-    "lib": ["dom", "esnext", "es6"]
+    }
   },
-  "include": ["web/src/**/*.ts", "web/src/**/*.tsx", "web/src/**/*.svelte"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "include": ["web/src/**/*"]
 }

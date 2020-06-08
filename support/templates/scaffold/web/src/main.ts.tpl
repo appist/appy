@@ -9,7 +9,7 @@ const replaceContents = (node: HTMLElement | null): HTMLElement | null => {
 };
 
 const initApp = async () => {
-  await initI18n();
+  initI18n();
 
   new App({
     target: replaceContents(document.getElementById("app")) || new HTMLElement(),

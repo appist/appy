@@ -71,7 +71,7 @@ func (s *engineSuite) TestSetGlobalFuncs() {
 func (s *engineSuite) TestAssetPathWithDebugBuild() {
 	{
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			s.Equal("/manifest.json", req.URL.String())
+			s.Equal("/assets-manifest.json", req.URL.String())
 			w.Write([]byte(`{"/images/a.png":"/images/a.contenthash.png"}`))
 		}))
 		defer server.Close()
@@ -86,7 +86,7 @@ func (s *engineSuite) TestAssetPathWithDebugBuild() {
 
 	{
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			s.Equal("/manifest.json", req.URL.String())
+			s.Equal("/assets-manifest.json", req.URL.String())
 			w.Write([]byte(`not a json`))
 		}))
 		s.engine.httpClient = server.Client()
@@ -98,7 +98,7 @@ func (s *engineSuite) TestAssetPathWithDebugBuild() {
 	{
 		s.config.HTTPSSLEnabled = true
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			s.Equal("/manifest.json", req.URL.String())
+			s.Equal("/assets-manifest.json", req.URL.String())
 			w.Write([]byte(`{"/images/a.png":"/images/a.contenthash.png"}`))
 		}))
 

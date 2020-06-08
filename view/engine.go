@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	manifestPath = "/manifest.json"
+	assetsManifestPath = "/assets-manifest.json"
 )
 
 // Engine renders the view template.
@@ -96,7 +96,7 @@ func (e *Engine) assetPath(path string) string {
 			hostname = e.manifestHostname
 		}
 
-		req, err := http.NewRequest("GET", hostname+manifestPath, nil)
+		req, err := http.NewRequest("GET", hostname+assetsManifestPath, nil)
 		if err != nil {
 			e.logger.Panic(err)
 		}
@@ -110,7 +110,7 @@ func (e *Engine) assetPath(path string) string {
 
 		data, _ = ioutil.ReadAll(response.Body)
 	} else {
-		data, err = e.asset.ReadFile(manifestPath)
+		data, err = e.asset.ReadFile(assetsManifestPath)
 
 		if err != nil {
 			e.logger.Panic(err)

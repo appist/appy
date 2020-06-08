@@ -92,7 +92,7 @@ func Scaffold(opt ScaffoldOption) error {
 			}
 
 			return tpl.Execute(file, map[string]string{
-				"assetWelcomeCSS":         "{{assetPath(`styles/welcome.css`)}}",
+				"assetWelcomeCSS":         "{{assetPath(`/styles/welcome.css`)}}",
 				"blockHead":               "{{block head()}}",
 				"blockBody":               "{{block body()}}",
 				"blockEnd":                "{{end}}",
