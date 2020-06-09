@@ -47,7 +47,6 @@ func (s *modelAssocSuite) setupDB(adapter, database string) {
 	switch adapter {
 	case "mysql":
 		os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13306/%s?multiStatements=true&parseTime=true", database))
-		os.Setenv("DB_URI_PRIMARY_REPLICA", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13307/%s?multiStatements=true&parseTime=true", database))
 		os.Setenv("DB_URI_REPLICA_PRIMARY_REPLICA", "true")
 		defer func() {
 			os.Unsetenv("DB_URI_PRIMARY")
