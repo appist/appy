@@ -217,6 +217,15 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 				model.softDeleteColumn = dbColumn
 			}
 
+			switch field.Tag.Get("association") {
+			case "belongsTo":
+			case "hasOne":
+			case "hasOneThrough":
+			case "hasMany":
+			case "hasManyThrough":
+			case "hasAndBelongsToMany":
+			}
+
 			model.attrs[dbColumn] = &attr
 		}
 	}
