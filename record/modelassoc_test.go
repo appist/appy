@@ -10,6 +10,7 @@ import (
 
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
+	"github.com/bxcodec/faker/v3"
 )
 
 type (
@@ -57,7 +58,7 @@ func (s *modelAssocSuite) setupDB(adapter, database string) {
 		query = `
 CREATE TABLE IF NOT EXISTS authors (
 	id INT AUTO_INCREMENT,
-	name VARCHAR UNIQUE NOT NULL,
+	name VARCHAR(255) UNIQUE NOT NULL,
 	created_at TIMESTAMP,
 	updated_at TIMESTAMP,
 	PRIMARY KEY (id)
@@ -66,7 +67,7 @@ CREATE TABLE IF NOT EXISTS authors (
 CREATE TABLE IF NOT EXISTS books (
 	id INT AUTO_INCREMENT,
 	author_id INT,
-	name VARCHAR UNIQUE NOT NULL,
+	name VARCHAR(255) UNIQUE NOT NULL,
 	created_at TIMESTAMP,
 	updated_at TIMESTAMP,
 	PRIMARY KEY (id)
@@ -85,7 +86,7 @@ CREATE TABLE IF NOT EXISTS books (
 		query = `
 CREATE TABLE IF NOT EXISTS authors (
 	id SERIAL PRIMARY KEY,
-	name VARCHAR UNIQUE NOT NULL,
+	name VARCHAR(255) UNIQUE NOT NULL,
 	created_at TIMESTAMP,
 	updated_at TIMESTAMP
 );
@@ -93,7 +94,7 @@ CREATE TABLE IF NOT EXISTS authors (
 CREATE TABLE IF NOT EXISTS books (
 	id SERIAL PRIMARY KEY,
 	author_id INT,
-	name VARCHAR UNIQUE NOT NULL,
+	name VARCHAR(255) UNIQUE NOT NULL,
 	created_at TIMESTAMP,
 	updated_at TIMESTAMP
 );
@@ -128,25 +129,32 @@ CREATE TABLE IF NOT EXISTS books (
 }
 
 func (s *modelAssocSuite) TestBelongsTo() {
-	type author struct {
-		Model     `masters:"primary" faker:"-"`
+	type authorM struct {
+		Model     `masters:"primary" autoIncrement:"id" faker:"-"`
 		ID        support.ZInt64 `faker:"-"`
 		Name      support.ZString
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
 		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
 	}
 
-	type book struct {
-		Model     `masters:"primary" faker:"-"`
+	type bookM struct {
+		Model     `masters:"primary" autoIncrement:"id" faker:"-"`
 		ID        support.ZInt64 `faker:"-"`
 		Name      support.ZString
-		Author    author        `db:"author_id" association:"belongsTo" faker:"-"`
+		Author    authorM       `db:"author_id" association:"belongsTo" faker:"-"`
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
 		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
 	}
 
 	for _, adapter := range support.SupportedDBAdapters {
 		s.setupDB(adapter, "test_belongs_to_with_"+adapter)
+
+		book := bookM{}
+		s.Nil(faker.FakeData(&book))
+
+		count, err := s.model(&book).Create().Exec()
+		s.Nil(err)
+		s.Equal(int64(1), count)
 	}
 }
 

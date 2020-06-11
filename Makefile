@@ -39,7 +39,7 @@ restart:
 
 test:
 	mkdir -p tmp
-	go test -covermode=atomic -coverprofile=tmp/coverage.out -race -failfast -v ./...
+	go test -covermode=atomic -coverprofile=tmp/coverage.out -race -failfast -v -run=TestModelAssocSuite ./record
 
 testcov:
 	go tool cover -html=tmp/coverage.out

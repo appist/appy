@@ -48,6 +48,7 @@ type (
 	// Model is the layer that represents business data and logic.
 	Model struct {
 		adapter, autoIncrement, tableName, action, group, having, join, order, selectColumns, timezone, where, softDeleteColumn string
+		belongsTo, hasOne, hasMany                                                                                              []modelAssoc
 		attrs                                                                                                                   map[string]*modelAttr
 		dest, scanDest                                                                                                          interface{}
 		destKind                                                                                                                reflect.Kind
@@ -83,6 +84,12 @@ type (
 		// SkipValidate indicates if the validation callbacks should be skipped.
 		// By default, it is false.
 		SkipValidate bool
+	}
+
+	modelAssoc struct {
+		optional, touch                                      bool
+		as, dependent, foreignKey, kind, through, primaryKey string
+		child, parent                                        reflect.Type
 	}
 
 	modelAttr struct {
@@ -122,6 +129,9 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 
 	model := &Model{
 		adapter:       "",
+		belongsTo:     []modelAssoc{},
+		hasOne:        []modelAssoc{},
+		hasMany:       []modelAssoc{},
 		attrs:         map[string]*modelAttr{},
 		dest:          dest,
 		destKind:      destKind,
@@ -195,7 +205,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 				stFieldType:   field.Type,
 			}
 
-			// SQLX uses db tag to retrieve the column name.
+			// sqlx uses db tag to retrieve the column name.
 			dbTag := field.Tag.Get("db")
 			if dbTag == "-" {
 				continue
@@ -217,13 +227,18 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 				model.softDeleteColumn = dbColumn
 			}
 
-			switch field.Tag.Get("association") {
-			case "belongsTo":
-			case "hasOne":
-			case "hasOneThrough":
-			case "hasMany":
-			case "hasManyThrough":
-			case "hasAndBelongsToMany":
+			assocTag := field.Tag.Get("association")
+			if assocTag != "" {
+				switch assocTag {
+				case "belongsTo":
+					model.belongsTo = append(model.belongsTo, modelAssoc{
+						as:         field.Tag.Get("as"),
+						foreignKey: field.Tag.Get("foreignKey"),
+						kind:       assocTag,
+					})
+				case "hasOne":
+				case "hasMany":
+				}
 			}
 
 			model.attrs[dbColumn] = &attr
