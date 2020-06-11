@@ -47,10 +47,6 @@ func (s *modelAssocSuite) setupDB(adapter, database string) {
 	switch adapter {
 	case "mysql":
 		os.Setenv("DB_URI_PRIMARY", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13306/%s?multiStatements=true&parseTime=true", database))
-<<<<<<< HEAD
-=======
-		os.Setenv("DB_URI_PRIMARY_REPLICA", fmt.Sprintf("mysql://root:whatever@0.0.0.0:13307/%s?multiStatements=true&parseTime=true", database))
->>>>>>> add initial draft for association
 		os.Setenv("DB_URI_REPLICA_PRIMARY_REPLICA", "true")
 		defer func() {
 			os.Unsetenv("DB_URI_PRIMARY")
@@ -61,11 +57,7 @@ func (s *modelAssocSuite) setupDB(adapter, database string) {
 		query = `
 CREATE TABLE IF NOT EXISTS authors (
 	id INT AUTO_INCREMENT,
-<<<<<<< HEAD
 	name VARCHAR(255) UNIQUE NOT NULL,
-=======
-	name VARCHAR UNIQUE NOT NULL,
->>>>>>> add initial draft for association
 	created_at TIMESTAMP,
 	updated_at TIMESTAMP,
 	PRIMARY KEY (id)
@@ -74,11 +66,7 @@ CREATE TABLE IF NOT EXISTS authors (
 CREATE TABLE IF NOT EXISTS books (
 	id INT AUTO_INCREMENT,
 	author_id INT,
-<<<<<<< HEAD
 	name VARCHAR(255) UNIQUE NOT NULL,
-=======
-	name VARCHAR UNIQUE NOT NULL,
->>>>>>> add initial draft for association
 	created_at TIMESTAMP,
 	updated_at TIMESTAMP,
 	PRIMARY KEY (id)
@@ -97,11 +85,7 @@ CREATE TABLE IF NOT EXISTS books (
 		query = `
 CREATE TABLE IF NOT EXISTS authors (
 	id SERIAL PRIMARY KEY,
-<<<<<<< HEAD
 	name VARCHAR(255) UNIQUE NOT NULL,
-=======
-	name VARCHAR UNIQUE NOT NULL,
->>>>>>> add initial draft for association
 	created_at TIMESTAMP,
 	updated_at TIMESTAMP
 );
@@ -109,11 +93,7 @@ CREATE TABLE IF NOT EXISTS authors (
 CREATE TABLE IF NOT EXISTS books (
 	id SERIAL PRIMARY KEY,
 	author_id INT,
-<<<<<<< HEAD
 	name VARCHAR(255) UNIQUE NOT NULL,
-=======
-	name VARCHAR UNIQUE NOT NULL,
->>>>>>> add initial draft for association
 	created_at TIMESTAMP,
 	updated_at TIMESTAMP
 );
