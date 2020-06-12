@@ -87,8 +87,8 @@ type (
 	}
 
 	modelAssoc struct {
-		autoSave, optional, polymorphic, touch               bool
-		as, dependent, foreignKey, kind, through, primaryKey string
+		autoSave, optional, polymorphic, touch                             bool
+		as, dependent, foreignKey, through, primaryKey, source, sourceType string
 	}
 
 	modelAttr struct {
@@ -1559,29 +1559,47 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 
 func (m *Model) parseAssociations(field reflect.StructField) {
 	assocTag := field.Tag.Get("association")
+	autoSave, _ := strconv.ParseBool(field.Tag.Get("autoSave"))
+	touch, _ := strconv.ParseBool(field.Tag.Get("touch"))
 
 	if assocTag != "" {
 		switch assocTag {
 		case "belongsTo":
-			autoSave, _ := strconv.ParseBool(field.Tag.Get("autoSave"))
 			optional, _ := strconv.ParseBool(field.Tag.Get("optional"))
 			polymorphic, _ := strconv.ParseBool(field.Tag.Get("polymorphic"))
-			touch, _ := strconv.ParseBool(field.Tag.Get("touch"))
 
 			m.belongsTo = append(m.belongsTo, modelAssoc{
-				as:          field.Tag.Get("as"),
 				autoSave:    autoSave,
 				dependent:   field.Tag.Get("dependent"),
 				foreignKey:  field.Tag.Get("foreignKey"),
-				kind:        assocTag,
 				optional:    optional,
 				polymorphic: polymorphic,
 				primaryKey:  field.Tag.Get("primaryKey"),
-				through:     field.Tag.Get("through"),
 				touch:       touch,
 			})
 		case "hasOne":
+			m.hasOne = append(m.hasOne, modelAssoc{
+				as:         field.Tag.Get("as"),
+				autoSave:   autoSave,
+				dependent:  field.Tag.Get("dependent"),
+				foreignKey: field.Tag.Get("foreignKey"),
+				primaryKey: field.Tag.Get("primaryKey"),
+				source:     field.Tag.Get("source"),
+				sourceType: field.Tag.Get("sourceType"),
+				through:    field.Tag.Get("through"),
+				touch:      touch,
+			})
 		case "hasMany":
+			m.hasMany = append(m.hasMany, modelAssoc{
+				as:         field.Tag.Get("as"),
+				autoSave:   autoSave,
+				dependent:  field.Tag.Get("dependent"),
+				foreignKey: field.Tag.Get("foreignKey"),
+				primaryKey: field.Tag.Get("primaryKey"),
+				source:     field.Tag.Get("source"),
+				sourceType: field.Tag.Get("sourceType"),
+				through:    field.Tag.Get("through"),
+			})
 		}
 	}
 }
