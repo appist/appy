@@ -340,8 +340,6 @@ $ npm install
 
 #### Step 5: Setup your local environment with databases running in docker compose cluster.
 
----
-
 ```bash
 $ go run . setup
 ```
