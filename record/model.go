@@ -87,9 +87,8 @@ type (
 	}
 
 	modelAssoc struct {
-		optional, touch                                      bool
+		autoSave, optional, polymorphic, touch               bool
 		as, dependent, foreignKey, kind, through, primaryKey string
-		child, parent                                        reflect.Type
 	}
 
 	modelAttr struct {
@@ -227,20 +226,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 				model.softDeleteColumn = dbColumn
 			}
 
-			assocTag := field.Tag.Get("association")
-			if assocTag != "" {
-				switch assocTag {
-				case "belongsTo":
-					model.belongsTo = append(model.belongsTo, modelAssoc{
-						as:         field.Tag.Get("as"),
-						foreignKey: field.Tag.Get("foreignKey"),
-						kind:       assocTag,
-					})
-				case "hasOne":
-				case "hasMany":
-				}
-			}
-
+			model.parseAssociations(field)
 			model.attrs[dbColumn] = &attr
 		}
 	}
@@ -1569,6 +1555,35 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 	}
 
 	return count, nil
+}
+
+func (m *Model) parseAssociations(field reflect.StructField) {
+	assocTag := field.Tag.Get("association")
+
+	if assocTag != "" {
+		switch assocTag {
+		case "belongsTo":
+			autoSave, _ := strconv.ParseBool(field.Tag.Get("autoSave"))
+			optional, _ := strconv.ParseBool(field.Tag.Get("optional"))
+			polymorphic, _ := strconv.ParseBool(field.Tag.Get("polymorphic"))
+			touch, _ := strconv.ParseBool(field.Tag.Get("touch"))
+
+			m.belongsTo = append(m.belongsTo, modelAssoc{
+				as:          field.Tag.Get("as"),
+				autoSave:    autoSave,
+				dependent:   field.Tag.Get("dependent"),
+				foreignKey:  field.Tag.Get("foreignKey"),
+				kind:        assocTag,
+				optional:    optional,
+				polymorphic: polymorphic,
+				primaryKey:  field.Tag.Get("primaryKey"),
+				through:     field.Tag.Get("through"),
+				touch:       touch,
+			})
+		case "hasOne":
+		case "hasMany":
+		}
+	}
 }
 
 func (m *Model) rebind(query string, args ...interface{}) (string, []interface{}) {
