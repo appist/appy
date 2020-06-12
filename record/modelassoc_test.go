@@ -129,17 +129,17 @@ CREATE TABLE IF NOT EXISTS books (
 
 func (s *modelAssocSuite) TestBelongsTo() {
 	type authorM struct {
-		Model     `masters:"primary" autoIncrement:"id" faker:"-"`
-		ID        support.ZInt64 `faker:"-"`
-		Name      support.ZString
+		Model     `masters:"primary" tableName:"authors" autoIncrement:"id" faker:"-"`
+		ID        int64 `faker:"-"`
+		Name      string
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
 		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
 	}
 
 	type bookM struct {
-		Model     `masters:"primary" autoIncrement:"id" faker:"-"`
-		ID        support.ZInt64 `faker:"-"`
-		Name      support.ZString
+		Model     `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
+		ID        int64 `faker:"-"`
+		Name      string
 		Author    authorM       `db:"author_id" association:"belongsTo" faker:"-"`
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
 		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`

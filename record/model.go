@@ -89,6 +89,7 @@ type (
 	modelAssoc struct {
 		autoSave, optional, polymorphic, touch                             bool
 		as, dependent, foreignKey, through, primaryKey, source, sourceType string
+		dest                                                               interface{}
 	}
 
 	modelAttr struct {
@@ -206,7 +207,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 
 			// sqlx uses db tag to retrieve the column name.
 			dbTag := field.Tag.Get("db")
-			if dbTag == "-" {
+			if dbTag == "-" || (field.Type.Kind() == reflect.Struct && !strings.HasPrefix(field.Type.String(), "zero.")) {
 				continue
 			}
 
@@ -644,6 +645,21 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 	case "count":
 		count, err = m.get(db, query, opt)
 	case "create":
+		errs = m.createBelongsTo()
+		if errs != nil {
+			return count, errs
+		}
+
+		errs = m.createHasOne()
+		if errs != nil {
+			return count, errs
+		}
+
+		errs = m.createHasMany()
+		if errs != nil {
+			return count, errs
+		}
+
 		dest := m.dest
 
 		if m.destKind == reflect.Array || m.destKind == reflect.Slice {
@@ -1119,6 +1135,18 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 		builder.WriteString(strings.Join(wheres, " AND "))
 		m.where, m.whereArgs = m.rebind(builder.String(), args...)
 	}
+}
+
+func (m *Model) createBelongsTo() []error {
+	return nil
+}
+
+func (m *Model) createHasOne() []error {
+	return nil
+}
+
+func (m *Model) createHasMany() []error {
+	return nil
 }
 
 func (m *Model) exec(db DBer, query string, opt ExecOption) (int64, error) {
