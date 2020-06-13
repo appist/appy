@@ -48,6 +48,8 @@ type (
 		Update() Modeler
 		UpdateAll(set string, args ...interface{}) Modeler
 		Where(condition string, args ...interface{}) Modeler
+		attrByDBColumn(dbColumn string) *modelAttr
+		pks() []string
 	}
 
 	// Model is the layer that represents business data and logic.
@@ -96,8 +98,9 @@ type (
 	}
 
 	modelAssoc struct {
-		autoSave, optional, polymorphic, touch                                        bool
-		as, dependent, fieldName, foreignKey, through, primaryKey, source, sourceType string
+		autoSave, optional, polymorphic, touch                                bool
+		as, dependent, destFieldName, foreignKey, through, source, sourceType string
+		primaryKeys                                                           []string
 	}
 
 	modelAttr struct {
@@ -1171,10 +1174,10 @@ func (m *Model) createBelongsTo() []error {
 	v := reflect.ValueOf(m.dest).Elem()
 
 	for dbColumn, b := range m.belongsTo {
-		assoc := v.FieldByName(b.fieldName)
+		assoc := v.FieldByName(b.destFieldName)
 
 		if !b.optional && assoc.IsZero() {
-			errs = append(errs, fmt.Errorf("%s cannot be nil", b.fieldName))
+			errs = append(errs, fmt.Errorf("%s cannot be nil", b.destFieldName))
 			continue
 		}
 
@@ -1191,13 +1194,20 @@ func (m *Model) createBelongsTo() []error {
 		}
 	}
 
-	for _, a := range assocs {
-		m := NewModel(m.dbManager, a, ModelOption{Tx: m.tx})
-		_, cerrs := m.Create().Exec(ExecOption{ByAssociation: true})
+	for dbColumn, a := range assocs {
+		model := NewModel(m.dbManager, a, ModelOption{Tx: m.tx})
+		_, cerrs := model.Create().Exec(ExecOption{ByAssociation: true})
 
 		if len(cerrs) > 0 {
 			errs = append(errs, cerrs...)
 			continue
+		}
+
+		av := reflect.ValueOf(a).Elem()
+		fk := m.belongsTo[dbColumn].foreignKey
+
+		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
+			v.FieldByName(m.attrs[fk].stFieldName).Set(av.FieldByName(model.attrByDBColumn(pk).stFieldName))
 		}
 	}
 
@@ -1673,6 +1683,16 @@ func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 	autoSave, _ := strconv.ParseBool(field.Tag.Get("autoSave"))
 	touch, _ := strconv.ParseBool(field.Tag.Get("touch"))
 
+	primaryKeys := strings.Split(field.Tag.Get("primaryKeys"), ",")
+	if len(primaryKeys) <= 1 {
+		primaryKeys = []string{"id"}
+	}
+
+	foreignKey := field.Tag.Get("foreignKey")
+	if foreignKey == "" {
+		foreignKey = support.ToSnakeCase(support.Singular(field.Name)) + "_id"
+	}
+
 	if assocTag != "" {
 		switch assocTag {
 		case "belongsTo":
@@ -1680,42 +1700,50 @@ func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 			polymorphic, _ := strconv.ParseBool(field.Tag.Get("polymorphic"))
 
 			m.belongsTo[dbColumn] = modelAssoc{
-				autoSave:    autoSave,
-				dependent:   field.Tag.Get("dependent"),
-				fieldName:   field.Name,
-				foreignKey:  field.Tag.Get("foreignKey"),
-				optional:    optional,
-				polymorphic: polymorphic,
-				primaryKey:  field.Tag.Get("primaryKey"),
-				touch:       touch,
+				autoSave:      autoSave,
+				dependent:     field.Tag.Get("dependent"),
+				destFieldName: field.Name,
+				foreignKey:    foreignKey,
+				optional:      optional,
+				polymorphic:   polymorphic,
+				primaryKeys:   primaryKeys,
+				touch:         touch,
 			}
 		case "hasOne":
 			m.hasOne[dbColumn] = modelAssoc{
-				as:         field.Tag.Get("as"),
-				autoSave:   autoSave,
-				dependent:  field.Tag.Get("dependent"),
-				fieldName:  field.Name,
-				foreignKey: field.Tag.Get("foreignKey"),
-				primaryKey: field.Tag.Get("primaryKey"),
-				source:     field.Tag.Get("source"),
-				sourceType: field.Tag.Get("sourceType"),
-				through:    field.Tag.Get("through"),
-				touch:      touch,
+				as:            field.Tag.Get("as"),
+				autoSave:      autoSave,
+				dependent:     field.Tag.Get("dependent"),
+				destFieldName: field.Name,
+				foreignKey:    foreignKey,
+				primaryKeys:   primaryKeys,
+				source:        field.Tag.Get("source"),
+				sourceType:    field.Tag.Get("sourceType"),
+				through:       field.Tag.Get("through"),
+				touch:         touch,
 			}
 		case "hasMany":
 			m.hasMany[dbColumn] = modelAssoc{
-				as:         field.Tag.Get("as"),
-				autoSave:   autoSave,
-				dependent:  field.Tag.Get("dependent"),
-				fieldName:  field.Name,
-				foreignKey: field.Tag.Get("foreignKey"),
-				primaryKey: field.Tag.Get("primaryKey"),
-				source:     field.Tag.Get("source"),
-				sourceType: field.Tag.Get("sourceType"),
-				through:    field.Tag.Get("through"),
+				as:            field.Tag.Get("as"),
+				autoSave:      autoSave,
+				dependent:     field.Tag.Get("dependent"),
+				destFieldName: field.Name,
+				foreignKey:    foreignKey,
+				primaryKeys:   primaryKeys,
+				source:        field.Tag.Get("source"),
+				sourceType:    field.Tag.Get("sourceType"),
+				through:       field.Tag.Get("through"),
 			}
 		}
 	}
+}
+
+func (m *Model) attrByDBColumn(dbColumn string) *modelAttr {
+	return m.attrs[dbColumn]
+}
+
+func (m *Model) pks() []string {
+	return m.primaryKeys
 }
 
 func (m *Model) rebind(query string, args ...interface{}) (string, []interface{}) {

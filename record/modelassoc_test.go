@@ -140,7 +140,8 @@ func (s *modelAssocSuite) TestBelongsTo() {
 		Model     `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
 		ID        int64 `faker:"-"`
 		Name      string
-		Author    *authorM      `db:"author_id" association:"belongsTo" faker:"-"`
+		Author    *authorM      `association:"belongsTo" faker:"-"`
+		AuthorID  int64         `db:"author_id"`
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
 		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
 	}
@@ -160,6 +161,15 @@ func (s *modelAssocSuite) TestBelongsTo() {
 				Name: "foo",
 			},
 			Name: "golang tutorial",
+		}
+		count, errs = s.model(&book).Create().Exec()
+		s.Equal(int64(1), count)
+
+		book = bookM{
+			Author: &authorM{
+				Name: "bar",
+			},
+			Name: "nodejs tutorial",
 		}
 		count, errs = s.model(&book).Create().Exec()
 		s.Equal(int64(1), count)
