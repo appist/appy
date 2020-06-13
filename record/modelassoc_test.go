@@ -140,7 +140,7 @@ func (s *modelAssocSuite) TestBelongsTo() {
 		Model     `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
 		ID        int64 `faker:"-"`
 		Name      string
-		Author    authorM       `db:"author_id" association:"belongsTo" faker:"-"`
+		Author    *authorM      `db:"author_id" association:"belongsTo" faker:"-"`
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
 		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
 	}
@@ -151,8 +151,17 @@ func (s *modelAssocSuite) TestBelongsTo() {
 		book := bookM{}
 		s.Nil(faker.FakeData(&book))
 
-		count, err := s.model(&book).Create().Exec()
-		s.Nil(err)
+		count, errs := s.model(&book).Create().Exec()
+		s.Equal(int64(0), count)
+		s.EqualError(errs[0], "Author cannot be nil")
+
+		book = bookM{
+			Author: &authorM{
+				Name: "foo",
+			},
+			Name: "golang tutorial",
+		}
+		count, errs = s.model(&book).Create().Exec()
 		s.Equal(int64(1), count)
 	}
 }

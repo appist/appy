@@ -3,6 +3,7 @@ package record
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"math/rand"
 	"reflect"
 	"strconv"
@@ -14,6 +15,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/guregu/null.v4"
 	"gopkg.in/guregu/null.v4/zero"
+)
+
+var (
+	parentTxCtxKey = contextKey("parentTx")
 )
 
 type (
@@ -47,19 +52,20 @@ type (
 
 	// Model is the layer that represents business data and logic.
 	Model struct {
-		adapter, autoIncrement, tableName, action, group, having, join, order, selectColumns, timezone, where, softDeleteColumn string
-		belongsTo, hasOne, hasMany                                                                                              []modelAssoc
-		attrs                                                                                                                   map[string]*modelAttr
-		dest, scanDest                                                                                                          interface{}
-		destKind                                                                                                                reflect.Kind
-		i18n                                                                                                                    *support.I18n
-		masters, replicas                                                                                                       []DBer
-		primaryKeys                                                                                                             []string
-		queryBuilder                                                                                                            strings.Builder
-		tx                                                                                                                      Txer
-		limit, offset                                                                                                           int
-		args, havingArgs, joinArgs, whereArgs                                                                                   []interface{}
-		individuals                                                                                                             []modelIndividual
+		adapter, autoIncrement, tableName, action, name, group, having, join, order, selectColumns, timezone, where, softDeleteColumn string
+		attrs                                                                                                                         map[string]*modelAttr
+		belongsTo, hasOne, hasMany                                                                                                    map[string]modelAssoc
+		dbManager                                                                                                                     *Engine
+		dest, scanDest                                                                                                                interface{}
+		destKind                                                                                                                      reflect.Kind
+		i18n                                                                                                                          *support.I18n
+		masters, replicas                                                                                                             []DBer
+		primaryKeys                                                                                                                   []string
+		queryBuilder                                                                                                                  strings.Builder
+		tx                                                                                                                            Txer
+		limit, offset                                                                                                                 int
+		args, havingArgs, joinArgs, whereArgs                                                                                         []interface{}
+		individuals                                                                                                                   []modelIndividual
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
@@ -71,6 +77,9 @@ type (
 	ExecOption struct {
 		// Context can be used to set the query timeout.
 		Context context.Context
+
+		// ByAssociation indicates if the execution is triggered by association.
+		ByAssociation bool
 
 		// Locale indicates the language translation to use for validation error
 		// messages.
@@ -87,9 +96,8 @@ type (
 	}
 
 	modelAssoc struct {
-		autoSave, optional, polymorphic, touch                             bool
-		as, dependent, foreignKey, through, primaryKey, source, sourceType string
-		dest                                                               interface{}
+		autoSave, optional, polymorphic, touch                                        bool
+		as, dependent, fieldName, foreignKey, through, primaryKey, source, sourceType string
 	}
 
 	modelAttr struct {
@@ -129,10 +137,12 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 
 	model := &Model{
 		adapter:       "",
-		belongsTo:     []modelAssoc{},
-		hasOne:        []modelAssoc{},
-		hasMany:       []modelAssoc{},
 		attrs:         map[string]*modelAttr{},
+		name:          destElem.Name(),
+		belongsTo:     map[string]modelAssoc{},
+		hasOne:        map[string]modelAssoc{},
+		hasMany:       map[string]modelAssoc{},
+		dbManager:     dbManager,
 		dest:          dest,
 		destKind:      destKind,
 		i18n:          dbManager.i18n,
@@ -207,12 +217,17 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 
 			// sqlx uses db tag to retrieve the column name.
 			dbTag := field.Tag.Get("db")
-			if dbTag == "-" || (field.Type.Kind() == reflect.Struct && !strings.HasPrefix(field.Type.String(), "zero.")) {
+			if dbTag == "-" {
 				continue
 			}
 
 			if dbTag != "" {
 				dbColumn = dbTag
+			}
+
+			if field.Tag.Get("association") != "" {
+				model.parseAssociations(field, dbColumn)
+				continue
 			}
 
 			if dbColumn == model.autoIncrement {
@@ -227,7 +242,6 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 				model.softDeleteColumn = dbColumn
 			}
 
-			model.parseAssociations(field)
 			model.attrs[dbColumn] = &attr
 		}
 	}
@@ -646,17 +660,17 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 		count, err = m.get(db, query, opt)
 	case "create":
 		errs = m.createBelongsTo()
-		if errs != nil {
+		if len(errs) > 0 {
 			return count, errs
 		}
 
 		errs = m.createHasOne()
-		if errs != nil {
+		if len(errs) > 0 {
 			return count, errs
 		}
 
 		errs = m.createHasMany()
-		if errs != nil {
+		if len(errs) > 0 {
 			return count, errs
 		}
 
@@ -667,6 +681,16 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 		}
 
 		count, errs = m.namedExecOrQuery(db, dest, query, opt)
+
+		if m.tx != nil && !opt.ByAssociation {
+			cerrs := m.Commit()
+
+			if len(cerrs) > 0 {
+				errs = append(errs, cerrs...)
+			}
+
+			m.tx = nil
+		}
 	case "delete", "update":
 		for _, individual := range m.individuals {
 			individualCount, tmpErrs := m.namedExecOrQuery(db, individual.dest, individual.query, opt)
@@ -1138,15 +1162,78 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 }
 
 func (m *Model) createBelongsTo() []error {
-	return nil
+	if len(m.belongsTo) < 1 {
+		return nil
+	}
+
+	assocs := map[string]interface{}{}
+	errs := []error{}
+	v := reflect.ValueOf(m.dest).Elem()
+
+	for dbColumn, b := range m.belongsTo {
+		assoc := v.FieldByName(b.fieldName)
+
+		if !b.optional && assoc.IsZero() {
+			errs = append(errs, fmt.Errorf("%s cannot be nil", b.fieldName))
+			continue
+		}
+
+		assocs[dbColumn] = assoc.Interface()
+	}
+
+	if len(errs) < 1 {
+		if m.tx == nil {
+			err := m.Begin()
+
+			if err != nil {
+				return []error{err}
+			}
+		}
+	}
+
+	for _, a := range assocs {
+		m := NewModel(m.dbManager, a, ModelOption{Tx: m.tx})
+		_, cerrs := m.Create().Exec(ExecOption{ByAssociation: true})
+
+		if len(cerrs) > 0 {
+			errs = append(errs, cerrs...)
+			continue
+		}
+	}
+
+	return errs
 }
 
 func (m *Model) createHasOne() []error {
-	return nil
+	if len(m.hasOne) < 1 {
+		return nil
+	}
+
+	errs := []error{}
+	for _, _ = range m.hasOne {
+	}
+
+	return errs
 }
 
 func (m *Model) createHasMany() []error {
-	return nil
+	if len(m.hasMany) < 1 {
+		return nil
+	}
+
+	if m.tx == nil {
+		err := m.Begin()
+
+		if err != nil {
+			return []error{err}
+		}
+	}
+
+	errs := []error{}
+	for _, _ = range m.hasMany {
+	}
+
+	return errs
 }
 
 func (m *Model) exec(db DBer, query string, opt ExecOption) (int64, error) {
@@ -1585,7 +1672,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 	return count, nil
 }
 
-func (m *Model) parseAssociations(field reflect.StructField) {
+func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 	assocTag := field.Tag.Get("association")
 	autoSave, _ := strconv.ParseBool(field.Tag.Get("autoSave"))
 	touch, _ := strconv.ParseBool(field.Tag.Get("touch"))
@@ -1596,38 +1683,41 @@ func (m *Model) parseAssociations(field reflect.StructField) {
 			optional, _ := strconv.ParseBool(field.Tag.Get("optional"))
 			polymorphic, _ := strconv.ParseBool(field.Tag.Get("polymorphic"))
 
-			m.belongsTo = append(m.belongsTo, modelAssoc{
+			m.belongsTo[dbColumn] = modelAssoc{
 				autoSave:    autoSave,
 				dependent:   field.Tag.Get("dependent"),
+				fieldName:   field.Name,
 				foreignKey:  field.Tag.Get("foreignKey"),
 				optional:    optional,
 				polymorphic: polymorphic,
 				primaryKey:  field.Tag.Get("primaryKey"),
 				touch:       touch,
-			})
+			}
 		case "hasOne":
-			m.hasOne = append(m.hasOne, modelAssoc{
+			m.hasOne[dbColumn] = modelAssoc{
 				as:         field.Tag.Get("as"),
 				autoSave:   autoSave,
 				dependent:  field.Tag.Get("dependent"),
+				fieldName:  field.Name,
 				foreignKey: field.Tag.Get("foreignKey"),
 				primaryKey: field.Tag.Get("primaryKey"),
 				source:     field.Tag.Get("source"),
 				sourceType: field.Tag.Get("sourceType"),
 				through:    field.Tag.Get("through"),
 				touch:      touch,
-			})
+			}
 		case "hasMany":
-			m.hasMany = append(m.hasMany, modelAssoc{
+			m.hasMany[dbColumn] = modelAssoc{
 				as:         field.Tag.Get("as"),
 				autoSave:   autoSave,
 				dependent:  field.Tag.Get("dependent"),
+				fieldName:  field.Name,
 				foreignKey: field.Tag.Get("foreignKey"),
 				primaryKey: field.Tag.Get("primaryKey"),
 				source:     field.Tag.Get("source"),
 				sourceType: field.Tag.Get("sourceType"),
 				through:    field.Tag.Get("through"),
-			})
+			}
 		}
 	}
 }
