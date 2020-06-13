@@ -79,6 +79,10 @@ type (
 		// could be replica lag which won't allow recent inserted/updated data to
 		// be returned correctly.
 		UseReplica bool
+
+		// SkipValidate indicates if the validation callbacks should be skipped.
+		// By default, it is false.
+		SkipValidate bool
 	}
 
 	modelAttr struct {
@@ -1370,7 +1374,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		for i := 0; i < v.Len(); i++ {
 			elem := v.Index(i)
 
-			if support.ArrayContains(validateActions, m.action) {
+			if support.ArrayContains(validateActions, m.action) && !opt.SkipValidate {
 				err = m.handleCallback(elem, "BeforeValidate")
 				if err != nil {
 					errs = append(errs, err)
@@ -1399,7 +1403,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 	case reflect.Ptr:
 		elem := v.Elem()
 
-		if support.ArrayContains(validateActions, m.action) {
+		if support.ArrayContains(validateActions, m.action) && !opt.SkipValidate {
 			err = m.handleCallback(elem, "BeforeValidate")
 			if err != nil {
 				return int64(0), []error{err}

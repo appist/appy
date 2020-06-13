@@ -2524,6 +2524,10 @@ func (s *modelSuite) TestValidate() {
 			s.Equal(1, len(errs))
 			s.EqualError(errs[0], "user1.Email must not be blank")
 
+			count, errs = s.model(&user).Create().Exec(ExecOption{SkipValidate: true})
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
+
 			count, errs = s.model(&user).Create().Exec(ExecOption{Locale: "zh-CN"})
 			s.Equal(int64(0), count)
 			s.Equal(1, len(errs))
@@ -2544,6 +2548,10 @@ func (s *modelSuite) TestValidate() {
 			s.Equal(2, len(errs))
 			s.EqualError(errs[0], "user1.Email must not be blank")
 			s.EqualError(errs[1], "user1.Email must not be blank")
+
+			count, errs = s.model(&users).Create().Exec(ExecOption{SkipValidate: true})
+			s.Equal(int64(0), count)
+			s.Equal(1, len(errs))
 
 			count, errs = s.model(&users).Create().Exec(ExecOption{Locale: "zh-CN"})
 			s.Equal(int64(0), count)
