@@ -1210,8 +1210,6 @@ func (m *Model) createHasOne() []error {
 	}
 
 	errs := []error{}
-	for _, _ = range m.hasOne {
-	}
 
 	return errs
 }
@@ -1230,8 +1228,6 @@ func (m *Model) createHasMany() []error {
 	}
 
 	errs := []error{}
-	for _, _ = range m.hasMany {
-	}
 
 	return errs
 }
