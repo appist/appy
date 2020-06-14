@@ -65,6 +65,7 @@ type (
 		primaryKeys                                                                                                                   []string
 		queryBuilder                                                                                                                  strings.Builder
 		tx                                                                                                                            Txer
+		associatedTx                                                                                                                  bool
 		limit, offset                                                                                                                 int
 		args, havingArgs, joinArgs, whereArgs                                                                                         []interface{}
 		individuals                                                                                                                   []modelIndividual
@@ -706,7 +707,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 
 		count, errs = m.namedExecOrQuery(db, dest, query, opt)
 
-		if m.tx != nil && !opt.byAssociation {
+		if m.tx != nil && !opt.byAssociation && m.associatedTx {
 			cerrs := m.Commit()
 
 			if len(cerrs) > 0 {
@@ -1211,6 +1212,8 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 			if err != nil {
 				return []error{err}
 			}
+
+			m.associatedTx = true
 		}
 	}
 
@@ -1268,14 +1271,6 @@ func (m *Model) createHasOne() []error {
 func (m *Model) createHasMany() []error {
 	if len(m.hasMany) < 1 {
 		return nil
-	}
-
-	if m.tx == nil {
-		err := m.Begin()
-
-		if err != nil {
-			return []error{err}
-		}
 	}
 
 	errs := []error{}
