@@ -97,7 +97,7 @@ type (
 	}
 
 	modelAssoc struct {
-		optional, polymorphic, touch                                          bool
+		optional, polymorphic, touch, validate                                bool
 		as, dependent, destFieldName, foreignKey, through, source, sourceType string
 		primaryKeys                                                           []string
 	}
@@ -1215,12 +1215,13 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 	}
 
 	for dbColumn, d := range dests {
+		bt := m.belongsTo[dbColumn]
 		av := reflect.ValueOf(d).Elem()
-		fk := m.belongsTo[dbColumn].foreignKey
+		fk := bt.foreignKey
 		model := NewModel(m.dbManager, d, ModelOption{Tx: m.tx})
 		needsCreate := false
 
-		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
+		for _, pk := range bt.primaryKeys {
 			if model.AttrByDBColumn(pk) == nil {
 				continue
 			}
@@ -1232,7 +1233,7 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 		}
 
 		if needsCreate {
-			_, cerrs := model.Create().Exec(ExecOption{byAssociation: true})
+			_, cerrs := model.Create().Exec(ExecOption{SkipValidate: !bt.validate, byAssociation: true})
 
 			if len(cerrs) > 0 {
 				errs = append(errs, cerrs...)
@@ -1240,7 +1241,7 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 			}
 		}
 
-		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
+		for _, pk := range bt.primaryKeys {
 			if model.AttrByDBColumn(pk) == nil {
 				continue
 			}
@@ -1721,6 +1722,7 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 	assocTag := field.Tag.Get("association")
 	touch, _ := strconv.ParseBool(field.Tag.Get("touch"))
+	validate, _ := strconv.ParseBool(field.Tag.Get("validate"))
 
 	primaryKeys := []string{"id"}
 	if field.Tag.Get("primaryKeys") != "" {
@@ -1746,6 +1748,7 @@ func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 				polymorphic:   polymorphic,
 				primaryKeys:   primaryKeys,
 				touch:         touch,
+				validate:      validate,
 			}
 		case "hasOne":
 			m.hasOne[dbColumn] = modelAssoc{
