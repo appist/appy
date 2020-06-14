@@ -97,7 +97,7 @@ type (
 	}
 
 	modelAssoc struct {
-		autoSave, optional, polymorphic, touch                                bool
+		optional, polymorphic, touch                                          bool
 		as, dependent, destFieldName, foreignKey, through, source, sourceType string
 		primaryKeys                                                           []string
 	}
@@ -1221,7 +1221,11 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 		needsCreate := false
 
 		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
-			if av.FieldByName(model.AttrByDBColumn(pk).stFieldName).IsZero() {
+			if model.AttrByDBColumn(pk) == nil {
+				continue
+			}
+
+			if av.IsValid() && av.FieldByName(model.AttrByDBColumn(pk).stFieldName).IsZero() {
 				needsCreate = true
 				break
 			}
@@ -1237,7 +1241,13 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 		}
 
 		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
-			v.FieldByName(m.attrs[fk].stFieldName).Set(av.FieldByName(model.AttrByDBColumn(pk).stFieldName))
+			if model.AttrByDBColumn(pk) == nil {
+				continue
+			}
+
+			if av.IsValid() {
+				v.FieldByName(m.attrs[fk].stFieldName).Set(av.FieldByName(model.AttrByDBColumn(pk).stFieldName))
+			}
 		}
 	}
 
@@ -1710,12 +1720,11 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 
 func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 	assocTag := field.Tag.Get("association")
-	autoSave, _ := strconv.ParseBool(field.Tag.Get("autoSave"))
 	touch, _ := strconv.ParseBool(field.Tag.Get("touch"))
 
-	primaryKeys := strings.Split(field.Tag.Get("primaryKeys"), ",")
-	if len(primaryKeys) <= 1 {
-		primaryKeys = []string{"id"}
+	primaryKeys := []string{"id"}
+	if field.Tag.Get("primaryKeys") != "" {
+		primaryKeys = strings.Split(field.Tag.Get("primaryKeys"), ",")
 	}
 
 	foreignKey := field.Tag.Get("foreignKey")
@@ -1730,7 +1739,6 @@ func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 			polymorphic, _ := strconv.ParseBool(field.Tag.Get("polymorphic"))
 
 			m.belongsTo[dbColumn] = modelAssoc{
-				autoSave:      autoSave,
 				dependent:     field.Tag.Get("dependent"),
 				destFieldName: field.Name,
 				foreignKey:    foreignKey,
@@ -1742,7 +1750,6 @@ func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 		case "hasOne":
 			m.hasOne[dbColumn] = modelAssoc{
 				as:            field.Tag.Get("as"),
-				autoSave:      autoSave,
 				dependent:     field.Tag.Get("dependent"),
 				destFieldName: field.Name,
 				foreignKey:    foreignKey,
@@ -1755,7 +1762,6 @@ func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 		case "hasMany":
 			m.hasMany[dbColumn] = modelAssoc{
 				as:            field.Tag.Get("as"),
-				autoSave:      autoSave,
 				dependent:     field.Tag.Get("dependent"),
 				destFieldName: field.Name,
 				foreignKey:    foreignKey,
