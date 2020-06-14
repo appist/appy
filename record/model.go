@@ -671,29 +671,9 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 				if len(errs) > 0 {
 					return count, errs
 				}
-
-				errs = m.createHasOne()
-				if len(errs) > 0 {
-					return count, errs
-				}
-
-				errs = m.createHasMany()
-				if len(errs) > 0 {
-					return count, errs
-				}
 			}
 		case reflect.Ptr:
 			errs = m.createBelongsTo(v)
-			if len(errs) > 0 {
-				return count, errs
-			}
-
-			errs = m.createHasOne()
-			if len(errs) > 0 {
-				return count, errs
-			}
-
-			errs = m.createHasMany()
 			if len(errs) > 0 {
 				return count, errs
 			}
@@ -1258,26 +1238,6 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 	return errs
 }
 
-func (m *Model) createHasOne() []error {
-	if len(m.hasOne) < 1 {
-		return nil
-	}
-
-	errs := []error{}
-
-	return errs
-}
-
-func (m *Model) createHasMany() []error {
-	if len(m.hasMany) < 1 {
-		return nil
-	}
-
-	errs := []error{}
-
-	return errs
-}
-
 func (m *Model) exec(db DBer, query string, opt ExecOption) (int64, error) {
 	var (
 		count  int64
@@ -1744,29 +1704,6 @@ func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 				primaryKeys:   primaryKeys,
 				touch:         touch,
 				validate:      validate,
-			}
-		case "hasOne":
-			m.hasOne[dbColumn] = modelAssoc{
-				as:            field.Tag.Get("as"),
-				dependent:     field.Tag.Get("dependent"),
-				destFieldName: field.Name,
-				foreignKey:    foreignKey,
-				primaryKeys:   primaryKeys,
-				source:        field.Tag.Get("source"),
-				sourceType:    field.Tag.Get("sourceType"),
-				through:       field.Tag.Get("through"),
-				touch:         touch,
-			}
-		case "hasMany":
-			m.hasMany[dbColumn] = modelAssoc{
-				as:            field.Tag.Get("as"),
-				dependent:     field.Tag.Get("dependent"),
-				destFieldName: field.Name,
-				foreignKey:    foreignKey,
-				primaryKeys:   primaryKeys,
-				source:        field.Tag.Get("source"),
-				sourceType:    field.Tag.Get("sourceType"),
-				through:       field.Tag.Get("through"),
 			}
 		}
 	}

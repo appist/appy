@@ -302,6 +302,30 @@ func (s *modelBelongsToSuite) TestCustomPrimaryKeys() {
 	}
 }
 
+func (s *modelBelongsToSuite) TestDependent() {
+	type authorM struct {
+		Model     `masters:"primary" tableName:"authors" autoIncrement:"id" faker:"-"`
+		ID        int64 `faker:"-"`
+		Name      string
+		CreatedAt support.ZTime `db:"created_at" faker:"-"`
+		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
+	}
+
+	type bookM struct {
+		Model     `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
+		ID        int64 `faker:"-"`
+		Name      string
+		Author    *authorM      `association:"belongsTo" faker:"-" optional:"true"`
+		AuthorID  int64         `db:"author_id" faker:"-"`
+		CreatedAt support.ZTime `db:"created_at" faker:"-"`
+		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
+	}
+
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_belongs_to_optional_owner_with_"+adapter)
+	}
+}
+
 func (s *modelBelongsToSuite) TestOptionalOwner() {
 	type authorM struct {
 		Model     `masters:"primary" tableName:"authors" autoIncrement:"id" faker:"-"`
