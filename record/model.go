@@ -25,6 +25,7 @@ type (
 	// Modeler implements all Model methods.
 	Modeler interface {
 		All() Modeler
+		AttrByDBColumn(dbColumn string) *ModelAttr
 		Begin() error
 		BeginContext(ctx context.Context, opts *sql.TxOptions) error
 		Commit() []error
@@ -40,6 +41,7 @@ type (
 		Limit(limit int) Modeler
 		Offset(offset int) Modeler
 		Order(order string) Modeler
+		PrimaryKeys() []string
 		Rollback() []error
 		Scan(dest interface{}) Modeler
 		Select(columns string) Modeler
@@ -48,14 +50,12 @@ type (
 		Update() Modeler
 		UpdateAll(set string, args ...interface{}) Modeler
 		Where(condition string, args ...interface{}) Modeler
-		attrByDBColumn(dbColumn string) *modelAttr
-		pks() []string
 	}
 
 	// Model is the layer that represents business data and logic.
 	Model struct {
 		adapter, autoIncrement, tableName, action, name, group, having, join, order, selectColumns, timezone, where, softDeleteColumn string
-		attrs                                                                                                                         map[string]*modelAttr
+		attrs                                                                                                                         map[string]*ModelAttr
 		belongsTo, hasOne, hasMany                                                                                                    map[string]modelAssoc
 		dbManager                                                                                                                     *Engine
 		dest, scanDest                                                                                                                interface{}
@@ -80,9 +80,6 @@ type (
 		// Context can be used to set the query timeout.
 		Context context.Context
 
-		// ByAssociation indicates if the execution is triggered by association.
-		ByAssociation bool
-
 		// Locale indicates the language translation to use for validation error
 		// messages.
 		Locale string
@@ -95,6 +92,8 @@ type (
 		// SkipValidate indicates if the validation callbacks should be skipped.
 		// By default, it is false.
 		SkipValidate bool
+
+		byAssociation bool
 	}
 
 	modelAssoc struct {
@@ -103,7 +102,8 @@ type (
 		primaryKeys                                                           []string
 	}
 
-	modelAttr struct {
+	// ModelAttr keeps track of the model's attributes.
+	ModelAttr struct {
 		autoIncrement bool
 		primaryKey    bool
 		stFieldName   string
@@ -140,7 +140,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 
 	model := &Model{
 		adapter:       "",
-		attrs:         map[string]*modelAttr{},
+		attrs:         map[string]*ModelAttr{},
 		name:          destElem.Name(),
 		belongsTo:     map[string]modelAssoc{},
 		hasOne:        map[string]modelAssoc{},
@@ -212,7 +212,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 			}
 		default:
 			dbColumn := support.ToSnakeCase(field.Name)
-			attr := modelAttr{
+			attr := ModelAttr{
 				autoIncrement: false,
 				stFieldName:   field.Name,
 				stFieldType:   field.Type,
@@ -706,7 +706,7 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 
 		count, errs = m.namedExecOrQuery(db, dest, query, opt)
 
-		if m.tx != nil && !opt.ByAssociation {
+		if m.tx != nil && !opt.byAssociation {
 			cerrs := m.Commit()
 
 			if len(cerrs) > 0 {
@@ -1221,14 +1221,14 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 		needsCreate := false
 
 		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
-			if av.FieldByName(model.attrByDBColumn(pk).stFieldName).IsZero() {
+			if av.FieldByName(model.AttrByDBColumn(pk).stFieldName).IsZero() {
 				needsCreate = true
 				break
 			}
 		}
 
 		if needsCreate {
-			_, cerrs := model.Create().Exec(ExecOption{ByAssociation: true})
+			_, cerrs := model.Create().Exec(ExecOption{byAssociation: true})
 
 			if len(cerrs) > 0 {
 				errs = append(errs, cerrs...)
@@ -1237,7 +1237,7 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 		}
 
 		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
-			v.FieldByName(m.attrs[fk].stFieldName).Set(av.FieldByName(model.attrByDBColumn(pk).stFieldName))
+			v.FieldByName(m.attrs[fk].stFieldName).Set(av.FieldByName(model.AttrByDBColumn(pk).stFieldName))
 		}
 	}
 
@@ -1768,11 +1768,14 @@ func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
 	}
 }
 
-func (m *Model) attrByDBColumn(dbColumn string) *modelAttr {
+// AttrByDBColumn returns the model's attribute based on the DB column
+// provided.
+func (m *Model) AttrByDBColumn(dbColumn string) *ModelAttr {
 	return m.attrs[dbColumn]
 }
 
-func (m *Model) pks() []string {
+// PrimaryKeys returns the model's primary keys.
+func (m *Model) PrimaryKeys() []string {
 	return m.primaryKeys
 }
 

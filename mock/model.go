@@ -32,6 +32,22 @@ func (_m *Model) All() record.Modeler {
 	return r0
 }
 
+// AttrByDBColumn provides a mock function with given fields: dbColumn
+func (_m *Model) AttrByDBColumn(dbColumn string) *record.ModelAttr {
+	ret := _m.Called(dbColumn)
+
+	var r0 *record.ModelAttr
+	if rf, ok := ret.Get(0).(func(string) *record.ModelAttr); ok {
+		r0 = rf(dbColumn)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*record.ModelAttr)
+		}
+	}
+
+	return r0
+}
+
 // Begin provides a mock function with given fields:
 func (_m *Model) Begin() error {
 	ret := _m.Called()
@@ -281,6 +297,22 @@ func (_m *Model) Order(order string) record.Modeler {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(record.Modeler)
+		}
+	}
+
+	return r0
+}
+
+// PrimaryKeys provides a mock function with given fields:
+func (_m *Model) PrimaryKeys() []string {
+	ret := _m.Called()
+
+	var r0 []string
+	if rf, ok := ret.Get(0).(func() []string); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
