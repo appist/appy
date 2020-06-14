@@ -163,16 +163,33 @@ func (s *modelAssocSuite) TestBelongsTo() {
 			Name: "golang tutorial",
 		}
 		count, errs = s.model(&book).Create().Exec()
+		s.Equal(0, len(errs))
 		s.Equal(int64(1), count)
 
+		author := book.Author
 		book = bookM{
-			Author: &authorM{
-				Name: "bar",
-			},
-			Name: "nodejs tutorial",
+			Author: author,
+			Name:   "nodejs tutorial",
 		}
 		count, errs = s.model(&book).Create().Exec()
+		s.Equal(0, len(errs))
 		s.Equal(int64(1), count)
+
+		books := []bookM{
+			{
+				Author: &authorM{
+					Name: "bar",
+				},
+				Name: "python tutorial",
+			},
+			{
+				Author: author,
+				Name:   "ruby tutorial",
+			},
+		}
+		count, errs = s.model(&books).Create().Exec()
+		s.Equal(0, len(errs))
+		s.Equal(int64(2), count)
 	}
 }
 

@@ -662,19 +662,40 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 	case "count":
 		count, err = m.get(db, query, opt)
 	case "create":
-		errs = m.createBelongsTo()
-		if len(errs) > 0 {
-			return count, errs
-		}
+		v := reflect.ValueOf(m.dest).Elem()
+		switch m.destKind {
+		case reflect.Array, reflect.Slice:
+			for i := 0; i < v.Len(); i++ {
+				errs = m.createBelongsTo(v.Index(i))
+				if len(errs) > 0 {
+					return count, errs
+				}
 
-		errs = m.createHasOne()
-		if len(errs) > 0 {
-			return count, errs
-		}
+				errs = m.createHasOne()
+				if len(errs) > 0 {
+					return count, errs
+				}
 
-		errs = m.createHasMany()
-		if len(errs) > 0 {
-			return count, errs
+				errs = m.createHasMany()
+				if len(errs) > 0 {
+					return count, errs
+				}
+			}
+		case reflect.Ptr:
+			errs = m.createBelongsTo(v)
+			if len(errs) > 0 {
+				return count, errs
+			}
+
+			errs = m.createHasOne()
+			if len(errs) > 0 {
+				return count, errs
+			}
+
+			errs = m.createHasMany()
+			if len(errs) > 0 {
+				return count, errs
+			}
 		}
 
 		dest := m.dest
@@ -1164,24 +1185,23 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 	}
 }
 
-func (m *Model) createBelongsTo() []error {
+func (m *Model) createBelongsTo(v reflect.Value) []error {
 	if len(m.belongsTo) < 1 {
 		return nil
 	}
 
-	assocs := map[string]interface{}{}
+	dests := map[string]interface{}{}
 	errs := []error{}
-	v := reflect.ValueOf(m.dest).Elem()
 
 	for dbColumn, b := range m.belongsTo {
-		assoc := v.FieldByName(b.destFieldName)
+		dest := v.FieldByName(b.destFieldName)
 
-		if !b.optional && assoc.IsZero() {
+		if !b.optional && dest.IsZero() {
 			errs = append(errs, fmt.Errorf("%s cannot be nil", b.destFieldName))
 			continue
 		}
 
-		assocs[dbColumn] = assoc.Interface()
+		dests[dbColumn] = dest.Interface()
 	}
 
 	if len(errs) < 1 {
@@ -1194,17 +1214,27 @@ func (m *Model) createBelongsTo() []error {
 		}
 	}
 
-	for dbColumn, a := range assocs {
-		model := NewModel(m.dbManager, a, ModelOption{Tx: m.tx})
-		_, cerrs := model.Create().Exec(ExecOption{ByAssociation: true})
+	for dbColumn, d := range dests {
+		av := reflect.ValueOf(d).Elem()
+		fk := m.belongsTo[dbColumn].foreignKey
+		model := NewModel(m.dbManager, d, ModelOption{Tx: m.tx})
+		needsCreate := false
 
-		if len(cerrs) > 0 {
-			errs = append(errs, cerrs...)
-			continue
+		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
+			if av.FieldByName(model.attrByDBColumn(pk).stFieldName).IsZero() {
+				needsCreate = true
+				break
+			}
 		}
 
-		av := reflect.ValueOf(a).Elem()
-		fk := m.belongsTo[dbColumn].foreignKey
+		if needsCreate {
+			_, cerrs := model.Create().Exec(ExecOption{ByAssociation: true})
+
+			if len(cerrs) > 0 {
+				errs = append(errs, cerrs...)
+				continue
+			}
+		}
 
 		for _, pk := range m.belongsTo[dbColumn].primaryKeys {
 			v.FieldByName(m.attrs[fk].stFieldName).Set(av.FieldByName(model.attrByDBColumn(pk).stFieldName))
