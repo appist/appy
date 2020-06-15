@@ -90,6 +90,10 @@ type (
 		// be returned correctly.
 		UseReplica bool
 
+		// SkipCallbacks indicates if the Create/Delete/Update callbacks should be
+		// skipped.
+		SkipCallbacks bool
+
 		// SkipValidate indicates if the validation callbacks should be skipped.
 		// By default, it is false.
 		SkipValidate bool
@@ -663,22 +667,6 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 	case "count":
 		count, err = m.get(db, query, opt)
 	case "create":
-		v := reflect.ValueOf(m.dest).Elem()
-		switch m.destKind {
-		case reflect.Array, reflect.Slice:
-			for i := 0; i < v.Len(); i++ {
-				errs = m.createBelongsTo(v.Index(i))
-				if len(errs) > 0 {
-					return count, errs
-				}
-			}
-		case reflect.Ptr:
-			errs = m.createBelongsTo(v)
-			if len(errs) > 0 {
-				return count, errs
-			}
-		}
-
 		dest := m.dest
 
 		if m.destKind == reflect.Array || m.destKind == reflect.Slice {
@@ -704,6 +692,16 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 			if tmpErrs != nil {
 				errs = append(errs, tmpErrs...)
 			}
+		}
+
+		if m.tx != nil && !opt.byAssociation && m.associatedTx {
+			derrs := m.Commit()
+
+			if len(derrs) > 0 {
+				errs = append(errs, derrs...)
+			}
+
+			m.tx = nil
 		}
 
 		m.individuals = []modelIndividual{}
@@ -1205,10 +1203,6 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 		needsCreate := false
 
 		for _, pk := range bt.primaryKeys {
-			if model.AttrByDBColumn(pk) == nil {
-				continue
-			}
-
 			if av.IsValid() && av.FieldByName(model.AttrByDBColumn(pk).stFieldName).IsZero() {
 				needsCreate = true
 				break
@@ -1225,12 +1219,64 @@ func (m *Model) createBelongsTo(v reflect.Value) []error {
 		}
 
 		for _, pk := range bt.primaryKeys {
-			if model.AttrByDBColumn(pk) == nil {
-				continue
-			}
-
 			if av.IsValid() {
 				v.FieldByName(m.attrs[fk].stFieldName).Set(av.FieldByName(model.AttrByDBColumn(pk).stFieldName))
+			}
+		}
+	}
+
+	return errs
+}
+
+func (m *Model) deleteBelongsTo(v reflect.Value) []error {
+	if len(m.belongsTo) < 1 {
+		return nil
+	}
+
+	dests := map[string]interface{}{}
+	errs := []error{}
+
+	for dbColumn, b := range m.belongsTo {
+		dest := v.FieldByName(b.destFieldName)
+
+		if b.dependent == "" || dest.IsZero() {
+			continue
+		}
+
+		dests[dbColumn] = dest.Interface()
+	}
+
+	if len(errs) < 1 {
+		if m.tx == nil {
+			err := m.Begin()
+
+			if err != nil {
+				return []error{err}
+			}
+
+			m.associatedTx = true
+		}
+	}
+
+	for dbColumn, d := range dests {
+		bt := m.belongsTo[dbColumn]
+		av := reflect.ValueOf(d).Elem()
+		fk := bt.foreignKey
+		model := NewModel(m.dbManager, d, ModelOption{Tx: m.tx})
+
+		if bt.dependent != "" {
+			skipCallbacks := (bt.dependent == "delete_without_callbacks")
+			_, cerrs := model.Delete().Exec(ExecOption{SkipCallbacks: skipCallbacks, byAssociation: true})
+
+			if len(cerrs) > 0 {
+				errs = append(errs, cerrs...)
+				continue
+			}
+		}
+
+		for _, pk := range bt.primaryKeys {
+			if av.IsValid() {
+				v.FieldByName(m.attrs[fk].stFieldName).Set(reflect.Zero(model.AttrByDBColumn(pk).stFieldType))
 			}
 		}
 	}
@@ -1501,6 +1547,21 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		for i := 0; i < v.Len(); i++ {
 			elem := v.Index(i)
 
+			switch m.action {
+			case "create":
+				cerrs := m.createBelongsTo(elem)
+
+				if len(cerrs) > 0 {
+					return count, cerrs
+				}
+			case "delete":
+				derrs := m.deleteBelongsTo(elem)
+
+				if len(derrs) > 0 {
+					return count, derrs
+				}
+			}
+
 			if support.ArrayContains(validateActions, m.action) && !opt.SkipValidate {
 				err = m.handleCallback(elem, "BeforeValidate")
 				if err != nil {
@@ -1529,6 +1590,21 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		}
 	case reflect.Ptr:
 		elem := v.Elem()
+
+		switch m.action {
+		case "create":
+			cerrs := m.createBelongsTo(elem)
+
+			if len(cerrs) > 0 {
+				return count, cerrs
+			}
+		case "delete":
+			derrs := m.deleteBelongsTo(elem)
+
+			if len(derrs) > 0 {
+				return count, derrs
+			}
+		}
 
 		if support.ArrayContains(validateActions, m.action) && !opt.SkipValidate {
 			err = m.handleCallback(elem, "BeforeValidate")
