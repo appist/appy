@@ -1236,10 +1236,10 @@ func (m *Model) deleteBelongsTo(v reflect.Value) []error {
 	dests := map[string]interface{}{}
 	errs := []error{}
 
-	for dbColumn, b := range m.belongsTo {
-		dest := v.FieldByName(b.destFieldName)
+	for dbColumn, bt := range m.belongsTo {
+		dest := v.FieldByName(bt.destFieldName)
 
-		if b.dependent == "" || dest.IsZero() {
+		if (bt.dependent == "" || dest.IsZero()) && !bt.touch {
 			continue
 		}
 
@@ -1260,9 +1260,24 @@ func (m *Model) deleteBelongsTo(v reflect.Value) []error {
 
 	for dbColumn, d := range dests {
 		bt := m.belongsTo[dbColumn]
-		av := reflect.ValueOf(d).Elem()
-		fk := bt.foreignKey
 		model := NewModel(m.dbManager, d, ModelOption{Tx: m.tx})
+
+		if bt.touch {
+			now := m.timeNow()
+			nullNow := null.TimeFrom(now)
+			zeroNow := zero.TimeFrom(now)
+			field := reflect.ValueOf(d).Elem().FieldByName(updatedAtField)
+			switch field.Interface().(type) {
+			case time.Time:
+				field.Set(reflect.ValueOf(now))
+			case *time.Time:
+				field.Set(reflect.ValueOf(&now))
+			case null.Time:
+				field.Set(reflect.ValueOf(nullNow))
+			case zero.Time:
+				field.Set(reflect.ValueOf(zeroNow))
+			}
+		}
 
 		if bt.dependent != "" {
 			skipCallbacks := (bt.dependent == "delete_without_callbacks")
@@ -1271,12 +1286,6 @@ func (m *Model) deleteBelongsTo(v reflect.Value) []error {
 			if len(cerrs) > 0 {
 				errs = append(errs, cerrs...)
 				continue
-			}
-		}
-
-		for _, pk := range bt.primaryKeys {
-			if av.IsValid() {
-				v.FieldByName(m.attrs[fk].stFieldName).Set(reflect.Zero(model.AttrByDBColumn(pk).stFieldType))
 			}
 		}
 	}

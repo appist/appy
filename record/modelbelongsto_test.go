@@ -454,10 +454,14 @@ func (s *modelBelongsToSuite) TestDependent() {
 			s.Equal(0, books[0].Reseller.Count)
 			s.Equal(2, books[1].Author.Count)
 			s.Equal(0, books[1].Reseller.Count)
-			s.Equal(int64(0), books[0].AuthorID)
-			s.Equal(int64(0), books[0].ResellerID)
-			s.Equal(int64(0), books[1].AuthorID)
-			s.Equal(int64(0), books[1].ResellerID)
+			s.Nil(nil, books[0].Author)
+			s.Equal(int64(2), books[0].AuthorID)
+			s.Nil(nil, books[0].Reseller)
+			s.Equal(int64(2), books[0].ResellerID)
+			s.Nil(nil, books[1].Author)
+			s.Equal(int64(3), books[1].AuthorID)
+			s.Nil(nil, books[1].Reseller)
+			s.Equal(int64(3), books[1].ResellerID)
 
 			var stores []storeDM
 			count, errs = s.model(&stores).Count().Exec()
@@ -512,6 +516,70 @@ func (s *modelBelongsToSuite) TestOptionalOwner() {
 		s.Equal(int64(2), count)
 		s.Equal(int64(0), books[0].AuthorID)
 		s.Equal(int64(0), books[1].AuthorID)
+	}
+}
+
+func (s *modelBelongsToSuite) TestTouch() {
+	type authorM struct {
+		Model     `masters:"primary" tableName:"authors" autoIncrement:"id" faker:"-"`
+		ID        int64         `faker:"-"`
+		Name      string        `faker:"-"`
+		CreatedAt support.ZTime `db:"created_at" faker:"-"`
+		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
+	}
+
+	type bookM struct {
+		Model     `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
+		ID        int64         `faker:"-"`
+		Name      string        `faker:"-"`
+		Author    *authorM      `association:"belongsTo" faker:"-" touch:"true"`
+		AuthorID  int64         `db:"author_id" faker:"-"`
+		CreatedAt support.ZTime `db:"created_at" faker:"-"`
+		UpdatedAt support.ZTime `db:"updated_at" faker:"-"`
+	}
+
+	for _, adapter := range support.SupportedDBAdapters {
+		s.setupDB(adapter, "test_belongs_to_touch_with_"+adapter)
+
+		book := bookM{
+			Name: "golang tutorial",
+			Author: &authorM{
+				Name: "author #1",
+			},
+		}
+
+		count, errs := s.model(&book).Create().Exec()
+		s.Nil(errs)
+		s.Equal(int64(1), count)
+		s.Equal(int64(1), book.AuthorID)
+
+		books := []bookM{
+			{
+				Name: "ruby tutorial",
+				Author: &authorM{
+					Name: "author #2",
+				},
+			},
+			{
+				Name: "python tutorial",
+				Author: &authorM{
+					Name: "author #3",
+				},
+			},
+		}
+
+		count, errs = s.model(&books).Create().Exec()
+		s.Nil(errs)
+		s.Equal(int64(2), count)
+		s.Equal(int64(2), books[0].AuthorID)
+		s.Equal(int64(3), books[1].AuthorID)
+
+		time.Sleep(1 * time.Second)
+		oldUpdatedAt := books[0].Author.UpdatedAt
+		count, errs = s.model(&books[0]).Delete().Exec()
+		s.Nil(errs)
+		s.Equal(int64(1), count)
+		s.NotEqual(oldUpdatedAt, books[0].Author.UpdatedAt)
 	}
 }
 
