@@ -463,16 +463,7 @@ func (m *Model) Create() Modeler {
 			field := v.Index(i).FieldByName(createdAtField)
 
 			if field.IsValid() {
-				switch field.Interface().(type) {
-				case time.Time:
-					field.Set(reflect.ValueOf(now))
-				case *time.Time:
-					field.Set(reflect.ValueOf(&now))
-				case null.Time:
-					field.Set(reflect.ValueOf(nullNow))
-				case zero.Time:
-					field.Set(reflect.ValueOf(zeroNow))
-				}
+				m.setNowForField(field, now, nullNow, zeroNow)
 			}
 		}
 	case reflect.Ptr:
@@ -480,16 +471,7 @@ func (m *Model) Create() Modeler {
 		field := v.FieldByName(createdAtField)
 
 		if field.IsValid() {
-			switch field.Interface().(type) {
-			case time.Time:
-				field.Set(reflect.ValueOf(now))
-			case *time.Time:
-				field.Set(reflect.ValueOf(&now))
-			case null.Time:
-				field.Set(reflect.ValueOf(nullNow))
-			case zero.Time:
-				field.Set(reflect.ValueOf(zeroNow))
-			}
+			m.setNowForField(field, now, nullNow, zeroNow)
 		}
 	}
 
@@ -512,16 +494,7 @@ func (m *Model) Delete() Modeler {
 				field := v.Index(i).FieldByName(deletedAtField)
 
 				if field.IsValid() {
-					switch field.Interface().(type) {
-					case time.Time:
-						field.Set(reflect.ValueOf(now))
-					case *time.Time:
-						field.Set(reflect.ValueOf(&now))
-					case null.Time:
-						field.Set(reflect.ValueOf(nullNow))
-					case zero.Time:
-						field.Set(reflect.ValueOf(zeroNow))
-					}
+					m.setNowForField(field, now, nullNow, zeroNow)
 				}
 			}
 
@@ -534,16 +507,7 @@ func (m *Model) Delete() Modeler {
 			field := v.FieldByName(deletedAtField)
 
 			if field.IsValid() {
-				switch field.Interface().(type) {
-				case time.Time:
-					field.Set(reflect.ValueOf(now))
-				case *time.Time:
-					field.Set(reflect.ValueOf(&now))
-				case null.Time:
-					field.Set(reflect.ValueOf(nullNow))
-				case zero.Time:
-					field.Set(reflect.ValueOf(zeroNow))
-				}
+				m.setNowForField(field, now, nullNow, zeroNow)
 			}
 		}
 
@@ -943,16 +907,7 @@ func (m *Model) Update() Modeler {
 			field := v.Index(i).FieldByName(updatedAtField)
 
 			if field.IsValid() {
-				switch field.Interface().(type) {
-				case time.Time:
-					field.Set(reflect.ValueOf(now))
-				case *time.Time:
-					field.Set(reflect.ValueOf(&now))
-				case null.Time:
-					field.Set(reflect.ValueOf(nullNow))
-				case zero.Time:
-					field.Set(reflect.ValueOf(zeroNow))
-				}
+				m.setNowForField(field, now, nullNow, zeroNow)
 			}
 
 			m.appendModelIndividual(v.Index(i))
@@ -962,16 +917,7 @@ func (m *Model) Update() Modeler {
 		field := v.FieldByName(updatedAtField)
 
 		if field.IsValid() {
-			switch field.Interface().(type) {
-			case time.Time:
-				field.Set(reflect.ValueOf(now))
-			case *time.Time:
-				field.Set(reflect.ValueOf(&now))
-			case null.Time:
-				field.Set(reflect.ValueOf(nullNow))
-			case zero.Time:
-				field.Set(reflect.ValueOf(zeroNow))
-			}
+			m.setNowForField(field, now, nullNow, zeroNow)
 		}
 
 		m.appendModelIndividual(v)
@@ -1267,15 +1213,9 @@ func (m *Model) deleteBelongsTo(v reflect.Value) []error {
 			nullNow := null.TimeFrom(now)
 			zeroNow := zero.TimeFrom(now)
 			field := reflect.ValueOf(d).Elem().FieldByName(updatedAtField)
-			switch field.Interface().(type) {
-			case time.Time:
-				field.Set(reflect.ValueOf(now))
-			case *time.Time:
-				field.Set(reflect.ValueOf(&now))
-			case null.Time:
-				field.Set(reflect.ValueOf(nullNow))
-			case zero.Time:
-				field.Set(reflect.ValueOf(zeroNow))
+
+			if field.IsValid() {
+				m.setNowForField(field, now, nullNow, zeroNow)
 			}
 		}
 
@@ -1873,6 +1813,19 @@ func (m *Model) scanPrimaryKeys(rows *Rows, v reflect.Value) error {
 	}
 
 	return nil
+}
+
+func (m *Model) setNowForField(field reflect.Value, now time.Time, nullNow support.NTime, zeroNow support.ZTime) {
+	switch field.Interface().(type) {
+	case time.Time:
+		field.Set(reflect.ValueOf(now))
+	case *time.Time:
+		field.Set(reflect.ValueOf(&now))
+	case null.Time:
+		field.Set(reflect.ValueOf(nullNow))
+	case zero.Time:
+		field.Set(reflect.ValueOf(zeroNow))
+	}
 }
 
 func (m *Model) timeNow() time.Time {
