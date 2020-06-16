@@ -1563,12 +1563,6 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 				if len(cerrs) > 0 {
 					return count, cerrs
 				}
-			case "delete":
-				derrs := m.deleteBelongsTo(elem)
-
-				if len(derrs) > 0 {
-					return count, derrs
-				}
 			}
 
 			if support.ArrayContains(validateActions, m.action) && !opt.SkipValidate {
