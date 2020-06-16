@@ -3,6 +3,7 @@ package record
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"math/rand"
 	"reflect"
 	"strconv"
@@ -16,10 +17,15 @@ import (
 	"gopkg.in/guregu/null.v4/zero"
 )
 
+var (
+	parentTxCtxKey = contextKey("parentTx")
+)
+
 type (
 	// Modeler implements all Model methods.
 	Modeler interface {
 		All() Modeler
+		AttrByDBColumn(dbColumn string) *ModelAttr
 		Begin() error
 		BeginContext(ctx context.Context, opts *sql.TxOptions) error
 		Commit() []error
@@ -35,6 +41,7 @@ type (
 		Limit(limit int) Modeler
 		Offset(offset int) Modeler
 		Order(order string) Modeler
+		PrimaryKeys() []string
 		Rollback() []error
 		Scan(dest interface{}) Modeler
 		Select(columns string) Modeler
@@ -47,18 +54,21 @@ type (
 
 	// Model is the layer that represents business data and logic.
 	Model struct {
-		adapter, autoIncrement, tableName, action, group, having, join, order, selectColumns, timezone, where, softDeleteColumn string
-		attrs                                                                                                                   map[string]*modelAttr
-		dest, scanDest                                                                                                          interface{}
-		destKind                                                                                                                reflect.Kind
-		i18n                                                                                                                    *support.I18n
-		masters, replicas                                                                                                       []DBer
-		primaryKeys                                                                                                             []string
-		queryBuilder                                                                                                            strings.Builder
-		tx                                                                                                                      Txer
-		limit, offset                                                                                                           int
-		args, havingArgs, joinArgs, whereArgs                                                                                   []interface{}
-		individuals                                                                                                             []modelIndividual
+		adapter, autoIncrement, tableName, action, name, group, having, join, order, selectColumns, timezone, where, softDeleteColumn string
+		attrs                                                                                                                         map[string]*ModelAttr
+		belongsTo, hasOne, hasMany                                                                                                    map[string]modelAssoc
+		dbManager                                                                                                                     *Engine
+		dest, scanDest                                                                                                                interface{}
+		destKind                                                                                                                      reflect.Kind
+		i18n                                                                                                                          *support.I18n
+		masters, replicas                                                                                                             []DBer
+		primaryKeys                                                                                                                   []string
+		queryBuilder                                                                                                                  strings.Builder
+		tx                                                                                                                            Txer
+		associatedTx                                                                                                                  bool
+		limit, offset                                                                                                                 int
+		args, havingArgs, joinArgs, whereArgs                                                                                         []interface{}
+		individuals                                                                                                                   []modelIndividual
 	}
 
 	// ModelOption is used to initialise a model with additional configurations.
@@ -80,12 +90,25 @@ type (
 		// be returned correctly.
 		UseReplica bool
 
+		// SkipCallbacks indicates if the Create/Delete/Update callbacks should be
+		// skipped.
+		SkipCallbacks bool
+
 		// SkipValidate indicates if the validation callbacks should be skipped.
 		// By default, it is false.
 		SkipValidate bool
+
+		byAssociation bool
 	}
 
-	modelAttr struct {
+	modelAssoc struct {
+		optional, polymorphic, touch, validate                                bool
+		as, dependent, destFieldName, foreignKey, through, source, sourceType string
+		primaryKeys                                                           []string
+	}
+
+	// ModelAttr keeps track of the model's attributes.
+	ModelAttr struct {
 		autoIncrement bool
 		primaryKey    bool
 		stFieldName   string
@@ -122,7 +145,12 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 
 	model := &Model{
 		adapter:       "",
-		attrs:         map[string]*modelAttr{},
+		attrs:         map[string]*ModelAttr{},
+		name:          destElem.Name(),
+		belongsTo:     map[string]modelAssoc{},
+		hasOne:        map[string]modelAssoc{},
+		hasMany:       map[string]modelAssoc{},
+		dbManager:     dbManager,
 		dest:          dest,
 		destKind:      destKind,
 		i18n:          dbManager.i18n,
@@ -189,13 +217,13 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 			}
 		default:
 			dbColumn := support.ToSnakeCase(field.Name)
-			attr := modelAttr{
+			attr := ModelAttr{
 				autoIncrement: false,
 				stFieldName:   field.Name,
 				stFieldType:   field.Type,
 			}
 
-			// SQLX uses db tag to retrieve the column name.
+			// sqlx uses db tag to retrieve the column name.
 			dbTag := field.Tag.Get("db")
 			if dbTag == "-" {
 				continue
@@ -203,6 +231,11 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 
 			if dbTag != "" {
 				dbColumn = dbTag
+			}
+
+			if field.Tag.Get("association") != "" {
+				model.parseAssociations(field, dbColumn)
+				continue
 			}
 
 			if dbColumn == model.autoIncrement {
@@ -430,16 +463,7 @@ func (m *Model) Create() Modeler {
 			field := v.Index(i).FieldByName(createdAtField)
 
 			if field.IsValid() {
-				switch field.Interface().(type) {
-				case time.Time:
-					field.Set(reflect.ValueOf(now))
-				case *time.Time:
-					field.Set(reflect.ValueOf(&now))
-				case null.Time:
-					field.Set(reflect.ValueOf(nullNow))
-				case zero.Time:
-					field.Set(reflect.ValueOf(zeroNow))
-				}
+				m.setNowForField(field, now, nullNow, zeroNow)
 			}
 		}
 	case reflect.Ptr:
@@ -447,16 +471,7 @@ func (m *Model) Create() Modeler {
 		field := v.FieldByName(createdAtField)
 
 		if field.IsValid() {
-			switch field.Interface().(type) {
-			case time.Time:
-				field.Set(reflect.ValueOf(now))
-			case *time.Time:
-				field.Set(reflect.ValueOf(&now))
-			case null.Time:
-				field.Set(reflect.ValueOf(nullNow))
-			case zero.Time:
-				field.Set(reflect.ValueOf(zeroNow))
-			}
+			m.setNowForField(field, now, nullNow, zeroNow)
 		}
 	}
 
@@ -479,16 +494,7 @@ func (m *Model) Delete() Modeler {
 				field := v.Index(i).FieldByName(deletedAtField)
 
 				if field.IsValid() {
-					switch field.Interface().(type) {
-					case time.Time:
-						field.Set(reflect.ValueOf(now))
-					case *time.Time:
-						field.Set(reflect.ValueOf(&now))
-					case null.Time:
-						field.Set(reflect.ValueOf(nullNow))
-					case zero.Time:
-						field.Set(reflect.ValueOf(zeroNow))
-					}
+					m.setNowForField(field, now, nullNow, zeroNow)
 				}
 			}
 
@@ -501,16 +507,7 @@ func (m *Model) Delete() Modeler {
 			field := v.FieldByName(deletedAtField)
 
 			if field.IsValid() {
-				switch field.Interface().(type) {
-				case time.Time:
-					field.Set(reflect.ValueOf(now))
-				case *time.Time:
-					field.Set(reflect.ValueOf(&now))
-				case null.Time:
-					field.Set(reflect.ValueOf(nullNow))
-				case zero.Time:
-					field.Set(reflect.ValueOf(zeroNow))
-				}
+				m.setNowForField(field, now, nullNow, zeroNow)
 			}
 		}
 
@@ -641,6 +638,16 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 		}
 
 		count, errs = m.namedExecOrQuery(db, dest, query, opt)
+
+		if m.tx != nil && !opt.byAssociation && m.associatedTx {
+			cerrs := m.Commit()
+
+			if len(cerrs) > 0 {
+				errs = append(errs, cerrs...)
+			}
+
+			m.tx = nil
+		}
 	case "delete", "update":
 		for _, individual := range m.individuals {
 			individualCount, tmpErrs := m.namedExecOrQuery(db, individual.dest, individual.query, opt)
@@ -649,6 +656,16 @@ func (m *Model) Exec(opts ...ExecOption) (int64, []error) {
 			if tmpErrs != nil {
 				errs = append(errs, tmpErrs...)
 			}
+		}
+
+		if m.tx != nil && !opt.byAssociation && m.associatedTx {
+			derrs := m.Commit()
+
+			if len(derrs) > 0 {
+				errs = append(errs, derrs...)
+			}
+
+			m.tx = nil
 		}
 
 		m.individuals = []modelIndividual{}
@@ -890,16 +907,7 @@ func (m *Model) Update() Modeler {
 			field := v.Index(i).FieldByName(updatedAtField)
 
 			if field.IsValid() {
-				switch field.Interface().(type) {
-				case time.Time:
-					field.Set(reflect.ValueOf(now))
-				case *time.Time:
-					field.Set(reflect.ValueOf(&now))
-				case null.Time:
-					field.Set(reflect.ValueOf(nullNow))
-				case zero.Time:
-					field.Set(reflect.ValueOf(zeroNow))
-				}
+				m.setNowForField(field, now, nullNow, zeroNow)
 			}
 
 			m.appendModelIndividual(v.Index(i))
@@ -909,16 +917,7 @@ func (m *Model) Update() Modeler {
 		field := v.FieldByName(updatedAtField)
 
 		if field.IsValid() {
-			switch field.Interface().(type) {
-			case time.Time:
-				field.Set(reflect.ValueOf(now))
-			case *time.Time:
-				field.Set(reflect.ValueOf(&now))
-			case null.Time:
-				field.Set(reflect.ValueOf(nullNow))
-			case zero.Time:
-				field.Set(reflect.ValueOf(zeroNow))
-			}
+			m.setNowForField(field, now, nullNow, zeroNow)
 		}
 
 		m.appendModelIndividual(v)
@@ -1109,6 +1108,129 @@ func (m *Model) buildWhereWithPrimaryKeys() {
 		builder.WriteString(strings.Join(wheres, " AND "))
 		m.where, m.whereArgs = m.rebind(builder.String(), args...)
 	}
+}
+
+func (m *Model) createBelongsTo(v reflect.Value) []error {
+	if len(m.belongsTo) < 1 {
+		return nil
+	}
+
+	dests := map[string]interface{}{}
+	errs := []error{}
+
+	for dbColumn, b := range m.belongsTo {
+		dest := v.FieldByName(b.destFieldName)
+
+		if !b.optional && dest.IsZero() {
+			errs = append(errs, fmt.Errorf("%s cannot be nil", b.destFieldName))
+			continue
+		}
+
+		dests[dbColumn] = dest.Interface()
+	}
+
+	if len(errs) < 1 {
+		if m.tx == nil {
+			err := m.Begin()
+
+			if err != nil {
+				return []error{err}
+			}
+
+			m.associatedTx = true
+		}
+	}
+
+	for dbColumn, d := range dests {
+		bt := m.belongsTo[dbColumn]
+		av := reflect.ValueOf(d).Elem()
+		fk := bt.foreignKey
+		model := NewModel(m.dbManager, d, ModelOption{Tx: m.tx})
+		needsCreate := false
+
+		for _, pk := range bt.primaryKeys {
+			if av.IsValid() && av.FieldByName(model.AttrByDBColumn(pk).stFieldName).IsZero() {
+				needsCreate = true
+				break
+			}
+		}
+
+		if needsCreate {
+			_, cerrs := model.Create().Exec(ExecOption{SkipValidate: !bt.validate, byAssociation: true})
+
+			if len(cerrs) > 0 {
+				errs = append(errs, cerrs...)
+				continue
+			}
+		}
+
+		for _, pk := range bt.primaryKeys {
+			if av.IsValid() {
+				v.FieldByName(m.attrs[fk].stFieldName).Set(av.FieldByName(model.AttrByDBColumn(pk).stFieldName))
+			}
+		}
+	}
+
+	return errs
+}
+
+func (m *Model) deleteBelongsTo(v reflect.Value) []error {
+	if len(m.belongsTo) < 1 {
+		return nil
+	}
+
+	dests := map[string]interface{}{}
+	errs := []error{}
+
+	for dbColumn, bt := range m.belongsTo {
+		dest := v.FieldByName(bt.destFieldName)
+
+		if (bt.dependent == "" || dest.IsZero()) && !bt.touch {
+			continue
+		}
+
+		dests[dbColumn] = dest.Interface()
+	}
+
+	if len(errs) < 1 {
+		if m.tx == nil {
+			err := m.Begin()
+
+			if err != nil {
+				return []error{err}
+			}
+
+			m.associatedTx = true
+		}
+	}
+
+	for dbColumn, d := range dests {
+		bt := m.belongsTo[dbColumn]
+		model := NewModel(m.dbManager, d, ModelOption{Tx: m.tx})
+
+		if bt.touch {
+			now := m.timeNow()
+			nullNow := null.TimeFrom(now)
+			zeroNow := zero.TimeFrom(now)
+			field := reflect.ValueOf(d).Elem().FieldByName(updatedAtField)
+
+			if field.IsValid() {
+				m.setNowForField(field, now, nullNow, zeroNow)
+			}
+		}
+
+		if bt.dependent != "" {
+			skipCallbacks := (bt.dependent == "delete_without_callbacks")
+			_, cerrs := model.Delete().Exec(ExecOption{SkipCallbacks: skipCallbacks, byAssociation: true})
+
+			if len(cerrs) > 0 {
+				errs = append(errs, cerrs...)
+				continue
+			}
+		}
+	}
+
+	return errs
 }
 
 func (m *Model) exec(db DBer, query string, opt ExecOption) (int64, error) {
@@ -1374,6 +1496,15 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		for i := 0; i < v.Len(); i++ {
 			elem := v.Index(i)
 
+			switch m.action {
+			case "create":
+				cerrs := m.createBelongsTo(elem)
+
+				if len(cerrs) > 0 {
+					return count, cerrs
+				}
+			}
+
 			if support.ArrayContains(validateActions, m.action) && !opt.SkipValidate {
 				err = m.handleCallback(elem, "BeforeValidate")
 				if err != nil {
@@ -1402,6 +1533,21 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 		}
 	case reflect.Ptr:
 		elem := v.Elem()
+
+		switch m.action {
+		case "create":
+			cerrs := m.createBelongsTo(elem)
+
+			if len(cerrs) > 0 {
+				return count, cerrs
+			}
+		case "delete":
+			derrs := m.deleteBelongsTo(elem)
+
+			if len(derrs) > 0 {
+				return count, derrs
+			}
+		}
 
 		if support.ArrayContains(validateActions, m.action) && !opt.SkipValidate {
 			err = m.handleCallback(elem, "BeforeValidate")
@@ -1547,6 +1693,52 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 	return count, nil
 }
 
+func (m *Model) parseAssociations(field reflect.StructField, dbColumn string) {
+	assocTag := field.Tag.Get("association")
+	touch, _ := strconv.ParseBool(field.Tag.Get("touch"))
+	validate, _ := strconv.ParseBool(field.Tag.Get("validate"))
+
+	primaryKeys := []string{"id"}
+	if field.Tag.Get("primaryKeys") != "" {
+		primaryKeys = strings.Split(field.Tag.Get("primaryKeys"), ",")
+	}
+
+	foreignKey := field.Tag.Get("foreignKey")
+	if foreignKey == "" {
+		foreignKey = support.ToSnakeCase(support.Singular(field.Name)) + "_id"
+	}
+
+	if assocTag != "" {
+		switch assocTag {
+		case "belongsTo":
+			optional, _ := strconv.ParseBool(field.Tag.Get("optional"))
+			polymorphic, _ := strconv.ParseBool(field.Tag.Get("polymorphic"))
+
+			m.belongsTo[dbColumn] = modelAssoc{
+				dependent:     field.Tag.Get("dependent"),
+				destFieldName: field.Name,
+				foreignKey:    foreignKey,
+				optional:      optional,
+				polymorphic:   polymorphic,
+				primaryKeys:   primaryKeys,
+				touch:         touch,
+				validate:      validate,
+			}
+		}
+	}
+}
+
+// AttrByDBColumn returns the model's attribute based on the DB column
+// provided.
+func (m *Model) AttrByDBColumn(dbColumn string) *ModelAttr {
+	return m.attrs[dbColumn]
+}
+
+// PrimaryKeys returns the model's primary keys.
+func (m *Model) PrimaryKeys() []string {
+	return m.primaryKeys
+}
+
 func (m *Model) rebind(query string, args ...interface{}) (string, []interface{}) {
 	var builder strings.Builder
 	newArgs := []interface{}{}
@@ -1621,6 +1813,19 @@ func (m *Model) scanPrimaryKeys(rows *Rows, v reflect.Value) error {
 	}
 
 	return nil
+}
+
+func (m *Model) setNowForField(field reflect.Value, now time.Time, nullNow support.NTime, zeroNow support.ZTime) {
+	switch field.Interface().(type) {
+	case time.Time:
+		field.Set(reflect.ValueOf(now))
+	case *time.Time:
+		field.Set(reflect.ValueOf(&now))
+	case null.Time:
+		field.Set(reflect.ValueOf(nullNow))
+	case zero.Time:
+		field.Set(reflect.ValueOf(zeroNow))
+	}
 }
 
 func (m *Model) timeNow() time.Time {

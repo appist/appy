@@ -2036,7 +2036,7 @@ func (s *modelSuite) TestShareTx() {
 			var u User
 			s.Nil(faker.FakeData(&u))
 
-			uModel := s.model(&u, ModelOption{duModel.Tx()})
+			uModel := s.model(&u, ModelOption{Tx: duModel.Tx()})
 			count, errs = uModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(1), u.ID)
@@ -2072,7 +2072,7 @@ func (s *modelSuite) TestShareTx() {
 			var u User
 			s.Nil(faker.FakeData(&u))
 
-			uModel := s.model(&u, ModelOption{duModel.Tx()})
+			uModel := s.model(&u, ModelOption{Tx: duModel.Tx()})
 			count, errs = uModel.Create().Exec()
 			s.Equal(int64(1), count)
 			s.Equal(int64(2), u.ID)
