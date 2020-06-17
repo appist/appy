@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS books (
 
 func (s *modelBelongsToSuite) TestBasic() {
 	type authorM struct {
-		Model     `masters:"primary" tableName:"authors" autoIncrement:"id" faker:"-"`
+		Model     `masters:"primary" tableName:"authors" faker:"-"`
 		ID        int64 `faker:"-"`
 		Name      string
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
@@ -171,7 +171,7 @@ func (s *modelBelongsToSuite) TestBasic() {
 	}
 
 	type bookM struct {
-		Model     `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
+		Model     `masters:"primary" tableName:"books" faker:"-"`
 		ID        int64 `faker:"-"`
 		Name      string
 		Author    *authorM      `association:"belongsTo" faker:"-"`
@@ -250,7 +250,7 @@ func (s *modelBelongsToSuite) TestCustomPrimaryKeys() {
 	}
 
 	type bookM struct {
-		Model      `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
+		Model      `masters:"primary" tableName:"books" faker:"-"`
 		ID         int64 `faker:"-"`
 		Name       string
 		Reseller   *resellerM    `association:"belongsTo" primaryKeys:"reseller_id" faker:"-"`
@@ -323,7 +323,7 @@ func (s *modelBelongsToSuite) TestCustomPrimaryKeys() {
 }
 
 type authorDM struct {
-	Model     `masters:"primary" tableName:"authors" autoIncrement:"id" faker:"-"`
+	Model     `masters:"primary" tableName:"authors" faker:"-"`
 	ID        int64 `faker:"-"`
 	Name      string
 	CreatedAt support.ZTime `db:"created_at" faker:"-"`
@@ -353,7 +353,7 @@ type resellerDM struct {
 }
 
 type storeDM struct {
-	Model     `masters:"primary" tableName:"stores" autoIncrement:"id" faker:"-"`
+	Model     `masters:"primary" tableName:"stores" faker:"-"`
 	ID        int64         `faker:"-"`
 	Name      string        `faker:"-"`
 	CreatedAt support.ZTime `db:"created_at" faker:"-"`
@@ -361,7 +361,7 @@ type storeDM struct {
 }
 
 type bookDM struct {
-	Model      `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
+	Model      `masters:"primary" tableName:"books" faker:"-"`
 	ID         int64         `faker:"-"`
 	Name       string        `faker:"-"`
 	Author     *authorDM     `association:"belongsTo" dependent:"delete" faker:"-"`
@@ -473,7 +473,7 @@ func (s *modelBelongsToSuite) TestDependent() {
 
 func (s *modelBelongsToSuite) TestOptionalOwner() {
 	type authorM struct {
-		Model     `masters:"primary" tableName:"authors" autoIncrement:"id" faker:"-"`
+		Model     `masters:"primary" tableName:"authors" faker:"-"`
 		ID        int64         `faker:"-"`
 		Name      string        `faker:"-"`
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
@@ -481,7 +481,7 @@ func (s *modelBelongsToSuite) TestOptionalOwner() {
 	}
 
 	type bookM struct {
-		Model     `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
+		Model     `masters:"primary" tableName:"books" faker:"-"`
 		ID        int64         `faker:"-"`
 		Name      string        `faker:"-"`
 		Author    *authorM      `association:"belongsTo" faker:"-" optional:"true"`
@@ -521,7 +521,7 @@ func (s *modelBelongsToSuite) TestOptionalOwner() {
 
 func (s *modelBelongsToSuite) TestTouch() {
 	type authorM struct {
-		Model     `masters:"primary" tableName:"authors" autoIncrement:"id" faker:"-"`
+		Model     `masters:"primary" tableName:"authors" faker:"-"`
 		ID        int64         `faker:"-"`
 		Name      string        `faker:"-"`
 		CreatedAt support.ZTime `db:"created_at" faker:"-"`
@@ -529,7 +529,7 @@ func (s *modelBelongsToSuite) TestTouch() {
 	}
 
 	type bookM struct {
-		Model     `masters:"primary" tableName:"books" autoIncrement:"id" faker:"-"`
+		Model     `masters:"primary" tableName:"books" faker:"-"`
 		ID        int64         `faker:"-"`
 		Name      string        `faker:"-"`
 		Author    *authorM      `association:"belongsTo" faker:"-" touch:"true"`
