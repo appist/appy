@@ -9,7 +9,7 @@ import (
 )
 
 type UserWithBeforeValidateError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64         `db:"id" faker:"-"`
 	Username  string        `db:"username" faker:"username,unique"`
 	CreatedAt support.ZTime `db:"created_at" faker:"-"`
@@ -22,7 +22,7 @@ func (u *UserWithBeforeValidateError) BeforeValidate() error {
 }
 
 type UserWithAfterValidateError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
 	CreatedAt *time.Time `db:"created_at" faker:"-"`
@@ -35,7 +35,7 @@ func (u *UserWithAfterValidateError) AfterValidate() error {
 }
 
 type UserWithBeforeCreateError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
 	CreatedAt *time.Time `db:"created_at" faker:"-"`
@@ -48,7 +48,7 @@ func (u *UserWithBeforeCreateError) BeforeCreate() error {
 }
 
 type UserWithAfterCreateError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64         `db:"id" faker:"-"`
 	Username  string        `db:"username" faker:"username,unique"`
 	CreatedAt support.NTime `db:"created_at" faker:"-"`
@@ -61,7 +61,7 @@ func (u *UserWithAfterCreateError) AfterCreate() error {
 }
 
 type UserWithBeforeUpdateError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
 	CreatedAt *time.Time `db:"created_at" faker:"-"`
@@ -74,7 +74,7 @@ func (u *UserWithBeforeUpdateError) BeforeUpdate() error {
 }
 
 type UserWithAfterUpdateError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
 	CreatedAt *time.Time `db:"created_at" faker:"-"`
@@ -87,7 +87,7 @@ func (u *UserWithAfterUpdateError) AfterUpdate() error {
 }
 
 type UserWithBeforeDeleteError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
 	CreatedAt *time.Time `db:"created_at" faker:"-"`
@@ -100,7 +100,7 @@ func (u *UserWithBeforeDeleteError) BeforeDelete() error {
 }
 
 type UserWithAfterDeleteError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
 	CreatedAt *time.Time `db:"created_at" faker:"-"`
@@ -113,7 +113,7 @@ func (u *UserWithAfterDeleteError) AfterDelete() error {
 }
 
 type UserWithAfterCreateCommitError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Message   string     `db:"-" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
@@ -127,7 +127,7 @@ func (u *UserWithAfterCreateCommitError) AfterCreateCommit() error {
 }
 
 type UserWithAfterCreateCommit struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Message   string     `db:"-" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
@@ -143,7 +143,7 @@ func (u *UserWithAfterCreateCommit) AfterCreateCommit() error {
 }
 
 type UserWithAfterDeleteCommit struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Message   string     `db:"-" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
@@ -159,7 +159,7 @@ func (u *UserWithAfterDeleteCommit) AfterDeleteCommit() error {
 }
 
 type UserWithAfterUpdateCommit struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64         `db:"id" faker:"-"`
 	Message   string        `db:"-" faker:"-"`
 	Username  string        `db:"username" faker:"username,unique"`
@@ -175,7 +175,7 @@ func (u *UserWithAfterUpdateCommit) AfterUpdateCommit() error {
 }
 
 type UserWithAfterRollbackError struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Message   string     `db:"-" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`
@@ -189,7 +189,7 @@ func (u *UserWithAfterRollbackError) AfterRollback() error {
 }
 
 type UserWithAfterRollback struct {
-	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" autoIncrement:"id" timezone:"local" faker:"-"`
+	Model     `masters:"primary" replicas:"primaryReplica" tableName:"callback_users" timezone:"local" faker:"-"`
 	ID        int64      `db:"id" faker:"-"`
 	Message   string     `db:"-" faker:"-"`
 	Username  string     `db:"username" faker:"username,unique"`

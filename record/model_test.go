@@ -26,7 +26,7 @@ type (
 	}
 
 	User struct {
-		Model      `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" timezone:"local" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" timezone:"local" faker:"-"`
 		ID         int64         `db:"id" faker:"-"`
 		Age        int64         `db:"-"`
 		LoginCount *int64        `db:"login_count"`
@@ -38,7 +38,7 @@ type (
 	}
 
 	AdminUser struct {
-		Model      `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" primaryKeys:"id,email" faker:"-"`
+		Model      `masters:"primary" replicas:"" tableName:"admins" primaryKeys:"id,email" faker:"-"`
 		ID         int64         `db:"id" faker:"-"`
 		Age        int64         `db:"-"`
 		LoginCount *int64        `db:"login_count"`
@@ -50,7 +50,7 @@ type (
 	}
 
 	DuplicateUser struct {
-		Model      `masters:"primary" replicas:"primaryReplica" tableName:"" autoIncrement:"id" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" faker:"-"`
 		ID         int64         `db:"id" faker:"-"`
 		Age        int64         `db:"-"`
 		LoginCount *int64        `db:"login_count"`
@@ -62,7 +62,7 @@ type (
 	}
 
 	SoftDeleteNUser struct {
-		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" faker:"-"`
 		ID         int64         `db:"id" faker:"-"`
 		Age        int64         `db:"-"`
 		LoginCount *int64        `db:"login_count"`
@@ -74,7 +74,7 @@ type (
 	}
 
 	SoftDeleteZUser struct {
-		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" faker:"-"`
 		ID         int64         `db:"id" faker:"-"`
 		Age        int64         `db:"-"`
 		LoginCount *int64        `db:"login_count"`
@@ -86,7 +86,7 @@ type (
 	}
 
 	HardDeleteUser struct {
-		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" faker:"-"`
 		ID         int64         `db:"id" faker:"-"`
 		Age        int64         `db:"-"`
 		LoginCount *int64        `db:"login_count"`
@@ -97,7 +97,7 @@ type (
 	}
 
 	UserWithoutPK struct {
-		Model      `masters:"primary" replicas:"primaryReplica" primaryKeys:"" tableName:"" faker:"-"`
+		Model      `masters:"primary" replicas:"primaryReplica" primaryKeys:"" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
 		Age        int64      `db:"-"`
 		LoginCount *int64     `db:"login_count"`
@@ -109,7 +109,7 @@ type (
 	}
 
 	MasterOnlyUser struct {
-		Model      `masters:"primary" replicas:"" tableName:"admins" autoIncrement:"id" faker:"-"`
+		Model      `masters:"primary" replicas:"" tableName:"admins" faker:"-"`
 		ID         int64      `db:"id" faker:"-"`
 		Age        int64      `db:"-"`
 		LoginCount *int64     `db:"login_count"`
@@ -2513,7 +2513,7 @@ func (s *modelSuite) TestValidate() {
 
 		{
 			type user1 struct {
-				Model `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+				Model `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" faker:"-"`
 				Email string `db:"email" binding:"required"`
 			}
 
@@ -2568,7 +2568,7 @@ func (s *modelSuite) TestValidate() {
 
 		{
 			type user2 struct {
-				Model                `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+				Model                `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" faker:"-"`
 				Password             string `db:"password"`
 				PasswordConfirmation string `db:"password_confirmation" binding:"eqfield=Password"`
 			}
@@ -2616,7 +2616,7 @@ func (s *modelSuite) TestValidate() {
 
 		{
 			type user3 struct {
-				Model    `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" autoIncrement:"id" faker:"-"`
+				Model    `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" faker:"-"`
 				Username string `db:"age" binding:"min=5,max=8"`
 			}
 

@@ -156,7 +156,7 @@ func NewModel(dbManager *Engine, dest interface{}, opts ...ModelOption) Modeler 
 		i18n:          dbManager.i18n,
 		masters:       []DBer{},
 		replicas:      []DBer{},
-		autoIncrement: "",
+		autoIncrement: "id",
 		primaryKeys:   []string{"id"},
 		tableName:     support.ToSnakeCase(support.Plural(destElem.Name())),
 		timezone:      "utc",
