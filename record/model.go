@@ -1530,8 +1530,6 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			}
 		}
 
-		defer rows.Close()
-
 		if err != nil {
 			return int64(0), []error{err}
 		}
@@ -1551,11 +1549,14 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 					count++
 				}
 
+				rows.Close()
+
 				if errs != nil {
 					return count, errs
 				}
 			case reflect.Ptr:
 				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
+				rows.Close()
 
 				if err != nil {
 					return count, []error{err}
@@ -1567,6 +1568,8 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			for rows.Next() {
 				count++
 			}
+
+			rows.Close()
 		}
 	}
 
