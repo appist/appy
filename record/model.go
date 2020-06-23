@@ -1238,46 +1238,19 @@ func (m *Model) exec(db DBer, query string, opt ExecOption) (int64, error) {
 		count  int64
 		err    error
 		result sql.Result
-		stmt   *Stmt
 	)
-
-	defer func() {
-		if stmt != nil {
-			stmt.Close()
-		}
-	}()
 
 	if m.tx != nil {
 		if opt.Context != nil {
-			stmt, err = m.tx.PrepareContext(opt.Context, query)
-			if err != nil {
-				return int64(0), err
-			}
-
-			result, err = stmt.ExecContext(opt.Context, m.args...)
+			result, err = m.tx.ExecContext(opt.Context, query, m.args...)
 		} else {
-			stmt, err = m.tx.Prepare(query)
-			if err != nil {
-				return int64(0), err
-			}
-
-			result, err = stmt.Exec(m.args...)
+			result, err = m.tx.Exec(query, m.args...)
 		}
 	} else {
 		if opt.Context != nil {
-			stmt, err = db.PrepareContext(opt.Context, query)
-			if err != nil {
-				return int64(0), err
-			}
-
-			result, err = stmt.ExecContext(opt.Context, m.args...)
+			result, err = db.ExecContext(opt.Context, query, m.args...)
 		} else {
-			stmt, err = db.Prepare(query)
-			if err != nil {
-				return int64(0), err
-			}
-
-			result, err = stmt.Exec(m.args...)
+			result, err = db.Exec(query, m.args...)
 		}
 	}
 
@@ -1297,46 +1270,19 @@ func (m *Model) get(db DBer, query string, opt ExecOption) (int64, error) {
 	var (
 		count int64
 		err   error
-		stmt  *Stmt
 	)
-
-	defer func() {
-		if stmt != nil {
-			stmt.Close()
-		}
-	}()
 
 	if m.tx != nil {
 		if opt.Context != nil {
-			stmt, err = m.tx.PrepareContext(opt.Context, query)
-			if err != nil {
-				return int64(0), err
-			}
-
-			err = stmt.GetContext(opt.Context, &count, m.args...)
+			err = m.tx.GetContext(opt.Context, &count, query, m.args...)
 		} else {
-			stmt, err = m.tx.Prepare(query)
-			if err != nil {
-				return int64(0), err
-			}
-
-			err = stmt.Get(&count, m.args...)
+			err = m.tx.Get(&count, query, m.args...)
 		}
 	} else {
 		if opt.Context != nil {
-			stmt, err = db.PrepareContext(opt.Context, query)
-			if err != nil {
-				return int64(0), err
-			}
-
-			err = stmt.GetContext(opt.Context, &count, m.args...)
+			err = db.GetContext(opt.Context, &count, query, m.args...)
 		} else {
-			stmt, err = db.Prepare(query)
-			if err != nil {
-				return int64(0), err
-			}
-
-			err = stmt.Get(&count, m.args...)
+			err = db.Get(&count, query, m.args...)
 		}
 	}
 
@@ -1347,48 +1293,21 @@ func (m *Model) getOrSelect(db DBer, query string, opt ExecOption) (int64, error
 	var (
 		count int64
 		err   error
-		stmt  *Stmt
 	)
-
-	defer func() {
-		if stmt != nil {
-			stmt.Close()
-		}
-	}()
 
 	switch m.destKind {
 	case reflect.Array, reflect.Slice:
 		if m.tx != nil {
 			if opt.Context != nil {
-				stmt, err = m.tx.PrepareContext(opt.Context, query)
-				if err != nil {
-					return int64(0), err
-				}
-
-				err = stmt.SelectContext(opt.Context, m.dest, m.args...)
+				err = m.tx.SelectContext(opt.Context, m.dest, query, m.args...)
 			} else {
-				stmt, err = m.tx.Prepare(query)
-				if err != nil {
-					return int64(0), err
-				}
-
-				err = stmt.Select(m.dest, m.args...)
+				err = m.tx.Select(m.dest, query, m.args...)
 			}
 		} else {
 			if opt.Context != nil {
-				stmt, err = db.PrepareContext(opt.Context, query)
-				if err != nil {
-					return int64(0), err
-				}
-
-				err = stmt.SelectContext(opt.Context, m.dest, m.args...)
+				err = db.SelectContext(opt.Context, m.dest, query, m.args...)
 			} else {
-				stmt, err = db.Prepare(query)
-				if err != nil {
-					return int64(0), err
-				}
-
-				err = stmt.Select(m.dest, m.args...)
+				err = db.Select(m.dest, query, m.args...)
 			}
 		}
 
@@ -1396,35 +1315,15 @@ func (m *Model) getOrSelect(db DBer, query string, opt ExecOption) (int64, error
 	case reflect.Ptr:
 		if m.tx != nil {
 			if opt.Context != nil {
-				stmt, err = m.tx.PrepareContext(opt.Context, query)
-				if err != nil {
-					return int64(0), err
-				}
-
-				err = stmt.GetContext(opt.Context, m.dest, m.args...)
+				err = m.tx.GetContext(opt.Context, m.dest, query, m.args...)
 			} else {
-				stmt, err = m.tx.Prepare(query)
-				if err != nil {
-					return int64(0), err
-				}
-
-				err = stmt.Get(m.dest, m.args...)
+				err = m.tx.Get(m.dest, query, m.args...)
 			}
 		} else {
 			if opt.Context != nil {
-				stmt, err = db.PrepareContext(opt.Context, query)
-				if err != nil {
-					return int64(0), err
-				}
-
-				err = stmt.GetContext(opt.Context, m.dest, m.args...)
+				err = db.GetContext(opt.Context, m.dest, query, m.args...)
 			} else {
-				stmt, err = db.Prepare(query)
-				if err != nil {
-					return int64(0), err
-				}
-
-				err = stmt.Get(m.dest, m.args...)
+				err = db.Get(m.dest, query, m.args...)
 			}
 		}
 
@@ -1650,11 +1549,14 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 					count++
 				}
 
+				rows.Close()
+
 				if errs != nil {
 					return count, errs
 				}
 			case reflect.Ptr:
 				err = m.scanPrimaryKeys(rows, reflect.ValueOf(m.dest).Elem())
+				rows.Close()
 
 				if err != nil {
 					return count, []error{err}
@@ -1666,9 +1568,9 @@ func (m *Model) namedExecOrQuery(db DBer, dest interface{}, query string, opt Ex
 			for rows.Next() {
 				count++
 			}
-		}
 
-		rows.Close()
+			rows.Close()
+		}
 	}
 
 	switch v.Kind() {
