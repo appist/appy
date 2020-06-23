@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"reflect"
+
 	record "github.com/appist/appy/record"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -47,10 +49,15 @@ func NewDB() (func(name string) record.DBer, *DB) {
 }
 
 // NewModel initializes a test model that is useful for testing purpose.
-func NewModel() (func(dest interface{}, opts ...record.ModelOption) record.Modeler, *Model) {
+func NewModel(mockedDest interface{}) (func(dest interface{}, opts ...record.ModelOption) record.Modeler, *Model) {
 	m := &Model{}
 
 	return func(dest interface{}, opts ...record.ModelOption) record.Modeler {
+		if mockedDest != nil {
+			val := reflect.ValueOf(dest)
+			val.Elem().Set(reflect.ValueOf(mockedDest).Elem())
+		}
+
 		return m
 	}, m
 }
