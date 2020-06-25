@@ -80,6 +80,7 @@ func NewAppCommand(asset *support.Asset, config *support.Config, dbManager *reco
 		cmd.AddCommand(newConfigEncCommand(config, logger))
 		cmd.AddCommand(newDBSchemaDumpCommand(config, dbManager, logger))
 		cmd.AddCommand(newGenMigrationCommand(config, dbManager, logger))
+		cmd.AddCommand(newSecretRotateCommand(asset, config, logger))
 		cmd.AddCommand(newStartCommand(logger, server))
 	}
 

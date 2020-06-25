@@ -85,6 +85,7 @@ An opinionated productive web framework that helps scaling business easier, i.e.
     middleware        List all the global middleware
     routes            List all the server-side routes
     secret            Generate a cryptographically secure secret key for encrypting cookie, CSRF token and config
+    secret:rotate     Rotate the secret that is used to encrypt/decrypt the configs (only available in debug build)
     serve             Run the HTTP/HTTPS web server without `webpack-dev-server`
     setup             Run dc:up/db:create/db:schema:load/db:seed to setup the datastore with seed data
     ssl:setup         Generate and install the locally trusted SSL certs using `mkcert`
