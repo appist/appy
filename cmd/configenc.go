@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/appist/appy/support"
@@ -52,19 +52,23 @@ func newConfigEncCommand(config *support.Config, logger *support.Logger) *Comman
 			if err != nil {
 				logger.Fatal(err)
 			}
+			envMap[key] = hex.EncodeToString(ciphertext)
 
-			encodedVal := hex.EncodeToString(ciphertext)
-			data, err := ioutil.ReadFile(config.Path())
-			if err != nil {
-				logger.Fatal(err)
+			envKeys := make([]string, 0, len(envMap))
+			for k := range envMap {
+				envKeys = append(envKeys, k)
 			}
-			newData := string(data)
+			sort.Strings(envKeys)
 
-			if existed {
-				re := regexp.MustCompile(key + `=.*\n`)
-				newData = re.ReplaceAllString(newData, key+"="+encodedVal+"\n")
-			} else {
-				newData += key + "=" + encodedVal + "\n"
+			newData := ""
+			prevKey := ""
+			for _, k := range envKeys {
+				if prevKey != "" && prevKey[0] != k[0] {
+					newData += "\n"
+				}
+
+				prevKey = k
+				newData += fmt.Sprintf("%s=%s\n", k, envMap[k])
 			}
 
 			err = ioutil.WriteFile(config.Path(), []byte(newData), 0)
