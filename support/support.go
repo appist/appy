@@ -56,15 +56,17 @@ func init() {
 
 	ginValidator, _ := binding.Validator.Engine().(*validator.Validate)
 	ginValidator.RegisterCustomTypeFunc(func(field reflect.Value) interface{} {
+		var val driver.Value
+
 		if valuer, ok := field.Interface().(driver.Valuer); ok {
-			val, err := valuer.Value()
+			v, err := valuer.Value()
 
 			if err == nil {
-				return val
+				val = v
 			}
 		}
 
-		return nil
+		return val
 	}, recordTypes...)
 }
 
