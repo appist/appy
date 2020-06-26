@@ -91,7 +91,7 @@ func (s *i18nSuite) TestValidationErrors() {
 
 	{
 		type user1 struct {
-			Email string `db:"email" binding:"required"`
+			Email ZString `db:"email" binding:"required"`
 		}
 
 		user := user1{}
@@ -111,11 +111,11 @@ func (s *i18nSuite) TestValidationErrors() {
 
 	{
 		type user2 struct {
-			Password             string `db:"password"`
-			PasswordConfirmation string `db:"password_confirmation" binding:"eqfield=Password"`
+			Password             string  `db:"password"`
+			PasswordConfirmation NString `db:"password_confirmation" binding:"eqfield=Password"`
 		}
 
-		user := user2{Password: "foo", PasswordConfirmation: "foobar"}
+		user := user2{Password: "foo", PasswordConfirmation: NewNString("foobar")}
 
 		errs := i18n.ValidationErrors(validator.Struct(user), "")
 		s.Equal(1, len(errs))

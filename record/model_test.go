@@ -2514,7 +2514,7 @@ func (s *modelSuite) TestValidate() {
 		{
 			type user1 struct {
 				Model `masters:"primary" replicas:"primaryReplica" tableName:"duplicate_users" faker:"-"`
-				Email string `db:"email" binding:"required"`
+				Email support.ZString `db:"email" binding:"required"`
 			}
 
 			user := user1{}
