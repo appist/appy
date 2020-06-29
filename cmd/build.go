@@ -192,7 +192,7 @@ func buildWebApp(logger *support.Logger, server *pack.Server, wd string) error {
 
 func copyAssetsFolder(asset *support.Asset, logger *support.Logger, releasePath string) error {
 	logger.Infof("Copying server-side assets into '%s' folder...", releasePath)
-	toCopies := []string{asset.Layout().Config(), asset.Layout().Docker(), asset.Layout().Locale(), asset.Layout().View()}
+	toCopies := []string{asset.Layout().Config(), asset.Layout().Root() + "/docker-compose.yml", asset.Layout().Locale(), asset.Layout().View()}
 
 	for _, toCopy := range toCopies {
 		err := copy.Copy(toCopy, releasePath+"/"+toCopy)

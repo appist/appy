@@ -23,7 +23,7 @@ func mdwSPA(server *Server, prefix string, fs http.FileSystem) HandlerFunc {
 
 		if !server.isCSRPath(req.URL.Path) ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout().Config()) ||
-			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout().Docker()) ||
+			strings.HasPrefix(req.URL.Path, "/docker-compose.yml") ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout().Locale()) ||
 			strings.HasPrefix(req.URL.Path, "/"+server.asset.Layout().View()) {
 			c.Next()

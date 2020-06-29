@@ -15,7 +15,6 @@ func (s *assetSuite) TestAssetLayout() {
 	asset := NewAsset(nil, "")
 
 	s.Equal("configs", asset.Layout().Config())
-	s.Equal(".docker", asset.Layout().Docker())
 	s.Equal("pkg/locales", asset.Layout().Locale())
 	s.Equal("", asset.Layout().Root())
 	s.Equal("pkg/views", asset.Layout().View())

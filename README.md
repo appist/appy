@@ -78,8 +78,8 @@ An opinionated productive web framework that helps scaling business easier, i.e.
     db:schema:load    Load all the databases schema for the current environment
     db:seed           Seed all databases for the current environment
     dc:down           Tear down the docker compose cluster
-    dc:restart        Restart services that are defined in `.docker/docker-compose.yml`
-    dc:up             Create and start containers that are defined in `.docker/docker-compose.yml`
+    dc:restart        Restart services that are defined in `docker-compose.yml`
+    dc:up             Create and start containers that are defined in `docker-compose.yml`
     gen:migration     Generate database migration file(default: primary, use --database to specify the target database) for the current environment (only available in debug build)
     help              Help about any command
     middleware        List all the global middleware
