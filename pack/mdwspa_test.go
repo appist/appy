@@ -47,7 +47,7 @@ func (s *mdwSPASuite) TestSSROrReservedPath() {
 	urls := []string{
 		"/ssr",
 		"/" + s.asset.Layout().Config(),
-		"/" + s.asset.Layout().Docker(),
+		"/docker-compose.yml",
 		"/" + s.asset.Layout().Locale(),
 		"/" + s.asset.Layout().View(),
 	}

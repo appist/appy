@@ -29,7 +29,6 @@ func NewAsset(embedded http.FileSystem, root string) *Asset {
 		embedded: embedded,
 		layout: &AssetLayout{
 			config: "configs",
-			docker: ".docker",
 			locale: "pkg/locales",
 			root:   root,
 			view:   "pkg/views",
@@ -109,11 +108,6 @@ type AssetLayout struct {
 // Config returns the path that stores the configuration.
 func (l *AssetLayout) Config() string {
 	return l.config
-}
-
-// Docker returns the path that stores the docker related files.
-func (l *AssetLayout) Docker() string {
-	return l.docker
 }
 
 // Locale returns the path that stores the server-side rendering locales.

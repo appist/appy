@@ -2,7 +2,7 @@ clean:
 	rm -rf dist coverage.out {{.projectName}} **/*.log
 
 docker\:build:
-	DOCKER_BUILDKIT=1 docker build -f .docker/Dockerfile --rm .
+	DOCKER_BUILDKIT=1 docker build --rm .
 
 codecheck:
 	go vet ./...

@@ -5,7 +5,7 @@ import "github.com/appist/appy/support"
 func newDcRestartCommand(asset *support.Asset, logger *support.Logger) *Command {
 	return &Command{
 		Use:   "dc:restart",
-		Short: "Restart services that are defined in `.docker/docker-compose.yml`",
+		Short: "Restart services that are defined in `docker-compose.yml`",
 		Run: func(cmd *Command, args []string) {
 			err := checkDocker()
 			if err != nil {

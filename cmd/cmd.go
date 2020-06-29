@@ -115,7 +115,7 @@ func runDockerCompose(action string, asset *support.Asset) error {
 		data []byte
 		err  error
 	)
-	dcPath := asset.Layout().Docker() + "/docker-compose.yml"
+	dcPath := asset.Layout().Root() + "/docker-compose.yml"
 
 	if support.IsDebugBuild() {
 		data, err = ioutil.ReadFile(dcPath)
