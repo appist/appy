@@ -11,5 +11,7 @@ model:
   filename: pkg/graphql/model/models_gen.go
 
 resolver:
-  filename: pkg/graphql/graphql.go
-  type: ResolverRoot
+  layout: follow-schema
+  dir: pkg/graphql/resolver
+  package: resolver
+  type: Root

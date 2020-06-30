@@ -24,11 +24,6 @@ func newBuildCommand(asset *support.Asset, logger *support.Logger, server *pack.
 		static   bool
 	)
 
-	goExe := "go"
-	if runtime.GOOS == "windows" {
-		goExe += ".exe"
-	}
-
 	cmd := &Command{
 		Use:   "build",
 		Short: "Compile the static assets into go files and build the release build binary (only available in debug build)",
@@ -42,7 +37,7 @@ func newBuildCommand(asset *support.Asset, logger *support.Logger, server *pack.
 			}
 
 			if platform != "" && !support.ArrayContains(platforms, platform) {
-				logger.Fatalf("the '%s' platform isn't supported, refer to `%s tool dist list` for the supported value", platform, goExe)
+				logger.Fatalf("the '%s' platform isn't supported, refer to `go tool dist list` for the supported value", platform)
 			}
 
 			wd, err := os.Getwd()
@@ -77,7 +72,7 @@ func newBuildCommand(asset *support.Asset, logger *support.Logger, server *pack.
 		},
 	}
 
-	cmd.Flags().StringVar(&platform, "platform", "", fmt.Sprintf("The platform for the binary to run on, see `%s tool dist list` for full list", goExe))
+	cmd.Flags().StringVar(&platform, "platform", "", "The platform for the binary to run on, see `go tool dist list` for full list")
 	cmd.Flags().BoolVar(&static, "static", false, "Specify if the binary should statically be built")
 	return cmd
 }
@@ -86,16 +81,6 @@ func buildCompressedBinary(logger *support.Logger, platform string, static bool,
 	name := path.Base(wd)
 
 	logger.Info("Building the binary...")
-
-	goExe := "go"
-	if runtime.GOOS == "windows" {
-		goExe += ".exe"
-	}
-
-	goPath, err := exec.LookPath(goExe)
-	if err != nil {
-		return err
-	}
 
 	buildCmdArgs := []string{"build", "-a", "-tags", "netgo jsoniter", "-ldflags", "-X github.com/appist/appy/support.Build=release -s -w"}
 	if static {
@@ -112,12 +97,12 @@ func buildCompressedBinary(logger *support.Logger, platform string, static bool,
 		}
 	}
 
-	buildCmd := exec.Command(goPath, append(buildCmdArgs, []string{"-o", name, "."}...)...)
+	buildCmd := exec.Command("go", append(buildCmdArgs, []string{"-o", name, "."}...)...)
 	buildCmd.Env = os.Environ()
 	buildCmd.Env = append(buildCmd.Env, buildCmdEnv...)
 
 	buildCmd.Stderr = os.Stderr
-	if err = buildCmd.Run(); err != nil {
+	if err := buildCmd.Run(); err != nil {
 		return err
 	}
 	fi, _ := os.Stat(name)
@@ -129,7 +114,7 @@ func buildCompressedBinary(logger *support.Logger, platform string, static bool,
 		upxExe += ".exe"
 	}
 
-	_, err = exec.LookPath(upxExe)
+	_, err := exec.LookPath(upxExe)
 	if err == nil {
 		logger.Info("Compressing the binary with upx...")
 
@@ -253,25 +238,15 @@ var assets http.FileSystem
 func getPlatforms() ([]string, error) {
 	var data []byte
 
-	goExe := "go"
-	if runtime.GOOS == "windows" {
-		goExe += ".exe"
-	}
-
-	goPath, err := exec.LookPath(goExe)
-	if err != nil {
-		return nil, err
-	}
-
-	cmd := exec.Command(goPath, "tool", "dist", "list")
+	cmd := exec.Command("go", "tool", "dist", "list")
 	cmd.Env = os.Environ()
 	cmd.Stderr = os.Stderr
 	stdout, _ := cmd.StdoutPipe()
-	if err = cmd.Start(); err != nil {
+	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
 
-	data, err = ioutil.ReadAll(stdout)
+	data, err := ioutil.ReadAll(stdout)
 	if err != nil {
 		return nil, err
 	}

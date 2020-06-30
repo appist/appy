@@ -31,7 +31,6 @@ An opinionated productive web framework that helps scaling business easier, i.e.
   - utilise `configs/.env.<APPY_ENV>` to support multiple environments deployment
 
 ## Table Of Contents
-
 - [Overview](#overview)
 - [Features](#features)
   - [package `cmd`](#package-cmd)
@@ -41,6 +40,8 @@ An opinionated productive web framework that helps scaling business easier, i.e.
   - [package `view`](#package-view)
   - [package `worker`](#package-worker)
 - [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
 - [Acknowledgement](#acknowledgement)
 - [Contribution](#contribution)
 - [License](#license)
@@ -315,14 +316,15 @@ $ mkdir <PROJECT_NAME> && cd $_ && go mod init $_ && git init
 package main
 
 import (
-  "github.com/appist/appy/support"
+  "github.com/appist/appy/cmd"
 )
 
 func main() {
-  support.Scaffold(support.ScaffoldOption{
-    DBAdapter: "postgres", // only "mysql" and "postgres" are supported
-    Description: "my first awesome app", // used in HTML's description meta tag, package.json and CLI help
-  })
+  err := cmd.Scaffold()
+
+  if err != nil {
+    panic(err)
+  }
 }
 ```
 
@@ -332,35 +334,16 @@ func main() {
 $ go run .
 ```
 
-#### Step 4: Install project dependencies for backend and frontend.
-
-```bash
-$ go mod download
-$ npm install
-```
-
-#### Step 5: Setup your local environment with databases running in docker compose cluster.
+#### Step 4: Setup the databases using Docker Compose.
 
 ```bash
 $ go run . setup
 ```
 
-#### Step 6: Start developing your application locally.
+#### Step 5: Start developing your application locally.
 
 ```bash
 $ go run . start
-```
-
-#### Step 7: Build the application binary with release mode.
-
-```bash
-$ go run . build
-```
-
-#### Step 8: Tear down everything once you're done testing.
-
-```bash
-$ go run . teardown
 ```
 
 ## Acknowledgement
