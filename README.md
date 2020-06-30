@@ -31,28 +31,20 @@ An opinionated productive web framework that helps scaling business easier, i.e.
   - utilise `configs/.env.<APPY_ENV>` to support multiple environments deployment
 
 ## Table Of Contents
-
-- [appy](#appy) - [Additional Notes](#additional-notes)
-  - [Table Of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Features](#features)
-    - [package `cmd`](#package-cmd)
-    - [package `mailer`](#package-mailer)
-    - [package `pack`](#package-pack)
-    - [package `record`](#package-record)
-    - [package `view`](#package-view)
-    - [package `worker`](#package-worker)
-  - [Getting Started](#getting-started)
-    - [Prerequisites](#prerequisites)
-    - [Quick Start](#quick-start)
-      - [Step 1: Create the project folder with go module and git initialised.](#step-1-create-the-project-folder-with-go-module-and-git-initialised)
-      - [Step 2: Create `main.go` with the snippet below.](#step-2-create-maingo-with-the-snippet-below)
-      - [Step 3: Initialize the project layout.](#step-3-initialize-the-project-layout)
-      - [Step 4: Start developing your application locally.](#step-4-start-developing-your-application-locally)
-      - [Step 5: Build the application binary with release mode.](#step-5-build-the-application-binary-with-release-mode)
-  - [Acknowledgement](#acknowledgement)
-  - [Contribution](#contribution)
-  - [License](#license)
+- [Overview](#overview)
+- [Features](#features)
+  - [package `cmd`](#package-cmd)
+  - [package `mailer`](#package-mailer)
+  - [package `pack`](#package-pack)
+  - [package `record`](#package-record)
+  - [package `view`](#package-view)
+  - [package `worker`](#package-worker)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
+- [Acknowledgement](#acknowledgement)
+- [Contribution](#contribution)
+- [License](#license)
 
 ## Overview
 
