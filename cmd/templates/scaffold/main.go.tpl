@@ -10,11 +10,11 @@ import (
 	_ "{{.projectName}}/db/migrate/primary"
 	_ "{{.projectName}}/db/seed/primary"
 
-	// Import GraphQL handler.
-	_ "{{.projectName}}/pkg/graphql"
-
 	// Import HTTP handlers.
 	_ "{{.projectName}}/pkg/handler"
+
+	// Import GraphQL handler.
+	_ "{{.projectName}}/pkg/graphql"
 
 	// Import background jobs.
 	_ "{{.projectName}}/pkg/job"

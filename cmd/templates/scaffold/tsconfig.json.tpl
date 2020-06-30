@@ -2,6 +2,7 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "baseUrl": "web/src",
+    "declaration": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
@@ -22,13 +23,11 @@
     "strictPropertyInitialization": true,
     "strictNullChecks": true,
     "target": "esnext",
-    "types": ["jest", "node", "@pyoner/svelte-types"],
-    "typeRoots": ["node_modules/@types", "web/src/typings"],
+    "types": ["jest", "node", "svelte"],
     "paths": {
-      "@assets": ["../../assets"],
-      "@": ["*"]
+      "@assets/*": ["../../assets/*"],
+      "@/*": ["*"]
     }
   },
-  "exclude": ["node_modules"],
-  "include": ["web/src/**/*"]
+  "exclude": ["node_modules"]
 }

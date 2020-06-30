@@ -32,18 +32,27 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 ## Table Of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-  - [package `cmd`](#package-cmd)
-  - [package `mailer`](#package-mailer)
-  - [package `pack`](#package-pack)
-  - [package `record`](#package-record)
-  - [package `view`](#package-view)
-  - [package `worker`](#package-worker)
-- [Getting Started](#getting-started)
-- [Acknowledgement](#acknowledgement)
-- [Contribution](#contribution)
-- [License](#license)
+- [appy](#appy) - [Additional Notes](#additional-notes)
+  - [Table Of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Features](#features)
+    - [package `cmd`](#package-cmd)
+    - [package `mailer`](#package-mailer)
+    - [package `pack`](#package-pack)
+    - [package `record`](#package-record)
+    - [package `view`](#package-view)
+    - [package `worker`](#package-worker)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Quick Start](#quick-start)
+      - [Step 1: Create the project folder with go module and git initialised.](#step-1-create-the-project-folder-with-go-module-and-git-initialised)
+      - [Step 2: Create `main.go` with the snippet below.](#step-2-create-maingo-with-the-snippet-below)
+      - [Step 3: Initialize the project layout.](#step-3-initialize-the-project-layout)
+      - [Step 4: Start developing your application locally.](#step-4-start-developing-your-application-locally)
+      - [Step 5: Build the application binary with release mode.](#step-5-build-the-application-binary-with-release-mode)
+  - [Acknowledgement](#acknowledgement)
+  - [Contribution](#contribution)
+  - [License](#license)
 
 ## Overview
 
@@ -315,14 +324,15 @@ $ mkdir <PROJECT_NAME> && cd $_ && go mod init $_ && git init
 package main
 
 import (
-  "github.com/appist/appy/support"
+  "github.com/appist/appy/cmd"
 )
 
 func main() {
-  support.Scaffold(support.ScaffoldOption{
-    DBAdapter: "postgres", // only "mysql" and "postgres" are supported
-    Description: "my first awesome app", // used in HTML's description meta tag, package.json and CLI help
-  })
+  err := cmd.Scaffold()
+
+  if err != nil {
+    panic(err)
+  }
 }
 ```
 
@@ -332,35 +342,16 @@ func main() {
 $ go run .
 ```
 
-#### Step 4: Install project dependencies for backend and frontend.
-
-```bash
-$ go mod download
-$ npm install
-```
-
-#### Step 5: Setup your local environment with databases running in docker compose cluster.
+#### Step 4: Setup the databases using Docker Compose.
 
 ```bash
 $ go run . setup
 ```
 
-#### Step 6: Start developing your application locally.
+#### Step 5: Start developing your application locally.
 
 ```bash
 $ go run . start
-```
-
-#### Step 7: Build the application binary with release mode.
-
-```bash
-$ go run . build
-```
-
-#### Step 8: Tear down everything once you're done testing.
-
-```bash
-$ go run . teardown
 ```
 
 ## Acknowledgement

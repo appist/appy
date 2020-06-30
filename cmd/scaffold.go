@@ -1,49 +1,63 @@
-package support
+package cmd
 
 import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"text/template"
 
-	"github.com/pkg/errors"
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/appist/appy/support"
 )
 
-// ScaffoldOption contains the information of how a new application should be
-// created.
-type ScaffoldOption struct {
-	// DBAdapter indicates the database adapter to use. By default, it is
-	// "postgres". Possible values are "mysql" and "postgres".
-	DBAdapter string
-
-	// Description indicates the project description that will be used in HTML's
-	// description meta tag, package.json and CLI help.
-	Description string
-}
+var (
+	scaffoldQ = []*survey.Question{
+		{
+			Name: "description",
+			Prompt: &survey.Input{
+				Message: "What does your app do?",
+				Help:    "Note: This will be used in HTML's description meta tag, package.json and CLI help message.",
+				Default: "",
+			},
+		},
+		{
+			Name: "dbAdapter",
+			Prompt: &survey.Select{
+				Message: "Which database adapter would you like to use?",
+				Options: support.SupportedDBAdapters,
+				Default: "postgres",
+			},
+		},
+	}
+)
 
 // Scaffold creates a new application.
-func Scaffold(opt ScaffoldOption) error {
-	if opt.DBAdapter == "" {
-		opt.DBAdapter = "postgres"
+func Scaffold() error {
+	answers := struct {
+		Description string `survey:"description"`
+		DBAdapter   string `survey:"dbAdapter"`
+	}{}
+
+	err := survey.Ask(scaffoldQ, &answers)
+	if err != nil {
+		return err
 	}
 
-	if !ArrayContains(SupportedDBAdapters, opt.DBAdapter) {
-		return errors.Errorf("DBAdapter '%s' is not supported, only '%s' are supported", opt.DBAdapter, SupportedDBAdapters)
-	}
-
-	moduleName := ModuleName()
+	moduleName := support.ModuleName()
 	_, dirname, _, _ := runtime.Caller(0)
 	tplPath := filepath.Dir(dirname) + "/templates/scaffold"
 
-	masterKeyDev := hex.EncodeToString(GenerateRandomBytes(32))
-	masterKeyTest := hex.EncodeToString(GenerateRandomBytes(32))
+	masterKeyDev := hex.EncodeToString(support.GenerateRandomBytes(32))
+	masterKeyTest := hex.EncodeToString(support.GenerateRandomBytes(32))
 
 	var dbURIPrimaryDev, dbURIPrimaryTest string
-	switch opt.DBAdapter {
+	switch answers.DBAdapter {
 	case "mysql":
 		dbURIPrimaryDev = getEncryptedValue(fmt.Sprintf("mysql://root:whatever@0.0.0.0:23306/%s", moduleName), masterKeyDev)
 		dbURIPrimaryTest = getEncryptedValue(fmt.Sprintf("mysql://root:whatever@0.0.0.0:23306/%s_test", moduleName), masterKeyTest)
@@ -52,12 +66,12 @@ func Scaffold(opt ScaffoldOption) error {
 		dbURIPrimaryTest = getEncryptedValue(fmt.Sprintf("postgresql://postgres:whatever@0.0.0.0:25432/%s_test?sslmode=disable&connect_timeout=5", moduleName), masterKeyTest)
 	}
 
-	httpCSRFSecretDev := getEncryptedValue(hex.EncodeToString(GenerateRandomBytes(32)), masterKeyDev)
-	httpSessionSecretsDev := getEncryptedValue(hex.EncodeToString(GenerateRandomBytes(32)), masterKeyDev)
+	httpCSRFSecretDev := getEncryptedValue(hex.EncodeToString(support.GenerateRandomBytes(32)), masterKeyDev)
+	httpSessionSecretsDev := getEncryptedValue(hex.EncodeToString(support.GenerateRandomBytes(32)), masterKeyDev)
 	workerRedisAddrDev := getEncryptedValue("0.0.0.0:26379", masterKeyDev)
 
-	httpCSRFSecretTest := getEncryptedValue(hex.EncodeToString(GenerateRandomBytes(32)), masterKeyTest)
-	httpSessionSecretsTest := getEncryptedValue(hex.EncodeToString(GenerateRandomBytes(32)), masterKeyTest)
+	httpCSRFSecretTest := getEncryptedValue(hex.EncodeToString(support.GenerateRandomBytes(32)), masterKeyTest)
+	httpSessionSecretsTest := getEncryptedValue(hex.EncodeToString(support.GenerateRandomBytes(32)), masterKeyTest)
 	workerRedisAddrTest := getEncryptedValue("0.0.0.0:26379", masterKeyTest)
 
 	if err := filepath.Walk(tplPath,
@@ -96,7 +110,7 @@ func Scaffold(opt ScaffoldOption) error {
 				"blockHead":               "{{block head()}}",
 				"blockBody":               "{{block body()}}",
 				"blockEnd":                "{{end}}",
-				"dbAdapter":               opt.DBAdapter,
+				"dbAdapter":               answers.DBAdapter,
 				"dbURIPrimaryDev":         dbURIPrimaryDev,
 				"httpCSRFSecretDev":       httpCSRFSecretDev,
 				"httpSessionSecretsDev":   httpSessionSecretsDev,
@@ -107,7 +121,7 @@ func Scaffold(opt ScaffoldOption) error {
 				"workerRedisAddrTest":     workerRedisAddrTest,
 				"extendApplicationLayout": "{{extends \"../layouts/application.html\"}}",
 				"projectName":             moduleName,
-				"projectDesc":             opt.Description,
+				"projectDesc":             answers.Description,
 				"masterKeyDev":            masterKeyDev,
 				"masterKeyTest":           masterKeyTest,
 				"translateWelcome":        "{{t(\"welcome\", `{\"Name\": \"John Doe\", \"Title\": \"` + t(\"title\") + `\"}`)}}",
@@ -119,9 +133,11 @@ func Scaffold(opt ScaffoldOption) error {
 	}
 
 	version := strings.ReplaceAll(runtime.Version(), "go", "")
+	re := regexp.MustCompile(`[a-zA-Z].*`)
+	version = re.ReplaceAllString(version, "")
 	versionSplits := strings.Split(version, ".")
 
-	return ioutil.WriteFile(
+	err = ioutil.WriteFile(
 		"go.mod",
 		[]byte(`module `+moduleName+`
 
@@ -134,11 +150,51 @@ require (
 )`),
 		0777,
 	)
+
+	if err != nil {
+		return err
+	}
+
+	err = installBackend()
+	if err != nil {
+		return err
+	}
+
+	err = installFrontend()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getEncryptedValue(value string, masterKey string) string {
 	plaintext := []byte(value)
-	ciphertext, _ := AESEncrypt(plaintext, []byte(masterKey))
+	ciphertext, _ := support.AESEncrypt(plaintext, []byte(masterKey))
 
 	return hex.EncodeToString(ciphertext)
+}
+
+func installBackend() error {
+	cmd := exec.Command("go", "mod", "download")
+	cmd.Env = os.Environ()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func installFrontend() error {
+	cmd := exec.Command("npm", "install")
+	cmd.Env = os.Environ()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
 }
