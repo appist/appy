@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/assets/logo.png" width="180"></p>
+
 # appy
 
 [![Build Status](https://github.com/appist/appy/workflows/Unit%20Test/badge.svg)](https://github.com/appist/appy/actions?workflow=Unit+Test)
