@@ -115,6 +115,7 @@ func gqlPlaygroundTpl(path string, c *Context) []byte {
 			var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
 			return v ? v[2] : null;
 		}
+
 		window.addEventListener('load', function (event) {
 			GraphQLPlayground.init(document.getElementById('root'), {
 				endpoint: '` + path + `',
@@ -123,8 +124,11 @@ func gqlPlaygroundTpl(path string, c *Context) []byte {
 					'X-CSRF-Token': unescape(getCookie("` + mdwCSRFAuthenticityTemplateFieldName(c) + `"))
 				},
 				settings: {
+					'editor.reuseHeaders': false,
 					'request.credentials': 'include',
-					'schema.polling.interval': 5000
+					'schema.polling.interval': 30000,
+					'tracing.hideTracingResponse': true,
+					'tracing.tracingSupported': true
 				}
 			})
 		})
