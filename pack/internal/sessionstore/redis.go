@@ -127,7 +127,7 @@ func (s *RedisStore) Options(options ginsessions.Options) {
 // Save adds a single session to the response.
 func (s *RedisStore) Save(r *http.Request, w http.ResponseWriter, session *gorsessions.Session) error {
 	// Marked for deletion.
-	if session.Options.MaxAge <= 0 {
+	if session.Options.MaxAge < 0 {
 		if err := s.delete(session); err != nil {
 			return err
 		}
@@ -200,21 +200,16 @@ func (s *RedisStore) save(session *gorsessions.Session) error {
 
 // load reads the session from redis and returns true if there is a sessoin data in DB.
 func (s *RedisStore) load(session *gorsessions.Session) (bool, error) {
-	data, err := s.redisClient.Do("GET", s.keyPrefix+session.ID).Result()
+	data, err := s.redisClient.Get(s.keyPrefix + session.ID).Result()
 	if err != nil {
 		return false, err
 	}
 
-	if data == nil {
+	if data == "" {
 		return false, nil // no data was associated with this key
 	}
 
-	b, ok := data.([]byte)
-	if !ok {
-		return false, nil
-	}
-
-	return true, s.serializer.Deserialize(b, session)
+	return true, s.serializer.Deserialize([]byte(data), session)
 }
 
 // delete removes keys from redis if MaxAge<0
