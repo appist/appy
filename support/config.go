@@ -269,7 +269,7 @@ type Config struct {
 	HTTPCSRFCookieHTTPOnly bool `env:"HTTP_CSRF_COOKIE_HTTP_ONLY" envDefault:"true"`
 
 	// HTTPCSRFCookieMaxAge indicates how long till the CSRF cookie should expire.
-	// By default, it is 0 which is no expiration.
+	// By default, it is 0 which gets deleted if the browser is closed.
 	HTTPCSRFCookieMaxAge int `env:"HTTP_CSRF_COOKIE_MAX_AGE" envDefault:"0"`
 
 	// HTTPCSRFCookiePath indicates which URL path the CSRF cookie can be sent to.
