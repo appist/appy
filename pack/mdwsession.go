@@ -16,6 +16,9 @@ var (
 	mdwSessionCtxKey = ContextKey("sessionManager")
 )
 
+// SessionOptions defines the session cookie's configuration.
+type SessionOptions = ginsessions.Options
+
 // Sessioner stores the values and optional configuration for a session.
 type Sessioner interface {
 	// AddFlash adds a flash message to the session.
@@ -41,7 +44,7 @@ type Sessioner interface {
 	Key() string
 
 	// Options sets the cookie configuration for a session.
-	Options(ginsessions.Options)
+	Options(SessionOptions)
 
 	// Set sets the session value associated to the given key.
 	Set(key interface{}, val interface{})
@@ -78,7 +81,7 @@ type SessionStore interface {
 	gorsessions.Store
 
 	// Options sets the cookie configuration for a session.
-	Options(ginsessions.Options)
+	Options(SessionOptions)
 
 	// KeyPrefix returns the prefix for the store key, not available for CookieStore.
 	KeyPrefix() string
@@ -113,7 +116,7 @@ func newSessionStore(config *support.Config) (SessionStore, error) {
 	}
 
 	if sessionStore != nil {
-		sessionStore.Options(ginsessions.Options{
+		sessionStore.Options(SessionOptions{
 			Domain:   config.HTTPSessionCookieDomain,
 			HttpOnly: config.HTTPSessionCookieHTTPOnly,
 			MaxAge:   config.HTTPSessionExpiration,
@@ -171,7 +174,7 @@ func (s *Session) Flashes(vars ...string) []interface{} {
 }
 
 // Options sets configuration for a session.
-func (s *Session) Options(options ginsessions.Options) {
+func (s *Session) Options(options SessionOptions) {
 	s.Session().Options = &gorsessions.Options{
 		Path:     options.Path,
 		Domain:   options.Domain,

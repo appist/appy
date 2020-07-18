@@ -9,7 +9,6 @@ import (
 
 	"github.com/appist/appy/support"
 	"github.com/appist/appy/test"
-	ginsessions "github.com/gin-contrib/sessions"
 	gorsessions "github.com/gorilla/sessions"
 )
 
@@ -85,7 +84,7 @@ func (s *mdwSessionSuite) TestSessionCookieStore() {
 	mdwSession(s.config)(c)
 
 	session := c.Session()
-	session.Options(ginsessions.Options{
+	session.Options(SessionOptions{
 		MaxAge: 368400,
 	})
 	sessionCookie, _ := c.Cookie(s.config.HTTPSessionCookieName)
@@ -153,9 +152,9 @@ func (fss *fakeSessionStore) New(r *http.Request, name string) (*gorsessions.Ses
 func (fss *fakeSessionStore) Get(r *http.Request, name string) (*gorsessions.Session, error) {
 	return nil, errors.New("not implemented")
 }
-func (fss *fakeSessionStore) KeyPrefix() string           { return fss.keyPrefix }
-func (fss *fakeSessionStore) SetKeyPrefix(p string)       { fss.keyPrefix = p }
-func (fss *fakeSessionStore) Options(ginsessions.Options) {}
+func (fss *fakeSessionStore) KeyPrefix() string      { return fss.keyPrefix }
+func (fss *fakeSessionStore) SetKeyPrefix(p string)  { fss.keyPrefix = p }
+func (fss *fakeSessionStore) Options(SessionOptions) {}
 func (fss *fakeSessionStore) Save(r *http.Request, w http.ResponseWriter, session *gorsessions.Session) error {
 	return nil
 }
