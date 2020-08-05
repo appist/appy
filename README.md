@@ -25,8 +25,8 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 - `appy` is made as a package for your application to import without the need to install any additional binary
 - `appy` glues the [great packages](#acknowledgement) to provide best productivity in developing Go web application
 - `appy` comes with 2 build types:
-  - debug - when the code is NOT running with the binary
-  - release - when the code is running with the binary
+  - debug - when the code is NOT running within the binary
+  - release - when the code is running within the binary
 - `appy` follows [12factor](https://12factor.net/) via `APPY_ENV` environment variable:
   - by default, it is `development`
   - when `APPY_ENV=staging` is set, the config file is `configs/.env.staging`
@@ -296,7 +296,8 @@ An opinionated productive web framework that helps scaling business easier, i.e.
 
 ### Prerequisites
 
-- [Docker w/ Docker Compose >= 19](https://www.docker.com/products/docker-desktop)
+- [Docker >= 19](https://www.docker.com/products/docker-desktop)
+- [Docker Compose >= 1.13](https://docs.docker.com/compose/install)
 - [Go >= 1.14](https://golang.org/dl/)
 - [NodeJS >= 14](https://nodejs.org/en/download/)
 - [PostgreSQL >= 11](https://www.postgresql.org/download/)
