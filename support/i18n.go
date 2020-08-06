@@ -100,7 +100,7 @@ func (i *I18n) T(key string, args ...interface{}) string {
 	localizer := i18n.NewLocalizer(i.bundle, locale)
 	msg, err := localizer.Localize(&i18n.LocalizeConfig{MessageID: key, TemplateData: data})
 	if err != nil {
-		i.logger.Warn(err)
+		i.logger.Infof("[I18N] %s", err.Error())
 		return ""
 	}
 
