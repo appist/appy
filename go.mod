@@ -28,7 +28,7 @@ require (
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/securecookie v1.1.1
-	github.com/gorilla/sessions v1.2.0
+	github.com/gorilla/sessions v1.2.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/hibiken/asynq v0.9.4
 	github.com/jmoiron/sqlx v1.2.1-0.20200324155115-ee514944af4b
