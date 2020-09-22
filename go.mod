@@ -46,7 +46,7 @@ require (
 	github.com/otiai10/copy v1.2.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/radovskyb/watcher v1.0.7
-	github.com/shirou/gopsutil v2.20.7+incompatible
+	github.com/shirou/gopsutil v2.20.8+incompatible
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
