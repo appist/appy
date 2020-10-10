@@ -1,5 +1,5 @@
 # The base image to install OS dependencies
-FROM golang:1.14.3-alpine AS base
+FROM golang:1.15.2-alpine AS base
 
 RUN apk update && \
   apk upgrade && \
@@ -18,7 +18,7 @@ RUN npm install
 RUN CGO_ENABLED=1 go run . build --static --platform=linux/amd64
 
 # The final image to run on production
-FROM alpine:3.11.5
+FROM alpine:3.12.0
 
 ENV APP_HOME=/home/{{.projectName}}
 ENV GROUP_NAME={{.projectName}}
