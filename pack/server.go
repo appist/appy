@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"runtime"
 	"strings"
 
@@ -237,6 +238,11 @@ func (s *Server) SetupGraphQL(path string, es graphql.ExecutableSchema, exts []g
 	}
 	gqlServer.SetQueryCache(gqlLRU.New(queryCacheSize))
 	gqlServer.SetErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
+		switch reflect.TypeOf(err).String() {
+		case "runtime.errorString", "*errors.errorString":
+			err = &gqlerror.Error{Message: err.Error()}
+		}
+
 		// Refer to https://gqlgen.com/reference/errors/#the-error-presenter for custom error handling.
 		return graphql.DefaultErrorPresenter(ctx, err)
 	})
