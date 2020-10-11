@@ -174,7 +174,6 @@ func (i *I18n) ValidationErrors(err error, locale string) []error {
 }
 
 func addDefaultValidationErrors(bundle *i18n.Bundle) {
-	localizer := i18n.NewLocalizer(bundle, "en")
 	messages := map[string]*i18n.Message{
 		validateErrorPrefix + "alpha": {
 			Other: "{{.Field}} must contain ASCII alpha characters only",
@@ -457,12 +456,17 @@ func addDefaultValidationErrors(bundle *i18n.Bundle) {
 		},
 	}
 
-	for id, message := range messages {
-		_, err := localizer.LocalizeMessage(&i18n.Message{ID: id})
+	for _, languageTag := range bundle.LanguageTags() {
+		localizer := i18n.NewLocalizer(bundle, languageTag.String())
 
-		if _, ok := err.(*i18n.MessageNotFoundErr); ok {
-			message.ID = id
-			bundle.AddMessages(language.English, message)
+		for id, message := range messages {
+			localisedMessage, err := localizer.LocalizeMessage(&i18n.Message{ID: id})
+			_, ok := err.(*i18n.MessageNotFoundErr)
+
+			if ok || localisedMessage == "" {
+				message.ID = id
+				bundle.AddMessages(languageTag, message)
+			}
 		}
 	}
 }
