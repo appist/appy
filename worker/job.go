@@ -10,6 +10,9 @@ type (
 	// Job represents a unit of work to be performed.
 	Job = asynq.Task
 
+	// JobResult holds enqueued job's metadata.
+	JobResult = asynq.Result
+
 	// JobPayload holds arbitrary data needed for job processing.
 	JobPayload = asynq.Payload
 
@@ -17,6 +20,8 @@ type (
 	JobOptions struct {
 		Deadline  time.Time
 		MaxRetry  int
+		ProcessAt time.Time
+		ProcessIn time.Duration
 		Queue     string
 		Timeout   time.Duration
 		UniqueTTL time.Duration
@@ -41,6 +46,14 @@ func parseJobOptions(opts *JobOptions) []asynq.Option {
 
 	if opts.MaxRetry != 0 {
 		asynqOptions = append(asynqOptions, asynq.MaxRetry(opts.MaxRetry))
+	}
+
+	if !opts.ProcessAt.IsZero() {
+		asynqOptions = append(asynqOptions, asynq.ProcessAt(opts.ProcessAt))
+	}
+
+	if opts.ProcessIn != 0 {
+		asynqOptions = append(asynqOptions, asynq.ProcessIn(opts.ProcessIn))
 	}
 
 	if opts.Queue != "" && opts.Queue != "default" {
