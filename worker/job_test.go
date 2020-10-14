@@ -19,11 +19,13 @@ func (s *jobSuite) TestParseJobOptions() {
 	opts = parseJobOptions(&JobOptions{
 		Deadline:  deadline,
 		MaxRetry:  10,
+		ProcessAt: time.Now(),
+		ProcessIn: 5 * time.Minute,
 		Queue:     "critical",
 		Timeout:   10 * time.Second,
 		UniqueTTL: 10 * time.Second,
 	})
-	s.Equal(5, len(opts))
+	s.Equal(7, len(opts))
 }
 
 func TestJobSuite(t *testing.T) {

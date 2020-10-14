@@ -121,13 +121,11 @@ func NewEngine(asset *support.Asset, config *support.Config, dbManager *record.E
 	workerLogger.worker = worker
 	worker.ServeMux.Use(func(next Handler) Handler {
 		return HandlerFunc(func(ctx context.Context, task *asynq.Task) error {
-			payload := strings.ReplaceAll(fmt.Sprintf("%+v", task.Payload), "{data:map[", "")
-			payload = strings.ReplaceAll(fmt.Sprintf("%+v", payload), "]}", "")
-			l.Infof(`[WORKER] job: %s, payload: (%s) start`, task.Type, payload)
-
 			start := time.Now()
+			l.Infof(`[WORKER] job: %s, payload: (%s) start`, task.Type, task.Payload)
+
 			err := next.ProcessTask(ctx, task)
-			l.Infof(`[WORKER] job: %s, payload: (%s) done in %s`, task.Type, payload, time.Since(start))
+			l.Infof(`[WORKER] job: %s, payload: (%s) done in %s`, task.Type, task.Payload, time.Since(start))
 
 			return err
 		})
@@ -145,52 +143,26 @@ func (w *Engine) Drain() {
 	w.jobs = []*Job{}
 }
 
-// Enqueue enqueues job to be processed immediately.
+// Enqueue enqueues job to be processed asynchronously.
 //
 // Enqueue returns nil if the job is enqueued successfully, otherwise returns
-// an error.
-func (w *Engine) Enqueue(job *Job, opts *JobOptions) error {
-	if w.config.AppyEnv == "test" {
-		w.mu.Lock()
-		defer w.mu.Unlock()
-
-		w.jobs = append(w.jobs, job)
-		return nil
-	}
-
-	return w.Client.Enqueue(job, parseJobOptions(opts))
-}
-
-// EnqueueAt schedules job to be enqueued at the specified time.
+// a non-nil error.
 //
-// It returns nil if the job is scheduled successfully, otherwise returns an
-// error.
-func (w *Engine) EnqueueAt(t time.Time, job *Job, opts *JobOptions) error {
-	if w.config.AppyEnv == "test" {
-		w.mu.Lock()
-		defer w.mu.Unlock()
-
-		w.jobs = append(w.jobs, job)
-		return nil
-	}
-
-	return w.Client.EnqueueAt(t, job, parseJobOptions(opts))
-}
-
-// EnqueueIn schedules job to be enqueued after the specified delay.
 //
-// It returns nil if the job is scheduled successfully, otherwise returns an
-// error.
-func (w *Engine) EnqueueIn(d time.Duration, job *Job, opts *JobOptions) error {
+// The argument opts specifies the behavior of job processing. If there are
+// conflicting JobOption values the last one overrides others. By default, max
+// retry is set to 25 and timeout is set to 30 minutes. If no ProcessAt or
+// ProcessIn options are passed, the job will be processed immediately.
+func (w *Engine) Enqueue(job *Job, opts *JobOptions) (*JobResult, error) {
 	if w.config.AppyEnv == "test" {
 		w.mu.Lock()
 		defer w.mu.Unlock()
 
 		w.jobs = append(w.jobs, job)
-		return nil
+		return nil, nil
 	}
 
-	return w.Client.EnqueueIn(d, job, parseJobOptions(opts))
+	return w.Client.Enqueue(job, parseJobOptions(opts)...)
 }
 
 // Jobs returns the enqueued jobs, only available for unit test with

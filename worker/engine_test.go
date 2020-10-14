@@ -104,8 +104,8 @@ func (s *engineSuite) TestGlobalMiddleware() {
 
 	s.writer.Flush()
 	s.Contains(s.buffer.String(), "INFO")
-	s.Contains(s.buffer.String(), "[WORKER] job: test, payload: (name:barfoo) start")
-	s.Contains(s.buffer.String(), "[WORKER] job: test, payload: (name:barfoo) done in")
+	s.Contains(s.buffer.String(), "[WORKER] job: test, payload: (map[name:barfoo]) start")
+	s.Contains(s.buffer.String(), "[WORKER] job: test, payload: (map[name:barfoo]) done in")
 	s.Equal(10, count)
 }
 
@@ -113,13 +113,13 @@ func (s *engineSuite) TestEnqueue() {
 	s.config = support.NewConfig(s.asset, s.logger)
 	worker := NewEngine(s.asset, s.config, s.dbManager, s.logger)
 
-	err := worker.Enqueue(NewJob("foo", map[string]interface{}{}), nil)
+	_, err := worker.Enqueue(NewJob("foo", map[string]interface{}{}), nil)
 	s.Nil(err)
 
-	err = worker.EnqueueAt(time.Now(), NewJob("bar", map[string]interface{}{}), nil)
+	_, err = worker.Enqueue(NewJob("bar", map[string]interface{}{}), &JobOptions{ProcessAt: time.Now()})
 	s.Nil(err)
 
-	err = worker.EnqueueIn(100*time.Millisecond, NewJob("foobar", map[string]interface{}{}), nil)
+	_, err = worker.Enqueue(NewJob("foobar", map[string]interface{}{}), &JobOptions{ProcessIn: 100 * time.Millisecond})
 	s.Nil(err)
 }
 
@@ -130,18 +130,18 @@ func (s *engineSuite) TestOpsWithTestEnv() {
 	s.config = support.NewConfig(s.asset, s.logger)
 	worker := NewEngine(s.asset, s.config, s.dbManager, s.logger)
 
-	err := worker.Enqueue(NewJob("foo", map[string]interface{}{}), nil)
+	_, err := worker.Enqueue(NewJob("foo", map[string]interface{}{}), nil)
 	s.Nil(err)
 	s.Equal(len(worker.Jobs()), 1)
 
-	err = worker.EnqueueAt(time.Now(), NewJob("foo", map[string]interface{}{}), nil)
+	_, err = worker.Enqueue(NewJob("foo", map[string]interface{}{}), &JobOptions{ProcessAt: time.Now()})
 	s.Nil(err)
 	s.Equal(len(worker.Jobs()), 2)
 
 	worker.Drain()
 	s.Equal(len(worker.Jobs()), 0)
 
-	err = worker.EnqueueIn(5*time.Minute, NewJob("foo", map[string]interface{}{}), nil)
+	_, err = worker.Enqueue(NewJob("foo", map[string]interface{}{}), &JobOptions{ProcessIn: 5 * time.Minute})
 	s.Nil(err)
 	s.Equal(len(worker.Jobs()), 1)
 }
