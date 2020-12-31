@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/99designs/gqlgen v0.13.0
-	github.com/AlecAivazis/survey/v2 v2.1.1
+	github.com/AlecAivazis/survey/v2 v2.2.7
 	github.com/BurntSushi/toml v0.3.1
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/CloudyKit/jet v2.1.2+incompatible
