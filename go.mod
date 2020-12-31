@@ -60,6 +60,6 @@ require (
 	golang.org/x/tools v0.0.0-20200501065659-ab2804fb9c9d // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/guregu/null.v4 v4.0.0
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
