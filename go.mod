@@ -10,7 +10,7 @@ require (
 	github.com/CloudyKit/jet v2.1.2+incompatible
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/bndr/gotabulate v1.1.2
-	github.com/bxcodec/faker/v3 v3.5.0
+	github.com/bxcodec/faker/v3 v3.6.0
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/chromedp/cdproto v0.0.0-20200209033844-7e00b02ea7d2
 	github.com/chromedp/chromedp v0.5.3
