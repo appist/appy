@@ -35,7 +35,7 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/jordan-wright/email v0.0.0-20200322182553-8eef2508c362
 	github.com/kr/text v0.2.0 // indirect
-	github.com/lib/pq v1.9.0
+	github.com/lib/pq v1.10.0
 	github.com/mitchellh/mapstructure v1.3.0 // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mum4k/termdash v0.14.0
