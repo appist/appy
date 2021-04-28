@@ -12,8 +12,8 @@ require (
 	github.com/bndr/gotabulate v1.1.2
 	github.com/bxcodec/faker/v3 v3.5.0
 	github.com/caarlos0/env v3.5.0+incompatible
-	github.com/chromedp/cdproto v0.0.0-20200209033844-7e00b02ea7d2
-	github.com/chromedp/chromedp v0.5.3
+	github.com/chromedp/cdproto v0.0.0-20210323015217-0942afbea50e
+	github.com/chromedp/chromedp v0.6.12
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/camelcase v1.0.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
@@ -34,6 +34,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.1-0.20200324155115-ee514944af4b
 	github.com/joho/godotenv v1.3.0
 	github.com/jordan-wright/email v0.0.0-20200322182553-8eef2508c362
+	github.com/knq/sysutil v0.0.0-20191005231841-15668db23d08 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.9.0
 	github.com/mitchellh/mapstructure v1.3.0 // indirect
