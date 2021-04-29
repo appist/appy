@@ -1,0 +1,36 @@
+version: 2
+updates:
+- package-ecosystem: gomod
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "21:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: github.com/hibiken/asynq
+    versions:
+    - 0.14.1
+    - 0.15.0
+    - 0.16.0
+    - 0.16.1
+    - 0.17.0
+  - dependency-name: github.com/chromedp/chromedp
+    versions:
+    - 0.6.10
+    - 0.6.5
+    - 0.6.6
+    - 0.6.8
+    - 0.6.9
+  - dependency-name: github.com/AlecAivazis/survey/v2
+    versions:
+    - 2.2.8
+    - 2.2.9
+  - dependency-name: github.com/mum4k/termdash
+    versions:
+    - 0.15.0
+  - dependency-name: github.com/lib/pq
+    versions:
+    - 1.10.0
+  - dependency-name: github.com/otiai10/copy
+    versions:
+    - 1.5.0
