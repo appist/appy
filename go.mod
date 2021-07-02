@@ -38,7 +38,7 @@ require (
 	github.com/lib/pq v1.9.0
 	github.com/mitchellh/mapstructure v1.3.0 // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/mum4k/termdash v0.14.0
+	github.com/mum4k/termdash v0.16.0
 	github.com/nicksnyder/go-i18n/v2 v2.1.2
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/onsi/ginkgo v1.12.0 // indirect
