@@ -26,6 +26,7 @@ func TestNewServer(t *testing.T) {
 		assert.Nil(t, server.config.Handler)
 		assert.Equal(t, 75*time.Second, server.config.IdleTimeout)
 		assert.Equal(t, 0, server.config.MaxHeaderBytes)
+		assert.Nil(t, server.PostServeHandler())
 		assert.Equal(t, 60*time.Second, server.config.ReadHeaderTimeout)
 		assert.Equal(t, 60*time.Second, server.config.ReadTimeout)
 		assert.Nil(t, server.config.TracerProvider)
@@ -67,5 +68,26 @@ func TestNewServer(t *testing.T) {
 		assert.Equal(t, 120*time.Second, server.config.ReadTimeout)
 		assert.NotNil(t, server.config.TracerProvider)
 		assert.Equal(t, 120*time.Second, server.config.WriteTimeout)
+	})
+
+	t.Run("should run Serve() properly", func(t *testing.T) {
+		logger, _, _ := support.NewTestLogger()
+		server := NewServer(&ServerConfig{
+			Address: "0.0.0.0:33000",
+		}, logger)
+
+		server.config.PostServeHandler = func() error {
+			assert.EqualError(t, server.Serve(), "listen tcp 0.0.0.0:33000: bind: address already in use")
+			assert.Nil(t, server.Shutdown())
+
+			return nil
+		}
+
+		go func() {
+			time.Sleep(500 * time.Millisecond)
+			assert.Nil(t, server.PostServeHandler())
+		}()
+
+		assert.Nil(t, server.Serve())
 	})
 }
