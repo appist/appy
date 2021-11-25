@@ -1,0 +1,15 @@
+{
+  "name": "appy",
+  "description": "An opinionated productive web framework that helps scaling business easier.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vitepress build .",
+    "dev": "vitepress dev .",
+    "serve": "vitepress serve ."
+  },
+  "devDependencies": {
+    "prettier": "^2.4.1",
+    "vitepress": "^0.20.0"
+  }
+}

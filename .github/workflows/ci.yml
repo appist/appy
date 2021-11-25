@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.2
+
+      - name: Go - Install Tools
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@release.2021.1
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.41.1
+          go install golang.org/x/tools/cmd/goimports@v0.1.5
+          go install github.com/securego/gosec/v2/cmd/gosec@v2.8.1
+          go install github.com/vektra/mockery/v2@v2.9.2
+
+      - name: Go - Format Code
+        run: if [ $(goimports -l -d . && git diff | wc -l) -gt 0 ]; then git diff && exit 1; fi
+
+      - name: Go - Check go.mod Status
+        shell: bash
+        run: if [ $(go mod tidy && git diff | wc -l) -gt 0 ]; then git diff && exit 1; fi
+
+      - name: Go - Generate
+        run: if [ $(go generate ./... && git diff | wc -l) -gt 0 ]; then git diff && exit 1; fi
+
+      - name: Go - Check Security Issues
+        run: gosec ./...
+
+      - name: Go - Check Bugs And Performance Issues
+        run: staticcheck ./...
+
+      - name: Go - Check Linting Status
+        run: golangci-lint run ./...
+
+      - name: Go - Check Suspicious Constructs
+        run: go vet -v ./...
+
+      - name: Go - Unit Test
+        run: |
+          mkdir -p tmp
+          go test -covermode=atomic -coverprofile=tmp/coverage.out -race -failfast -v ./...
+
+      - name: Upload Test Coverage To Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  snyk:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Run Snyk Check
+        uses: snyk/actions/golang@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: monitor
+          args: --org=appist

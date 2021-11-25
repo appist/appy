@@ -1,0 +1,32 @@
+{
+  "editor.formatOnSave": true,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/.hg/store/**": true
+  },
+  "git.ignoreLimitWarning": true,
+  "go.lintOnSave": "package",
+  "go.toolsManagement.autoUpdate": true,
+  "go.toolsManagement.checkForUpdates": "local",
+  "go.useLanguageServer": true,
+  "gopls": {
+    "experimentalWorkspaceModule": true
+  },
+  "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true
+  },
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  }
+}

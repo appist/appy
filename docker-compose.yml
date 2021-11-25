@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: ubuntu/mysql:8.0-20.04_beta
+    ports:
+      - "23306:3306"
+    environment:
+      - MYSQL_USER=mysql
+      - MYSQL_PASSWORD=whatever
+      - MYSQL_ROOT_PASSWORD=whatever
+
+  postgres:
+    image: postgres:14.1
+    ports:
+      - "25432:5432"
+    environment:
+      - POSTGRESQL_USER=postgres
+      - POSTGRESQL_PASSWORD=whatever
+
+  redis:
+    image: redis:6.2.6
+    ports:
+      - "26379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes

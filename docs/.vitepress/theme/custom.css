@@ -1,0 +1,14 @@
+a.nav-bar-title > .logo {
+  margin-bottom: 0.2rem;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+:root {
+  --c-brand: #3c81f6;
+  --c-brand-light: #609afb;
+}
+
+.custom-block.tip {
+  border-color: var(--c-brand-light);
+}

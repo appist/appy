@@ -1,0 +1,54 @@
+default_stages: [commit]
+
+fail_fast: true
+
+repos:
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.15.1
+    hooks:
+      - id: gitlint
+        name: Git - Check Commit Message
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.4.1
+    hooks:
+      - id: prettier
+        name: Prettier - Format HTML/JSON/JS/MD/TS/YML
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/tekwizely/pre-commit-golang
+    rev: v1.0.0-beta.4
+    hooks:
+      - id: go-imports
+        name: Go - Format Code
+
+      - id: go-mod-tidy-repo
+        name: Go - Check go.mod Status
+
+      - id: my-cmd-mod
+        name: Go - Generate
+        args: [go, generate, ./...]
+
+      - id: go-test-mod
+        name: Go - Check Unit Test Status
+
+      - id: go-build-mod
+        name: Go - Check Build Status
+
+      - id: go-sec-mod
+        name: Go - Check Security Issues
+
+      - id: go-staticcheck-mod
+        name: Go - Check Bugs And Performance Issues
+
+      - id: go-vet-mod
+        name: Go - Check Suspicious Constructs
+
+      - id: golangci-lint-mod
+        name: Go - Check Linting Status

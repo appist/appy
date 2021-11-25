@@ -1,0 +1,14 @@
+# Misc.
+.cache
+.envrc
+.idea
+*.out
+.DS_Store
+Thumbs.db
+coverage
+
+# Temporary assets
+.pnpm-store
+node_modules
+vendor
+tmp
