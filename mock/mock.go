@@ -12,14 +12,6 @@ type (
 	Mock struct {
 		mock.Mock
 	}
-
-	// AnythingOfTypeArgument is a string that contains the type of an argument
-	// for use when type checking.
-	AnythingOfTypeArgument = mock.AnythingOfTypeArgument
-
-	// IsTypeArgument is a struct that contains the type of an argument for use
-	// when type checking. This is an alternative to AnythingOfType.
-	IsTypeArgument = mock.IsTypeArgument
 )
 
 const (
