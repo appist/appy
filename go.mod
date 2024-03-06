@@ -37,7 +37,6 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.9.0
 	github.com/mitchellh/mapstructure v1.3.0 // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mum4k/termdash v0.14.0
 	github.com/nicksnyder/go-i18n/v2 v2.1.2
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
@@ -49,7 +48,6 @@ require (
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/spf13/cobra v1.1.1
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/vektah/gqlparser/v2 v2.1.0
